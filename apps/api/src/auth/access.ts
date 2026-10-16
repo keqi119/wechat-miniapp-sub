@@ -5,9 +5,10 @@ import { tokenHash } from './auth.service';
 import {h5Access} from '../h5-sign/access';
 import {requireNativeSigning} from '../esign/native-signing';
 import {requireCurrentConsents} from './consents';
-export const resources = ['swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
+export const resources = ['technical-acceptances','swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
 export function allowed(role: string, resource: string, write: boolean) {
   if (role === 'ADMIN') return true;
+  if(resource==='technical-acceptances')return role==='OPERATIONS';
   if (['users', 'audit-logs', 'payment-verifications'].includes(resource)) return false;
   if (['enterprise-seals','seal-authorities','signature-policies'].includes(resource)) return !write && role === 'OPERATIONS';
   if (resource === 'esign-approvals') return role === 'OPERATIONS';
@@ -54,7 +55,7 @@ export class Access implements CanActivate {
       ensure(raw, 401, 'UNAUTHENTICATED', '请先登录');
       const session = await this.db.customerSession.findUnique({ where: { id: tokenHash(raw) }, include: { customer: true } });
       ensure(session && session.expiresAt > new Date(), 401, 'SESSION_EXPIRED', '登录已过期');
-      if(request.method==='POST'&&/^\/customer\/(?:esign\/(?:register|verify|refresh)|(?:contracts|handovers|order-changes)\/[^/]+\/sign)$/i.test(path.replace(/\/+$/,''))){requireNativeSigning();await requireCurrentConsents(this.db,session.customer.id,['terms','privacy']);}
+      if(request.method==='POST'&&/^\/customer\/(?:esign\/(?:register|verify|refresh)|(?:contracts|handovers|order-changes|technical-acceptances)\/[^/]+\/sign)$/i.test(path.replace(/\/+$/,''))){requireNativeSigning();await requireCurrentConsents(this.db,session.customer.id,['terms','privacy']);}
       request.customer = session.customer; request.session = session;
       return true;
     }

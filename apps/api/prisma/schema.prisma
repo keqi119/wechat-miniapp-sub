@@ -151,6 +151,8 @@ model AdminSession {
  createdAt DateTime @default(now())
 }
 model Customer {
+ swapPurchases SwapCreditPurchase[]
+ technicalAcceptances TechnicalAcceptance[]
  id String @id @default(cuid())
  mobile String @unique
  openId String? @unique
@@ -168,6 +170,58 @@ model Customer {
  files StoredFile[]
  acceptedConsents CustomerConsent[]
  paymentVerifications PaymentVerification[]
+}
+
+enum TechnicalRetentionStatus {
+ RETAINED
+ REVIEW_DUE
+ HELD
+ PURGED
+}
+model TechnicalAcceptance {
+ id String @id @default(cuid())
+ customerId String?
+ customer Customer? @relation(fields:[customerId],references:[id])
+ createdBy String
+ documentId String
+ templateVersion Int
+ templateHash String
+ body String
+ bodyHash String
+ documentHash String
+ status SignatureStatus @default(DRAFT)
+ revision Int @default(1)
+ confirmedAt DateTime?
+ consentSnapshot Json?
+ stoppedAt DateTime?
+ completedAt DateTime?
+ sourceFileId String?
+ sourcePdfHash String?
+ slotCoordinates Json?
+ signedFileId String?
+ providerTaskId String? @unique
+ signingLeaseUntil DateTime?
+ retentionDueAt DateTime?
+ retentionStatus TechnicalRetentionStatus @default(RETAINED)
+ retentionReviewedAt DateTime?
+ legalHold Boolean @default(false)
+ purgeStartedAt DateTime?
+ purgedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ actions TechnicalAcceptanceAction[]
+ @@index([customerId,createdAt])
+}
+model TechnicalAcceptanceAction {
+ id String @id @default(cuid())
+ recordId String
+ record TechnicalAcceptance @relation(fields:[recordId],references:[id])
+ actorId String
+ action String
+ key String
+ requestHash String
+ createdAt DateTime @default(now())
+ @@unique([actorId,key])
 }
 model CustomerSession {
  id String @id
@@ -365,6 +419,7 @@ model CreditVerification {
  @@unique([applicationId,revision])
 }
 model Order {
+ swapPurchases SwapCreditPurchase[]
  currentAssignmentId String? @unique
  assignments VehicleAssignment[]
  revision Int @default(0)
@@ -415,6 +470,7 @@ model Contract {
  updatedAt DateTime @updatedAt
 }
 model Bill {
+ swapPurchase SwapCreditPurchase?
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
@@ -438,6 +494,7 @@ model Bill {
  @@unique([orderId,idempotencyKey])
 }
 model Payment {
+ swapPurchase SwapCreditPurchase?
  allocations PaymentAllocation[]
  id String @id @default(cuid())
  billId String
@@ -1040,6 +1097,7 @@ model VehicleHold {
  @@index([changeId,status])
 }
 model SwapCredit {
+ purchase SwapCreditPurchase?
  id String @id @default(cuid())
  orderId String
  source SwapCreditSource
@@ -1062,6 +1120,7 @@ model SwapReservation {
  @@index([changeId,status])
 }
 model SwapLedger {
+ purchase SwapCreditPurchase? @relation(fields:[purchaseId],references:[id],onDelete:NoAction,onUpdate:NoAction)
  id String @id @default(cuid())
  orderId String
  changeId String?
@@ -1092,6 +1151,12 @@ enum SwapPurchaseStatus {
  VOID
 }
 model SwapCreditPurchase {
+ order Order @relation(fields:[orderId],references:[id],onDelete:NoAction,onUpdate:NoAction)
+ customer Customer @relation(fields:[customerId],references:[id],onDelete:NoAction,onUpdate:NoAction)
+ bill Bill @relation(fields:[billId],references:[id],onDelete:NoAction,onUpdate:NoAction)
+ payment Payment? @relation(fields:[paymentId],references:[id],onDelete:NoAction,onUpdate:NoAction)
+ credit SwapCredit? @relation(fields:[creditId],references:[id],onDelete:NoAction,onUpdate:NoAction)
+ ledger SwapLedger[]
  id String @id @default(cuid())
  orderId String
  customerId String

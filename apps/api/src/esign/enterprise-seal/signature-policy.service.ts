@@ -1,3 +1,4 @@
+import {lockTechnical,TECHNICAL_KIND,assertTechnicalIdentity} from '../../technical-acceptance/rules';
 import { Db } from '../../common/db';
 import { ensure } from '../../common/errors';
 import { audit } from '../../common/data';
@@ -14,6 +15,8 @@ export class SignaturePolicyService {
   constructor(private db:Db,private writer:ContractPdfArtifactWriterService,private accounts:CustomerESignOnboardingService,private settings:FadadaSettings){}
   private async evaluation(kind:SignatureKind,resourceId:string,policyId:string,actorId:string){
     const [resource,policy,actor]=await Promise.all([this.writer.resource(kind,resourceId),this.db.signaturePolicy.findUnique({where:{id:policyId}}),this.db.adminUser.findUnique({where:{id:actorId}})]);
+    if(kind==='TECHNICAL_ACCEPTANCE')await assertTechnicalIdentity(this.db,resource);
+    if(kind==='TECHNICAL_ACCEPTANCE')ensure(resource.confirmedAt&&!resource.stoppedAt&&!resource.purgedAt&&!resource.purgeStartedAt&&['DRAFT','PENDING'].includes(resource.status),409,'ACCEPTANCE_STATE','验收已停止或本人未确认');
     if(kind==='AMENDMENT')ensure(resource.delayQuote?.status==='CONFIRMED'&&resource.delayQuote.change.activeQuoteId===resource.delayQuote.id&&resource.delayQuote.change.status==='AWAITING_SIGNATURE',409,'AMENDMENT_STATE','补充协议不再是当前待签版本');
     ensure(actor?.active,403,'SEAL_REQUESTER_INACTIVE','签章申请人不可用');
     ensure(policy?.status==='ACTIVE'&&policy.kind===kind,409,'SIGNATURE_POLICY','签署策略不可用');
@@ -23,7 +26,7 @@ export class SignaturePolicyService {
     const readiness=await this.accounts.readiness(resource.customerId);
     const policyView={id:policy.id,policyCode:policy.policyCode,policyName:policy.policyName,status:policy.status as 'ACTIVE',executionMode:policy.executionMode as 'PARALLEL'|'SEQUENTIAL',requiresEnterpriseSeal:true,defaultSealId:seal.id};
     const sealView={id:seal.id,provider:'FADADA' as const,providerSealId:seal.providerSignatureId,sealName:seal.sealName,sealType:'COMPANY' as const,status:seal.status as 'ACTIVE'};
-    const decision=this.engine.evaluate({actor:{id:actor.id,roleCodes:[actor.role],permissionCodes:[]},authorities:authorities as any,contract:{id:resourceId,businessType:kind,contractTemplateType:kind,status:(kind!=='HANDOVER'?['DRAFT','PENDING'].includes(resource.status):resource.status==='CUSTOMER_CONFIRMED')?'PENDING_SIGN':resource.status},customer:{id:resource.customerId,status:'ACTIVE'},customerReadiness:readiness,order:{id:resource.orderId,customerId:resource.customerId,orderStatus:resource.order?.status||'AWAITING_SIGNATURE'},policy:policyView,seal:sealView,source:'ADMIN'});
+    const decision=this.engine.evaluate({actor:{id:actor.id,roleCodes:[actor.role],permissionCodes:[]},authorities:authorities as any,contract:{id:resourceId,businessType:kind,contractTemplateType:kind,status:(kind!=='HANDOVER'?['DRAFT','PENDING'].includes(resource.status):resource.status==='CUSTOMER_CONFIRMED')?'PENDING_SIGN':resource.status},customer:{id:resource.customerId,status:'ACTIVE'},customerReadiness:readiness,order:kind==='TECHNICAL_ACCEPTANCE'?undefined:{id:resource.orderId,customerId:resource.customerId,orderStatus:resource.order?.status||'AWAITING_SIGNATURE'},policy:policyView,seal:sealView,source:'ADMIN'});
     ensure(['ALLOW','REQUIRE_APPROVAL'].includes(decision.code),409,decision.code,'签署策略或客户实名状态不满足要求');
     // Compilation here creates an immutable review draft only. Provider execution
     // still requires approved(), two distinct active people and both authorities.
@@ -38,6 +41,7 @@ export class SignaturePolicyService {
     if(existing){ensure(existing.requesterId===requesterId,409,'APPROVAL_EXISTS','已有签章复核申请');ensure(existing.planHash===this.reviewHash(this.reviewPlan(context.plan,existing.plan),existing.documentHash,existing.sourcePdfHash,existing.slotCoordinates),409,'PLAN_CHANGED','策略已变化，请先拒绝旧复核申请');return existing;}
     const artifact=await this.writer.prepare(kind,resourceId,this.settings);
     return this.db.serial(async tx=>{
+      if(kind===TECHNICAL_KIND){const current=await lockTechnical(tx,resourceId);ensure(current?.confirmedAt&&!current.stoppedAt&&!current.purgeStartedAt&&!current.purgedAt&&current.status==='DRAFT'&&current.documentHash===documentHash,409,'ACCEPTANCE_STATE','验收准备期间状态已变化');}
       const concurrent=await tx.eSignApproval.findFirst({where:{...where,expiresAt:{gt:new Date()}},orderBy:{createdAt:'desc'}});
       if(concurrent){ensure(concurrent.requesterId===requesterId,409,'APPROVAL_EXISTS','已有签章复核申请');return concurrent;}
       const approval=await tx.eSignApproval.create({data:{kind,resourceId,customerId:context.resource.customerId,documentHash,sourceFileId:artifact.file.id,sourcePdfHash:artifact.file.sha256,slotCoordinates:artifact.slotCoordinates,policyId,sealId:context.seal.id,requesterId,status:'PENDING',planHash:this.reviewHash(context.plan,documentHash,artifact.file.sha256,artifact.slotCoordinates),plan:context.plan as any,expiresAt:new Date(Date.now()+24*60*60*1000)}});

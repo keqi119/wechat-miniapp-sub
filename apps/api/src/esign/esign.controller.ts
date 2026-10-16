@@ -1,3 +1,4 @@
+import {TechnicalAcceptanceSigning} from '../technical-acceptance/signing';
 import {MINIAPP_RETURN,runNativeSigning,nativeRealnameUrl} from './native-signing';
 import {realnameInput,recordRealnameConsent} from './realname-consent';
 import { Body, Controller, Get, Inject, Param, Post, Req, Res } from '@nestjs/common';
@@ -9,8 +10,8 @@ import { SignatureService } from '../orders/signature.service';
 import { CustomerESignOnboardingService } from './customer-esign-onboarding.service';
 import { SignaturePolicyService } from './enterprise-seal/signature-policy.service';
 import { FadadaESignGateway } from './fadada/fadada-esign.provider';
-import { FadadaSettings } from './esign.settings';
-export const ESIGN_SETTINGS=Symbol('ESIGN_SETTINGS');
+import { FadadaSettings,ESIGN_SETTINGS } from './esign.settings';
+export {ESIGN_SETTINGS} from './esign.settings';
 @Controller()
 export class ESignCustomerController {
   constructor(@Inject(CustomerESignOnboardingService)private accounts:CustomerESignOnboardingService,@Inject(Db)private db:Db){}
@@ -36,8 +37,8 @@ export class EnterpriseSealController {
   @Get('admin/seal-authorities')async authorities(@Req()request:any){return this.listing(this.db.sealAuthority,request,['subjectId','authorityType']);}
   @Post('admin/seal-authorities')async authority(@Req()request:any,@Body()body:any){this.admin(request);const input=z.object({sealId:z.string().min(1),subjectType:z.enum(['USER','ROLE']),subjectId:z.string().min(1),authorityType:z.enum(['REQUEST_USE','APPROVE_USE'])}).strict().parse(body);ensure(await this.db.enterpriseSeal.count({where:{id:input.sealId,status:'ACTIVE'}}),409,'SEAL_STATE','印章未启用');if(input.subjectType==='USER')ensure(await this.db.adminUser.count({where:{id:input.subjectId,active:true,role:{in:['ADMIN','OPERATIONS']}}}),400,'SEAL_SUBJECT','授权人员不可用');else ensure(['ADMIN','OPERATIONS'].includes(input.subjectId),400,'SEAL_SUBJECT','授权角色不可用');const item=await this.db.sealAuthority.upsert({where:{sealId_subjectType_subjectId_authorityType:input},create:{...input,status:'ACTIVE',requiresTwoPersonApproval:true},update:{status:'ACTIVE',requiresTwoPersonApproval:true}});await audit(this.db,request.admin.id,'SEAL_AUTHORITY_GRANTED','seal-authorities',item.id,{sealId:input.sealId,authorityType:input.authorityType});return item;}
   @Post('admin/seal-authorities/:id/revoke')async revoke(@Param('id')id:string,@Req()request:any){this.admin(request);const item=await this.db.sealAuthority.update({where:{id},data:{status:'DISABLED'}});await audit(this.db,request.admin.id,'SEAL_AUTHORITY_REVOKED','seal-authorities',id,{});return item;}
-  @Get('admin/signature-policies')async policies(@Req()request:any){const delegate={findMany:(args:any)=>this.db.signaturePolicy.findMany({...args,where:{...args.where,...(request.query.kind?{kind:z.enum(['SUBSCRIPTION','HANDOVER','AMENDMENT']).parse(request.query.kind)}:{})}}),count:(args:any)=>this.db.signaturePolicy.count({...args,where:{...args.where,...(request.query.kind?{kind:z.enum(['SUBSCRIPTION','HANDOVER','AMENDMENT']).parse(request.query.kind)}:{})}})};return this.listing(delegate,request,['policyCode','policyName']);}
-  @Post('admin/signature-policies')async policy(@Req()request:any,@Body()body:any){this.admin(request);const input=z.object({policyCode:z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),policyName:z.string().trim().min(1).max(100),kind:z.enum(['SUBSCRIPTION','HANDOVER','AMENDMENT']),sealId:z.string().min(1),executionMode:z.literal('SEQUENTIAL').default('SEQUENTIAL')}).strict().parse(body);const item=await this.db.signaturePolicy.create({data:{...input,status:'DRAFT'}});await audit(this.db,request.admin.id,'SIGNATURE_POLICY_DRAFT','signature-policies',item.id,{});return item;}
+  @Get('admin/signature-policies')async policies(@Req()request:any){const delegate={findMany:(args:any)=>this.db.signaturePolicy.findMany({...args,where:{...args.where,...(request.query.kind?{kind:z.enum(['SUBSCRIPTION','HANDOVER','AMENDMENT','TECHNICAL_ACCEPTANCE']).parse(request.query.kind)}:{})}}),count:(args:any)=>this.db.signaturePolicy.count({...args,where:{...args.where,...(request.query.kind?{kind:z.enum(['SUBSCRIPTION','HANDOVER','AMENDMENT','TECHNICAL_ACCEPTANCE']).parse(request.query.kind)}:{})}})};return this.listing(delegate,request,['policyCode','policyName']);}
+  @Post('admin/signature-policies')async policy(@Req()request:any,@Body()body:any){this.admin(request);const input=z.object({policyCode:z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),policyName:z.string().trim().min(1).max(100),kind:z.enum(['SUBSCRIPTION','HANDOVER','AMENDMENT','TECHNICAL_ACCEPTANCE']),sealId:z.string().min(1),executionMode:z.literal('SEQUENTIAL').default('SEQUENTIAL')}).strict().parse(body);const item=await this.db.signaturePolicy.create({data:{...input,status:'DRAFT'}});await audit(this.db,request.admin.id,'SIGNATURE_POLICY_DRAFT','signature-policies',item.id,{});return item;}
   @Post('admin/signature-policies/:id/activate')async activatePolicy(@Param('id')id:string,@Req()request:any){this.admin(request);const policy=await this.db.signaturePolicy.findUniqueOrThrow({where:{id}});ensure(await this.db.enterpriseSeal.count({where:{id:policy.sealId,status:'ACTIVE'}}),409,'SEAL_STATE','印章未启用');const item=await this.db.signaturePolicy.update({where:{id},data:{status:'ACTIVE'}});await audit(this.db,request.admin.id,'SIGNATURE_POLICY_ACTIVATED','signature-policies',id,{});return item;}
   @Post('admin/signature-policies/:id/disable')async disablePolicy(@Param('id')id:string,@Req()request:any){this.admin(request);const item=await this.db.signaturePolicy.update({where:{id},data:{status:'DISABLED'}});await audit(this.db,request.admin.id,'SIGNATURE_POLICY_DISABLED','signature-policies',id,{});return item;}
 }
@@ -54,8 +55,8 @@ export class ESignApprovalController {
 }
 @Controller()
 export class FadadaCallbacksController {
-  constructor(@Inject(FadadaESignGateway)private gateway:FadadaESignGateway,@Inject(CustomerESignOnboardingService)private accounts:CustomerESignOnboardingService,@Inject(SignatureService)private signatures:SignatureService){}
-  @Post('callbacks/fadada-sign')sign(@Body()body:unknown){return this.gateway.callback(body,(task,event)=>task.kind!=='HANDOVER'?this.signatures.settleContract(task.resourceId,{...event,taskId:task.id}):this.signatures.settleHandover(task.resourceId,{...event,taskId:task.id}));}
+  constructor(@Inject(FadadaESignGateway)private gateway:FadadaESignGateway,@Inject(CustomerESignOnboardingService)private accounts:CustomerESignOnboardingService,@Inject(SignatureService)private signatures:SignatureService,@Inject(TechnicalAcceptanceSigning)private technical:TechnicalAcceptanceSigning){}
+  @Post('callbacks/fadada-sign')sign(@Body()body:unknown){return this.gateway.callback(body,(task,event)=>{if(task.kind==='TECHNICAL_ACCEPTANCE')return this.technical.settle(task.resourceId,{...event,taskId:task.id});if(task.kind==='HANDOVER')return this.signatures.settleHandover(task.resourceId,{...event,taskId:task.id});ensure(['SUBSCRIPTION','AMENDMENT'].includes(task.kind),409,'SIGNATURE_KIND','不支持的签署业务类型');return this.signatures.settleContract(task.resourceId,{...event,taskId:task.id});});}
   @Post('callbacks/fadada-identity')identity(@Body()body:unknown){return this.accounts.callback(body);}
 }
 @Controller()

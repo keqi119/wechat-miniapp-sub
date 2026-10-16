@@ -13,7 +13,7 @@ import { createStage1ContractPdfSigningSlots } from './contract-pdf-render-model
 import { assertApprovedText, decryptIdentity } from '../esign/fadada/fadada-safety';
 import { approvedTemplate, commercialSnapshot, resolveSubscriptionTemplate, resolveHandoverTemplate } from './contract-template';
 import type { FadadaSettings } from '../esign/esign.settings';
-export type SignatureKind = 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT';
+export type SignatureKind = 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT' | 'TECHNICAL_ACCEPTANCE';
 export class ContractPdfArtifactWriterService {
   private root = resolve(process.env.UPLOAD_DIR || resolve(projectRoot, 'var/uploads'));
   constructor(private db: Db, private renderer = new ContractPdfRendererService()) {}
@@ -33,7 +33,14 @@ export class ContractPdfArtifactWriterService {
     catch(error:any) { if(error.code!=='EEXIST')throw error;ensure((await fs.readFile(storagePath)).equals(buffer),409,'ARTIFACT_HASH_MISMATCH','归档路径已有不同内容'); }
     return this.db.storedFile.create({ data: { ...input, name: input.name.replace(/[\\/\r\n]/g,'_').slice(0,200), mimeType:'application/pdf', size:buffer.length, sha256, storagePath } });
   }
+  async discardUnreferencedTechnicalFile(id:string){
+    const file=await this.db.storedFile.findUnique({where:{id}});if(!file||file.purpose!=='technical-acceptance')return;
+    if(await this.db.technicalAcceptance.count({where:{OR:[{sourceFileId:id},{signedFileId:id}]}})||await this.db.eSignApproval.count({where:{sourceFileId:id}})||await this.db.fadadaTask.count({where:{OR:[{sourceFileId:id},{signedFileId:id}]}}))return;
+    ensure(resolve(file.storagePath).startsWith(this.root+sep),409,'STORAGE_PATH','文件存储路径无效');
+    await this.db.storedFile.delete({where:{id}});if(!await this.db.storedFile.count({where:{storagePath:file.storagePath}})){try{await fs.unlink(file.storagePath);}catch(e:any){if(e.code!=='ENOENT')throw e;}}
+  }
   async resource(kind: SignatureKind, resourceId: string) {
+    if(kind==='TECHNICAL_ACCEPTANCE'){const r=await this.db.technicalAcceptance.findUnique({where:{id:resourceId}});ensure(r&&!r.purgedAt&&!r.purgeStartedAt,404,'NOT_FOUND','验收文件不存在');return r as any;}
     const result = kind!=='HANDOVER' ? await this.db.contract.findUnique({ where:{id:resourceId}, include:{order:{include:{customer:true,vehicle:true}},delayQuote:{include:{change:true}}} }) : await this.db.handover.findUnique({ where:{id:resourceId}, include:{order:{include:{customer:true,vehicle:true}}} });
     ensure(result,404,'NOT_FOUND','签署业务记录不存在');
     if(kind!=='HANDOVER')ensure((result as any).kind===kind,409,'CONTRACT_KIND','签署业务类型不匹配');
@@ -41,6 +48,7 @@ export class ContractPdfArtifactWriterService {
   }
   async prepare(kind: SignatureKind, resourceId: string, settings: FadadaSettings) {
     const resource = await this.resource(kind,resourceId);
+    if(kind==='TECHNICAL_ACCEPTANCE'){ensure(resource.confirmedAt&&!resource.stoppedAt&&resource.status==='DRAFT'&&!resource.providerTaskId&&resource.sourceFileId&&resource.sourcePdfHash&&resource.slotCoordinates,409,'ACCEPTANCE_STATE','本人未确认或验收文件不可准备');ensure(hash(resource.body)===resource.bodyHash,409,'DOCUMENT_MISMATCH','验收正文已变化');await this.readVerified(resource.sourceFileId,resource.sourcePdfHash);const file=await this.db.storedFile.findUniqueOrThrow({where:{id:resource.sourceFileId}});return{resource,file,slotCoordinates:resource.slotCoordinates,documentHash:resource.documentHash};}
     ensure(!resource.providerTaskId && (kind!=='HANDOVER' ? resource.status==='DRAFT' : resource.status==='CUSTOMER_CONFIRMED' && resource.signatureStatus==='DRAFT'),409,'ARTIFACT_PROTECTED','签署已发起或业务状态不可重新生成文档');
     const account = await this.db.eSignAccount.findUnique({where:{customerId:resource.customerId}});
     ensure(account?.identityCiphertext,409,'REALNAME_REQUIRED','请先完成实名资料核验');

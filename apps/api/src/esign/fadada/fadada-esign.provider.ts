@@ -1,3 +1,4 @@
+import {TECHNICAL_KIND,technicalEnabled,lockTechnical} from '../../technical-acceptance/rules';
 import {approvedReturnUrl} from '../../h5-sign/config';
 import { createHash, randomUUID } from 'node:crypto';
 import { Db } from '../../common/db';
@@ -11,15 +12,30 @@ import { FadadaApiClient } from './fadada-api.client';
 import { accountReadiness, assertSignerResult, decryptIdentity, verifiedCallback } from './fadada-safety';
 export class FadadaESignGateway extends ESignGateway {
   constructor(private db:Db,private config:FadadaSettings,private api:FadadaApiClient,private writer:ContractPdfArtifactWriterService,private policies:SignaturePolicyService){super();}
-  private enabled(){ensure(this.config.enabled&&this.config.signingEnabled,503,'FADADA_SIGNING_DISABLED','法大大真实签署尚未启用');}
+  private enabled(kind?:string,readOnly=false){ensure(this.config.enabled&&(kind===TECHNICAL_KIND?(readOnly||technicalEnabled()):this.config.signingEnabled),503,'FADADA_SIGNING_DISABLED','法大大真实签署尚未启用');}
+  private title(kind:string){return kind===TECHNICAL_KIND?'电子签署流程验证确认书':kind==='HANDOVER'?'车辆交接单':kind==='AMENDMENT'?'订阅变更补充协议':'汽车订阅合同与订阅方案';}
+  private async technicalAllowed(id:string){const r=await this.db.technicalAcceptance.findUnique({where:{id}});return !!(technicalEnabled()&&r?.confirmedAt&&!r.stoppedAt&&!r.purgedAt&&!r.purgeStartedAt&&['DRAFT','PENDING'].includes(r.status));}
+  private async technicalGate(id:string){ensure(await this.technicalAllowed(id),409,'ACCEPTANCE_STOPPED','本次技术验证已停止或不可继续签署');}
+  private async technicalDispatch<T>(id:string,action:()=>Promise<T>,unsentTask?:{id:string;lease:Date}):Promise<T|null>{
+    // Deliberately NOT db.serial: once an external call starts, automatic transaction retry is unsafe.
+    // The previously committed seal marker survives timeout/unknown outcome and prevents another seal.
+    return this.db.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT id FROM "TechnicalAcceptance" WHERE id=${id} FOR UPDATE`;
+      const r=await tx.technicalAcceptance.findUnique({where:{id}});
+      const allowed=technicalEnabled()&&r?.confirmedAt&&!r.stoppedAt&&!r.purgedAt&&!r.purgeStartedAt&&['DRAFT','PENDING'].includes(r.status);
+      if(!allowed){if(unsentTask){await tx.fadadaTask.updateMany({where:{id:unsentTask.id,processingUntil:unsentTask.lease},data:{sealRequestedAt:null}});return null;}ensure(false,409,'ACCEPTANCE_STOPPED','本次技术验证已停止，不再发起签署');}
+      return action();
+    },{isolationLevel:'ReadCommitted',timeout:Math.max(15000,this.config.requestTimeoutMs||15000)+10000,maxWait:5000});
+  }
   private positions(approval:any,role:'CUSTOMER'|'PLATFORM'){
-    const expected=approval.kind!=='HANDOVER'?[`STAGE1_BODY_${role}`,`STAGE1_ATTACHMENT1_${role}`]:[`STAGE2_HANDOVER_${role}`];
+    const expected=approval.kind===TECHNICAL_KIND?[`TECHNICAL_${role}`]:approval.kind!=='HANDOVER'?[`STAGE1_BODY_${role}`,`STAGE1_ATTACHMENT1_${role}`]:[`STAGE2_HANDOVER_${role}`];
     const all=approval.slotCoordinates as any[];
     ensure(Array.isArray(all),409,'SIGNATURE_COORDINATES','签署坐标尚未生成');
     return expected.map(slotId=>{const rows=all.filter(row=>row.slotId===slotId);ensure(rows.length===1,409,'SIGNATURE_COORDINATES','签署坐标缺失或重复');const row=rows[0];ensure(Number.isInteger(row.pageNumber)&&row.pageNumber>=0&&Number.isFinite(row.x)&&row.x>=0&&row.x<=800&&Number.isFinite(row.y)&&row.y>=0&&row.y<=1131,409,'SIGNATURE_COORDINATES','签署坐标无效');return{pagenum:row.pageNumber,x:row.x,y:row.y};});
   }
   async create(input:Parameters<ESignGateway['create']>[0]){
-    this.enabled();
+    this.enabled(input.kind);
+    if(input.kind===TECHNICAL_KIND)await this.technicalGate(input.contractId);
     ensure(this.config.signNotifyUrl?.startsWith('https://mini-api.subauto.keybox.cloud/'),503,'FADADA_CALLBACK_CONFIG','独立平台签署回调与返回地址未配置');
     const returnUrl=approvedReturnUrl(input.returnUrl||this.config.signReturnUrl);
     const existing=await this.db.fadadaTask.findUnique({where:{kind_resourceId_documentHash:{kind:input.kind,resourceId:input.contractId,documentHash:input.documentHash}}});
@@ -41,10 +57,12 @@ export class FadadaESignGateway extends ESignGateway {
       const uploadLeaseUntil=new Date(Date.now()+60000);
       const claim=await this.db.fadadaTask.updateMany({where:{id:task.id,uploadedAt:null,OR:[{processingUntil:null},{processingUntil:{lt:new Date()}}]},data:{processingUntil:uploadLeaseUntil}});
       ensure(claim.count===1,409,'SIGNATURE_PROCESSING','签署任务准备中，请稍后重试');
-      try{const pdf=await this.writer.readVerified(task.sourceFileId,task.sourcePdfHash);const uploaded=await this.api.uploadDocs({contractId:task.providerEnvelopeId,docTitle:input.kind!=='HANDOVER'?'汽车订阅合同与订阅方案':'车辆交接单',fileName:task.providerEnvelopeId+'.pdf',pdf});const raw=uploaded.raw as any;ensure(['1','1000','success'].includes(String(raw?.code||raw?.result_code||'')),502,'FADADA_UPLOAD_UNCONFIRMED','供应商未确认签署PDF上传');const stored=await this.db.fadadaTask.updateMany({where:{id:task.id,uploadedAt:null,processingUntil:uploadLeaseUntil},data:{uploadedAt:new Date(),status:'PENDING',processingUntil:null}});ensure(stored.count===1,409,'SIGNATURE_LEASE_LOST','签署准备处理权已变化，请重新查询');task=await this.db.fadadaTask.findUniqueOrThrow({where:{id:task.id}});}
+      try{if(input.kind===TECHNICAL_KIND)await this.technicalGate(input.contractId);const pdf=await this.writer.readVerified(task.sourceFileId,task.sourcePdfHash);const upload=()=>this.api.uploadDocs({contractId:task!.providerEnvelopeId,docTitle:this.title(input.kind),fileName:task!.providerEnvelopeId+'.pdf',pdf});const uploaded=input.kind===TECHNICAL_KIND?(await this.technicalDispatch(input.contractId,upload))!:await upload();const raw=uploaded.raw as any;ensure(['1','1000','success'].includes(String(raw?.code||raw?.result_code||'')),502,'FADADA_UPLOAD_UNCONFIRMED','供应商未确认签署PDF上传');const stored=await this.db.fadadaTask.updateMany({where:{id:task.id,uploadedAt:null,processingUntil:uploadLeaseUntil},data:{uploadedAt:new Date(),status:'PENDING',processingUntil:null}});ensure(stored.count===1,409,'SIGNATURE_LEASE_LOST','签署准备处理权已变化，请重新查询');task=await this.db.fadadaTask.findUniqueOrThrow({where:{id:task.id}});}
       catch(error){await this.db.fadadaTask.updateMany({where:{id:task.id,processingUntil:uploadLeaseUntil},data:{processingUntil:null}});throw error;}
     }
-    const entry=await this.api.createExternalSignUrl({contractId:task.providerEnvelopeId,customerId:task.customerProviderId,transactionId:task.customerTransactionId,docTitle:input.kind!=='HANDOVER'?'汽车订阅合同与订阅方案':'车辆交接单',notifyUrl:this.config.signNotifyUrl!,returnUrl,signaturePositions:this.positions(context.approval,'CUSTOMER'),signerName:identity.name,signerMobile:input.mobile,validityMinutes:this.config.signUrlValidityMinutes});
+    if(input.kind===TECHNICAL_KIND)await this.technicalGate(input.contractId);
+    const entryAction=()=>this.api.createExternalSignUrl({contractId:task!.providerEnvelopeId,customerId:task!.customerProviderId,transactionId:task!.customerTransactionId,docTitle:this.title(input.kind),notifyUrl:this.config.signNotifyUrl!,returnUrl,signaturePositions:this.positions(context.approval,'CUSTOMER'),signerName:identity.name,signerMobile:input.mobile,validityMinutes:this.config.signUrlValidityMinutes});
+    const entry=input.kind===TECHNICAL_KIND?(await this.technicalDispatch(input.contractId,entryAction))!:await entryAction();
     return {taskId:task.id,url:entry.signUrl,status:'PENDING'};
   }
   private async providerStatus(task:any,platform:boolean){
@@ -55,8 +73,7 @@ export class FadadaESignGateway extends ESignGateway {
     return {...result,absent};
   }
   async query(taskId:string):Promise<{status:'PENDING'|'SIGNED'|'REJECTED'|'EXPIRED';documentHash:string;signedFileId?:string}>{
-    this.enabled();
-    let task=await this.db.fadadaTask.findUnique({where:{id:taskId}});ensure(task?.uploadedAt,404,'SIGNATURE_TASK','签署任务未准备完成');
+    let task=await this.db.fadadaTask.findUnique({where:{id:taskId}});ensure(task?.uploadedAt,404,'SIGNATURE_TASK','签署任务未准备完成');this.enabled(task.kind,true);
     const resource=await this.writer.resource(task.kind as SignatureKind,task.resourceId);
     ensure(resource.customerId===task.customerId&&(task.kind!=='HANDOVER'?resource.documentHash:resource.manifestHash)===task.documentHash,409,'DOCUMENT_MISMATCH','签署业务文档已变化');
     if(task.status==='SIGNED'){ensure(task.signedFileId&&task.signedPdfHash,409,'SIGNATURE_ARCHIVE_REQUIRED','已签署文档未归档');await this.writer.readVerified(task.signedFileId,task.signedPdfHash);return{status:'SIGNED',documentHash:task.documentHash,signedFileId:task.signedFileId};}
@@ -72,26 +89,30 @@ export class FadadaESignGateway extends ESignGateway {
       task=await this.db.fadadaTask.findUniqueOrThrow({where:{id:task.id}});
       let platform=await this.providerStatus(task,true);
       if(platform.status!=='SIGNED'&&!task.sealRequestedAt){
+        if(task.kind===TECHNICAL_KIND&&!await this.technicalAllowed(task.resourceId))return{status:'PENDING',documentHash:task.documentHash};
         ensure(platform.absent,409,'SEAL_PROVIDER_STATE','供应商企业签章状态不明确，不能重复盖章');
         const context=await this.policies.approved(task.kind as SignatureKind,task.resourceId,task.documentHash,task.approvalId);
         ensure(context.seal.providerCustomerId===task.platformProviderId,409,'SEAL_IDENTITY_MISMATCH','企业签署身份已变化');
-        const requested=await this.db.fadadaTask.updateMany({where:{id:task.id,sealRequestedAt:null,processingUntil:leaseUntil},data:{sealRequestedAt:new Date()}});
+        const requested=task.kind===TECHNICAL_KIND?await this.db.serial(async tx=>{const r=await lockTechnical(tx,task!.resourceId);if(!technicalEnabled()||!r||r.stoppedAt||r.purgedAt||r.purgeStartedAt||!r.confirmedAt||r.status!=='PENDING')return{count:0};return tx.fadadaTask.updateMany({where:{id:task!.id,sealRequestedAt:null,processingUntil:leaseUntil},data:{sealRequestedAt:new Date()}});}):await this.db.fadadaTask.updateMany({where:{id:task.id,sealRequestedAt:null,processingUntil:leaseUntil},data:{sealRequestedAt:new Date()}});
+        if(task.kind===TECHNICAL_KIND&&!requested.count)return{status:'PENDING',documentHash:task.documentHash};
         ensure(requested.count===1,409,'SEAL_PROCESSING','企业盖章处理中');
         await audit(this.db,context.approval.approverId!,'ENTERPRISE_SEAL_EXECUTION','esign-tasks',task.id,{approvalId:task.approvalId,planHash:context.approval.planHash,sourcePdfHash:task.sourcePdfHash});
-        const sealed=await this.api.autoSealContract({contractId:task.providerEnvelopeId,customerId:task.platformProviderId,signatureId:context.seal.providerSignatureId,transactionId:task.platformTransactionId,docTitle:task.kind!=='HANDOVER'?'汽车订阅合同与订阅方案':'车辆交接单',notifyUrl:this.config.signNotifyUrl,signaturePositions:this.positions(context.approval,'PLATFORM')});
+        const sealAction=()=>this.api.autoSealContract({contractId:task!.providerEnvelopeId,customerId:task!.platformProviderId,signatureId:context.seal.providerSignatureId,transactionId:task!.platformTransactionId,docTitle:this.title(task!.kind),notifyUrl:this.config.signNotifyUrl,signaturePositions:this.positions(context.approval,'PLATFORM')});
+        const sealed=task.kind===TECHNICAL_KIND?await this.technicalDispatch(task.resourceId,sealAction,{id:task.id,lease:leaseUntil}):await sealAction();
+        if(!sealed)return{status:'PENDING',documentHash:task.documentHash};
         ensure(['1','1000','success','3000'].includes(sealed.resultCode||''),502,'ENTERPRISE_SEAL_UNCONFIRMED','供应商尚未确认企业盖章，请查询状态');
         platform=await this.providerStatus(task,true);
       }
       if(platform.status!=='SIGNED')return{status:'PENDING',documentHash:task.documentHash};
       const current=await this.db.fadadaTask.findUniqueOrThrow({where:{id:task.id}});ensure(current.sealRequestedAt,409,'SEAL_APPROVAL_TRACE','企业签章缺少已批准执行记录');
       const signed=await this.api.downloadSignedContract({contractId:task.providerEnvelopeId});
-      const archived=await this.writer.persistPdf(signed.buffer,{customerId:task.customerId,name:task.resourceId+'-signed.pdf',purpose:task.kind==='AMENDMENT'?'amendment':'contract'});
-      await this.db.serial(async tx=>{const settled=await tx.fadadaTask.updateMany({where:{id:task!.id,processingUntil:leaseUntil,status:{not:'SIGNED'}},data:{status:'SIGNED',platformSignedAt:new Date(),signedFileId:archived.id,signedPdfHash:archived.sha256,processingUntil:null}});ensure(settled.count===1,409,'SIGNATURE_LEASE_LOST','签署归档处理权已变化，请重新查询');await audit(tx,'fadada','SIGNED_PDF_ARCHIVED','esign-tasks',task!.id,{sourcePdfHash:task!.sourcePdfHash,signedPdfHash:archived.sha256,fileId:archived.id},'PROVIDER');});
+      const archived=await this.writer.persistPdf(signed.buffer,{customerId:task.customerId,name:task.resourceId+'-signed.pdf',purpose:task.kind===TECHNICAL_KIND?'technical-acceptance':task.kind==='AMENDMENT'?'amendment':'contract'});
+      try{await this.db.serial(async tx=>{const settled=await tx.fadadaTask.updateMany({where:{id:task!.id,processingUntil:leaseUntil,status:{not:'SIGNED'}},data:{status:'SIGNED',platformSignedAt:new Date(),signedFileId:archived.id,signedPdfHash:archived.sha256,processingUntil:null}});ensure(settled.count===1,409,'SIGNATURE_LEASE_LOST','签署归档处理权已变化，请重新查询');await audit(tx,'fadada','SIGNED_PDF_ARCHIVED','esign-tasks',task!.id,{sourcePdfHash:task!.sourcePdfHash,signedPdfHash:archived.sha256,fileId:archived.id},'PROVIDER');});}finally{if(task.kind===TECHNICAL_KIND)await this.writer.discardUnreferencedTechnicalFile(archived.id);}
       return{status:'SIGNED',documentHash:task.documentHash,signedFileId:archived.id};
     }finally{await this.db.fadadaTask.updateMany({where:{id:task.id,processingUntil:leaseUntil},data:{processingUntil:null}});}
   }
   async callback(payload:unknown,settle:(task:any,event:Awaited<ReturnType<FadadaESignGateway['query']>>)=>Promise<unknown>){
-    this.enabled();const verified=verifiedCallback(payload,this.config);const eventId=hash(Object.fromEntries(Object.entries(verified.record).sort(([a],[b])=>a.localeCompare(b))));
+    ensure(this.config.enabled,503,'FADADA_DISABLED','签约服务尚未配置');const verified=verifiedCallback(payload,this.config);const eventId=hash(Object.fromEntries(Object.entries(verified.record).sort(([a],[b])=>a.localeCompare(b))));
     const previous=await this.db.providerEvent.findUnique({where:{provider_eventId:{provider:'FADADA_SIGN',eventId}}});if(previous?.status==='PROCESSED')return{accepted:true,replayed:true};
     const task=await this.db.fadadaTask.findFirst({where:{OR:[{customerTransactionId:verified.transactionId},{platformTransactionId:verified.transactionId}]}});ensure(task&&verified.providerContractId===task.providerEnvelopeId,404,'CALLBACK_TASK_MISMATCH','签署回调任务身份不匹配');
     await this.db.providerEvent.upsert({where:{provider_eventId:{provider:'FADADA_SIGN',eventId}},create:{provider:'FADADA_SIGN',eventId,resourceId:task.resourceId,payloadHash:eventId,status:'PROCESSING'},update:{}});

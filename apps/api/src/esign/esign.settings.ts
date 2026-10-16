@@ -1,6 +1,7 @@
 import { loadFadadaConfig } from './fadada/fadada.config';
 import type { FadadaConfig } from './fadada/fadada.types';
 import { ensure } from '../common/errors';
+export const ESIGN_SETTINGS=Symbol('ESIGN_SETTINGS');
 export interface FadadaSettings extends FadadaConfig { identityEncryptionKey: string; cjkFontPath?: string; signingEnabled: boolean; }
 export function fadadaSettings(env: NodeJS.ProcessEnv = process.env): FadadaSettings {
   const enabled = env.FADADA_ENABLED === 'true';

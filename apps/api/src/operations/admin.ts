@@ -13,7 +13,7 @@ const schemas: Record<string, z.ZodObject<any>> = {
   'model-definitions': z.object({ brand: text, name: text, bodyType: z.string().max(100).default(''), description: z.string().max(5000).default('') }),
   vehicles: vehicleDto, plans: planDto,
   users: z.object({ username: z.string().min(3).max(100), password: z.string().min(16).max(256), name: text, role: z.enum(['ADMIN','OPERATIONS','FINANCE','SUPPORT']), active: z.boolean().default(true) }),
-  'legal-documents': z.object({ type: z.enum(['application','privacy','terms','subscription','handover','credit-verification','mileage-pack','usage-policy','vehicle-change','delivery-delay-amendment','vehicle-change-amendment']), version: z.number().int().positive(), title: text, content: z.string().min(1).max(100000), confirmedBy: z.string().min(1).optional(), confirmedAt: z.string().datetime().optional() }),
+  'legal-documents': z.object({ type: z.enum(['application','privacy','terms','subscription','handover','credit-verification','mileage-pack','usage-policy','vehicle-change','delivery-delay-amendment','vehicle-change-amendment','technical-signing-verification']), version: z.number().int().positive(), title: text, content: z.string().min(1).max(100000), confirmedBy: z.string().min(1).optional(), confirmedAt: z.string().datetime().optional() }),
   entitlements: z.object({ orderId: text, title: text, description: text, status: z.enum(['PENDING','ACTIVE','EXPIRED']).default('PENDING') }),
   notifications: z.object({ customerId: text, title: text, content: z.string().min(1).max(5000), resourceType: text.optional(), resourceId: text.optional() }),
 };
@@ -32,6 +32,7 @@ export class AdminController {
   }
   @Get(':resource') async list(@Param('resource') resource: string, @Query() query: any, @Req() request:any) {
     const delegate = delegates[resource]; ensure(delegate, 404, 'NOT_FOUND', '资源不存在'); const p = pagination(query); const where: any = {};
+    if(resource==='legal-documents'&&query.type)where.type=String(query.type);
     if (query.status && !['customers','users','audit-logs','model-definitions','notifications','deposits'].includes(resource)) where.status = query.status;
     const searchFields: Record<string,string[]> = { vehicles: ['title','brand','model'], 'model-definitions': ['name','brand'], plans: ['name'], customers: ['name','mobile'], users: ['name','username'], 'legal-documents': ['title'], services: ['description','mobile'], notifications: ['title','content'] };
     if (query.keyword) where.OR = (searchFields[resource] || ['id']).map(field => ({ [field]: { contains: String(query.keyword), mode: 'insensitive' } }));

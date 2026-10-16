@@ -1,8 +1,8 @@
 import { Db } from '../common/db';
 import { ensure } from '../common/errors';
-export type SigningKind = 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT';
+export type SigningKind = 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT' | 'TECHNICAL_ACCEPTANCE';
 const leaseMs = 45_000;
-function fields(kind: SigningKind) { return kind !== 'HANDOVER' ? { model: 'contract', state: 'status', hash: 'documentHash' } : { model: 'handover', state: 'signatureStatus', hash: 'manifestHash' }; }
+function fields(kind: SigningKind) { return kind === 'TECHNICAL_ACCEPTANCE' ? {model:'technicalAcceptance',state:'status',hash:'documentHash'} : kind !== 'HANDOVER' ? { model: 'contract', state: 'status', hash: 'documentHash' } : { model: 'handover', state: 'signatureStatus', hash: 'manifestHash' }; }
 async function persistedTask(tx: any, kind: SigningKind, item: any) {
   const f = fields(kind);
   const task = await tx.fadadaTask.findUnique({ where: { kind_resourceId_documentHash: { kind, resourceId: item.id, documentHash: item[f.hash] } } });
@@ -24,7 +24,7 @@ export async function finishSigning(db: Db, kind: SigningKind, item: any, leaseU
     ensure(current && current[f.hash] === item[f.hash], 409, 'DOCUMENT_MISMATCH', '签署文档版本已变化');
     const task = await persistedTask(tx, kind, current);
     ensure(!task || task.id === taskId, 409, 'SIGNING_TASK_MISMATCH', '签署结果与持久任务不匹配');
-    const updated = await (tx as any)[f.model].updateMany({ where: { id: item.id, [f.state]: 'PENDING', [f.hash]: item[f.hash], signingLeaseUntil: leaseUntil, OR: [{ providerTaskId: null }, { providerTaskId: taskId }] }, data: { providerTaskId: taskId, signingLeaseUntil: null } });
+    const updated = await (tx as any)[f.model].updateMany({ where: { id: item.id, ...(kind==='TECHNICAL_ACCEPTANCE'?{stoppedAt:null,purgedAt:null,purgeStartedAt:null}:{}), [f.state]: 'PENDING', [f.hash]: item[f.hash], signingLeaseUntil: leaseUntil, OR: [{ providerTaskId: null }, { providerTaskId: taskId }] }, data: { providerTaskId: taskId, signingLeaseUntil: null } });
     ensure(updated.count === 1, 409, 'SIGNATURE_LEASE_LOST', '签署准备已由其他请求恢复，请刷新状态');
   });
 }
