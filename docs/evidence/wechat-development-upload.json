@@ -1,0 +1,21 @@
+{
+  "asOf": "2026-10-16T14:15:00+08:00",
+  "timezone": "Asia/Shanghai",
+  "version": "1.0.0",
+  "channel": "development",
+  "uploadStatus": "SUCCEEDED",
+  "totalBytes": 328406,
+  "packages": [
+    {
+      "name": "TOTAL",
+      "size": 328406
+    }
+  ],
+  "evidence": {
+    "sizeSource": ".runtime/miniapp-upload-1.0.0-info.json",
+    "uploadConfirmation": "主控已确认现有 CLI 上传结果成功；本记录整理未重新上传。"
+  },
+  "reviewSubmitted": false,
+  "productionReleased": false,
+  "scope": "仅证明开发版 1.0.0 上传成功，不证明代码审核通过、正式发布或完整业务验收。"
+}

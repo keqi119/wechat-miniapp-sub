@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-16-miniapp-independent-platform-design.md`，用户已确认并授权计划后直接施工，不再增加计划批准步骤。
 
+**执行进展（2026-10-16 14:25）:** Task 1–3 的实现已完成并通过对应本地测试、独立审查和生产只读检查；Task 4 已完成协议实现与微信/SMS 真机登录，真实支付、退款及签署验收待业务资料；Task 5 已部署独立生产服务、批准并发布文案、登记隐私及请求域名、上传开发版 1.0.0，微信审核和正式发布未完成。下方保留原始施工清单，逐项实际证据和剩余事项以 `docs/evidence/release-validation.md` 及进度账本为准。
+
 ## Global Constraints
 
 - 当前项目根目录为 `D:\wechat-miniapp-sub`；旧项目及其数据库保持只读。

@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-10-16T06:24:10.330Z",
+  "scope": "one-authorized-SMS-to-existing-WeChat-customer",
+  "templateCode": "SMS_508385053",
+  "diagnosis": "Source SMS configuration retained Chinese outer quotation marks. The HTTP Authorization header failed ByteString validation before any provider request was sent.",
+  "correction": "Removed paired outer Chinese quotes from the new system's SMS settings; preserved all other production settings. Original reference project was not modified.",
+  "provider": {
+    "httpStatus": 200,
+    "code": "OK",
+    "requestId": "01A14361-E1F1-56AF-9158-D5853A313A11"
+  },
+  "acceptedByProvider": true,
+  "deliveryConfirmedByUser": true,
+  "smsLoginVerified": true,
+  "httpLogin": {
+    "at": "2026-10-16T14:25:09+08:00",
+    "route": "POST /api/customer/auth/sms/login",
+    "status": 201
+  },
+  "verification": "User confirmed receipt and SMS login. Independent database check at 2026-10-16T06:25:14.539Z found the same challenge CONSUMED at 06:25:09.624Z on the first attempt, one customer with linked OpenID, and one active session; see production-sms-login.json.",
+  "latestSms": {
+    "status": "SENT",
+    "sentAt": "2026-10-16T06:24:10.491Z",
+    "expiresAt": "2026-10-16T06:29:10.514Z",
+    "consumedAt": null,
+    "attempts": 0
+  },
+  "execution": "Called the deployed RealIdentityGateway.requestSms method with a transport observer that retained only provider status/code/requestId. Existing consented customer's phone selected internally; no phone, code, hash, credential, or token emitted. A count precondition prevents this one-shot helper from sending again.",
+  "readOnlyTemplateQueries": {
+    "GetSmsTemplate": "NoPermission",
+    "GetSmsSign": "NoPermission",
+    "interpretation": "Current credential cannot query these details. SendSms returned OK; subsequent user confirmation and database evidence verified delivery and SMS login."
+  }
+}

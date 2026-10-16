@@ -4,13 +4,15 @@
 
 ## 当前交付状态
 
-2026-10-16：生产基础版本 `20261016-1320` 已部署。
+2026-10-16，截至 14:25（Asia/Shanghai）：生产基础版本 `20261016-1320` 已部署。
 
 - 后台：<https://mini-admin.subauto.keybox.cloud>
 - API 健康：<https://mini-api.subauto.keybox.cloud/api/health>
 - 新数据库、上传目录、服务及备份均独立。生产车辆与套餐由运营录入，无演示库存。
 - 已批准正式文案发布，微信隐私指引与请求、上传、下载合法域名已登记。
-- **正式微信发布及完整业务验收尚未完成。** 用户已真机完成微信手机号登录，生产库已核对微信绑定及两份正式协议的同意记录。短信能力已按用户授权开启，待一次真实短信登录验收；支付/退款、法大大实名/企业签章和签后归档仍待验收，相关开关保持关闭。网页或健康接口可访问不能替代业务验收。
+- 微信开发版 `1.0.0` 已上传，包大小 328406 字节；尚未提交代码审核和正式发布，见 [上传证据](docs/evidence/wechat-development-upload.json)。
+- 用户已真机完成微信一键手机号登录和自建阿里云短信备用登录；生产库已核对同一客户的微信绑定、正式协议同意及短信首次验证消费记录。旧配置中的中文外围引号导致短信首次发送失败，现已修正并补充导入校验；指定模板为 `SMS_508385053`。
+- **正式微信发布及完整业务验收尚未完成。** 支付/退款、法大大实名/企业签章和签后归档仍待验收，相关开关保持关闭。法大大 textapi 历史记录标记为生产，当前供应商环境及印章归属尚未取得确认。网页或健康接口可访问不能替代业务验收。
 
 详见 [生产核验](docs/evidence/production-deployment.md)、[小程序核验](docs/evidence/miniapp-verification.md)、[实施计划](docs/superpowers/plans/2026-10-16-independent-platform.md)。
 
@@ -49,6 +51,7 @@ pnpm --filter @chundian/admin test
 pnpm --filter @independent-platform/miniprogram test
 node apps/miniprogram/scripts/verify-reference.cjs
 node --test scripts/tests/prepare-production-config.test.mjs
+node --test scripts/tests/provider-sms-config.test.mjs
 pnpm build
 ```
 

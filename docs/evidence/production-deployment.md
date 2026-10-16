@@ -1,5 +1,14 @@
 # 正式环境部署核验
 
+## 登录验收与短信配置修正（2026-10-16 14:25 CST）
+
+- 微信一键手机号登录已由用户真机完成，独立库确认手机号/OpenID 绑定、正式协议同意及有效会话。
+- 用户授权向同一手机号发送一次短信验证。开启 `PORTAL_SMS_ENABLED=true` 后，用户最初三次请求失败；只读诊断确认原 `.env` 的短信值含中文外围引号，导致 HTTP 请求头 ByteString 校验失败，尚未到达阿里云。
+- 仅在新系统私有配置中去除配对外围引号，模板确认为用户指定的 `SMS_508385053`，其他配置保持不变；重建自有 API 容器，健康仍为 `ok / connected / 20261016-1320`。原项目配置未改动。
+- 14:24:10 调用已部署的 `RealIdentityGateway.requestSms` 向该客户发送一次授权验证码，阿里云返回 HTTP 200 / `OK`。14:25:09 用户通过手机端 `/api/customer/auth/sms/login` 登录，访问日志 HTTP 201；数据库确认验证码 `CONSUMED`、首次尝试、同一客户与有效会话，订单仍为 0。
+- 导入脚本新增中文外围引号规范化及格式检查，12 项新增回归与12项原配置生成器测试均通过，独立审查无阻断项。运行镜像未改，修正只需更新配置。
+- 下方初次审计保留当时快照；其中 `PORTAL_SMS_ENABLED=false` 及“短信未验证”仅描述当时状态。当前 SMS 已开启并验收通过，微信支付及法大大写入开关仍关闭。证据：`production-sms-send.json`、`production-sms-login.json`。
+
 ## 主控后续核验（2026-10-16 13:51–13:54 CST）
 
 - 主控独立读取 backup 与 pay-certificates 的 systemd 结果：均 `Result=success / ExecMainStatus=0`，有实际开始和结束时间；运行中 API 的 `FADADA_ENABLED` 与 `FADADA_SIGNING_ENABLED` 均为 `false`。

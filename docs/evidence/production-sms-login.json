@@ -1,7 +1,12 @@
 {
-  "checkedAt": "2026-10-16T06:09:21.346Z",
-  "smsChallengeCount": 0,
-  "latestSms": null,
+  "checkedAt": "2026-10-16T06:25:14.539Z",
+  "smsChallengeCount": 4,
+  "latestSms": {
+    "status": "CONSUMED",
+    "sentAt": "2026-10-16T06:24:10.491Z",
+    "consumedAt": "2026-10-16T06:25:09.624Z",
+    "attempts": 1
+  },
   "customerCount": 1,
   "customerOpenIdLinked": true,
   "activeCustomerSessions": 1,
