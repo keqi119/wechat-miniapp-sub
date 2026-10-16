@@ -2,23 +2,41 @@ const services = require('../../services/index');
 const config = require('../../config');
 const { toastError, confirm, go } = require('../../utils/page');
 Page({
-  data: { authenticated: false, profile: null, busy: false, error: '', message: '', mobile: '', code: '', cooldown: 0, accepted: false, legalDocuments: [], consentCurrent: false, customerServiceTelephone: config.customerServiceTelephone, readiness: null, identityName: '', idCardNo: '', identityAccepted: false, signingConfig: null, signingError: '', paymentVerifications: [], verificationError: '', verificationMessage: '' },
-  onShow() { this.refresh(); },
+  data: { authenticated: false, profile: null, busy: false, error: '', message: '', mobile: '', code: '', cooldown: 0, accepted: false, legalDocuments: [], consentCurrent: false, customerServiceTelephone: config.customerServiceTelephone, readiness: null, identityVerified: false, identityStatusText: '实名状态尚待核验', certificateStatusText: '签署证书尚待核验', identityName: '', idCardNo: '', identityAccepted: false, signingConfig: null, signingError: '', paymentVerifications: [], verificationError: '', verificationMessage: '' },
+  pageSession() { return { customerId: services.getContext().customer?.id || null, token: wx.getStorageSync?.(config.storageKey)?.token || null, generation: this._pageGeneration || 0 }; },
+  isCurrentSession(stamp) { const current = this.pageSession(); return !this._disposed && stamp.customerId === current.customerId && stamp.token === current.token && stamp.generation === current.generation; },
+  applyReadiness(readiness) {
+    const identityVerified = readiness?.realNameStatus === 'VERIFIED';
+    this.setData({ readiness, identityVerified, identityStatusText: identityVerified ? '已完成实名核验' : readiness?.realNameStatus === 'PENDING' ? '实名核验处理中，请主动查询结果' : '实名状态尚待核验', certificateStatusText: identityVerified && readiness.certBound === true && readiness.readyForSigning === true ? '签署证书已就绪' : '签署证书尚待核验', ...(identityVerified ? { identityName: '', idCardNo: '', identityAccepted: false } : {}) });
+  },
+  onShow() { return this.refresh(); },
   async refresh() {
-    const context = services.getContext();
+    if (this._disposed) return;
+    const context = services.getContext(), stamp = this.pageSession(), revision = this._refreshRevision = (this._refreshRevision || 0) + 1;
+    const current = () => this.isCurrentSession(stamp) && this._refreshRevision === revision;
+    if (this._identityQuery && !this.isCurrentSession(this._identityQuery.stamp)) { this._identityQuery = null; this.setData({ busy: false }); }
+    if (!this._readinessSession || this._readinessSession.customerId !== stamp.customerId || this._readinessSession.token !== stamp.token) { this.applyReadiness(null); this.setData({ identityName: '', idCardNo: '', identityAccepted: false, message: '' }); }
+    this._readinessSession = stamp;
     this.setData({ authenticated: context.authenticated, profile: context.profile, error: '', signingConfig: null, signingError: '', ...(!context.authenticated ? { paymentVerifications: [], verificationError: '', verificationMessage: '', consentCurrent: false, identityName: '', idCardNo: '', identityAccepted: false } : {}) });
     try {
       const documents = await services.getLoginDocuments();
+      if (!current()) return;
       if (documents.length !== 2 || documents.some((doc,index) => doc.type !== ['terms','privacy'][index] || !doc.id || !Number.isInteger(doc.version) || !doc.content)) throw new Error('当前已发布协议暂不可用，请稍后重试。');
       const changed = JSON.stringify(documents.map(doc => [doc.id,doc.version])) !== JSON.stringify(this.data.legalDocuments.map(doc => [doc.id,doc.version]));
       this.setData({ legalDocuments: documents, accepted: changed ? false : this.data.accepted, identityAccepted: changed ? false : this.data.identityAccepted });
       if (!context.authenticated) return;
       const updated = await services.refreshContext();
+      if (!current()) return;
       this.setData({ authenticated: updated.authenticated, profile: updated.profile, consentCurrent: documents.every(doc => updated.consents.some(consent => consent.documentId === doc.id && consent.version === doc.version)) });
       await this.refreshPaymentVerifications();
-      const readiness = await services.getESignReadiness(); this.setData({ readiness });
-      try { this.setData({ signingConfig: await services.getSigningConfig() }); } catch (error) { this.setData({ signingConfig: null, signingError: error.message }); }
-    } catch (error) { this.setData({ error: error.message, authenticated: services.getContext().authenticated }); }
+      if (!current()) return;
+      if (!this._identityQuery) {
+        const identityRevision = this._identityRevision || 0;
+        try { const readiness = await services.getESignReadiness(); if (!current()) return; if (identityRevision === (this._identityRevision || 0)) this.applyReadiness(readiness); }
+        catch (error) { if (!current()) return; if (identityRevision === (this._identityRevision || 0)) throw error; }
+      }
+      try { const signingConfig = await services.getSigningConfig(); if (current()) this.setData({ signingConfig }); } catch (error) { if (current()) this.setData({ signingConfig: null, signingError: error.message }); }
+    } catch (error) { if (current()) this.setData({ error: error.message, authenticated: services.getContext().authenticated }); }
   },
   verificationRow(record,resumeAllowed=false) {
     const active=Number.isFinite(Date.parse(record.expiresAt))&&Date.parse(record.expiresAt)>Date.now();
@@ -27,10 +45,10 @@ Page({
   },
   async refreshPaymentVerifications() {
     if(this._verificationBusy)return;
-    const context=services.getContext(),revision=(this._verificationRevision||0)+1;this._verificationRevision=revision;
+    const context=services.getContext(),stamp=this.pageSession(),revision=(this._verificationRevision||0)+1;this._verificationRevision=revision;
     if(!context.authenticated){this.setData({paymentVerifications:[]});return;}
-    try{const records=await services.getPaymentVerifications();if(this._verificationRevision===revision&&services.getContext().customer?.id===context.customer.id)this.setData({paymentVerifications:records.map(record=>this.verificationRow(record)),verificationError:''});}
-    catch(error){if(this._verificationRevision===revision){this.setData({paymentVerifications:[],verificationError:error.message});if(!services.getContext().authenticated)this.setData({authenticated:false,consentCurrent:false});}}
+    try{const records=await services.getPaymentVerifications();if(this._verificationRevision===revision&&this.isCurrentSession(stamp))this.setData({paymentVerifications:records.map(record=>this.verificationRow(record)),verificationError:''});}
+    catch(error){if(this._verificationRevision===revision&&this.isCurrentSession(stamp)){this.setData({paymentVerifications:[],verificationError:error.message});if(!services.getContext().authenticated)this.setData({authenticated:false,consentCurrent:false});}}
   },
   setVerification(record,resumeAllowed=false) { this.setData({paymentVerifications:this.data.paymentVerifications.map(row=>row.id===record.id?this.verificationRow(record,resumeAllowed):row)}); },
   disableVerification(id) { this.setData({paymentVerifications:this.data.paymentVerifications.map(row=>row.id===id?{...row,canStart:false,resumeAllowed:false}:row)}); },
@@ -62,14 +80,22 @@ Page({
   async acceptCurrentConsents() { await this.run(async () => { await services.acceptConsents(this.consentSnapshot()); await this.refresh(); this.setData({ message: '当前版本协议同意已记录。' }); }); },
   callService() { wx.makePhoneCall({ phoneNumber: this.data.customerServiceTelephone, fail: error => { if (!/cancel/i.test(error.errMsg || '')) toastError(new Error('电话暂时无法拨打，请手动拨号。')); } }); },
   async verifyIdentity() {
-    if (this.data.busy) return;
+    if (this.data.busy || this.data.identityVerified || this.data.readiness?.realNameStatus === 'VERIFIED') return;
     if (!this.data.consentCurrent || !this.data.identityAccepted) return toastError(new Error('请先更新一般协议同意，并单独选择本次实名信息处理同意。'));
     const privacy = this.data.legalDocuments.find(doc => doc.type === 'privacy');
     if (!privacy) return toastError(new Error('当前隐私政策尚不可用，请刷新后阅读。'));
     await this.run(async () => { await services.startESignVerification({ name: this.data.identityName.trim(), idCardNo: this.data.idCardNo.trim(), consent: { accepted: true, documentId: privacy.id, version: privacy.version } }); this.setData({ identityName: '', idCardNo: '', identityAccepted: false }); });
   },
   onIdentityConsent(event) { if (!this.data.busy) this.setData({ identityAccepted: event.detail.value.includes('identity') }); },
-  async refreshIdentity() { await this.run(async () => { const readiness = await services.refreshESignReadiness(); this.setData({ readiness, message: readiness.readyForSigning ? '供应商已确认实名与证书就绪。' : '实名或证书仍未就绪，请查看准备状态。' }); }); },
+  async refreshIdentity() {
+    if (this.data.busy || this._disposed) return;
+    const stamp = this.pageSession(), lease = { stamp }, revision = this._identityRevision = (this._identityRevision || 0) + 1;
+    this._identityQuery = lease; this.setData({ busy: true, error: '', message: '' });
+    const current = () => this.isCurrentSession(stamp) && this._identityRevision === revision && this._identityQuery === lease;
+    try { const readiness = await services.refreshESignReadiness(); if (!current()) return; this.applyReadiness(readiness); this.setData({ message: readiness.realNameStatus === 'VERIFIED' ? readiness.readyForSigning && readiness.certBound ? '已完成实名核验，签署证书已就绪。' : '已完成实名核验，签署证书尚待核验。' : '实名或证书仍未就绪，请查看准备状态。' }); }
+    catch (error) { if (current()) { this.setData({ error: error.message }); toastError(error); } }
+    finally { if (current()) this.setData({ busy: false }); if (this._identityQuery === lease) this._identityQuery = null; }
+  },
   input(e) { const field = e.currentTarget.dataset.field; if (['mobile', 'code', 'identityName', 'idCardNo'].includes(field)) this.setData({ [field]: e.detail.value }); },
   consent(e) { this.setData({ accepted: e.detail.value.includes('accepted') }); },
   async phoneLogin(e) {
@@ -105,6 +131,6 @@ Page({
   openLegal(e) { go('/pages/legal/index?type=' + e.currentTarget.dataset.type); },
   openProfile() { go('/pages/profile/index'); },
   openHome() { go('/pages/home/index'); },
-  onUnload() { clearInterval(this._cooldownTimer); },
+  onUnload() { this._disposed = true; this._pageGeneration = (this._pageGeneration || 0) + 1; this._refreshRevision = (this._refreshRevision || 0) + 1; this._identityRevision = (this._identityRevision || 0) + 1; clearInterval(this._cooldownTimer); },
   onHide() { this.setData({ identityName: '', idCardNo: '', identityAccepted: false }); },
 });

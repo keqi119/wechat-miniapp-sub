@@ -1,0 +1,92 @@
+{
+  "generatedAt": "2026-10-16T12:28:21.107Z",
+  "scope": "Offline actual-wcc synthetic layout only. No API, SDK, clipboard, browser external navigation, QR, SMS, payment, signing, preview or upload.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "settings-verified-certificate-ready",
+      "route": "settings",
+      "enabled": true,
+      "identityVerified": true,
+      "readiness": {
+        "realNameStatus": "VERIFIED",
+        "certBound": true,
+        "readyForSigning": true
+      },
+      "text": "签署证书已就绪",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "settings-verified-certificate-ready.png",
+      "passed": true
+    },
+    {
+      "name": "settings-verified-certificate-pending",
+      "route": "settings",
+      "enabled": true,
+      "identityVerified": true,
+      "readiness": {
+        "realNameStatus": "VERIFIED",
+        "certBound": false,
+        "readyForSigning": false
+      },
+      "text": "签署证书尚待核验",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "settings-verified-certificate-pending.png",
+      "passed": true
+    },
+    {
+      "name": "settings-pending-verification",
+      "route": "settings",
+      "enabled": true,
+      "readiness": {
+        "realNameStatus": "PENDING",
+        "certBound": false,
+        "readyForSigning": false
+      },
+      "text": "实名核验处理中",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "settings-pending-verification.png",
+      "passed": true
+    },
+    {
+      "name": "settings-disabled-unverified",
+      "route": "settings",
+      "enabled": false,
+      "readiness": {
+        "realNameStatus": "NOT_STARTED",
+        "certBound": false,
+        "readyForSigning": false
+      },
+      "text": "小程序内实名与签署暂未启用",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "settings-disabled-unverified.png",
+      "passed": true
+    },
+    {
+      "name": "settings-verified-query-error",
+      "route": "settings",
+      "enabled": true,
+      "identityVerified": true,
+      "error": "查询未完成，请稍后主动查询。",
+      "readiness": {
+        "realNameStatus": "VERIFIED",
+        "certBound": true,
+        "readyForSigning": true
+      },
+      "text": "查询未完成",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "settings-verified-query-error.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

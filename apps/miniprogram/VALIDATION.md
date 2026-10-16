@@ -29,3 +29,7 @@ B1只读安全审查后授权兼容：list summary和详情分离、详情坚持
 B2恢复报价收尾：新增3红→绿，B2专项16/16、全包140/140、build90文件/16WXML17WXSS、Mock109×2零差异。最近已签恢复基线与原资金来源分离，历史补收退款不当作新收费，已完成旧侧仅查看。详见evidence/vehicle-change-report.md末节。原生0a4f378仍由主控后续合并。
 
 B2与原生合并后的最新验证：受影响54/54、完整153/153、build95文件/17WXML18WXSS、Mock109×2零差异；B2 16及native14离线版面通过，无外部请求。见evidence/b2-native-integration-report.md。当前root业务接线已恢复原生，无H5 fallback，未部署B2。
+
+B3付费次数：新增23行为回归（18项观察红→绿），B3冻结时完整176/176；固定80000分一次、独立默认未选全文、稳定原单/原payment可信查询、8状态及五余额、预占与例外退款/RESTORE只读。18actual-wcc离线版面/18PNG无溢出/异常/外部请求；独立合成UI库真实HTTP11项/19请求，另冻结与原权益恢复两节点各3请求，DI渠道替身，无wx.requestPayment/真实渠道。详见evidence/paid-swap-report.md。
+
+设置页实名完成最小修复：另8项实际红→绿，最新完整184/184、check/build96文件/17WXML18WXSS、Mock109×2零差异。仅服务端VERIFIED显示“已完成实名核验”、隐藏再提交表单、证书独立状态；onShow/主动核验共享版本与session隔离，旧回包/错误/finally/unload不覆盖新状态。5actual-wcc离线图含实名完成+证书就绪/尚待核验，零异常/外部请求/溢出；evidence/settings-readiness-report.md。未接触生产/真实渠道/SDK/预览上传。

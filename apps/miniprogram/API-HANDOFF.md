@@ -2,6 +2,8 @@
 
 真实接口以 ../../docs/api-contract.md 为准。适配器 src/services/api.js 保持源公开服务方法；getContext 同步读取有效会话快照，refreshContext 异步回读服务端。所有写入只调用 /api/customer/*，公开浏览调用 /api/public/*。
 
+最新B3补充（替代下文历史B2中paidAvailable固定0/购买未开放描述）：契约apps/api/b3-contract.md，swap-account真实五计数与purchaseTerms/product/purchases；POST customer/orders/:id/swap-credits仅固定SWAP_CREDIT_1与独立同意快照，返回普通80000分账单。GET customer/swap-credit-purchases/:id只安全DB读；查询PENDING_PAYMENT且有paymentId才GET customer/payments/:id，再回读原purchase/account。POST原purchase/close稳定key，VOID幂等只读。8状态与nullable PAID cycle/changeId、ledger RESTORE兼容；无客户退款/恢复写入口，无1分验收复用或自动付款。设置页最新仅以服务端realNameStatus===VERIFIED完成实名，certBound/readyForSigning独立显示证书；GET readiness与用户主动POST refresh仍明确分开，onShow不申请证书。
+
 生产错误不会退回样例，401清会话，403/404/409/供应商失败分别保留错误码；最终方案确认传revision+commercialHash；申请传documentId/version；附件传fileIds；里程传orderId/readingKm；交接传manifestHash/readFileIds。接口版本变化须同步测试。
 
 信用第一阶段：GET /customer/applications/:id/credit-review；POST /credit-consent {documentId,version,decision:ACCEPT|DECLINE,idempotencyKey}；POST /credit-consent/withdraw {consentId,idempotencyKey}，两写接口返回同safe。safe新增canDecline、consentRequirementsMet、verificationCurrent、canConfirmFinalPlan；canFinalize属于后台出具动作，原生不依赖它。最终方案须固定creditVerificationId/creditRuleVersion/creditBand/creditRevision，客户确认前与当前有效核验匹配。DECLINE/withdraw不以一般隐私补签为前提。详情加载信用失败仅阻止信用操作及方案确认，不阻断已获授权的申请只读展示。
