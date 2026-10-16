@@ -68,7 +68,7 @@ def main():
             status, body, headers = get(path)
             expected = 401 if path.endswith('/records') else 404 if path.endswith('not-a-route') else 200
             if path.startswith('/miniapp-sign/') and status != expected:
-                raise RuntimeError('Unexpected route status for ' + path)
+                raise RuntimeError('Unexpected route status for ' + path + ': ' + str(status) + ', expected ' + str(expected))
             if path in ['/miniapp-sign/', '/miniapp-sign/return/'] and b'/miniapp-sign/assets/' not in body:
                 raise RuntimeError('New path did not serve the H5 artifact')
             if path in ['/miniapp-sign/', '/miniapp-sign/return/'] and not headers.get('content-type', '').startswith('text/html'):
@@ -82,7 +82,8 @@ def main():
     except BaseException:
         VHOST.write_bytes(before)
         if prior_http is None:
-            HTTP_CONFIG.unlink(missing_ok=True)
+            if HTTP_CONFIG.exists():
+                HTTP_CONFIG.unlink()
         else:
             HTTP_CONFIG.write_bytes(prior_http)
         subprocess.run(['nginx', '-t'], check=True)
