@@ -1,0 +1,293 @@
+{
+  "mode": "isolated-browser-fixtures-not-api-e2e",
+  "checks": [
+    "OPERATIONS: role-specific actions and no customer impersonation",
+    "quote: exact cents, unchanged retry key, real conflict shown without fabricated success",
+    "external compensation: no default, explicit true kept draft after manual-finance rejection",
+    "390px: quote form fits viewport",
+    "order entry: one modal, authoritative context binding, no successful fixture writes",
+    "expiry: explicit Beijing time, no default, summary list, expired quote cannot publish; confirmed signing remains available",
+    "FINANCE: role-specific actions and no customer impersonation",
+    "SUPPORT: role-specific actions and no customer impersonation"
+  ],
+  "pageErrors": [],
+  "writes": [
+    {
+      "role": "OPERATIONS",
+      "path": "/api/admin/order-changes/qa-change/quotes",
+      "body": {
+        "revision": 4,
+        "idempotencyKey": "2b5ae868-0a32-482d-a8ec-824e8bddbd62",
+        "expiresAt": "2099-01-01T04:34:00.000Z",
+        "externalCompensationRequired": true,
+        "newStartDate": "2026-11-16",
+        "periods": [
+          {
+            "sequence": 1,
+            "dueDate": "2026-10-15",
+            "amount": 519901,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 2,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 3,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 4,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 5,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 6,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 7,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 8,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 9,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 10,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 11,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 12,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          }
+        ],
+        "reason": "QA延期",
+        "settlementExplanation": "QA原款沿用",
+        "handoverArrangement": "QA新日期交车",
+        "cancellationTerms": "QA再次延期重新确认"
+      }
+    },
+    {
+      "role": "OPERATIONS",
+      "path": "/api/admin/order-changes/qa-change/quotes",
+      "body": {
+        "revision": 4,
+        "idempotencyKey": "2b5ae868-0a32-482d-a8ec-824e8bddbd62",
+        "expiresAt": "2099-01-01T04:34:00.000Z",
+        "externalCompensationRequired": false,
+        "newStartDate": "2026-11-16",
+        "periods": [
+          {
+            "sequence": 1,
+            "dueDate": "2026-10-15",
+            "amount": 519901,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 2,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 3,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 4,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 5,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 6,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 7,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 8,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 9,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 10,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 11,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 12,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          }
+        ],
+        "reason": "QA延期",
+        "settlementExplanation": "QA原款沿用",
+        "handoverArrangement": "QA新日期交车",
+        "cancellationTerms": "QA再次延期重新确认"
+      }
+    },
+    {
+      "role": "OPERATIONS",
+      "path": "/api/admin/order-changes/qa-change/quotes",
+      "body": {
+        "revision": 4,
+        "idempotencyKey": "2b5ae868-0a32-482d-a8ec-824e8bddbd62",
+        "expiresAt": "2099-01-01T04:34:00.000Z",
+        "externalCompensationRequired": false,
+        "newStartDate": "2026-11-16",
+        "periods": [
+          {
+            "sequence": 1,
+            "dueDate": "2026-10-15",
+            "amount": 519901,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 2,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 3,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 4,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 5,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 6,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 7,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 8,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 9,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 10,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 11,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          },
+          {
+            "sequence": 12,
+            "dueDate": "2026-10-15",
+            "amount": 519900,
+            "calculationBasis": "隔离测试：沿用本期原金额"
+          }
+        ],
+        "reason": "QA延期",
+        "settlementExplanation": "QA原款沿用",
+        "handoverArrangement": "QA新日期交车",
+        "cancellationTerms": "QA再次延期重新确认"
+      }
+    },
+    {
+      "role": "OPERATIONS",
+      "path": "/api/admin/orders/qa-order/delivery-delay-changes",
+      "body": {
+        "expectedOrderRevision": 3,
+        "priorTermsHash": "qa-terms-hash",
+        "reason": "QA双方协商延期",
+        "idempotencyKey": "8532ba5d-0cf5-49f7-b0be-99d393cf868f"
+      }
+    }
+  ]
+}

@@ -12,13 +12,13 @@ export function CustomerSigningReadiness({ customerId }: { customerId: string })
   useEffect(() => { const controller = new AbortController(); setState(undefined); setError(undefined); api.request<Readiness>(`/admin/customers/${encodeURIComponent(customerId)}/esign-readiness`, { signal: controller.signal }).then(setState).catch(error => { if (error.name !== 'AbortError') setError(error); }); return () => controller.abort(); }, [customerId, refresh]);
   return <section className="esign-card"><header><ShieldCheck size={18}/><h3>客户实名与证书准备</h3>{state ? <span className={state.readyForSigning ? 'readiness-ready' : 'readiness-pending'}>{readinessStates[state.state] ?? state.state}</span> : null}<button className="icon-button" aria-label="刷新实名准备状态" onClick={() => setRefresh(value => value + 1)}><RefreshCw size={14}/></button></header>{error ? <ErrorNotice error={error} retry={() => setRefresh(value => value + 1)}/> : !state ? <Loading label="正在查询签前准备状态"/> : <><div className="esign-checks"><div><span>供应商实名</span><strong>{state.realNameStatus === 'VERIFIED' ? '已核验' : state.realNameStatus === 'FAILED' ? '核验失败' : state.realNameStatus === 'EXPIRED' ? '已过期' : '待完成'}</strong></div><div><span>实名证书</span><strong>{state.certBound ? '已绑定' : '待绑定'}</strong></div></div><p>{nextSteps[state.nextAction] ?? '按服务端返回的准备状态继续处理。'}</p></>}</section>;
 }
-export function SigningPreparation({ entity, kind }: { entity: Entity; kind: 'SUBSCRIPTION' | 'HANDOVER' }) {
+export function SigningPreparation({ entity, kind }: { entity: Entity; kind: 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT' }) {
   const [approval, setApproval] = useState<Entity>(); const [loaded, setLoaded] = useState(false); const [error, setError] = useState<unknown>();
   useEffect(() => {
     const controller = new AbortController();
     const query = new URLSearchParams({ resourceId: entity.id, kind, page: '1', pageSize: '100' });
     api.request<Page>(`/admin/esign-approvals?${query}`, { signal: controller.signal }).then(result => {
-      const hash = kind === 'SUBSCRIPTION' ? entity.documentHash : entity.manifestHash;
+      const hash = kind === 'HANDOVER' ? entity.manifestHash : entity.documentHash;
       const matches = result.items.filter(item => item.resourceId === entity.id && item.kind === kind && item.documentHash === hash);
       setApproval(matches[0]); setLoaded(true);
     }).catch(error => { if (error.name !== 'AbortError') { setError(error); setLoaded(true); } });

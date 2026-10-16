@@ -2,7 +2,7 @@ import type { Field, Resource } from './resources';
 
 const status = { key: 'status', label: '状态' };
 const created = { key: 'createdAt', label: '创建时间', format: 'date' as const };
-export const prepareFields = (kind: 'SUBSCRIPTION' | 'HANDOVER'): Field[] => [{ key: 'policyId', label: '签署策略', source: 'signature-policies', sourceFilters: { status: 'ACTIVE', kind }, required: true, hint: '选择已启用、与当前文档类型一致的顺序签署策略' }];
+export const prepareFields = (kind: 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT'): Field[] => [{ key: 'policyId', label: '签署策略', source: 'signature-policies', sourceFilters: { status: 'ACTIVE', kind }, required: true, hint: '选择已启用、与当前文档类型一致的顺序签署策略' }];
 export const esignResources: Resource[] = [
   {
     key: 'enterprise-seals', title: '企业印章', singular: '印章档案', subtitle: '企业身份与供应商印章映射由两名管理员分别建档、核验启用。', create: true,
@@ -19,7 +19,7 @@ export const esignResources: Resource[] = [
   {
     key: 'signature-policies', title: '签署策略', singular: '签署策略', subtitle: '配置订阅合同与交接单的印章；按先客户签署、后企业盖章执行。', create: true,
     columns: [{ key: 'policyName', label: '策略名称' }, { key: 'policyCode', label: '策略编码' }, { key: 'kind', label: '文档类型' }, { key: 'sealId', label: '企业印章' }, status, created],
-    fields: [{ key: 'policyCode', label: '策略编码', required: true, hint: '仅英文字母、数字、下划线与连字符，最多100位' }, { key: 'policyName', label: '策略名称', required: true }, { key: 'kind', label: '适用文档', type: 'select', required: true, options: [['SUBSCRIPTION', '订阅合同'], ['HANDOVER', '车辆交接单']] }, { key: 'sealId', label: '企业印章', source: 'enterprise-seals', sourceFilters: { status: 'ACTIVE' }, required: true }, { key: 'executionMode', label: '执行顺序', type: 'select', required: true, defaultValue: 'SEQUENTIAL', options: [['SEQUENTIAL', '先客户签署，再企业盖章']] }],
+    fields: [{ key: 'policyCode', label: '策略编码', required: true, hint: '仅英文字母、数字、下划线与连字符，最多100位' }, { key: 'policyName', label: '策略名称', required: true }, { key: 'kind', label: '适用文档', type: 'select', required: true, options: [['SUBSCRIPTION', '订阅合同'], ['HANDOVER', '车辆交接单'], ['AMENDMENT', '延期补充协议']] }, { key: 'sealId', label: '企业印章', source: 'enterprise-seals', sourceFilters: { status: 'ACTIVE' }, required: true }, { key: 'executionMode', label: '执行顺序', type: 'select', required: true, defaultValue: 'SEQUENTIAL', options: [['SEQUENTIAL', '先客户签署，再企业盖章']] }],
     actions: [{ label: '启用签署策略', path: 'activate', kind: 'primary' }, { label: '停用签署策略', path: 'disable', warning: '停用后使用该策略的计划将无法发起或继续通过执行校验。', kind: 'danger' }],
   },
   {

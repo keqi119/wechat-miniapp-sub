@@ -13,3 +13,7 @@ A冻结后的授权兼容补丁：追加REFUND_PENDING/REFUNDED包状态及REFUN
 A契约视觉核对补丁：交接确认前独立显著展示服务端actualAt对应北京时间及实际交车/还车标签；新事实确认前fresh GET核对actualAt与manifestHash及屏幕展示快照，不向后端传入客户端补造时间。缺失/无效/未来时间禁止新事实确认，已响应历史仍可查看；时间未核对历史不发起新签署。月里程范围标“末日不含”，归还尾月单列归还时刻截止，服务端日期未改。新增2回归，最终全包93/93、build86文件/16WXML/17WXSS，14状态14PNG零溢出/JS异常/外部请求，含handover-server-actual-time.png。
 
 末期边界补充：实际归还日恰等于原endDate时，按account.returnedOn+最后非CANCELLED期识别归还尾期，仍显示“以实际还车时刻截止”，不误标普通“末日不含”。新增1红→绿，最终全包94/94；build86文件/16WXML/17WXSS，14状态14PNG仍零溢出/异常/外部请求；不改DTO日期。
+
+2026-10-16 B1延期交车：新增15项行为回归先红后绿，全包109/109通过；build87文件/16WXML/17WXSS，Mock109文件×2副本0差异。9个actual-wcc离线合成状态、9PNG、390px零溢出/JS异常/外部请求，见evidence/delivery-delay-layout/report.json与delivery-delay-report.md。版本/hash fresh守门、默认未勾选、正式补充全文缺失关闭、拒绝原因、稳定幂等key、终态及409/429/500/网络失败、服务端SIGNED+归档守门。仅复用原签页kind路由；未变更Fadada桥接/域名、冻结A副本或生产，未调用业务API/SDK/预览/上传/真实付款签署。
+
+B1只读安全审查后授权兼容：list summary和详情分离、详情坚持resolved正文，新增3行为回归先红后绿，最终112/112（B1共18）、build87文件/16WXML17WXSS、Mock109×2零差异；11种actual-wcc离线版面11PNG零溢出/异常/外部请求。首次确认期限按服务端quote.expiresAt北京时间展示，过期或无有效时区时间禁confirm；已确认不误阻后续sign/sync。只读API发现与修复进度见evidence/delivery-delay-api-review.md，未运行共享DB/业务HTTP/供应商操作。

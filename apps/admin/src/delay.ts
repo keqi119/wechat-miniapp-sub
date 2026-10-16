@@ -1,0 +1,42 @@
+import { moneyToCents, type Entity } from './core.ts';
+import { parseShanghaiDateTime } from './usage.ts';
+
+export type DelayContext = { orderId: string; orderRevision: number; priorTermsHash: string; months: number; startDate: string; endDate: string; depositAmount: number; periods: Array<{ sequence: number; startDate: string; endDate: string; dueDate: string; amount: number; billId: string | null; billStatus: string | null; netPaidAmount: number }>; canCreate: boolean; activeChangeId?: string; blockers: string[]; capabilityNote: string };
+export type DelayQuoteDraft = { expiresAt: string; externalCompensationRequired: string; newStartDate: string; periods: Array<{ sequence: number; dueDate: string; amount: string; calculationBasis: string }>; reason: string; settlementExplanation: string; handoverArrangement: string; cancellationTerms: string };
+const required = (value: unknown, label: string): string => { if (typeof value !== 'string' || !value.trim()) throw new Error(`请填写${label}`); return value.trim(); };
+function revision(value: unknown): number { if (!Number.isSafeInteger(value) || Number(value) < 0) throw new Error('当前版本缺失，请刷新详情'); return Number(value); }
+function requestKey(key: string): string { if (key.length < 8) throw new Error('请求编号缺失，请重新打开表单'); return key; }
+function calendarDate(value: unknown, label: string): string { const text = required(value, label); const date = new Date(`${text}T00:00:00Z`); if (!/^\d{4}-\d{2}-\d{2}$/.test(text) || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== text) throw new Error(`${label}无效`); return text; }
+export function delayCreatePayload(context: Record<string, unknown>, reason: string, key: string) { return { expectedOrderRevision: revision(context.orderRevision), priorTermsHash: required(context.priorTermsHash, '原条款哈希'), reason: required(reason, '延期原因'), idempotencyKey: requestKey(key) }; }
+export function delayQuotePayload(currentRevision: number, expected: number[], draft: DelayQuoteDraft & Record<string, unknown>, key: string) {
+  if (!['true', 'false'].includes(draft.externalCompensationRequired)) throw new Error('请明确选择本次是否涉及系统范围外额外赔付');
+  const expiresAt = parseShanghaiDateTime(required(draft.expiresAt, '客户确认截止时间（北京时间）'));
+  if (new Date(expiresAt).getTime() <= Date.now()) throw new Error('客户确认截止时间须在未来，请重新填写');
+  const periods = draft.periods;
+  if (!expected.length || periods.length !== expected.length || new Set(periods.map(p => p.sequence)).size !== periods.length || periods.some(p => !expected.includes(p.sequence))) throw new Error('请完整填写每个订阅期且勿重复');
+  return { revision: revision(currentRevision), idempotencyKey: requestKey(key), expiresAt, externalCompensationRequired: draft.externalCompensationRequired === 'true', newStartDate: calendarDate(draft.newStartDate, '新起租日'), periods: periods.map(p => ({ sequence: p.sequence, dueDate: calendarDate(p.dueDate, `第${p.sequence}期付款日`), amount: moneyToCents(p.amount), calculationBasis: required(p.calculationBasis, `第${p.sequence}期计算依据`) })), reason: required(draft.reason, '延期原因'), settlementExplanation: required(draft.settlementExplanation, '资金安排'), handoverArrangement: required(draft.handoverArrangement, '交接安排'), cancellationTerms: required(draft.cancellationTerms, '取消及再次延期安排') };
+}
+const capability: Record<string, string> = { quotes: 'canQuote', review: 'canReview', publish: 'canPublish', 'prepare-signature': 'canPrepareSignature', 'prepare-finance': 'canPrepareFinance', apply: 'canApply', cancel: 'canCancel' };
+export function delayActionAllowed(action: string, entity: Record<string, unknown>, role?: string, actorId?: string): boolean {
+  if (entity.kind !== 'DELIVERY_DELAY' || !capability[action] || entity[capability[action]] !== true || !actorId) return false;
+  if (!['ADMIN', ...(['review', 'prepare-finance'].includes(action) ? ['FINANCE'] : ['OPERATIONS'])].includes(role ?? '')) return false;
+  const quote = entity.quote as Record<string, unknown> | undefined;
+  if (action === 'publish' && (!quote?.expiresAt || !(new Date(String(quote.expiresAt)).getTime() > Date.now()))) return false;
+  return action !== 'review' || (!!quote?.createdBy && quote.createdBy !== actorId);
+}
+export function delayActionPayload(action: string, currentRevision: number, input: Record<string, unknown>, key: string): Record<string, unknown> {
+  const body: Record<string, unknown> = { revision: revision(currentRevision), idempotencyKey: requestKey(key) };
+  if (action === 'review') { if (!['APPROVED', 'REJECTED'].includes(String(input.decision))) throw new Error('请选择复核结论'); body.decision = input.decision; body.note = required(input.note, '复核意见'); }
+  else if (action === 'prepare-signature') body.policyId = required(input.policyId, '补充协议签署策略');
+  else if (action === 'cancel') body.reason = required(input.reason, '取消原因');
+  else if (!['publish', 'prepare-finance', 'apply'].includes(action)) throw new Error('不支持的后台动作');
+  return body;
+}
+const pick = (source: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
+const periodKeys = ['sequence', 'startDate', 'endDate', 'dueDate', 'amount', 'calculationBasis', 'originalAmount', 'netPaidAmount', 'carryAmount', 'chargeAmount', 'refundAmount'];
+const quoteKeys = ['status', 'id', 'revision', 'commercialHash', 'expiresAt', 'newStartDate', 'newEndDate', 'months', 'reason', 'settlementExplanation', 'handoverArrangement', 'cancellationTerms', 'createdBy', 'reviewedBy', 'reviewNote', 'confirmedAt'];
+function quoteSafe(value: unknown): unknown { if (!value || typeof value !== 'object') return value; const quote = value as Record<string, unknown>; return { ...pick(quote, quoteKeys), ...(quote.document && typeof quote.document === 'object' ? { document: pick(quote.document as Record<string, unknown>, ['id', 'type', 'version', 'hash', 'templateHash', 'bodyHash', 'content']) } : {}), ...(Array.isArray(quote.periods) ? { periods: quote.periods.map(p => pick(p, periodKeys)) } : {}) }; }
+export function delayContextSafe(source: Record<string, unknown>): Record<string, unknown> { return { ...pick(source, ['orderId', 'orderRevision', 'priorTermsHash', 'months', 'startDate', 'endDate', 'depositAmount', 'canCreate', 'activeChangeId', 'blockers', 'capabilityNote']), ...(Array.isArray(source.periods) ? { periods: source.periods.map(p => pick(p, ['sequence', 'startDate', 'endDate', 'dueDate', 'amount', 'billId', 'billStatus', 'netPaidAmount'])) } : {}) }; }
+export function delayListItemSafe(source: Record<string, unknown>): Entity { return { ...pick(source, ['id', 'orderId', 'kind', 'status', 'revision', 'reason', 'createdAt']), ...(source.quoteSummary && typeof source.quoteSummary === 'object' ? { quoteSummary: pick(source.quoteSummary as Record<string, unknown>, ['id', 'revision', 'newStartDate', 'newEndDate', 'months', 'commercialHash', 'expiresAt']) } : {}) } as Entity; }
+export function delayDetailSafe(source: Record<string, unknown>): Entity { const result = pick(source, ['id', 'orderId', 'customerId', 'kind', 'status', 'revision', 'reason', 'createdAt', ...Object.values(capability), 'blockers', 'capabilityNote']); if (source.quote !== undefined) result.quote = quoteSafe(source.quote); if (Array.isArray(source.history)) result.history = source.history.map(quoteSafe); if (source.contract && typeof source.contract === 'object') result.contract = pick(source.contract as Record<string, unknown>, ['id', 'status', 'sourceFileId', 'signedFileId']); if (source.finance && typeof source.finance === 'object') { const finance = source.finance as Record<string, unknown>; result.finance = { ...pick(finance, ['blockers']), ...(Array.isArray(finance.obligations) ? { obligations: finance.obligations.map(o => pick(o, ['sequence', 'startDate', 'endDate', 'dueDate', 'amount', 'allocatedAmount', 'chargeBillId', 'chargeAmount', 'chargeStatus'])) } : {}), ...(Array.isArray(finance.refunds) ? { refunds: finance.refunds.map(r => pick(r, ['id', 'amount', 'status', 'paymentId'])) } : {}) }; } return result as Entity; }
+export const delayStatus = (status: unknown): string => ({ DRAFT: '延期草案', REVIEW_PENDING: '待独立财务复核', REVIEWED: '报价已复核', AWAITING_CONFIRMATION: '待客户确认报价', AWAITING_SIGNATURE: '待补充协议签署', AWAITING_FINANCE: '待核清延期款项', READY: '可生效延期条款', APPLIED: '延期条款已生效', CANCELLED: '已取消', REJECTED: '报价已拒绝' } as Record<string, string>)[String(status)] ?? String(status ?? '—');

@@ -59,6 +59,23 @@
 .back-link {
   margin-top: 36rpx;
 }
+.legal-snapshot {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+  margin-top: 24rpx;
+}
+.delay-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+  margin-bottom: 24rpx;
+}
+.delay-agreement checkbox {
+  flex-shrink: 0;
+}
 
 .page {
   padding-bottom: calc(64rpx + env(safe-area-inset-bottom));

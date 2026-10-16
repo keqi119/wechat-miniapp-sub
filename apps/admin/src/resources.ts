@@ -49,7 +49,7 @@ export const labels: Record<string, string> = {
   REVIEWED: '复核已通过', SUPERSEDED: '已被修订版替代', EXTRA_FEE: '额外费用', RETURN_SETTLEMENT: '退车结算', CUSTOMER_SIGN: '客户签署', ENTERPRISE_SEAL: '企业盖章', PLATFORM: '服务平台',
   SEAL_DRAFT_CREATED: '印章建档', SEAL_ACTIVATED: '印章核验启用', SEAL_DISABLED: '停用印章', SEAL_AUTHORITY_GRANTED: '授予用印权限', SEAL_AUTHORITY_REVOKED: '撤销用印权限', SIGNATURE_REVIEW_REQUESTED: '提交签署复核', SIGNATURE_REVIEW_APPROVED: '签署复核通过', SIGNATURE_POLICY_DRAFT: '新建签署策略', SIGNATURE_POLICY_ACTIVATED: '启用签署策略', SIGNATURE_POLICY_DISABLED: '停用签署策略',
   AUTHORIZED: '已授权', 'payment-verifications': '支付验收', CNY: '人民币',
-  'usage-periods': '月里程台账', 'return-settlements': '退订结算', 'mileage-pack': '里程包购买说明', 'credit-verification': '人工信用核验说明', 'usage-policy': '订阅使用规则', MILEAGE_PACK: '里程包加购', MILEAGE_EXCESS: '月里程超额费用', SETTLING: '退订结算中',
+  'usage-periods': '月里程台账', 'return-settlements': '退订结算', 'mileage-pack': '里程包购买说明', 'credit-verification': '人工信用核验说明', 'delivery-delay-amendment': '延期交车补充协议', 'usage-policy': '订阅使用规则', MILEAGE_PACK: '里程包加购', MILEAGE_EXCESS: '月里程超额费用', SETTLING: '退订结算中',
 };
 export function statusLabel(value: string) { return labels[value] ?? value; }
 Object.assign(labels, commercialTermLabels, handoverFactLabels);
@@ -77,13 +77,14 @@ export const resources: Resource[] = [
   { key: 'notifications', title: '站内通知', singular: '通知', subtitle: '向客户发送业务进展通知，追踪已读状态。', create: true, columns: [{ key: 'title', label: '通知标题' }, { key: 'customerId', label: '客户' }, { key: 'readAt', label: '阅读时间', format: 'date' }, created], fields: [ref('customerId', '客户', 'customers'), text('title', '标题'), area('content', '通知正文', true), text('resourceType', '关联资源类型', false), text('resourceId', '关联资源 ID', false)] },
   { key: 'users', title: '后台账号', singular: '账号', subtitle: '按职责分配运营、财务、客服与管理权限。', create: true, edit: true, columns: [{ key: 'name', label: '姓名' }, { key: 'username', label: '用户名' }, { key: 'role', label: '角色' }, { key: 'active', label: '启用' }, created], fields: [text('username', '用户名'), text('name', '姓名'), { key: 'password', label: '密码', type: 'password', hint: '新建必填；编辑留空则保留当前密码' }, select('role', '角色', ['OPERATIONS', 'FINANCE', 'SUPPORT', 'ADMIN']), { key: 'active', label: '允许登录', type: 'boolean' }] },
   { key: 'audit-logs', title: '操作审计', singular: '审计记录', subtitle: '留存操作者、业务对象与状态变化，审计记录不可编辑。', columns: [{ key: 'action', label: '操作' }, { key: 'actorId', label: '操作人' }, { key: 'resourceType', label: '资源类型' }, { key: 'resourceId', label: '业务对象' }, created] },
-  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
+  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy', 'delivery-delay-amendment']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
   ...esignResources,
   ...usageResources,
+  { key: 'order-changes', title: '交车延期', singular: '延期变更', subtitle: '逐单确认报价、补充协议与资金后生效延期。', columns: [] },
 ];
 export const groups = [
   { label: '车源与商品', keys: ['vehicles', 'model-definitions', 'plans'] },
-  { label: '客户与订阅', keys: ['applications', 'customers', 'orders', 'contracts'] },
+  { label: '客户与订阅', keys: ['applications', 'customers', 'orders', 'contracts', 'order-changes'] },
   { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds', 'payment-verifications'] },
   { label: '交付与服务', keys: ['handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
   { label: '里程与退订', keys: ['usage-periods', 'return-settlements'] },
@@ -100,7 +101,7 @@ export function actionAllowed(resource: string, action: Action, entity: Entity, 
   if (resource === 'vehicles') return !entity.reservedOrderId && (action.path === 'publish' ? ['DRAFT', 'UNPUBLISHED'].includes(status) : status === 'PUBLISHED');
   if (resource === 'plans') return action.path === 'activate' ? !entity.active : !!entity.active;
   if (resource === 'applications') return action.path === 'review' ? ['SUBMITTED', 'IN_REVIEW', 'NEEDS_INFO'].includes(status) : action.path === 'credit-verifications' ? creditReady(entity.creditReview, entity.id, 'verify') : action.path === 'final-plan' && ['IN_REVIEW', 'AWAITING_CONFIRMATION'].includes(status) && creditReady(entity.creditReview, entity.id, 'finalize');
-  if (resource === 'contracts') return action.path === 'prepare-signature' ? status === 'DRAFT' : action.path === 'send' ? ['DRAFT', 'REJECTED', 'EXPIRED'].includes(status) : status === 'PENDING';
+  if (resource === 'contracts') return entity.kind !== 'AMENDMENT' && (action.path === 'prepare-signature' ? status === 'DRAFT' : action.path === 'send' ? ['DRAFT', 'REJECTED', 'EXPIRED'].includes(status) : status === 'PENDING');
   if (resource === 'bills') {
     const manual = ['EXTRA_FEE', 'RETURN_SETTLEMENT', 'MILEAGE_EXCESS'].includes(String(entity.type));
     return action.path === 'review' ? manual && status === 'DRAFT' && !!userId && entity.createdBy !== userId : manual ? status === 'REVIEWED' : status === 'DRAFT';

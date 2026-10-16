@@ -1,3 +1,6 @@
+import { DelaySigning } from './order-changes/signing';
+import { OrderChangesController } from './order-changes/controller';
+import { OrderChangesService } from './order-changes/service';
 import 'reflect-metadata';
 import { Controller, Get, Inject, Module } from '@nestjs/common';
 import { NestFactory, APP_GUARD } from '@nestjs/core';
@@ -38,7 +41,7 @@ export async function createApp(options: { db?: Db; identity?: IdentityGateway; 
   validateConfig();
   const db = options.db || new Db();
   const fadada = createFadadaIntegration(db);
-  @Module({ controllers: [HealthController, AuthController, CatalogController, ApplicationsController, CreditReviewController, UsageController, BillingController, WorkflowsController, FilesController, CustomerController, OrderActionsController, options.signatureController || SignaturesController, PaymentCallbacksController, PaymentVerificationController, VerificationCallbackController, ...fadada.controllers, ...(options.extraControllers || []), AdminController], providers: [{ provide: Db, useValue: db }, { provide: IdentityGateway, useValue: options.identity || new RealIdentityGateway(db, identitySettings()) }, { provide: PaymentGateway, useValue: options.payment || new WechatPaymentGateway(wechatPaySettings()) }, { provide: VERIFICATION_PROVIDER, useValue: options.verification || createVerificationProvider() }, PaymentVerificationService, UsageService, {provide:USAGE_CLOCK,useValue:options.usageClock||(()=>new Date())}, { provide: ESignGateway, useValue: options.esign || fadada.gateway }, BillingService, SignatureService, ...fadada.providers, { provide: APP_GUARD, useClass: Access }, ...(options.extraProviders || [])] })
+  @Module({ controllers: [HealthController, OrderChangesController, AuthController, CatalogController, ApplicationsController, CreditReviewController, UsageController, BillingController, WorkflowsController, FilesController, CustomerController, OrderActionsController, options.signatureController || SignaturesController, PaymentCallbacksController, PaymentVerificationController, VerificationCallbackController, ...fadada.controllers, ...(options.extraControllers || []), AdminController], providers: [{ provide: Db, useValue: db }, { provide: IdentityGateway, useValue: options.identity || new RealIdentityGateway(db, identitySettings()) }, { provide: PaymentGateway, useValue: options.payment || new WechatPaymentGateway(wechatPaySettings()) }, { provide: VERIFICATION_PROVIDER, useValue: options.verification || createVerificationProvider() }, PaymentVerificationService, OrderChangesService, DelaySigning, UsageService, {provide:USAGE_CLOCK,useValue:options.usageClock||(()=>new Date())}, { provide: ESignGateway, useValue: options.esign || fadada.gateway }, BillingService, SignatureService, ...fadada.providers, { provide: APP_GUARD, useClass: Access }, ...(options.extraProviders || [])] })
   class ApiModule {}
   const app = await NestFactory.create(ApiModule, { logger: process.env.NODE_ENV === 'test' ? false : ['error','warn','log'], rawBody: true });
   app.setGlobalPrefix('api');

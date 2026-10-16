@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import fs from "node:fs";
 import path from "node:path";
 import PDFDocument from "pdfkit";
+import {useCjkFont} from './pdf-font';
 
 import {
   ContractPdfAppendixRow,
@@ -210,14 +211,16 @@ async function renderPdf(
   });
 
   if (fontPath) {
-    doc.font(fontPath);
+    useCjkFont(doc,fontPath);
   } else {
     doc.font("Helvetica");
   }
 
   doc.info.Title = model.contractNo;
   doc.info.Subject =
-    model.agreementKind === "SUBSCRIPTION_EXTENSION"
+    model.agreementKind === "DELIVERY_DELAY_AMENDMENT"
+      ? "Delivery delay amendment signing artifact"
+      : model.agreementKind === "SUBSCRIPTION_EXTENSION"
       ? "Subscription extension agreement signing artifact"
       : model.agreementKind === "VEHICLE_SWAP_SUPPLEMENT"
         ? "Vehicle swap supplement signing artifact"
@@ -226,7 +229,9 @@ async function renderPdf(
 
   writeTitle(
     doc,
-    model.agreementKind === "SUBSCRIPTION_EXTENSION"
+    model.agreementKind === "DELIVERY_DELAY_AMENDMENT"
+      ? "延期交车补充协议"
+      : model.agreementKind === "SUBSCRIPTION_EXTENSION"
       ? "汽车订阅服务续订补充协议"
       : model.agreementKind === "VEHICLE_SWAP_SUPPLEMENT"
         ? "汽车订阅服务换车补充协议"
@@ -238,20 +243,24 @@ async function renderPdf(
   writeSubscriberPartyInfo(doc, model.subscriberParty);
   writeSection(doc, "合同正文");
   writeParagraph(doc, buildStage1MainBodyText(model.contentTemplate));
+  const bodySlots = model.signingSlots.filter((slot) => slot.documentType === "CONTRACT_BODY");
+  ensureSpace(doc, 50 + estimateSigningSlotsHeight(bodySlots.length));
   writeSection(doc, "合同正文签署区");
   writeSigningSlots(
     doc,
-    model.signingSlots.filter((slot) => slot.documentType === "CONTRACT_BODY"),
+    bodySlots,
     slotCoordinates,
     () => currentPageNumber
   );
   startNewPage(doc);
   writeSection(doc, "附件1：订阅方案 / 交易条件快照");
   writeAppendix(doc, model.appendix.sections);
+  const appendixSlots = model.signingSlots.filter((slot) => slot.documentType === "ATTACHMENT1_SUBSCRIPTION_PLAN");
+  ensureSpace(doc, 50 + estimateSigningSlotsHeight(appendixSlots.length));
   writeSection(doc, "附件1签署区");
   writeSigningSlots(
     doc,
-    model.signingSlots.filter((slot) => slot.documentType === "ATTACHMENT1_SUBSCRIPTION_PLAN"),
+    appendixSlots,
     slotCoordinates,
     () => currentPageNumber
   );
@@ -459,9 +468,6 @@ function writeSigningSlot(
 
   doc.x = left;
   doc.y = Math.max(keywordBottom, blankY + SIGNING_BLANK_HEIGHT + 4);
-  if (slot.offsetX !== undefined || slot.offsetY !== undefined) {
-    doc.fontSize(8).text(`Offset intent: x=${slot.offsetX ?? 0}, y=${slot.offsetY ?? 0}`);
-  }
   doc.moveDown(0.8);
 }
 

@@ -1,3 +1,4 @@
+import {listenForHttpTests} from './http-listener';
 import { fixtureUsagePolicy } from './usage-fixtures';
 import '../src/common/config';
 import { before, after, test } from 'node:test';
@@ -33,7 +34,7 @@ async function approve(id:string){return req(`/admin/mileages/${id}/review`,{dec
 before(async()=>{assert.ok(process.env.TEST_DATABASE_URL?.includes('_test'));process.env.NODE_ENV='test';process.env.ADMIN_ORIGIN=origin;db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});
   for(const [km,amount]of [[1000,80000],[2000,150000],[3000,200000]])await db.mileagePackProduct.upsert({where:{id:`mileage-${km}-v1`},update:{},create:{id:`mileage-${km}-v1`,version:1,km,amount}});
   const max=await db.legalDocument.aggregate({where:{type:'mileage-pack'},_max:{version:true}});await db.legalDocument.create({data:{type:'mileage-pack',version:(max._max.version||0)+1,title:'测试购买提示',content:'仅本订阅期有效；退订失效且不退款；争议人工处理。合成测试',status:'PUBLISHED',confirmedAt:new Date(),confirmedBy:'fixture'}});
-  for(const role of ['ADMIN','OPERATIONS','FINANCE'] as const){const key=randomUUID(),a=await db.adminUser.create({data:{username:key,name:role,role,passwordHash:'fixture'}});await db.adminSession.create({data:{id:tokenHash(key),adminId:a.id,csrfToken:csrf,expiresAt:new Date(Date.now()+3600000)}});cookies[role]='admin_session='+key;}app=await createApp({db,payment,usageClock:()=>now} as any);await app.listen(0,'127.0.0.1');base=await app.getUrl();});
+  for(const role of ['ADMIN','OPERATIONS','FINANCE'] as const){const key=randomUUID(),a=await db.adminUser.create({data:{username:key,name:role,role,passwordHash:'fixture'}});await db.adminSession.create({data:{id:tokenHash(key),adminId:a.id,csrfToken:csrf,expiresAt:new Date(Date.now()+3600000)}});cookies[role]='admin_session='+key;}app=await createApp({db,payment,usageClock:()=>now} as any);base=await listenForHttpTests(app);});
 after(async()=>{await app?.close();await db?.$disconnect();});
 test('delivery initializes anchored subscription months and cannot proceed with signed date mismatch',async()=>{
   const f=await fixture(),a=await account(f);assert.deepEqual(a.periods.map((p:any)=>[p.startDate,p.endDate]),[['2026-01-31','2026-02-28'],['2026-02-28','2026-03-31'],['2026-03-31','2026-04-30']]);assert.equal(a.baseAllowanceKm,1500);assert.equal(a.excessPriceAmount,150);assert.equal(a.packBalanceKm,0);

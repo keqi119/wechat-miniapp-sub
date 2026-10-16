@@ -41,4 +41,5 @@ Page({
     if (this.data.bill)
       go('/pages/record/index?type=bills&id=' + encodeURIComponent(this.data.bill.id));
   },
+  openDeliveryDelay() { const id = this.data.subscription?.deliveryDelayChangeId; if (id) go('/pages/record/index?type=orderchanges&id=' + encodeURIComponent(id)); },
 });

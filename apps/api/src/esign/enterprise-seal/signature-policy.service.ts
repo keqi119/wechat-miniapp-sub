@@ -14,6 +14,7 @@ export class SignaturePolicyService {
   constructor(private db:Db,private writer:ContractPdfArtifactWriterService,private accounts:CustomerESignOnboardingService,private settings:FadadaSettings){}
   private async evaluation(kind:SignatureKind,resourceId:string,policyId:string,actorId:string){
     const [resource,policy,actor]=await Promise.all([this.writer.resource(kind,resourceId),this.db.signaturePolicy.findUnique({where:{id:policyId}}),this.db.adminUser.findUnique({where:{id:actorId}})]);
+    if(kind==='AMENDMENT')ensure(resource.delayQuote?.status==='CONFIRMED'&&resource.delayQuote.change.activeQuoteId===resource.delayQuote.id&&resource.delayQuote.change.status==='AWAITING_SIGNATURE',409,'AMENDMENT_STATE','补充协议不再是当前待签版本');
     ensure(actor?.active,403,'SEAL_REQUESTER_INACTIVE','签章申请人不可用');
     ensure(policy?.status==='ACTIVE'&&policy.kind===kind,409,'SIGNATURE_POLICY','签署策略不可用');
     const seal=await this.db.enterpriseSeal.findUnique({where:{id:policy.sealId}});
@@ -22,7 +23,7 @@ export class SignaturePolicyService {
     const readiness=await this.accounts.readiness(resource.customerId);
     const policyView={id:policy.id,policyCode:policy.policyCode,policyName:policy.policyName,status:policy.status as 'ACTIVE',executionMode:policy.executionMode as 'PARALLEL'|'SEQUENTIAL',requiresEnterpriseSeal:true,defaultSealId:seal.id};
     const sealView={id:seal.id,provider:'FADADA' as const,providerSealId:seal.providerSignatureId,sealName:seal.sealName,sealType:'COMPANY' as const,status:seal.status as 'ACTIVE'};
-    const decision=this.engine.evaluate({actor:{id:actor.id,roleCodes:[actor.role],permissionCodes:[]},authorities:authorities as any,contract:{id:resourceId,businessType:kind,contractTemplateType:kind,status:(kind==='SUBSCRIPTION'?['DRAFT','PENDING'].includes(resource.status):resource.status==='CUSTOMER_CONFIRMED')?'PENDING_SIGN':resource.status},customer:{id:resource.customerId,status:'ACTIVE'},customerReadiness:readiness,order:{id:resource.orderId,customerId:resource.customerId,orderStatus:resource.order?.status||'AWAITING_SIGNATURE'},policy:policyView,seal:sealView,source:'ADMIN'});
+    const decision=this.engine.evaluate({actor:{id:actor.id,roleCodes:[actor.role],permissionCodes:[]},authorities:authorities as any,contract:{id:resourceId,businessType:kind,contractTemplateType:kind,status:(kind!=='HANDOVER'?['DRAFT','PENDING'].includes(resource.status):resource.status==='CUSTOMER_CONFIRMED')?'PENDING_SIGN':resource.status},customer:{id:resource.customerId,status:'ACTIVE'},customerReadiness:readiness,order:{id:resource.orderId,customerId:resource.customerId,orderStatus:resource.order?.status||'AWAITING_SIGNATURE'},policy:policyView,seal:sealView,source:'ADMIN'});
     ensure(['ALLOW','REQUIRE_APPROVAL'].includes(decision.code),409,decision.code,'签署策略或客户实名状态不满足要求');
     // Compilation here creates an immutable review draft only. Provider execution
     // still requires approved(), two distinct active people and both authorities.
@@ -31,7 +32,7 @@ export class SignaturePolicyService {
   }
   async prepare(kind:SignatureKind,resourceId:string,policyId:string,requesterId:string){
     const context=await this.evaluation(kind,resourceId,policyId,requesterId);
-    const documentHash=kind==='SUBSCRIPTION'?context.resource.documentHash:context.resource.manifestHash;
+    const documentHash=kind!=='HANDOVER'?context.resource.documentHash:context.resource.manifestHash;
     const where={kind,resourceId,documentHash,policyId,status:{in:['PENDING','APPROVED']},expiresAt:{gt:new Date()}};
     const existing=await this.db.eSignApproval.findFirst({where,orderBy:{createdAt:'desc'}});
     if(existing){ensure(existing.requesterId===requesterId,409,'APPROVAL_EXISTS','已有签章复核申请');ensure(existing.planHash===this.reviewHash(this.reviewPlan(context.plan,existing.plan),existing.documentHash,existing.sourcePdfHash,existing.slotCoordinates),409,'PLAN_CHANGED','策略已变化，请先拒绝旧复核申请');return existing;}
@@ -58,7 +59,7 @@ export class SignaturePolicyService {
     const prior=await this.db.eSignApproval.findUniqueOrThrow({where:{id}}),task=await this.db.fadadaTask.findUniqueOrThrow({where:{id:eligibility.taskId}});
     ensure(prior.planHash===this.reviewHash(prior.plan,prior.documentHash,prior.sourcePdfHash,prior.slotCoordinates),409,'SIGNING_PLAN_CHANGED','原始复核证据已变化');
     const context=await this.evaluation(prior.kind as SignatureKind,prior.resourceId,policyId,requesterId);
-    ensure(context.resource.customerId===task.customerId&&(prior.kind==='SUBSCRIPTION'?context.resource.documentHash:context.resource.manifestHash)===task.documentHash&&context.seal.providerCustomerId===task.platformProviderId&&context.seal.id===prior.sealId,409,'RENEWAL_IDENTITY','重新授权不能改变业务文档、企业签署身份或原印章');
+    ensure(context.resource.customerId===task.customerId&&(prior.kind!=='HANDOVER'?context.resource.documentHash:context.resource.manifestHash)===task.documentHash&&context.seal.providerCustomerId===task.platformProviderId&&context.seal.id===prior.sealId,409,'RENEWAL_IDENTITY','重新授权不能改变业务文档、企业签署身份或原印章');
     await this.writer.readVerified(task.sourceFileId,task.sourcePdfHash);
     const plan={...context.plan,renewal:{taskId:task.id,priorApprovalId:id}};
     return this.db.serial(async tx=>{
@@ -82,7 +83,7 @@ export class SignaturePolicyService {
     const approver=await this.db.adminUser.findUnique({where:{id:approverId}});
     ensure(approver?.active&&this.canApprove(context.authorities,draft.sealId,approver),403,'SEAL_APPROVER_AUTHORITY','当前人员无有效印章复核授权');
     ensure(draft.status==='PENDING'&&draft.expiresAt>new Date()&&planHash===draft.planHash&&planHash===this.reviewHash(this.reviewPlan(context.plan,draft.plan),draft.documentHash,draft.sourcePdfHash,draft.slotCoordinates),409,'APPROVAL_STATE','复核版本、策略或有效期已变化');
-    ensure((draft.kind==='SUBSCRIPTION'?context.resource.documentHash:context.resource.manifestHash)===draft.documentHash,409,'DOCUMENT_MISMATCH','复核文档已变化');
+    ensure((draft.kind!=='HANDOVER'?context.resource.documentHash:context.resource.manifestHash)===draft.documentHash,409,'DOCUMENT_MISMATCH','复核文档已变化');
     await this.writer.readVerified(draft.sourceFileId,draft.sourcePdfHash);
     return this.db.serial(async tx=>{const renewal=(draft.plan as any)?.renewal;if(renewal){const changed=await tx.fadadaTask.updateMany({where:{id:renewal.taskId,approvalId:renewal.priorApprovalId,kind:draft.kind,resourceId:draft.resourceId,customerId:draft.customerId,documentHash:draft.documentHash,sourceFileId:draft.sourceFileId,sourcePdfHash:draft.sourcePdfHash,platformProviderId:context.seal.providerCustomerId,status:{in:['PREPARED','PENDING']},OR:[{processingUntil:null},{processingUntil:{lt:new Date()}}]},data:{approvalId:id}});ensure(changed.count===1,409,'RENEWAL_STATE','签署任务或旧授权已变化，不能切换授权');await audit(tx,approverId,'SIGNATURE_TASK_REAUTHORIZED','esign-tasks',renewal.taskId,{priorApprovalId:renewal.priorApprovalId,approvalId:id,sourcePdfHash:draft.sourcePdfHash,planHash});}const updated=await tx.eSignApproval.updateMany({where:{id,status:'PENDING',planHash,expiresAt:{gt:new Date()}},data:{status:'APPROVED',approverId,approvedAt:new Date()}});ensure(updated.count===1,409,'APPROVAL_STATE','复核已由其他操作处理');await audit(tx,approverId,'SIGNATURE_REVIEW_APPROVED','esign-approvals',id,{planHash,sourcePdfHash:draft.sourcePdfHash});return tx.eSignApproval.findUniqueOrThrow({where:{id}});});
   }
@@ -92,7 +93,7 @@ export class SignaturePolicyService {
     const context=await this.evaluation(kind,resourceId,approval.policyId,approval.requesterId);
     const reviewer=await this.db.adminUser.findUnique({where:{id:approval.approverId!}});
     ensure(reviewer?.active&&this.canApprove(context.authorities,approval.sealId,reviewer),403,'SEAL_APPROVER_AUTHORITY','印章复核授权已失效');
-    ensure(this.reviewHash(this.reviewPlan(context.plan,approval.plan),approval.documentHash,approval.sourcePdfHash,approval.slotCoordinates)===approval.planHash&&context.seal.id===approval.sealId&&(kind==='SUBSCRIPTION'?context.resource.documentHash:context.resource.manifestHash)===documentHash,409,'SIGNING_PLAN_CHANGED','签署方案已变化');
+    ensure(this.reviewHash(this.reviewPlan(context.plan,approval.plan),approval.documentHash,approval.sourcePdfHash,approval.slotCoordinates)===approval.planHash&&context.seal.id===approval.sealId&&(kind!=='HANDOVER'?context.resource.documentHash:context.resource.manifestHash)===documentHash,409,'SIGNING_PLAN_CHANGED','签署方案已变化');
     await this.writer.readVerified(approval.sourceFileId,approval.sourcePdfHash);
     return {...context,approval};
   }

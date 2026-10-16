@@ -7,7 +7,37 @@
     ><view>未找到这条记录</view
     ><button class="secondary" bindtap="openList">查看记录列表</button></view
   ><block wx:else
-    ><view class="eyebrow">RECORD DETAIL / 详情</view><view class="title">{{record.title}}</view
+    ><block wx:if="{{type === 'orderchanges' && change}}">
+      <view class="eyebrow">DELIVERY / 延期交车</view><view class="title">{{change.title}}</view>
+      <view class="record-summary"><text class="tag">{{change.statusText}}</text><view class="muted">流程版本 {{change.revision}} · 记录 {{change.id}}</view></view>
+      <view class="notice">延期方案不增加订阅月数。客户确认、补充协议签署、资金核对与方案生效分别记录；签署完成不代表已经交车，不会自动扣款或退款。</view>
+      <view wx:if="{{change.reason}}" class="card"><view class="section-title">延期原因</view><view>{{change.reason}}</view></view>
+      <block wx:if="{{change.quote}}">
+        <view class="card"><view class="label">客户首次确认截止时间</view><view>{{change.quote.expiresAtText}}</view><view class="muted">仅限制首次确认；已经确认的版本仍可按流程继续签署、查询和查阅历史，签章授权有效期单独核验。</view></view>
+        <view wx:if="{{change.quote.confirmationExpired}}" class="notice" role="alert">本版本客户确认期限已过，不能再确认。请联系运营出具新报价并重新复核、发布；原版本记录保留。</view>
+        <view wx:if="{{change.status === 'AWAITING_CONFIRMATION' && !change.quote.confirmationDeadlineValid}}" class="notice" role="alert">本版本确认期限待核对，暂不能确认，请联系运营。</view>
+        <view class="card"><view class="section-title">本次正式方案 · 报价版本 {{change.quote.revision}}</view><view class="detail-row"><text class="muted">新起租日</text><text class="detail-value">{{change.quote.newStartDateText}}</text></view><view class="detail-row"><text class="muted">新结束日</text><text class="detail-value">{{change.quote.newEndDateText}}</text></view><view class="detail-row"><text class="muted">订阅月数</text><text class="detail-value">{{change.quote.months}}个月（保持原月数）</text></view><view>{{change.quote.reason}}</view></view>
+        <view class="card"><view class="section-title">逐期费用与原款安排</view><view class="notice">金额和期间均来自已复核方案。原付款沿用不代表再次到账；应补、应退分列，不以负数抵充或自动扣押金。</view>
+          <view wx:for="{{change.quote.periods}}" wx:key="sequence" class="field">
+            <view class="section-title">第 {{item.sequence}} 月</view><view>{{item.periodText}}</view><view class="muted">协商付款到期日 {{item.dueDateText}}</view>
+            <view class="detail-row"><text class="muted">本期应付</text><text class="detail-value">{{item.amountText}}</text></view><view class="detail-row"><text class="muted">原期金额</text><text class="detail-value">{{item.originalAmountText}}</text></view><view class="detail-row"><text class="muted">原款净实收</text><text class="detail-value">{{item.netPaidAmountText}}</text></view><view class="detail-row"><text class="muted">本期沿用原款</text><text class="detail-value">{{item.carryAmountText}}</text></view><view class="detail-row"><text class="muted">本期补收</text><text class="detail-value">{{item.chargeAmountText}}</text></view><view class="detail-row"><text class="muted">本期退款</text><text class="detail-value">{{item.refundAmountText}}</text></view><view class="muted">计算依据：{{item.calculationBasis}}</view>
+          </view>
+        </view>
+        <view class="card"><view class="section-title">逐单协商安排</view><view class="label">资金结算与补偿安排</view><view>{{change.quote.settlementExplanation}}</view><view class="label">交接安排</view><view>{{change.quote.handoverArrangement}}</view><view class="label">取消与履约异常安排</view><view>{{change.quote.cancellationTerms}}</view></view>
+        <view class="card"><view class="section-title">本方案固定的正式补充条款</view><block wx:if="{{change.quote.document}}"><view class="muted">文案版本 v{{change.quote.document.version}}</view><view class="legal-snapshot">{{change.quote.document.content}}</view></block><view wx:else class="notice">正式延期补充条款尚不可用，不能确认或发起签署，请联系运营。</view></view>
+      </block>
+      <view wx:else class="card"><view class="section-title">正式方案尚待发布</view><view class="muted">仅展示当前流程状态，未发布草稿不能确认为客户接受，也不能用于签署。</view></view>
+      <view wx:if="{{change.contract}}" class="card"><view class="section-title">补充协议</view><view>{{change.contract.statusText}}</view><button wx:if="{{change.contract.sourceFileId}}" class="text-button" data-id="{{change.contract.sourceFileId}}" bindtap="openDocument">查看冻结协议 PDF →</button><button wx:if="{{change.contract.signedFileId}}" class="text-button" data-id="{{change.contract.signedFileId}}" bindtap="openDocument">查看已归档签署 PDF →</button></view>
+      <view wx:if="{{change.finance.obligations.length || change.finance.refunds.length}}" class="card"><view class="section-title">当前资金核对进度</view><view class="notice">以下只读展示服务端实际分配、补款账单和退款进度。补款需在普通账单中另行核对并主动支付，退款由财务独立处理。</view>
+        <view wx:for="{{change.finance.obligations}}" wx:key="sequence" class="field"><view>第 {{item.sequence}} 月 · {{item.periodText}}</view><view class="muted">应付 {{item.amountText}} · 原款已分配 {{item.allocatedAmountText}}</view><view>补款 {{item.chargeAmountText}} · {{item.chargeStatusText}}</view><view class="muted">到期日 {{item.dueDateText}}</view><button wx:if="{{item.chargeBillId}}" class="secondary" data-id="{{item.chargeBillId}}" bindtap="openChangeBill">查看本期普通补款账单</button></view>
+        <view wx:for="{{change.finance.refunds}}" wx:key="id" class="field"><view>退款 {{item.amountText}}</view><view>{{item.statusText}}</view><view class="muted">退款记录 {{item.id}}</view></view>
+      </view>
+      <view wx:if="{{change.blockers.length || change.finance.blockers.length || change.capabilityNote}}" class="notice"><view wx:for="{{change.blockers}}" wx:key="index">{{item}}</view><view wx:for="{{change.finance.blockers}}" wx:key="index">{{item}}</view><view>{{change.capabilityNote}}</view></view>
+      <view wx:if="{{changeError}}" class="notice" role="alert">{{changeError}}</view><view wx:if="{{message}}" class="notice" role="status">{{message}}</view>
+      <view wx:if="{{change.canConfirm}}" class="card"><checkbox-group bindchange="onChangeRead"><label class="delay-agreement"><checkbox value="change" checked="{{changeRead}}" disabled="{{busy}}" color="#252723"/><text>我已完整阅读并确认本版本的新起止日期、逐期费用、原款沿用、补收退款、交接取消安排及正式补充条款。</text></label></checkbox-group><button class="primary" disabled="{{busy || !changeRead}}" loading="{{busy}}" bindtap="confirmChange">确认本版本延期方案</button></view>
+      <view wx:if="{{change.canReject}}" class="card"><view class="label">如不同意，请说明原因</view><textarea class="textarea" value="{{changeRejectReason}}" bindinput="inputChangeRejectReason" maxlength="500" disabled="{{busy}}" placeholder="请填写拒绝此版本的原因"/><button class="secondary" disabled="{{busy}}" bindtap="rejectChange">拒绝此版本，转人工沟通</button></view>
+      <button wx:if="{{change.canSign}}" class="primary" disabled="{{busy}}" loading="{{busy}}" bindtap="signChange">进入正式补充协议签署</button><button wx:if="{{change.canSync}}" class="secondary" disabled="{{busy}}" loading="{{busy}}" bindtap="syncChange">查询签署与资金进度</button><button class="text-button" disabled="{{busy}}" bindtap="reload">刷新真实流程状态</button><button class="text-button back-link" bindtap="openList">查看全部延期记录 →</button>
+    </block><block wx:else><view class="eyebrow">RECORD DETAIL / 详情</view><view class="title">{{record.title}}</view
     ><view class="record-summary"
       ><text class="tag">{{record.statusText}}</text
       ><view class="muted">{{record.subtitle}}</view></view
@@ -49,6 +79,6 @@
         bindtap="act"
         >{{item.label}}</button
       ></view
-    ><button wx:if="{{type === 'orders'}}" class="secondary" bindtap="openOrderUsage">查看本订阅月里程、里程包及退订结算</button><button class="text-button back-link" bindtap="openList">查看全部记录 →</button></block
+    ><button wx:if="{{type === 'orders'}}" class="secondary" bindtap="openOrderUsage">查看本订阅月里程、里程包及退订结算</button><button wx:if="{{type === 'orders'}}" class="secondary" bindtap="openOrderChanges">查看延期交车方案与进度</button><button class="text-button back-link" bindtap="openList">查看全部记录 →</button></block></block
   ></view
 >

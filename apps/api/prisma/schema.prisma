@@ -351,6 +351,11 @@ model CreditVerification {
  @@unique([applicationId,revision])
 }
 model Order {
+ revision Int @default(0)
+ effectiveTermsVersionId String?
+ changes OrderChange[]
+ obligations ServiceObligation[]
+ termsVersions OrderTermsVersion[]
  id String @id @default(cuid())
  applicationId String @unique
  application Application @relation(fields:[applicationId],references:[id])
@@ -374,6 +379,8 @@ model Order {
  usageAccount UsageAccount?
 }
 model Contract {
+ delayQuoteId String? @unique
+ delayQuote DelayQuote? @relation(fields:[delayQuoteId],references:[id])
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
@@ -415,6 +422,7 @@ model Bill {
  @@unique([orderId,idempotencyKey])
 }
 model Payment {
+ allocations PaymentAllocation[]
  id String @id @default(cuid())
  billId String
  bill Bill @relation(fields:[billId],references:[id])
@@ -821,4 +829,111 @@ model FadadaTask {
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
  @@unique([kind,resourceId,documentHash])
+}
+
+enum OrderChangeStatus {
+ DRAFT
+ REVIEW_PENDING
+ REVIEWED
+ AWAITING_CONFIRMATION
+ AWAITING_SIGNATURE
+ AWAITING_FINANCE
+ READY
+ APPLIED
+ CANCELLED
+ REJECTED
+}
+enum DelayQuoteStatus {
+ DRAFT
+ REVIEWED
+ PUBLISHED
+ CONFIRMED
+ REJECTED
+ SUPERSEDED
+}
+model OrderChange {
+ id String @id @default(cuid())
+ orderId String
+ order Order @relation(fields:[orderId],references:[id])
+ customerId String
+ kind String @default("DELIVERY_DELAY")
+ status OrderChangeStatus @default(DRAFT)
+ revision Int @default(0)
+ priorTermsHash String
+ priorTerms Json
+ originalContractId String
+ reason String
+ createdBy String
+ idempotencyKey String
+ requestHash String
+ activeQuoteId String?
+ appliedAt DateTime?
+ createdAt DateTime @default(now())
+ quotes DelayQuote[]
+ @@unique([orderId,idempotencyKey])
+ @@index([customerId,createdAt])
+}
+model DelayQuote {
+ id String @id @default(cuid())
+ changeId String
+ change OrderChange @relation(fields:[changeId],references:[id])
+ revision Int
+ status DelayQuoteStatus @default(DRAFT)
+ commercialHash String
+ snapshot Json
+ fundsSnapshot Json
+ createdBy String
+ reviewedBy String?
+ reviewNote String @default("")
+ confirmedAt DateTime?
+ financePreparedAt DateTime?
+ createdAt DateTime @default(now())
+ contract Contract?
+ obligations ServiceObligation[]
+ termsVersion OrderTermsVersion?
+ @@unique([changeId,revision])
+}
+model ServiceObligation {
+ id String @id @default(cuid())
+ orderId String
+ order Order @relation(fields:[orderId],references:[id])
+ quoteId String
+ quote DelayQuote @relation(fields:[quoteId],references:[id])
+ sequence Int
+ startDate DateTime @db.Date
+ endDate DateTime @db.Date
+ dueDate DateTime @db.Date
+ amount Int
+ sourceBillIds String[] @default([])
+ chargeBillId String?
+ chargeAmount Int @default(0)
+ active Boolean @default(false)
+ createdAt DateTime @default(now())
+ allocations PaymentAllocation[]
+ @@unique([quoteId,sequence])
+ @@index([orderId,active,sequence])
+}
+model PaymentAllocation {
+ id String @id @default(cuid())
+ paymentId String
+ payment Payment @relation(fields:[paymentId],references:[id])
+ obligationId String
+ obligation ServiceObligation @relation(fields:[obligationId],references:[id])
+ amount Int
+ releasedAt DateTime?
+ createdAt DateTime @default(now())
+ @@unique([paymentId,obligationId])
+}
+model OrderTermsVersion {
+ id String @id @default(cuid())
+ orderId String
+ order Order @relation(fields:[orderId],references:[id])
+ quoteId String @unique
+ quote DelayQuote @relation(fields:[quoteId],references:[id])
+ version Int
+ snapshot Json
+ hash String
+ effectiveAt DateTime
+ createdAt DateTime @default(now())
+ @@unique([orderId,version])
 }

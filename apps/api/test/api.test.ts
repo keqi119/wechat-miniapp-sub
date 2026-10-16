@@ -1,3 +1,4 @@
+import {listenForHttpTests} from './http-listener';
 import { seedUsageLegal } from './usage-fixtures';
 import '../src/common/config';
 import { test, before, after } from 'node:test';
@@ -31,8 +32,7 @@ before(async () => {
   await seedUsageLegal(db);
   await db.adminUser.create({ data: { username: 'integration-admin', name: 'Test Admin', role: 'ADMIN', passwordHash: passwordHash('Strong-Test-Password-2026') } });
   app = await createApp({ db, identity: { wechat: async ({ loginCode }: any) => ({ mobile: loginCode === 'second' ? '13900000002' : '13900000001', openId: loginCode }), requestSms: async () => {}, verifySms: async () => ({ mobile: '13900000001' }) } as IdentityGateway });
-  await app.listen(0, '127.0.0.1');
-  base = await app.getUrl();
+  base = await listenForHttpTests(app);
   const login = await req('/admin/auth/login', 'POST', { username: 'integration-admin', password: 'Strong-Test-Password-2026' }, 'none');
   assert.equal(login.status, 201);
   cookie = login.headers.get('set-cookie')!.split(';')[0]; csrf = login.data.csrfToken;

@@ -11,6 +11,7 @@ export class OrderActionsController {
     return this.db.serial(async tx => {
       const order = await tx.order.findUnique({where:{id},include:{contracts:true,bills:{include:{payments:{include:{refunds:true}}}},handovers:true}});
       ensure(order && ['AWAITING_SIGNATURE','AWAITING_PAYMENT','AWAITING_HANDOVER'].includes(order.status),409,'ORDER_STATE','仅交付前订单可取消');
+      ensure(await tx.orderChange.count({where:{orderId:id,status:{notIn:['APPLIED','CANCELLED','REJECTED']}}})===0,409,'CHANGE_ACTIVE','须先处理正在进行的订单变更');
       const vehicle = await tx.vehicle.findUniqueOrThrow({where:{id:order.vehicleId}});
       ensure(vehicle.reservedOrderId === id && vehicle.status === 'RESERVED',409,'VEHICLE_OWNERSHIP','车辆预留归属异常');
       ensure(!order.contracts.some(c=>c.status==='PENDING') && !order.handovers.some(h=>h.signatureStatus==='PENDING'||h.status==='COMPLETED'),409,'SIGNATURE_PENDING','须先终止渠道签署，交付完成不可取消');

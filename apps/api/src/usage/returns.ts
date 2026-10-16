@@ -1,3 +1,4 @@
+import {serviceBillSequences} from '../order-changes/obligations';
 import { Prisma } from '@prisma/client';
 import { ensure } from '../common/errors';
 import { audit, hash } from '../common/data';
@@ -21,7 +22,7 @@ export async function returnView(tx:Prisma.TransactionClient,record:any,financia
   const pending=bills.some(b=>b.payments.some(p=>['CREATING','PENDING'].includes(p.status)||p.refunds.some(r=>['PENDING_APPROVAL','PROCESSING'].includes(r.status))));
   const depositRefundRequiredAmount=bills.filter(b=>b.type==='DEPOSIT').reduce((n,b)=>n+b.paidAmount-b.payments.flatMap(p=>p.refunds).filter(r=>r.status==='SUCCEEDED').reduce((s,r)=>s+r.amount,0),0);
   const max=await tx.usagePeriod.aggregate({where:{accountId:a.id,status:{not:'CANCELLED'}},_max:{sequence:true}});
-  const future=bills.filter(b=>b.type==='SUBSCRIPTION'&&b.sequence>(max._max.sequence||0));
+  const sequences=await serviceBillSequences(tx,record.orderId);const future=bills.filter(b=>(sequences.get(b.id)||0)>(max._max.sequence||0));
   const futureUnrefunded=future.some(b=>b.paidAmount>b.payments.flatMap(p=>p.refunds).filter(r=>r.status==='SUCCEEDED').reduce((s,r)=>s+r.amount,0));
   const invalidPacks=await tx.mileagePurchase.count({where:{accountId:a.id,applicableFromSequence:{gt:max._max.sequence||0},status:{notIn:['VOID','REFUNDED']}}});
   const frozen=await tx.mileagePurchase.count({where:{accountId:a.id,status:'REFUND_PENDING'}});
@@ -41,7 +42,8 @@ export async function returnAction(tx:Prisma.TransactionClient,record:any,action
     ensure((await returnView(tx,record,true)).canComplete,409,'RETURN_NOT_SETTLED','尚有缺失里程、争议、账单、未知支付或应退资金未核清');
     await voidUnpaidQuotes(tx,a.id,120);await expireRemainingPacks(tx,a);
     const max=await tx.usagePeriod.aggregate({where:{accountId:a.id,status:{not:'CANCELLED'}},_max:{sequence:true}});
-    await tx.bill.updateMany({where:{orderId:record.orderId,type:'SUBSCRIPTION',sequence:{gt:max._max.sequence||0},status:{in:['DRAFT','REVIEWED','PENDING']}},data:{status:'VOID'}});
+    const sequences=await serviceBillSequences(tx,record.orderId);const futureIds=[...sequences].filter(([,sequence])=>sequence>(max._max.sequence||0)).map(([id])=>id);
+    await tx.bill.updateMany({where:{orderId:record.orderId,id:{in:futureIds},status:{in:['DRAFT','REVIEWED','PENDING']}},data:{status:'VOID'}});
     await tx.order.update({where:{id:record.orderId},data:{status:'COMPLETED'}});data={status:'COMPLETED',completedAt:new Date()};
   }
   const updated=await tx.returnSettlement.update({where:{id:record.id},data:{...data,revision:{increment:1}}});

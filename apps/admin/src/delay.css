@@ -1,0 +1,5 @@
+.delay-period-form{border:1px solid var(--line);border-radius:7px;padding:16px;margin:18px 0;background:#f8f8f3;min-width:0}
+.delay-period-form legend{padding:0 7px;font-size:12px;font-weight:600}.delay-period-form>p{font-size:11px;color:#757a6b;margin-bottom:15px;overflow-wrap:anywhere}
+.delay-quote-form>.field,.delay-quote-form>h3{margin-top:18px}.delay-quote-form>p{font-size:12px;color:#777d6e;margin-top:8px}.delay-prose{margin:15px 0}.delay-prose>strong{font-size:12px}.delay-prose>p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin-top:6px;color:#6b7360}
+.delay-inline-create{border-top:1px solid var(--line);margin-top:20px;padding-top:14px}.delay-inline-create .record-form{padding:14px 0 0}.delay-inline-create h4{margin:0;font-size:13px}.delay-inline-create .action-warning p{margin:0}.delay-period-form a{display:inline-flex;gap:3px;align-items:center;text-decoration:underline}
+.delay-approved-document>p{white-space:pre-wrap;overflow-wrap:anywhere}

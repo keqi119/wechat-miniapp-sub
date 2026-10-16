@@ -1,3 +1,4 @@
+import { effectiveTerms } from '../order-changes/context';
 import { usagePolicyAppendix } from './policy';
 import { dateOnly } from '../billing/rules';
 import { ensure } from '../common/errors';
@@ -12,7 +13,7 @@ export function periods(start:string,months:number){
 }
 export async function lockAccount(tx:any,orderId:string){const account=await tx.usageAccount.findUnique({where:{orderId}});ensure(account,409,'USAGE_NOT_ACTIVE','请先完成符合已签日期的交车，建立月度用量账户');return tx.usageAccount.update({where:{id:account.id},data:{revision:{increment:1}}});}
 export async function initializeUsage(tx:any,order:any,handover:any){
-  const snapshot=order.finalPlanSnapshot as any;
+  const snapshot=await effectiveTerms(tx,order);
   ensure(handover.actualAt&&handover.actualAt<=new Date(Date.now()+300000),409,'HANDOVER_DATE_REQUIRED','交接须包含真实且非未来的交车时间');
   const actual=shanghaiDay(handover.actualAt);
   ensure(actual===String(snapshot.startDate).slice(0,10),409,'DELIVERY_DATE_AMENDMENT_REQUIRED','实际交车日与已签方案不符，须先双方确认延期费用和补充协议');

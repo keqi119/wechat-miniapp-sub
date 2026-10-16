@@ -1,5 +1,6 @@
 const { money, date } = require('../utils/format');
 const { createUsageApi } = require('./usage');
+const { createOrderChangesApi } = require('./order-changes');
 const TYPES = ['applications', 'orders', 'contracts', 'bills', 'payments', 'deposits', 'entitlements', 'notifications', 'services', 'mileages'];
 const VERIFICATION_STATUS = { AUTHORIZED: '已授权，尚未付款', CREATING: '支付准备结果待确认', PENDING: '支付结果待确认', SUCCEEDED: '支付成功', CLOSED: '验收已关闭', FAILED: '支付失败，不能继续付款', EXPIRED: '验收授权已过期' };
 const CREDIT_BANDS = { GE750: '750分及以上', B700_749: '700—749分', B650_699: '650—699分', LT650: '低于650分', UNVERIFIABLE: '无法核验' };
@@ -33,7 +34,8 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const verificationPayments = new Set();
   const creditKeys = new Map();
   const usageApi = createUsageApi({ call, identifier, error, idempotencyKey, getContext });
-  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); }
+  const changesApi = createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, enterSigning });
+  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); changesApi.clearChangeKeys(); }
   function session() {
     const value = platform.getStorageSync(storageKey);
     if (!value) return null;
@@ -229,10 +231,12 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     return call('POST', '/customer/applications', { vehicleId: payload.vehicleId, subscriptionPlanId: payload.subscriptionPlanId || payload.planId, profile: payload.profile || { name: payload.name, mobile: payload.mobile }, consents: payload.consents, idempotencyKey: payload.idempotencyKey || idempotencyKey('application') });
   }
   async function getRecords(type, params = {}) {
+    if (type === 'orderchanges') return (await changesApi.getOrderChanges(params)).items;
     if (!TYPES.includes(type)) throw error('无法识别记录类型。', 'VALIDATION');
     return list(await call('GET', '/customer/records/' + type, { page: params.page || 1, pageSize: params.pageSize || 50 })).items;
   }
   async function getRecord(type, id) {
+    if (type === 'orderchanges') return changesApi.getOrderChange(id);
     if (!TYPES.includes(type)) throw error('无法识别记录类型。', 'VALIDATION');
     return call('GET', '/customer/records/' + type + '/' + identifier(id));
   }
@@ -288,6 +292,9 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   async function startSign(kind, id) {
     const route = kind === 'handover' ? '/customer/handovers/' : '/customer/contracts/';
     const result = await call('POST', route + identifier(id) + '/sign', {});
+    return enterSigning(kind, id, result);
+  }
+  async function enterSigning(kind, id, result) {
     if (!result?.taskId) throw error('签署任务响应无效。', 'RESPONSE');
     if (result.url) validateSignUrl(result.url);
     if (!result.url && !result.miniProgram && result.status !== 'SIGNED') throw error('尚未取得有效的签署入口。', 'RESPONSE');
@@ -295,7 +302,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (result.status !== 'SIGNED') await native('navigateTo', { url: '/pages/sign/index?kind=' + kind + '&id=' + identifier(id) });
     return { ...result, status: result.status || 'PENDING', message: '请完成签署后返回查询结果。' };
   }
-  async function getSignStatus(id, kind = 'contract') { if (kind === 'identity') { const readiness = await call('POST', '/customer/esign/refresh', {}); return { ...readiness, status: readiness.readyForSigning ? 'VERIFIED' : 'PENDING' }; } return call('GET', (kind === 'handover' ? '/customer/handovers/' : '/customer/contracts/') + identifier(id) + '/sign-status'); }
+  async function getSignStatus(id, kind = 'contract') { if (kind === 'order-change') return changesApi.queryOrderChangeSignature(id); if (kind === 'identity') { const readiness = await call('POST', '/customer/esign/refresh', {}); return { ...readiness, status: readiness.readyForSigning ? 'VERIFIED' : 'PENDING' }; } return call('GET', (kind === 'handover' ? '/customer/handovers/' : '/customer/contracts/') + identifier(id) + '/sign-status'); }
   function getSigningTask(kind, id) {
     if (!session()) throw error('请重新登录后发起签署。', 'AUTH_REQUIRED');
     const pending = platform.getStorageSync(pendingKey);
@@ -387,7 +394,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (/^image\//i.test(contentType)) await native('previewImage', { current: downloaded.tempFilePath, urls: [downloaded.tempFilePath] });
     else await native('openDocument', { filePath: downloaded.tempFilePath, showMenu: false });
   }
-  return { ...usageApi, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
+  return { ...usageApi, ...changesApi, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
     getModelDefinitions: async () => list(await call('GET', '/public/model-definitions', undefined, false)).items,
     getDashboard: async () => { const result = await call('GET', '/customer/dashboard'); return { ...result, ...(result.application ? { application: application(result.application) } : {}), ...(result.subscription ? { subscription: { ...result.subscription, imageUrl: media(result.subscription.imageUrl) } } : {}) }; },
     getApplication: async id => application(await call('GET', '/customer/applications/' + identifier(id))),

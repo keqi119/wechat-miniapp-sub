@@ -1,3 +1,5 @@
+import {serviceBillSequences} from '../order-changes/obligations';
+import { guardDelayPayment,allocateDelayPayment } from '../order-changes/finance';
 import { guardPackRefund, settlePackRefund } from '../usage/refunds';
 import { Body, Controller, Get, HttpException, Inject, Injectable, Param, Post, Req } from '@nestjs/common';
 import { advanceToHandover } from '../orders/readiness';
@@ -39,7 +41,7 @@ export class BillingService {
         ensure(event.transactionId, 409, 'PAYMENT_MISMATCH', '渠道交易号缺失');
         ensure(payment.bill.status === 'PENDING' && payment.bill.paidAmount === 0 && payment.amount === payment.bill.amount, 409, 'BILL_CONFLICT', '账单已处理，请人工核对支付');
         await tx.bill.update({ where: { id: payment.billId }, data: { paidAmount: payment.amount, status: 'PAID' } });
-        await grantPaidPack(tx,payment.bill,payment.id);
+        await grantPaidPack(tx,payment.bill,payment.id); await allocateDelayPayment(tx,payment);
         if (payment.bill.type === 'DEPOSIT') await tx.depositEntry.create({ data: { customerId: payment.customerId, orderId: payment.bill.orderId, paymentId: payment.id, type: 'RECEIPT', amount: payment.amount } });
         await notify(tx, payment.customerId, '付款已确认', '渠道已核验付款到账。', 'payments', payment.id);
       }
@@ -53,8 +55,9 @@ export class BillingService {
     ensure(customer.openId, 409, 'WECHAT_REQUIRED', '支付前请绑定当前小程序微信身份');
     const claim = await this.db.serial(async tx => {
       const bill = await tx.bill.findFirst({ where: { id: billId, customerId: customer.id } }); ensure(bill, 404, 'NOT_FOUND', '账单不存在'); ensure(bill.status === 'PENDING' && bill.paidAmount === 0, 409, 'BILL_NOT_PAYABLE', '账单当前不可支付');
+      await guardDelayPayment(tx,bill);
       const usage=await tx.usageAccount.findUnique({where:{orderId:bill.orderId}});
-      if(usage){await tx.usageAccount.update({where:{id:usage.id},data:{revision:{increment:1}}});if(usage.returnedOn&&bill.type==='SUBSCRIPTION'){const last=await tx.usagePeriod.aggregate({where:{accountId:usage.id,status:{not:'CANCELLED'}},_max:{sequence:true}});ensure(bill.sequence<=(last._max.sequence||0),409,'RETURN_FUTURE_BILL','车辆已交还，未来未履行月份须先结算，不可继续支付');}}
+      if(usage){await tx.usageAccount.update({where:{id:usage.id},data:{revision:{increment:1}}});if(usage.returnedOn){const last=await tx.usagePeriod.aggregate({where:{accountId:usage.id,status:{not:'CANCELLED'}},_max:{sequence:true}});const sequence=(await serviceBillSequences(tx,bill.orderId)).get(bill.id);ensure(!sequence||sequence<=(last._max.sequence||0),409,'RETURN_FUTURE_BILL','车辆已交还，未来未履行月份须先结算，不可继续支付');}}
       await guardPackPayment(tx,bill);
       const existing = await tx.payment.findUnique({ where: { customerId_idempotencyKey: { customerId: customer.id, idempotencyKey } } });
       if (existing) ensure(existing.billId === billId, 409, 'IDEMPOTENCY_CONFLICT', '请求编号已用于其他账单');
@@ -149,6 +152,7 @@ export class BillingController {
       const existing = await tx.refund.findUnique({ where: { requestedBy_idempotencyKey: { requestedBy: request.admin.id, idempotencyKey: input.idempotencyKey } } });
       if (existing) { ensure(existing.paymentId === input.paymentId && existing.amount === input.amount && existing.reason === input.reason, 409, 'IDEMPOTENCY_CONFLICT', '退款请求编号与内容冲突'); return existing; }
       const payment = await tx.payment.findUnique({ where: { id: input.paymentId } }); ensure(payment?.status === 'SUCCEEDED', 409, 'PAYMENT_STATE', '仅成功支付可申请退款');
+      const bill=await tx.bill.findUniqueOrThrow({where:{id:payment.billId}});await tx.order.update({where:{id:bill.orderId},data:{revision:{increment:1}}});ensure(await tx.orderChange.count({where:{orderId:bill.orderId,status:{notIn:['APPLIED','CANCELLED','REJECTED']}}})===0,409,'CHANGE_REFUND_MANAGED','订单变更期间退款须使用已签补充协议生成的退款安排');
       await guardPackRefund(tx,payment,input.amount);
       const sum = await tx.refund.aggregate({ where: { paymentId: input.paymentId, status: { in: ['PENDING_APPROVAL','PROCESSING','SUCCEEDED'] } }, _sum: { amount: true } });
       ensure((sum._sum.amount || 0) + input.amount <= payment.amount, 409, 'REFUND_LIMIT', '退款累计金额不可超过实付');

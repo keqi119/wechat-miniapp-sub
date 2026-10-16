@@ -11,6 +11,6 @@ export abstract class PaymentGateway {
   abstract refund(input: { refundId: string; paymentId: string; amount: number; totalAmount: number; reason: string }): Promise<{ status: 'PROCESSING' | 'SUCCEEDED' | 'FAILED'; providerRefundId?: string }>;
 }
 export abstract class ESignGateway {
-  abstract create(input: { contractId: string; customerId: string; documentHash: string; kind: 'SUBSCRIPTION' | 'HANDOVER'; customerName: string; mobile: string }): Promise<{ taskId: string; url?: string; miniProgram?: { appId: string; path: string }; status: string }>;
+  abstract create(input: { contractId: string; customerId: string; documentHash: string; kind: 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT'; customerName: string; mobile: string }): Promise<{ taskId: string; url?: string; miniProgram?: { appId: string; path: string }; status: string }>;
   abstract query(taskId: string): Promise<{ status: 'PENDING' | 'SIGNED' | 'REJECTED' | 'EXPIRED'; documentHash: string; signedFileId?: string }>;
 }

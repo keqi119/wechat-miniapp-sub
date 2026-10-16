@@ -13,7 +13,7 @@ const schemas: Record<string, z.ZodObject<any>> = {
   'model-definitions': z.object({ brand: text, name: text, bodyType: z.string().max(100).default(''), description: z.string().max(5000).default('') }),
   vehicles: vehicleDto, plans: planDto,
   users: z.object({ username: z.string().min(3).max(100), password: z.string().min(16).max(256), name: text, role: z.enum(['ADMIN','OPERATIONS','FINANCE','SUPPORT']), active: z.boolean().default(true) }),
-  'legal-documents': z.object({ type: z.enum(['application','privacy','terms','subscription','handover','credit-verification','mileage-pack','usage-policy','vehicle-change']), version: z.number().int().positive(), title: text, content: z.string().min(1).max(100000), confirmedBy: z.string().min(1).optional(), confirmedAt: z.string().datetime().optional() }),
+  'legal-documents': z.object({ type: z.enum(['application','privacy','terms','subscription','handover','credit-verification','mileage-pack','usage-policy','vehicle-change','delivery-delay-amendment']), version: z.number().int().positive(), title: text, content: z.string().min(1).max(100000), confirmedBy: z.string().min(1).optional(), confirmedAt: z.string().datetime().optional() }),
   entitlements: z.object({ orderId: text, title: text, description: text, status: z.enum(['PENDING','ACTIVE','EXPIRED']).default('PENDING') }),
   notifications: z.object({ customerId: text, title: text, content: z.string().min(1).max(5000), resourceType: text.optional(), resourceId: text.optional() }),
 };
@@ -22,7 +22,7 @@ function withoutCredit(value:any):any {
   if(!value||typeof value!=='object'||value instanceof Date)return value;
   return Object.fromEntries(Object.entries(value).filter(([key])=>!['creditBand','creditVerificationId','creditRevision','creditRuleVersion'].includes(key)).map(([key,item])=>[key,withoutCredit(item)]));
 }
-function safe(resource: string, value: any, role?:string) { if (!value) return value; if (resource === 'users') { const { passwordHash: _, ...rest } = value; return rest; } if (resource === 'customers') { const { openId: _, providerCustomerId: __, ...rest } = value; return rest; } if(['applications','orders'].includes(resource)&&!['ADMIN','OPERATIONS'].includes(role||''))return withoutCredit(value); return value; }
+function safe(resource: string, value: any, role?:string) { if (!value) return value; if(resource==='contracts'&&value.kind==='AMENDMENT'&&!['ADMIN','OPERATIONS'].includes(role||'')){const{body,sourceFileId,signedFileId,...summary}=value;return summary;} if (resource === 'users') { const { passwordHash: _, ...rest } = value; return rest; } if (resource === 'customers') { const { openId: _, providerCustomerId: __, ...rest } = value; return rest; } if(['applications','orders'].includes(resource)&&!['ADMIN','OPERATIONS'].includes(role||''))return withoutCredit(value); return value; }
 @Controller('admin')
 export class AdminController {
   constructor(@Inject(Db) private db: Db) {}

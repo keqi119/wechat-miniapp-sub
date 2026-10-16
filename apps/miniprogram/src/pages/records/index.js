@@ -11,6 +11,7 @@ const TITLES = {
   notifications: '消息通知',
   services: '服务记录',
   mileages: '里程复核',
+  orderchanges: '延期交车方案',
 };
 Page({
   data: { type: '', title: '记录', loading: true, error: '', items: [], usage: null, usageError: '', settlement: null, settlementError: '', selectedProductId: '', selectedProduct: null, purchaseAccepted: false, purchase: null, busy: false, purchaseError: '', usageMessage: '', disputeReason: '' },

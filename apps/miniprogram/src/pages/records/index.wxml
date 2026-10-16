@@ -27,6 +27,7 @@
         <text class="tag">{{item.statusText}}</text>
       </view>
       <view class="muted record-subtitle">{{item.subtitle}}</view>
+      <view wx:if="{{type === 'orderchanges' && item.quoteSummary}}" class="muted">客户确认截止 {{item.quoteSummary.expiresAtText}}</view>
       <view class="row between">
         <text wx:if="{{item.amountText}}" class="record-amount">{{item.amountText}}</text>
         <text class="record-link">查看详情 →</text>

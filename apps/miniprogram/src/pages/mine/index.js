@@ -9,6 +9,7 @@ Page({
     application: null,
     links: [
       { type: 'orders', title: '我的订阅与订单' },
+      { type: 'orderchanges', title: '延期交车方案' },
       { type: 'contracts', title: '合同文件' },
       { type: 'bills', title: '账单' },
       { type: 'payments', title: '支付记录' },

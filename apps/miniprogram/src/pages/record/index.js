@@ -10,18 +10,21 @@ const TYPES = [
   'notifications',
   'services',
   'mileages',
+  'orderchanges',
 ];
 Page({
-  data: { type: '', id: '', loading: true, error: '', record: null, busy: false, message: '' },
+  data: { type: '', id: '', loading: true, error: '', record: null, busy: false, message: '', change: null, changeRead: false, changeError: '', changeRejectReason: '' },
   onLoad(options) {
     this.setData({ type: options.type || '', id: options.id || '' });
     this.reload();
   },
   reload() {
+    this.setData({ changeRead: false, change: null });
     return load(this, async () => {
       if (!TYPES.includes(this.data.type) || !this.data.id)
         throw new Error('记录地址不完整，请从记录列表重新进入。');
-      return { record: await services.getRecord(this.data.type, this.data.id) };
+      const record = await services.getRecord(this.data.type, this.data.id);
+      return this.data.type === 'orderchanges' ? { record, change: record } : { record };
     });
   },
   onShow() { if (this.data.id) this.reload(); },
@@ -57,4 +60,27 @@ Page({
     go('/pages/records/index?type=' + (TYPES.includes(this.data.type) ? this.data.type : 'orders'));
   },
   openOrderUsage() { if (this.data.type === 'orders' && this.data.record) go('/pages/records/index?type=entitlements&orderId=' + encodeURIComponent(this.data.record.id)); },
+  openOrderChanges() { go('/pages/records/index?type=orderchanges'); },
+  onChangeRead(e) { if (!this.data.busy) this.setData({ changeRead: e.detail.value.includes('change'), changeError: '' }); },
+  inputChangeRejectReason(e) { if (!this.data.busy) this.setData({ changeRejectReason: e.detail.value }); },
+  confirmChange() { return this.changeAction('confirm'); },
+  rejectChange() { return this.changeAction('reject'); },
+  signChange() { return this.changeAction('sign'); },
+  syncChange() { return this.changeAction('sync'); },
+  async changeAction(action) {
+    if (this.data.busy || !this.data.change) return;
+    const current = this.data.change;
+    if (action === 'confirm' && !this.data.changeRead) { this.setData({ changeError: '请完整阅读日期、逐期款项安排及正式补充条款，再勾选确认。' }); return; }
+    if (action === 'reject' && !this.data.changeRejectReason.trim()) { this.setData({ changeError: '请填写拒绝当前延期方案的原因。' }); return; }
+    this.setData({ busy: true, changeError: '', message: '' });
+    try {
+      if (action !== 'sync' && !(await confirm(action === 'confirm' ? '确认本版本延期方案？' : action === 'reject' ? '拒绝本版本延期方案？' : '进入补充协议签署？', action === 'confirm' ? '请核对新起止日期、原款沿用、补收及退款安排。确认后仍需正式签署与资金核对，不代表已经交车或方案已生效。' : action === 'reject' ? '此意见将提交运营处理，不会自动退订或退款。' : '请核对正式文档，返回后查询服务端签署结果。'))) return;
+      const method = { confirm: 'confirmOrderChange', reject: 'rejectOrderChange', sign: 'signOrderChange', sync: 'syncOrderChange' }[action];
+      await services[method](current.id, { revision: current.revision, commercialHash: current.quote?.commercialHash, read: this.data.changeRead, reason: this.data.changeRejectReason.trim() });
+      await this.reload();
+      this.setData({ changeRejectReason: '', message: action === 'confirm' ? '当前版本确认意见已提交，后续签署、资金及生效状态请查看服务端进度。' : action === 'reject' ? '拒绝意见已提交人工处理。' : action === 'sign' ? '签署入口已发起，请返回查询真实结果。' : '已读取服务端最新进度；仅显示当前真实签署、资金和生效状态。' });
+    } catch (error) { await this.reload(); this.setData({ changeError: error.message, changeRead: false, message: '' }); toastError(error); }
+    finally { this.setData({ busy: false }); }
+  },
+  openChangeBill(e) { if (e.currentTarget.dataset.id) go('/pages/record/index?type=bills&id=' + encodeURIComponent(e.currentTarget.dataset.id)); },
 });

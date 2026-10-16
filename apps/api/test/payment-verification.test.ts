@@ -1,3 +1,4 @@
+import {listenForHttpTests} from './http-listener';
 import '../src/common/config';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -83,7 +84,7 @@ before(async () => {
     const max = await db.legalDocument.aggregate({ where: { type }, _max: { version: true } });
     await db.legalDocument.create({ data: { type, version: (max._max.version || 0) + 1, title: type, content: 'Synthetic verification consent', status: 'PUBLISHED', confirmedBy: 'fixture', confirmedAt: new Date() } });
   }
-  app = await createApp({ db, verification } as any); await app.listen(0, '127.0.0.1'); base = await app.getUrl();
+  app = await createApp({ db, verification } as any); base = await listenForHttpTests(app);
 });
 after(async () => { await app?.close(); await db?.$disconnect(); });
 

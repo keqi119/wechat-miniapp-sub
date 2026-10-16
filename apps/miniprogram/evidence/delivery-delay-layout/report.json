@@ -1,0 +1,108 @@
+{
+  "generatedAt": "2026-10-16T09:09:05.778Z",
+  "scope": "Offline actual-wcc template layout using synthetic display data only. No API, SDK, signing, payments, DevTools preview or publishing.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "delay-draft-hidden",
+      "text": "正式方案尚待发布",
+      "boxes": 0,
+      "overflow": false,
+      "screenshot": "delay-draft-hidden.png",
+      "passed": true
+    },
+    {
+      "name": "delay-formal-unchecked",
+      "text": "2026.12.15（含当日）",
+      "boxes": 1,
+      "enabled": false,
+      "overflow": false,
+      "screenshot": "delay-formal-unchecked.png",
+      "passed": true
+    },
+    {
+      "name": "delay-explicit-reading",
+      "accepted": true,
+      "text": "原款净实收",
+      "boxes": 1,
+      "enabled": true,
+      "overflow": false,
+      "screenshot": "delay-explicit-reading.png",
+      "passed": true
+    },
+    {
+      "name": "delay-document-unavailable",
+      "text": "正式延期补充条款尚不可用",
+      "boxes": 0,
+      "overflow": false,
+      "screenshot": "delay-document-unavailable.png",
+      "passed": true
+    },
+    {
+      "name": "delay-confirmation-expired",
+      "text": "本版本客户确认期限已过",
+      "boxes": 0,
+      "overflow": false,
+      "screenshot": "delay-confirmation-expired.png",
+      "passed": true
+    },
+    {
+      "name": "delay-confirmed-expired-continues",
+      "text": "进入正式补充协议签署",
+      "forbiddenText": "本版本客户确认期限已过",
+      "boxes": 0,
+      "overflow": false,
+      "screenshot": "delay-confirmed-expired-continues.png",
+      "passed": true
+    },
+    {
+      "name": "delay-awaiting-signature",
+      "text": "进入正式补充协议签署",
+      "boxes": 0,
+      "overflow": false,
+      "screenshot": "delay-awaiting-signature.png",
+      "passed": true
+    },
+    {
+      "name": "delay-signed-finance-pending",
+      "text": "退款渠道结果仍待核实",
+      "boxes": 0,
+      "overflow": false,
+      "screenshot": "delay-signed-finance-pending.png",
+      "passed": true
+    },
+    {
+      "name": "delay-applied-server-state",
+      "text": "延期方案已生效",
+      "boxes": 0,
+      "overflow": false,
+      "screenshot": "delay-applied-server-state.png",
+      "passed": true
+    },
+    {
+      "name": "delay-list",
+      "route": "records",
+      "text": "延期交车补充方案",
+      "boxes": 0,
+      "overflow": false,
+      "screenshot": "delay-list.png",
+      "passed": true
+    },
+    {
+      "name": "delay-dashboard-link",
+      "route": "use",
+      "text": "查看本订阅延期交车方案",
+      "boxes": 0,
+      "forbiddenText": "用车中",
+      "overflow": false,
+      "screenshot": "delay-dashboard-link.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

@@ -1,8 +1,8 @@
 import { Db } from '../common/db';
 import { ensure } from '../common/errors';
-export type SigningKind = 'SUBSCRIPTION' | 'HANDOVER';
+export type SigningKind = 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT';
 const leaseMs = 45_000;
-function fields(kind: SigningKind) { return kind === 'SUBSCRIPTION' ? { model: 'contract', state: 'status', hash: 'documentHash' } : { model: 'handover', state: 'signatureStatus', hash: 'manifestHash' }; }
+function fields(kind: SigningKind) { return kind !== 'HANDOVER' ? { model: 'contract', state: 'status', hash: 'documentHash' } : { model: 'handover', state: 'signatureStatus', hash: 'manifestHash' }; }
 async function persistedTask(tx: any, kind: SigningKind, item: any) {
   const f = fields(kind);
   const task = await tx.fadadaTask.findUnique({ where: { kind_resourceId_documentHash: { kind, resourceId: item.id, documentHash: item[f.hash] } } });

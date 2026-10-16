@@ -1,3 +1,4 @@
+import {listenForHttpTests} from './http-listener';
 import { seedUsageLegal } from './usage-fixtures';
 import '../src/common/config';
 import { before, after, test } from 'node:test';
@@ -40,7 +41,7 @@ before(async()=>{
   for(const role of ['ADMIN','OPERATIONS','FINANCE','SUPPORT'] as const){const id=randomUUID();const a=await db.adminUser.create({data:{username:id,name:role,role,passwordHash:'fixture'}});await db.adminSession.create({data:{id:tokenHash(id),adminId:a.id,csrfToken:csrf,expiresAt:new Date(Date.now()+3600000)}});cookies[role]='admin_session='+id;}
   const max=await db.legalDocument.aggregate({where:{type:'credit-verification'},_max:{version:true}});
   doc=await db.legalDocument.create({data:{type:'credit-verification',version:(max._max.version||0)+1,title:'人工核验说明',content:'合成测试，不记录精确分或截图',status:'PUBLISHED',confirmedBy:'fixture',confirmedAt:new Date()}});
-  server=await createApp({db});await server.listen(0,'127.0.0.1');base=await server.getUrl();
+  server=await createApp({db});base=await listenForHttpTests(server);
 });
 after(async()=>{await server?.close();await db?.$disconnect();});
 test('application-specific explicit consent is private, decline is not approval, and arbitrary evidence is rejected',async()=>{

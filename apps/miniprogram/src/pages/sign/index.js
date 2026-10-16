@@ -2,7 +2,7 @@ const services = require('../../services/index');
 const { load, toastError } = require('../../utils/page');
 Page({
   data: { loading: true, error: '', url: '', task: null, status: '', message: '' },
-  onLoad(options) { this.id = options.id; this.kind = ['handover', 'identity'].includes(options.kind) ? options.kind : 'contract'; this.reload(); },
+  onLoad(options) { this.id = options.id; this.kind = ['handover', 'identity', 'order-change'].includes(options.kind) ? options.kind : 'contract'; this.reload(); },
   onShow() { if (this.id) this.refreshStatus(); },
   reload() { return load(this, async () => { const task = services.getSigningTask(this.kind, this.id); return { task, url: task.url || '', status: task.status || 'PENDING' }; }); },
   async refreshStatus() {

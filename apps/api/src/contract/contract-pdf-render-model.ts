@@ -109,7 +109,7 @@ export interface ContractPdfRenderDiagnostics {
 }
 
 export interface ContractPdfRenderModel {
-  agreementKind?: "SUBSCRIPTION_EXTENSION" | "SUBSCRIPTION_STANDARD" | "VEHICLE_SWAP_SUPPLEMENT";
+  agreementKind?: "SUBSCRIPTION_EXTENSION" | "SUBSCRIPTION_STANDARD" | "VEHICLE_SWAP_SUPPLEMENT" | "DELIVERY_DELAY_AMENDMENT";
   appendix: ContractPdfAppendix;
   contentTemplate: string;
   contractId: string;

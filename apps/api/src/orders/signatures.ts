@@ -12,7 +12,7 @@ export class SignaturesController {
   async send(id: string, customerId?: string) {
     const claim = await this.db.serial(async tx => {
       const contract = await tx.contract.findFirst({ where: { id, ...(customerId ? { customerId } : {}) }, include: { order: { include: { customer: true } } } });
-      ensure(contract, 404, 'NOT_FOUND', '合同不存在'); ensure(contract.status !== 'SIGNED' && ['AWAITING_SIGNATURE','AWAITING_PAYMENT'].includes(contract.order.status), 409, 'STATE_CONFLICT', '当前订单不可发起签署');
+      ensure(contract, 404, 'NOT_FOUND', '合同不存在'); ensure(contract.kind==='SUBSCRIPTION',409,'CONTRACT_KIND','补充协议须从订单变更入口签署'); ensure(contract.status !== 'SIGNED' && ['AWAITING_SIGNATURE','AWAITING_PAYMENT'].includes(contract.order.status), 409, 'STATE_CONFLICT', '当前订单不可发起签署');
       return claimSigning(tx, 'SUBSCRIPTION', contract);
     });
     const item = claim.item;
@@ -27,6 +27,7 @@ export class SignaturesController {
 
   @Get('customer/contracts/:id/sign-status') async status(@Param('id') id: string, @Req() request: any) { const item = await this.db.contract.findFirst({ where: { id, customerId: request.customer.id } }); ensure(item, 404, 'NOT_FOUND', '合同不存在'); return this.sync(id); }
   @Post('admin/contracts/:id/sync') async sync(@Param('id') id: string) {
+    const contract=await this.db.contract.findUnique({where:{id}});ensure(contract?.kind==='SUBSCRIPTION',409,'CONTRACT_KIND','补充协议须从订单变更入口查询');
     const recovered = await recoverSigning(this.db, 'SUBSCRIPTION', id); const item = recovered.item; if (!item.providerTaskId || recovered.pendingPreparation) return recovered.state;
     const result = await this.esign.query(item.providerTaskId); ensure(result.documentHash === item.documentHash, 409, 'DOCUMENT_MISMATCH', '签署文档与合同不匹配');
     return this.signatures.settleContract(id, { ...result, taskId: item.providerTaskId });
