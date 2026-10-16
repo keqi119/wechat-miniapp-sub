@@ -1,3 +1,4 @@
+import {nativeSigningConfig} from '../esign/native-signing';
 import {Body,Controller,Get,Header,Inject,Post,Req,Res} from '@nestjs/common';
 import {z} from 'zod';
 import {Db} from '../common/db';
@@ -12,7 +13,7 @@ function safe(customer:any,session:any){return{customer:{id:customer.id,maskedMo
 @Controller()
 export class H5AuthController{
  constructor(@Inject(Db)private db:Db,@Inject(IdentityGateway)private identity:IdentityGateway){}
- @Get('public/signing-config')@Header('Cache-Control','no-store')publicConfig(){return h5Config();}
+ @Get('public/signing-config')@Header('Cache-Control','no-store')publicConfig(){return nativeSigningConfig();}
  @Get('h5-sign/config')config(){return h5Config();}
  @Get('h5-sign/legal')async legal(){const docs=await currentDocuments(this.db,['terms','privacy']);return{documents:docs.map(({id,type,version,title,content}:any)=>({id,type,version,title,content}))};}
  @Post('h5-sign/auth/sms/request')async sms(@Body()body:any){

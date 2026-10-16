@@ -1,3 +1,5 @@
+import {MINIAPP_RETURN,runNativeSigning,nativeRealnameUrl} from './native-signing';
+import {realnameInput,recordRealnameConsent} from './realname-consent';
 import { Body, Controller, Get, Inject, Param, Post, Req, Res } from '@nestjs/common';
 import { z } from 'zod';
 import { Db } from '../common/db';
@@ -11,11 +13,11 @@ import { FadadaSettings } from './esign.settings';
 export const ESIGN_SETTINGS=Symbol('ESIGN_SETTINGS');
 @Controller()
 export class ESignCustomerController {
-  constructor(@Inject(CustomerESignOnboardingService)private accounts:CustomerESignOnboardingService){}
+  constructor(@Inject(CustomerESignOnboardingService)private accounts:CustomerESignOnboardingService,@Inject(Db)private db:Db){}
   @Get('customer/esign/readiness')readiness(@Req()request:any){return this.accounts.readiness(request.customer.id);}
-  @Post('customer/esign/register')register(@Req()request:any){return this.accounts.register(request.customer.id);}
-  @Post('customer/esign/verify')verify(@Req()request:any,@Body()body:any){const input=z.object({name:z.string().trim().min(2).max(50),idCardNo:z.string().regex(/^\d{17}[\dXx]$/)}).strict().parse(body);return this.accounts.verify(request.customer.id,input);}
-  @Post('customer/esign/refresh')refresh(@Req()request:any){return this.accounts.refresh(request.customer.id);}
+  @Post('customer/esign/register')register(@Req()request:any,@Body()body:any){z.object({}).strict().parse(body);return runNativeSigning(()=>this.accounts.register(request.customer.id));}
+  @Post('customer/esign/verify')async verify(@Req()request:any,@Body()body:any){const input=realnameInput.parse(body);await recordRealnameConsent(this.db,request.customer.id,input.consent,'MINIAPP');return runNativeSigning(async()=>{const result=await this.accounts.verify(request.customer.id,{name:input.name,idCardNo:input.idCardNo},MINIAPP_RETURN);return{...result,url:nativeRealnameUrl(result.url)};});}
+  @Post('customer/esign/refresh')refresh(@Req()request:any,@Body()body:any){z.object({}).strict().parse(body);return runNativeSigning(()=>this.accounts.refresh(request.customer.id));}
   @Get('admin/customers/:id/esign-readiness')adminReadiness(@Param('id')id:string){return this.accounts.readiness(id);}
 }
 @Controller()

@@ -111,7 +111,7 @@ test('legacy signing is closed and unconfigured payment never succeeds; handover
   const identity = order.customerId === customerId ? 'customer' : 'other';
   const contract = await db.contract.findFirstOrThrow();
   const legacySigning=await req(`/customer/contracts/${contract.id}/sign`, 'POST', {}, identity);
-  assert.equal(legacySigning.status,409);assert.equal(legacySigning.data.error.code,'H5_SIGNING_REQUIRED');
+  assert.equal(legacySigning.status,503);assert.equal(legacySigning.data.error.code,'MINIAPP_SIGNING_UNAVAILABLE');
   const bill = await db.bill.findFirstOrThrow(); await req(`/admin/bills/${bill.id}/publish`, 'POST', {});
   assert.equal((await req(`/customer/bills/${bill.id}/pay`, 'POST', { idempotencyKey: 'payment-test-0001' }, identity)).status, 503);
   assert.equal((await db.bill.findUniqueOrThrow({ where: { id: bill.id } })).paidAmount, 0);
