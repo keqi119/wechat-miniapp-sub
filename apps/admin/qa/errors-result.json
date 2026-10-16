@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "SUPPORT write controls hidden and real API write denied",
+    "real no-match empty state and clear filter",
+    "503 server message and request ID display without stale success data",
+    "409 version conflict preserves entered form and requests reload",
+    "401 clears business UI and returns to reauthentication"
+  ],
+  "errors": []
+}

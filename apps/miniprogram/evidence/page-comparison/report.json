@@ -1,0 +1,131 @@
+{
+  "scope": "Offline browser layout comparison of actual wcc templates using explicitly synthetic QA display models; no API/device/payment/signing claims.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "pages": [
+    {
+      "page": "home",
+      "reference": "reference-home.png",
+      "real": "real-home.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "catalog",
+      "reference": "reference-catalog.png",
+      "real": "real-catalog.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "use",
+      "reference": "reference-use.png",
+      "real": "real-use.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "mine",
+      "reference": "reference-mine.png",
+      "real": "real-mine.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "vehicle",
+      "reference": "reference-vehicle.png",
+      "real": "real-vehicle.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "application",
+      "reference": "reference-application.png",
+      "real": "real-application.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "application-detail",
+      "reference": "reference-application-detail.png",
+      "real": "real-application-detail.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "records",
+      "reference": "reference-records.png",
+      "real": "real-records.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "record",
+      "reference": "reference-record.png",
+      "real": "real-record.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "profile",
+      "reference": "reference-profile.png",
+      "real": "real-profile.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "service",
+      "reference": "reference-service.png",
+      "real": "real-service.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "mileage",
+      "reference": "reference-mileage.png",
+      "real": "real-mileage.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "handover",
+      "reference": "reference-handover.png",
+      "real": "real-handover.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "settings",
+      "reference": "reference-settings.png",
+      "real": "real-settings.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    },
+    {
+      "page": "legal",
+      "reference": "reference-legal.png",
+      "real": "real-legal.png",
+      "originalStylesIdentical": true,
+      "referenceOverflow": false,
+      "realOverflow": false
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": []
+}

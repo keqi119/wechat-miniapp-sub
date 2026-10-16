@@ -1,0 +1,58 @@
+{
+  "recordedAt": "2026-10-16T06:05:33.922Z",
+  "scope": "Actual native account agreement links, public legal reads/navigation/screenshots only; no login, SMS, consent submission or business mutation.",
+  "links": [
+    {
+      "type": "terms",
+      "text": "纯电主义小程序用户协议版本 1 · 查看完整协议 →",
+      "linkOffset": {
+        "left": 34.79999923706055,
+        "top": 633.3250122070312
+      },
+      "destination": "pages/legal/index",
+      "query": {
+        "type": "terms"
+      },
+      "title": "纯电主义小程序用户协议",
+      "version": 1,
+      "error": "",
+      "contentLength": 1005
+    },
+    {
+      "type": "privacy",
+      "text": "纯电主义小程序隐私政策版本 1 · 查看完整协议 →",
+      "linkOffset": {
+        "left": 34.79999923706055,
+        "top": 320.82501220703125
+      },
+      "destination": "pages/legal/index",
+      "query": {
+        "type": "privacy"
+      },
+      "title": "纯电主义小程序隐私政策",
+      "version": 1,
+      "error": "",
+      "contentLength": 3264
+    }
+  ],
+  "exceptions": [],
+  "settings": {
+    "path": "pages/settings/index",
+    "error": "",
+    "authenticated": false,
+    "accepted": false,
+    "legalDocumentVersions": [
+      {
+        "type": "terms",
+        "title": "纯电主义小程序用户协议",
+        "version": 1
+      },
+      {
+        "type": "privacy",
+        "title": "纯电主义小程序隐私政策",
+        "version": 1
+      }
+    ],
+    "acceptedAfterNavigation": false
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "checks": [
+    "real seal draft and evidence upload; creator cannot activate own seal",
+    "real customer readiness shows unregistered state without fabricated verification",
+    "extra fee real create uses exact cents and creator cannot self-review or publish",
+    "independent finance review and subsequent real publication",
+    "real customer objection and immutable new handover revision",
+    "real pre-delivery order safely cancelled without payment or signing"
+  ],
+  "errors": [],
+  "fixture": "local chundian_dev / QA ACTIVE scenario; no signed or paid provider states",
+  "records": {
+    "sealId": "cmvahbg9n000qurhkrsa7x2k2",
+    "billId": "cmvahbhfv000wurhk1d0s3e1h",
+    "handoverId": "cmvahbpq40017urhki8dug1yj"
+  }
+}

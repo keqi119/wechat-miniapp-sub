@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-16T04:29:37.547Z",
+  "origin": "local",
+  "scope": "credential-and-read-only-provider-queries",
+  "noChargesNoSmsNoSigning": true,
+  "wechatMiniapp": {
+    "ok": false,
+    "providerCode": 40164,
+    "phoneAuthorizationTested": false
+  },
+  "wechatCertificate": {
+    "validFrom": "Jun 18 08:01:38 2026 GMT",
+    "validTo": "Jun 17 08:01:38 2031 GMT",
+    "currentlyValid": true
+  },
+  "wechatPayResponse": {
+    "status": 404,
+    "providerCode": "ORDER_NOT_EXIST",
+    "hasSignature": true,
+    "verifierId": "329ECC6DB93D60103C6FBCDB273E86239A956EAA"
+  },
+  "wechatPay": {
+    "ok": true,
+    "errorCode": "PAYMENT_ORDER_NOT_EXIST",
+    "miniappMerchantBindingTested": false
+  },
+  "fadada": {
+    "providerCode": "1",
+    "certificateBound": true,
+    "certificateEvidencePresent": true,
+    "companySealAuthorizationTested": false
+  }
+}

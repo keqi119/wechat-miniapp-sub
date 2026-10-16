@@ -1,0 +1,68 @@
+{
+  "at": "2026-10-16T05:21:53.236Z",
+  "base": "https://mini-admin.subauto.keybox.cloud",
+  "mode": "critical",
+  "checks": [
+    "production HTTPS cookie login, real dashboard, security headers and CSP",
+    "3 production modules return 200 with ADMIN read permissions; empty inventory and published legal content verified",
+    "production cookie session survives browser refresh",
+    "real production 403 rejects logout without CSRF and preserves session",
+    "production 390px layout has no horizontal overflow",
+    "no JavaScript, CSP, network failures or non-authentication writes",
+    "production session explicitly signed out"
+  ],
+  "pages": [
+    {
+      "resource": "vehicles",
+      "status": 200,
+      "total": 0
+    },
+    {
+      "resource": "legal-documents",
+      "status": 200,
+      "total": 5
+    },
+    {
+      "resource": "esign-approvals",
+      "status": 200,
+      "total": 0
+    }
+  ],
+  "errors": [],
+  "consoleErrors": [],
+  "unexpectedWrites": [],
+  "failedRequests": [],
+  "cookieMetadata": [
+    {
+      "name": "admin_session",
+      "domain": "mini-api.subauto.keybox.cloud",
+      "path": "/api/admin",
+      "secure": true,
+      "httpOnly": true,
+      "sameSite": "Strict"
+    }
+  ],
+  "securityHeaders": {
+    "content-security-policy": "default-src 'self'; connect-src 'self' https://mini-api.subauto.keybox.cloud; img-src 'self' blob: data: https://mini-api.subauto.keybox.cloud; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+    "strict-transport-security": "max-age=31536000",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "referrer-policy": "no-referrer"
+  },
+  "bundleAssets": [
+    "/assets/index-BT2DweYJ.js"
+  ],
+  "apiHealth": {
+    "status": "ok",
+    "database": "connected",
+    "version": "20261016-1320"
+  },
+  "dashboardCounts": {
+    "applications": 0,
+    "contracts": 0,
+    "bills": 0,
+    "handovers": 0,
+    "services": 0,
+    "refunds": 0
+  }
+}

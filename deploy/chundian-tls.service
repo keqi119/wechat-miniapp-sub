@@ -1,0 +1,8 @@
+[Unit]
+Description=Renew independent Chundian TLS certificates
+After=network-online.target
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/wechat-miniapp-sub/deploy/issue-tls.sh
+User=root
+UMask=0077

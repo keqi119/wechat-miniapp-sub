@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-10-16T06:01:31.586Z",
+  "customerCount": 1,
+  "latestCustomer": {
+    "createdAt": "2026-10-16T06:01:20.999Z",
+    "phoneStored": true,
+    "openIdLinked": true,
+    "activeSessions": 1,
+    "consents": [
+      {
+        "type": "terms",
+        "version": 1,
+        "source": "LOGIN",
+        "acceptedAt": "2026-10-16T06:01:21.041Z"
+      },
+      {
+        "type": "privacy",
+        "version": 1,
+        "source": "LOGIN",
+        "acceptedAt": "2026-10-16T06:01:21.041Z"
+      }
+    ]
+  },
+  "orders": 0
+}

@@ -1,0 +1,208 @@
+{
+  "recordedAt": "2026-10-16T05:09:27.315Z",
+  "scope": "Actual WeChat DevTools native rendering/navigation, read-only, no mocked responses/storage, no login/SMS/pay/sign or business writes. Screenshots are simulator evidence, not physical-device verification.",
+  "sdk": "0.13.0",
+  "pages": [
+    {
+      "name": "home",
+      "url": "/pages/home/index",
+      "path": "pages/home/index",
+      "loading": false,
+      "error": "无法连接后台，请检查网络后重试。",
+      "hasPageRoot": true,
+      "screenshotRequested": "home.png",
+      "screenshotError": "timeout waiting for automator response"
+    },
+    {
+      "name": "catalog",
+      "url": "/pages/catalog/index",
+      "path": "pages/catalog/index",
+      "loading": false,
+      "error": "无法连接后台，请检查网络后重试。",
+      "hasPageRoot": true,
+      "screenshotRequested": "catalog.png",
+      "screenshotError": "timeout waiting for automator response"
+    },
+    {
+      "name": "use",
+      "url": "/pages/use/index",
+      "path": "pages/use/index",
+      "loading": false,
+      "error": "请先登录后继续。",
+      "hasPageRoot": true,
+      "screenshot": "use.png"
+    },
+    {
+      "name": "mine",
+      "url": "/pages/mine/index",
+      "path": "pages/mine/index",
+      "loading": false,
+      "error": "请先登录后继续。",
+      "hasPageRoot": true,
+      "screenshot": "mine.png"
+    },
+    {
+      "name": "settings",
+      "url": "/pages/settings/index",
+      "path": "pages/settings/index",
+      "error": "无法连接后台，请检查网络后重试。",
+      "authenticated": false,
+      "busy": false,
+      "hasPageRoot": true,
+      "screenshot": "settings.png"
+    },
+    {
+      "name": "terms",
+      "url": "/pages/legal/index?type=terms",
+      "path": "pages/legal/index",
+      "loading": false,
+      "error": "无法连接后台，请检查网络后重试。",
+      "hasPageRoot": true,
+      "screenshotRequested": "terms.png",
+      "screenshotError": "timeout waiting for automator response"
+    },
+    {
+      "name": "privacy",
+      "url": "/pages/legal/index?type=privacy",
+      "path": "pages/legal/index",
+      "loading": false,
+      "error": "无法连接后台，请检查网络后重试。",
+      "hasPageRoot": true,
+      "screenshotRequested": "privacy.png",
+      "screenshotError": "timeout waiting for automator response"
+    },
+    {
+      "name": "application-legal",
+      "url": "/pages/legal/index?type=application",
+      "path": "pages/legal/index",
+      "loading": false,
+      "error": "无法连接后台，请检查网络后重试。",
+      "hasPageRoot": true,
+      "screenshot": "application-legal.png"
+    },
+    {
+      "name": "vehicle-no-id",
+      "url": "/pages/vehicle/index",
+      "path": "pages/vehicle/index",
+      "loading": false,
+      "error": "缺少车辆编号，请返回选车页重新选择。",
+      "hasPageRoot": true,
+      "screenshot": "vehicle-no-id.png"
+    },
+    {
+      "name": "application-no-id",
+      "url": "/pages/application/index",
+      "path": "pages/application/index",
+      "loading": false,
+      "error": "缺少车辆或套餐信息，请重新选择方案。",
+      "busy": false,
+      "hasPageRoot": true,
+      "screenshot": "application-no-id.png"
+    },
+    {
+      "name": "application-detail-no-id",
+      "url": "/pages/application-detail/index",
+      "path": "pages/application-detail/index",
+      "loading": false,
+      "error": "缺少有效的业务编号，请返回列表重新进入。",
+      "actionError": "",
+      "busy": false,
+      "hasPageRoot": true,
+      "screenshot": "application-detail-no-id.png"
+    },
+    {
+      "name": "profile-anonymous",
+      "url": "/pages/profile/index",
+      "path": "pages/profile/index",
+      "loading": false,
+      "error": "请先登录后继续。",
+      "busy": false,
+      "hasPageRoot": true,
+      "screenshot": "profile-anonymous.png"
+    },
+    {
+      "name": "records-anonymous",
+      "url": "/pages/records/index?type=mileages",
+      "path": "pages/records/index",
+      "loading": false,
+      "error": "请先登录后继续。",
+      "hasPageRoot": true,
+      "screenshot": "records-anonymous.png"
+    },
+    {
+      "name": "record-no-id",
+      "url": "/pages/record/index?type=contracts",
+      "path": "pages/record/index",
+      "loading": false,
+      "error": "记录地址不完整，请从记录列表重新进入。",
+      "busy": false,
+      "hasPageRoot": true,
+      "screenshot": "record-no-id.png"
+    },
+    {
+      "name": "service-anonymous",
+      "url": "/pages/service/index",
+      "path": "pages/service/index",
+      "loading": false,
+      "error": "请先登录后继续。",
+      "busy": false,
+      "hasPageRoot": true,
+      "screenshot": "service-anonymous.png"
+    },
+    {
+      "name": "mileage-anonymous",
+      "url": "/pages/mileage/index",
+      "path": "pages/mileage/index",
+      "loading": false,
+      "error": "请先登录后继续。",
+      "busy": false,
+      "hasPageRoot": true,
+      "screenshotRequested": "mileage-anonymous.png",
+      "screenshotError": "timeout waiting for automator response"
+    },
+    {
+      "name": "handover-anonymous",
+      "url": "/pages/handover/index",
+      "path": "pages/handover/index",
+      "loading": false,
+      "error": "请先登录后继续。",
+      "busy": false,
+      "hasPageRoot": true,
+      "screenshot": "handover-anonymous.png"
+    },
+    {
+      "name": "sign-no-entry",
+      "url": "/pages/sign/index",
+      "path": "pages/sign/index",
+      "loading": false,
+      "error": "请重新登录后发起签署。",
+      "hasPageRoot": true,
+      "screenshot": "sign-no-entry.png"
+    }
+  ],
+  "exceptions": [],
+  "consoleErrors": [
+    {
+      "type": "warn",
+      "args": [
+        "wx.getSystemInfoSync is deprecated.Please use wx.getSystemSetting/wx.getAppAuthorizeSetting/wx.getDeviceInfo/wx.getWindowInfo/wx.getAppBaseInfo instead."
+      ]
+    }
+  ],
+  "system": {
+    "platform": "devtools",
+    "system": "iOS 10.0.1",
+    "model": "iPhone 12/13 mini",
+    "SDKVersion": "3.17.4",
+    "version": "8.0.5",
+    "windowWidth": 375,
+    "windowHeight": 639
+  },
+  "summary": {
+    "routes": 18,
+    "nativePageRoots": 18,
+    "screenshots": 13,
+    "screenshotTimeouts": 5,
+    "exceptions": 0
+  }
+}

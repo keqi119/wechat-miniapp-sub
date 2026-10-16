@@ -1,0 +1,7 @@
+{
+  "recordedAt": "2026-10-16T05:13:36.725Z",
+  "scope": "Read-only wx.request GET to independent public health; no configuration/storage/session or business mutations.",
+  "result": {
+    "errMsg": "request:fail url not in domain list"
+  }
+}

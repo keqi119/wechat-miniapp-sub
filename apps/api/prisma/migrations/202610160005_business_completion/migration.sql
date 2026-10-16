@@ -1,0 +1,12 @@
+ALTER TYPE "BillStatus" ADD VALUE 'REVIEWED';
+ALTER TYPE "HandoverStatus" ADD VALUE 'SUPERSEDED';
+ALTER TABLE "Order" ADD COLUMN "cancellationReason" TEXT, ADD COLUMN "terminationFileId" TEXT, ADD COLUMN "cancelledAt" TIMESTAMP(3);
+ALTER TABLE "Bill" ADD COLUMN "description" TEXT NOT NULL DEFAULT '', ADD COLUMN "evidenceFileIds" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[], ADD COLUMN "createdBy" TEXT, ADD COLUMN "reviewedBy" TEXT, ADD COLUMN "reviewedAt" TIMESTAMP(3), ADD COLUMN "reviewNote" TEXT, ADD COLUMN "idempotencyKey" TEXT;
+CREATE UNIQUE INDEX "Bill_orderId_idempotencyKey_key" ON "Bill"("orderId","idempotencyKey");
+ALTER TABLE "Handover" ADD COLUMN "revision" INTEGER NOT NULL DEFAULT 1, ADD COLUMN "previousHandoverId" TEXT, ADD COLUMN "resolutionNote" TEXT, ADD COLUMN "resolvedBy" TEXT;
+CREATE UNIQUE INDEX "Handover_previousHandoverId_key" ON "Handover"("previousHandoverId");
+CREATE TABLE "CustomerConsent" ("id" TEXT NOT NULL, "customerId" TEXT NOT NULL, "documentId" TEXT NOT NULL, "type" TEXT NOT NULL, "version" INTEGER NOT NULL, "acceptedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "source" TEXT NOT NULL, CONSTRAINT "CustomerConsent_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "CustomerConsent_customerId_documentId_key" ON "CustomerConsent"("customerId","documentId");
+CREATE INDEX "CustomerConsent_customerId_type_idx" ON "CustomerConsent"("customerId","type");
+ALTER TABLE "CustomerConsent" ADD CONSTRAINT "CustomerConsent_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "CustomerConsent" ADD CONSTRAINT "CustomerConsent_documentId_fkey" FOREIGN KEY ("documentId") REFERENCES "LegalDocument"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

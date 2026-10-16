@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-10-16T03:59:13.643Z",
+  "evidence": [
+    {
+      "domain": "mini-admin.subauto.keybox.cloud",
+      "recordId": "2110943621951717376",
+      "value": "139.196.227.195",
+      "created": true
+    },
+    {
+      "domain": "mini-api.subauto.keybox.cloud",
+      "recordId": "2110943624765998080",
+      "value": "139.196.227.195",
+      "created": true
+    }
+  ]
+}

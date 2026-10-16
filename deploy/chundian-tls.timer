@@ -1,0 +1,8 @@
+[Unit]
+Description=Check Chundian TLS renewal daily
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+RandomizedDelaySec=1800
+[Install]
+WantedBy=timers.target

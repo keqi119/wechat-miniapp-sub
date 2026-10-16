@@ -1,0 +1,13 @@
+{
+  "applicationId": "qa-admin-browser-cmvaharv50004urhkdnfdyi6y",
+  "checks": [
+    "dashboard response loaded before screenshot",
+    "application review and latest state reread",
+    "versioned final plan uses exact cents and server commercial hash",
+    "final-plan detail restores and rereads after reload",
+    "390px final-plan detail has no viewport overflow"
+  ],
+  "errors": [],
+  "revision": 1,
+  "commercialHash": "60bf37cc034862dba42ad63d5b83c427e916cb4f07a9f6de9094beb1063e14a2"
+}

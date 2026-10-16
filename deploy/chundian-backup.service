@@ -1,0 +1,10 @@
+[Unit]
+Description=Independent Chundian encrypted database and file backup
+After=docker.service
+Requires=docker.service
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/wechat-miniapp-sub/deploy/backup.sh
+ExecStartPost=/bin/bash /opt/wechat-miniapp-sub/deploy/maintenance.sh
+User=root
+UMask=0077

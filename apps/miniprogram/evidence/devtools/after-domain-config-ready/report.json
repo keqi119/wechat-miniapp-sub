@@ -1,0 +1,99 @@
+{
+  "recordedAt": "2026-10-16T05:57:09.649Z",
+  "scope": "Production public native wx.request and DevTools page rendering only. No mocks, login, SMS, storage writes, customer business writes, payments, identity verification or signing.",
+  "requests": [
+    {
+      "endpoint": "/health",
+      "statusCode": 200,
+      "status": "ok"
+    },
+    {
+      "endpoint": "/public/vehicles",
+      "statusCode": 200,
+      "items": 0,
+      "total": 0,
+      "emptyInventoryExpected": true
+    },
+    {
+      "endpoint": "/public/legal/terms",
+      "statusCode": 200,
+      "document": {
+        "id": "cmvaiahrw0001oh01bvfs1faf",
+        "type": "terms",
+        "title": "纯电主义小程序用户协议",
+        "version": 1,
+        "status": "PUBLISHED",
+        "contentLength": 1005,
+        "contentSha256": "c6e03eb6d66adb35b0c23a9de262dff29ec714c007dd7c74fe3a02b421a9f383"
+      }
+    },
+    {
+      "endpoint": "/public/legal/privacy",
+      "statusCode": 200,
+      "document": {
+        "id": "cmvaiai0n0004oh01bg9lsbcp",
+        "type": "privacy",
+        "title": "纯电主义小程序隐私政策",
+        "version": 1,
+        "status": "PUBLISHED",
+        "contentLength": 3264,
+        "contentSha256": "025919ce885a0914af09dcfb4f8cb15e19cff3fad34d7e2b2e0c059cfada228d"
+      }
+    },
+    {
+      "endpoint": "/public/legal/application",
+      "statusCode": 200,
+      "document": {
+        "id": "cmvaiaia20007oh01hytbb73p",
+        "type": "application",
+        "title": "纯电主义订阅申请须知",
+        "version": 1,
+        "status": "PUBLISHED",
+        "contentLength": 708,
+        "contentSha256": "950d37c12df65c15ed955d3cc4c38a3ece0ff9822a9f922c21d1a3e3d2016999"
+      }
+    },
+    {
+      "endpoint": "/public/legal/subscription",
+      "statusCode": 200,
+      "document": {
+        "id": "cmvaiaiif000aoh01szy2q1st",
+        "type": "subscription",
+        "title": "纯电主义汽车订阅服务合同及最终方案附件",
+        "version": 1,
+        "status": "PUBLISHED",
+        "contentLength": 3736,
+        "contentSha256": "d320b47764200484bda73e031c2372ef898f641706db48847a3bd92b7cc5f30d"
+      }
+    },
+    {
+      "endpoint": "/public/legal/handover",
+      "statusCode": 200,
+      "document": {
+        "id": "cmvaiairz000doh01i5cqcjzz",
+        "type": "handover",
+        "title": "车辆交接确认单",
+        "version": 1,
+        "status": "PUBLISHED",
+        "contentLength": 774,
+        "contentSha256": "0486759fb24165ea9cbfb2afcf5c889a594e571ece72f6ea2a499b5257a68efd"
+      }
+    }
+  ],
+  "pages": [],
+  "exceptions": [],
+  "domainCheck": {
+    "projectUrlCheck": true,
+    "privateUrlCheck": null,
+    "effectiveUrlCheck": true
+  },
+  "sdkError": "Cannot destructure property 'rawPath' of 't.getPageMetaByWebviewId(...)' as it is null.",
+  "summary": {
+    "requests": 7,
+    "successfulRequests": 7,
+    "nativePages": 0,
+    "pageErrors": 0,
+    "exceptions": 0,
+    "screenshots": 0
+  }
+}

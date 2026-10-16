@@ -3,6 +3,7 @@ dist/
 coverage/
 .superpowers/
 .runtime/
+var/
 .env
 .env.*
 !.env.example
@@ -16,4 +17,5 @@ project.private.config.json
 config.local.js
 playwright-report/
 test-results/
+docs/evidence/wechat-domain-confirmation.jpg
 .DS_Store

@@ -1,6 +1,18 @@
-* text=auto eol=lf
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.pdf binary
-*.woff2 binary
+# Preserve byte-for-byte provenance and already-applied migration checksums.
+reference/miniprogram-mock/** -text
+apps/api/prisma/migrations/** -text
+apps/api/test/fadada-digest.spec.ts -text
+apps/api/test/fadada-api-client.spec.ts -text
+apps/api/test/enterprise-seal-policy.spec.ts -text
+apps/api/test/enterprise-seal-signing-plan.spec.ts -text
+apps/api/src/esign/esign.provider.ts -text
+apps/api/src/esign/fadada/fadada.types.ts -text
+apps/api/src/esign/fadada/fadada-digest.ts -text
+apps/api/src/esign/fadada/fadada-request-builder.ts -text
+apps/api/src/esign/fadada/fadada-http-client.ts -text
+apps/api/src/esign/fadada/fadada-api.client.ts -text
+apps/api/src/esign/enterprise-seal/enterprise-seal.types.ts -text
+apps/api/src/esign/enterprise-seal/signature-policy-engine.ts -text
+apps/api/src/esign/enterprise-seal/signing-plan-compiler.ts -text
+apps/api/src/esign/enterprise-seal/signing-plan-hash.ts -text
+apps/api/src/esign/enterprise-seal/enterprise-seal-mask.ts -text

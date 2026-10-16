@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "real detail eligibility exposes original task and same-PDF renewal action",
+    "real processing lease blocks renewal and shows server reason",
+    "real renewal rejects unverified draft seal, preserves form, task and immutable PDF",
+    "renewal form and real rejection remain usable at 390px without page overflow"
+  ],
+  "errors": [],
+  "fixture": "local synthetic expired authorization and unexecuted task metadata only; draft seal and unverified identity remain unchanged; no successful renewal claimed"
+}

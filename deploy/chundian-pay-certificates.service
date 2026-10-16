@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh Chundian WeChat Pay verification certificates
+After=docker.service network-online.target
+Requires=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker run --rm --network chundian-prod_default --read-only --user 0:1000 --cap-drop ALL --security-opt no-new-privileges -v /opt/wechat-miniapp-sub/.env.production:/run/config.env:ro -v /opt/wechat-miniapp-sub/secrets:/run/chundian-secrets -v /opt/wechat-miniapp-sub/deploy/refresh-wechat-certificates.mjs:/run/refresh.mjs:ro node:24.21.0-bookworm-slim node /run/refresh.mjs /run/config.env
+User=root
+UMask=0027

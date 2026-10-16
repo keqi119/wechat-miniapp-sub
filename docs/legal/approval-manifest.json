@@ -1,0 +1,72 @@
+{
+  "status": "APPROVED",
+  "preparedAt": "2026-10-16T12:25:16.3089732+08:00",
+  "files": [
+    {
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\application-notice.md",
+      "sha256": "ee47e10947af771cd0a2e68cb60533218436ca4289fb466e545205fbd79cf2e7"
+    },
+    {
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\commercial-schedule.md",
+      "sha256": "113743243539415578996a3328e6503e58a88bd57b5b18823457d1fb409d5188"
+    },
+    {
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\handover-record.md",
+      "sha256": "71daf80036a3f77e3407d1434891846e845157c0e64495ebcaf4884b157b30ba"
+    },
+    {
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\privacy-policy.md",
+      "sha256": "555e796c91464c41b506d6560e53550a183f4f6f9f9c7017a86ebc90704d4d77"
+    },
+    {
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\README.md",
+      "sha256": "2821f118abf156f91b3e2e1cc6eb16f346c402408c12206f4073a2cacc2dc19b"
+    },
+    {
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\subscription-contract.md",
+      "sha256": "b587ce62ac90a10152b89908ca2fd1a7c3a49f8e9d062d05067102e7ea4a0e23"
+    },
+    {
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\user-agreement.md",
+      "sha256": "bdcca4eb4f2ac673df24b2bb8d7454362cd27ecb03cd26f280c552983b5b3cf2"
+    }
+  ],
+  "approvedAt": "2026-10-16T04:34:46.609Z",
+  "approvedBy": "用户代表上海晓浪网络科技有限公司",
+  "approvalStatement": "已审阅并批准六份文案，逐单附件由运营填写后签署",
+  "approvalQuestionId": "call_270844bd13a54617b65461608fccb4c5",
+  "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
+  "editorialChanges": "仅将草稿/拟定/待确认标记改为已批准正式文本；保留全部实体业务条款及逐单变量。",
+  "approvedFiles": [
+    {
+      "file": "subscription-contract.md",
+      "approvedSourceSha256": "b587ce62ac90a10152b89908ca2fd1a7c3a49f8e9d062d05067102e7ea4a0e23",
+      "finalSha256": "25175276a1cfb09e88ab187845d7eb282aa75f08c4da3b9bbd1d668065135d19"
+    },
+    {
+      "file": "commercial-schedule.md",
+      "approvedSourceSha256": "113743243539415578996a3328e6503e58a88bd57b5b18823457d1fb409d5188",
+      "finalSha256": "cd30fcb8eef2f7c502c71c0b823075afe1e28a7cc2bd6608456898daeed51da7"
+    },
+    {
+      "file": "handover-record.md",
+      "approvedSourceSha256": "71daf80036a3f77e3407d1434891846e845157c0e64495ebcaf4884b157b30ba",
+      "finalSha256": "0486759fb24165ea9cbfb2afcf5c889a594e571ece72f6ea2a499b5257a68efd"
+    },
+    {
+      "file": "user-agreement.md",
+      "approvedSourceSha256": "bdcca4eb4f2ac673df24b2bb8d7454362cd27ecb03cd26f280c552983b5b3cf2",
+      "finalSha256": "c6e03eb6d66adb35b0c23a9de262dff29ec714c007dd7c74fe3a02b421a9f383"
+    },
+    {
+      "file": "privacy-policy.md",
+      "approvedSourceSha256": "555e796c91464c41b506d6560e53550a183f4f6f9f9c7017a86ebc90704d4d77",
+      "finalSha256": "025919ce885a0914af09dcfb4f8cb15e19cff3fad34d7e2b2e0c059cfada228d"
+    },
+    {
+      "file": "application-notice.md",
+      "approvedSourceSha256": "ee47e10947af771cd0a2e68cb60533218436ca4289fb466e545205fbd79cf2e7",
+      "finalSha256": "950d37c12df65c15ed955d3cc4c38a3ece0ff9822a9f922c21d1a3e3d2016999"
+    }
+  ]
+}

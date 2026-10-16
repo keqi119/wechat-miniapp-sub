@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="eyebrow">ACCOUNT / 账户设置</view><view class="title">让每次出行有据可查。</view>
+  <view wx:if="{{error}}" class="notice">{{error}}</view><view wx:if="{{message}}" class="notice">{{message}}</view>
+  <view wx:if="{{authenticated}}" class="card">
+    <view class="section-title">{{profile.name || '已登录客户'}}</view><view class="muted">{{profile.mobile}}</view>
+    <button class="secondary" bindtap="openProfile" disabled="{{busy}}">完善资料</button>
+    <button class="secondary" bindtap="logout" disabled="{{busy}}" loading="{{busy}}">退出账户</button>
+  </view>
+  <view wx:else class="card">
+    <view class="section-title">登录后办理订阅与用车服务</view>
+    <checkbox-group bindchange="consent"><label class="consent-row"><checkbox value="accepted" checked="{{accepted}}" color="#252723"/><text>我已阅读并同意用户协议和隐私政策</text></label></checkbox-group>
+    <button class="primary" open-type="getPhoneNumber" bindgetphonenumber="phoneLogin" disabled="{{busy || !accepted}}" loading="{{busy}}">微信手机号一键登录</button>
+    <view class="section-title setting-heading">短信验证码备用</view>
+    <view class="field"><view class="label">手机号</view><input class="input" type="number" maxlength="11" value="{{mobile}}" data-field="mobile" bindinput="input" disabled="{{busy}}"/></view>
+    <view class="field"><view class="label">验证码</view><input class="input" type="number" maxlength="8" value="{{code}}" data-field="code" bindinput="input" disabled="{{busy}}"/></view>
+    <button class="secondary" bindtap="sendSms" disabled="{{busy || cooldown > 0 || !accepted}}">{{cooldown > 0 ? cooldown + ' 秒后重试' : '获取验证码'}}</button>
+    <button class="primary" bindtap="smsLogin" disabled="{{busy || !accepted}}" loading="{{busy}}">验证并登录</button>
+  </view>
+  <view class="card"><view class="section-title">当前版本协议</view><button wx:for="{{legalDocuments}}" wx:key="id" class="text-button" data-type="{{item.type}}" bindtap="openLegal"><view><view>{{item.title}}</view><view class="muted small">版本 {{item.version}} · 查看完整协议 →</view></view></button><block wx:if="{{authenticated && !consentCurrent}}"><checkbox-group bindchange="consent"><label class="consent-row"><checkbox value="accepted" checked="{{accepted}}" color="#252723"/><text>我已阅读并同意以上版本协议</text></label></checkbox-group><button class="primary" bindtap="acceptCurrentConsents" disabled="{{busy || !accepted}}">记录当前版本同意</button></block></view>
+  <view wx:if="{{authenticated}}" class="card"><view class="section-title">电子签署实名准备</view><view class="muted">{{readiness.readyForSigning ? '实名与证书已就绪' : '请完成供应商实名核验与证书绑定'}}</view><block wx:if="{{!readiness.readyForSigning && readiness.realNameStatus !== 'VERIFIED'}}"><view class="field"><view class="label">实名姓名</view><input class="input" value="{{identityName}}" data-field="identityName" bindinput="input" maxlength="50" disabled="{{busy}}"/></view><view class="field"><view class="label">证件号码</view><input class="input" value="{{idCardNo}}" data-field="idCardNo" bindinput="input" maxlength="18" password="{{true}}" disabled="{{busy}}"/></view><button class="primary" bindtap="verifyIdentity" disabled="{{busy}}">前往供应商实名核验</button></block><button class="secondary" bindtap="refreshIdentity" disabled="{{busy}}">查询实名与证书状态</button></view>
+<view class="card"><view class="label">客户服务电话</view><view>+86 {{customerServiceTelephone}}</view><button class="secondary" bindtap="callService">拨打客服电话</button></view>
+  <button class="secondary" bindtap="clearCache" disabled="{{busy}}">清理签署入口缓存</button><button class="primary return-home" bindtap="openHome">返回首页</button>
+</view>

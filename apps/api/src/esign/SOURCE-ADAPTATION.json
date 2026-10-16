@@ -1,0 +1,102 @@
+{
+  "sourceCommit": "453da778dcfefd3727813179382490903644ef26",
+  "retained": [
+    {
+      "path": "apps/api/src/esign/esign.provider.ts",
+      "sourceSha256": "63b912dfc4b581cbe6d8a07148e65c872c9ede7037cad7b6d03176e0e12d90b6",
+      "currentSha256": "63b912dfc4b581cbe6d8a07148e65c872c9ede7037cad7b6d03176e0e12d90b6",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/fadada/fadada-api.client.ts",
+      "sourceSha256": "04d14fec451d4d87ef072bfd0cf144fba9730e578a37629a7e9a6034dbf00242",
+      "currentSha256": "04d14fec451d4d87ef072bfd0cf144fba9730e578a37629a7e9a6034dbf00242",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/fadada/fadada-digest.ts",
+      "sourceSha256": "ae533c75537ece253b2af43c7d662efcf72766e04fcdacd38ebf13e5cbadd795",
+      "currentSha256": "ae533c75537ece253b2af43c7d662efcf72766e04fcdacd38ebf13e5cbadd795",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/fadada/fadada-http-client.ts",
+      "sourceSha256": "949ab0c2ea723be1160df61d3f0da6903782ca288071955977561c60e8391b3e",
+      "currentSha256": "949ab0c2ea723be1160df61d3f0da6903782ca288071955977561c60e8391b3e",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/fadada/fadada-request-builder.ts",
+      "sourceSha256": "b94cf2898ce8ecadb98a10d795fb238a6401b12cdecfdc8aa206862cbd43d4ac",
+      "currentSha256": "b94cf2898ce8ecadb98a10d795fb238a6401b12cdecfdc8aa206862cbd43d4ac",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/fadada/fadada.types.ts",
+      "sourceSha256": "a59e722b56f535051b9ef0c840cddcebdb87413fb9b7c85dcef4c33ea9b933d1",
+      "currentSha256": "a59e722b56f535051b9ef0c840cddcebdb87413fb9b7c85dcef4c33ea9b933d1",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/enterprise-seal/enterprise-seal-mask.ts",
+      "sourceSha256": "b5c3dae81f0b04e6161a2dce99bc4c49fead2715886b1dcd8f8516e1e16a6ec8",
+      "currentSha256": "b5c3dae81f0b04e6161a2dce99bc4c49fead2715886b1dcd8f8516e1e16a6ec8",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/enterprise-seal/enterprise-seal.types.ts",
+      "sourceSha256": "26b0c4abc091b5eea7125b243ad8490ee86ddbcd2729db31ef20c0d95cce6bef",
+      "currentSha256": "26b0c4abc091b5eea7125b243ad8490ee86ddbcd2729db31ef20c0d95cce6bef",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/enterprise-seal/signature-policy-engine.ts",
+      "sourceSha256": "60687a40983c1080fff4b2040acd8ed91795b299d9dd09bde5bfaa9bfce7ba91",
+      "currentSha256": "60687a40983c1080fff4b2040acd8ed91795b299d9dd09bde5bfaa9bfce7ba91",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/enterprise-seal/signing-plan-compiler.ts",
+      "sourceSha256": "388733de3667cdb52b0567b1860d6cdbd5dbc82854187a35e7d6727dabc1f8a0",
+      "currentSha256": "388733de3667cdb52b0567b1860d6cdbd5dbc82854187a35e7d6727dabc1f8a0",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/esign/enterprise-seal/signing-plan-hash.ts",
+      "sourceSha256": "fd8ab0cb8aa36eff9a16e946a02433e56bd430211b1c2ecaab7cdeeae7290331",
+      "currentSha256": "fd8ab0cb8aa36eff9a16e946a02433e56bd430211b1c2ecaab7cdeeae7290331",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/contract/contract-pdf-renderer.service.ts",
+      "sourceSha256": "de405c07c6c5a85afc5b89f9c9f20bfbc9c146d2f8cdd447ac3c6839fcb4b6f2",
+      "currentSha256": "de405c07c6c5a85afc5b89f9c9f20bfbc9c146d2f8cdd447ac3c6839fcb4b6f2",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/contract/contract-pdf-render-model.ts",
+      "sourceSha256": "cb485183e6026fb5abc58f36abb92fb9c380b32153cf6ab1b3161c76057f07ab",
+      "currentSha256": "cb485183e6026fb5abc58f36abb92fb9c380b32153cf6ab1b3161c76057f07ab",
+      "byteIdentical": true
+    },
+    {
+      "path": "apps/api/src/contract/contract-pdf-artifact.types.ts",
+      "sourceSha256": "bc252fb8ad853b735b7926b90a843afe063390177d9ec17ae71174f1651ded16",
+      "currentSha256": "bc252fb8ad853b735b7926b90a843afe063390177d9ec17ae71174f1651ded16",
+      "byteIdentical": true
+    }
+  ],
+  "adaptations": [
+    "fadada.config.ts: replace Nest ConfigService dependency with same get interface; provider default is fadada rather than mock.",
+    "New isolated ESignAccount/EnterpriseSeal/SealAuthority/SignaturePolicy/ESignApproval/FadadaTask models replace old platform entities.",
+    "FadadaESignGateway adapts provider/account/artifact responsibilities using original digest, request, HTTP and API classes unchanged.",
+    "PDF writer uses independent StoredFile storage; subscription renderer/model/types byte-identical. Handover renderer adapted to current checklist/evidence/manifestHash with real coordinates and embedded images.",
+    "All enterprise sealing requires active issuer mapping, authorizations, two distinct people and immutable review hash. Source policy/compiler/hash retained unchanged.",
+    "Only sequential customer then enterprise sealing is enabled for this platform; unsupported parallel policies fail closed.",
+    "Generic provider success does not establish real name, expired certificates are blocked, signed-state requires exact provider identities and archived PDF.",
+    "New strict contract-template adapter interpolates user-approved main contract/commercial schedule using immutable customer-confirmed commercialTerms and canonical billing data; retained renderer/model/types remain unchanged. Missing/unknown placeholders and incomplete handover facts are rejected.",
+    "Review attempts preserve rejected/expired evidence; schema007 replaces the unique business/policy key with an index and serialized active-attempt creation. Authorized distinct reviewers can reject a pending unused attempt.",
+    "Schema008 binds provider query results to identityVersion, current ciphertext digest, transaction/serial and a persistent verify/query lease. Stale workers cannot verify a replacement identity or clear a newer worker lease.",
+    "Expired in-flight tasks can request a fresh two-person authorization of the same PDF/coordinates/task/platform/seal. Approval transaction CAS switches only task.approvalId and records the prior approval; envelope and signer transactions stay unchanged."
+  ]
+}

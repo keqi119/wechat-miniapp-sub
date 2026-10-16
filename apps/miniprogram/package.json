@@ -1,0 +1,19 @@
+{
+  "name": "@independent-platform/miniprogram",
+  "version": "0.1.0",
+  "private": true,
+  "description": "纯电主义独立平台真实微信小程序",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "check": "node scripts/check.cjs",
+    "compile:templates": "node scripts/compile-templates.cjs",
+    "preview": "node scripts/preview.cjs",
+    "build": "node scripts/build.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "miniprogram-compiler": "0.2.3"
+  }
+}

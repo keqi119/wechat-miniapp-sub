@@ -1,0 +1,111 @@
+import type { Entity } from './core';
+import { esignResources, prepareFields } from './esign-resources.ts';
+import { commercialTermLabels, handoverFactLabels } from './business-terms.ts';
+
+export type Field = { key: string; label: string; type?: 'text' | 'number' | 'money' | 'textarea' | 'lines' | 'select' | 'date' | 'files' | 'boolean' | 'password' | 'checklist' | 'commercial'; required?: boolean; readOnly?: boolean; requireFacts?: boolean; defaultValue?: string; options?: [string, string][]; source?: string; sourceFilters?: Record<string, string>; sourceWhen?: { field: string; value: string; source: string }; uploadPurpose?: string; hint?: string; min?: number; max?: number };
+export type Action = { label: string; path: string; fields?: Field[]; fixed?: Record<string, unknown>; warning?: string; kind?: 'danger' | 'primary' };
+export type Resource = { key: string; title: string; singular: string; subtitle: string; fields?: Field[]; columns: { key: string; label: string; format?: 'money' | 'date' }[]; actions?: Action[]; create?: boolean; edit?: boolean; statuses?: string[] };
+const text = (key: string, label: string, required = true): Field => ({ key, label, required });
+const num = (key: string, label: string, min = 0, max?: number): Field => ({ key, label, type: 'number', required: true, min, max });
+const amount = (key: string, label: string): Field => ({ key, label, type: 'money', required: true, hint: '单位：元 · 保存时精确换算为整数分' });
+const ref = (key: string, label: string, source: string): Field => ({ key, label, source, required: true });
+const area = (key: string, label: string, required = false): Field => ({ key, label, type: 'textarea', required });
+const select = (key: string, label: string, options: string[]): Field => ({ key, label, type: 'select', required: true, options: options.map(value => [value, statusLabel(value)]) });
+const statusColumn = { key: 'status', label: '状态' };
+const created = { key: 'createdAt', label: '创建时间', format: 'date' as const };
+const note = area('note', '处理备注', true);
+const planFields: Field[] = [text('name', '套餐名称'), num('months', '订阅月数', 1, 120), amount('monthlyFeeAmount', '每月订阅费'), num('mileagePerMonthKm', '每月含里程（km）'), amount('excessMileagePriceAmount', '超里程单价 / km'), area('energyDescription', '能源说明', true), { key: 'benefits', label: '订阅权益', type: 'lines', hint: '每行一项权益' }, area('conditions', '使用与销售条件', true)];
+export const labels: Record<string, string> = {
+  DRAFT: '草稿', PUBLISHED: '已发布', AVAILABLE: '可订阅', RESERVED: '已预留', IN_USE: '用车中', UNPUBLISHED: '未上架', RETIRED: '已退出',
+  SUBMITTED: '待审核', IN_REVIEW: '审核中', NEEDS_INFO: '待补件', REJECTED: '已拒绝', PENDING_CONFIRMATION: '待确认', CONFIRMED: '已确认', CANCELLED: '已取消',
+  PENDING_SIGNATURE: '待签署', SIGNING: '签署中', SIGNED: '已签署', PENDING_PAYMENT: '待支付', PAID: '已支付', ACTIVE: '进行中', COMPLETED: '已完成', CLOSED: '已关闭',
+  PENDING: '待处理', APPROVED: '已通过', PROCESSING: '处理中', FAILED: '失败', SUCCEEDED: '已成功', OPEN: '待受理', ASSIGNED: '已派单', RESOLVED: '已解决',
+  OVERDUE: '已逾期', HELD: '持有中', REFUNDED: '已退款', UNREAD: '未读', READ: '已读', RETURN: '退车', DELIVERY: '交付',
+  ADMIN: '管理员', OPERATIONS: '运营审核', FINANCE: '财务', SUPPORT: '客服', PRIVACY: '隐私政策', USER_AGREEMENT: '用户协议', SUBSCRIPTION_CONTRACT: '订阅合同',
+  AWAITING_CONFIRMATION: '待客户确认', FINAL_PLAN_CONFIRMED: '方案已确认', AWAITING_SIGNATURE: '待签署', AWAITING_PAYMENT: '待收款', AWAITING_HANDOVER: '待交付',
+  PENDING_APPROVAL: '待审核', CUSTOMER_CONFIRMED: '客户已确认', OBJECTION_SUBMITTED: '客户提出异议', IN_PROGRESS: '处理中', ACCEPTED: '已受理', EXPIRED: '已到期', VOID: '已作废', CREATING: '创建中',
+  application: '申请须知', privacy: '隐私政策', terms: '用户协议', subscription: '订阅合同', handover: '交接协议',
+  LOGIN: '登录后台', CREATE: '新建记录', UPDATE: '更新记录', PUBLISH: '发布', UNPUBLISH: '下架', ACTIVATE: '启用', DEACTIVATE: '停用', REVIEW: '审核', FINAL_PLAN: '发布最终方案', SUBMIT: '提交', CONFIRM: '确认', REQUEST: '发起申请', APPROVE: '审批通过', REJECT: '拒绝', ASSIGN: '派单', UPLOAD: '上传文件', STATUS: '更新状态', COMPLETE: '完成',
+  vehicles: '车辆', plans: '套餐', users: '后台账号', applications: '申请', orders: '订单', contracts: '合同', bills: '账单', payments: '支付', deposits: '押金', refunds: '退款', handovers: '交接', mileages: '里程', services: '工单', entitlements: '权益', notifications: '通知', 'legal-documents': '协议', 'model-definitions': '车型', 'audit-logs': '审计', files: '附件', customers: '客户',
+  rescue: '道路救援', accident: '事故报案', SUBSCRIPTION: '订阅费用', DEPOSIT: '押金', RECEIPT: '收取', REFUND: '退回', CUSTOMER: '客户', PROVIDER: '服务商',
+  'enterprise-seals': '企业印章', 'seal-authorities': '用印授权', 'signature-policies': '签署策略', 'esign-approvals': '签署计划审批',
+  DISABLED: '已停用', REVOKED: '已撤销', USER: '指定人员', ROLE: '后台角色', REQUEST_USE: '申请用印', APPROVE_USE: '复核用印', SEQUENTIAL: '先客户签署，再企业盖章', HANDOVER: '车辆交接单',
+  REVIEWED: '复核已通过', SUPERSEDED: '已被修订版替代', EXTRA_FEE: '额外费用', RETURN_SETTLEMENT: '退车结算', CUSTOMER_SIGN: '客户签署', ENTERPRISE_SEAL: '企业盖章', PLATFORM: '服务平台',
+  SEAL_DRAFT_CREATED: '印章建档', SEAL_ACTIVATED: '印章核验启用', SEAL_DISABLED: '停用印章', SEAL_AUTHORITY_GRANTED: '授予用印权限', SEAL_AUTHORITY_REVOKED: '撤销用印权限', SIGNATURE_REVIEW_REQUESTED: '提交签署复核', SIGNATURE_REVIEW_APPROVED: '签署复核通过', SIGNATURE_POLICY_DRAFT: '新建签署策略', SIGNATURE_POLICY_ACTIVATED: '启用签署策略', SIGNATURE_POLICY_DISABLED: '停用签署策略',
+};
+export function statusLabel(value: string) { return labels[value] ?? value; }
+Object.assign(labels, commercialTermLabels, handoverFactLabels);
+export const resources: Resource[] = [
+  { key: 'vehicles', title: '车辆管理', singular: '车辆', subtitle: '维护车辆档案、真实车况与可售状态。', create: true, edit: true, statuses: ['DRAFT', 'PUBLISHED', 'UNPUBLISHED', 'RESERVED', 'IN_USE'], columns: [{ key: 'title', label: '车辆' }, { key: 'brand', label: '品牌' }, { key: 'city', label: '所在城市' }, { key: 'mileageKm', label: '里程 / km' }, statusColumn, created], fields: [text('brand', '品牌'), text('model', '车型'), text('title', '车辆标题'), num('year', '上牌年份', 2000, 2100), text('city', '城市'), num('mileageKm', '累计里程（km）'), num('batteryHealthPercent', '电池健康度（%）', 0, 100), area('description', '车辆介绍'), area('conditionDisclosure', '车况披露', true), { key: 'coverFileId', label: '封面照片', type: 'files' }, { key: 'mediaFileIds', label: '车辆照片与附件', type: 'files' }], actions: [{ label: '上架车辆', path: 'publish', warning: '上架后客户可在小程序浏览此车辆及有效套餐。', kind: 'primary' }, { label: '下架车辆', path: 'unpublish', kind: 'danger' }] },
+  { key: 'model-definitions', title: '车型资料', singular: '车型', subtitle: '统一车型信息，让车辆目录保持清晰。', create: true, edit: true, columns: [{ key: 'brand', label: '品牌' }, { key: 'name', label: '车型' }, { key: 'bodyType', label: '车身类型' }, created], fields: [text('brand', '品牌'), text('name', '车型名称'), text('bodyType', '车身类型'), area('description', '车型说明')] },
+  { key: 'plans', title: '订阅套餐', singular: '套餐', subtitle: '车辆绑定套餐；金额以整数分入库。', create: true, edit: true, columns: [{ key: 'name', label: '套餐名称' }, { key: 'vehicleId', label: '关联车辆' }, { key: 'months', label: '期限 / 月' }, { key: 'monthlyFeeAmount', label: '月费', format: 'money' }, { key: 'active', label: '启用' }, created], fields: [ref('vehicleId', '关联车辆', 'vehicles'), ...planFields], actions: [{ label: '启用套餐', path: 'activate', kind: 'primary' }, { label: '停用套餐', path: 'deactivate', kind: 'danger' }] },
+  { key: 'customers', title: '客户档案', singular: '客户', subtitle: '查看客户身份、资料附件和业务记录。审核请进入订阅申请。', columns: [{ key: 'name', label: '客户姓名' }, { key: 'mobile', label: '认证手机号' }, { key: 'drivingYears', label: '驾龄 / 年' }, created] },
+  { key: 'applications', title: '订阅申请', singular: '申请', subtitle: '核验资料，确定押金，发布客户可确认的最终方案。', statuses: ['SUBMITTED', 'IN_REVIEW', 'NEEDS_INFO', 'AWAITING_CONFIRMATION', 'FINAL_PLAN_CONFIRMED', 'REJECTED'], columns: [{ key: 'id', label: '申请编号' }, { key: 'customer.name', label: '客户' }, { key: 'vehicle.title', label: '申请车辆' }, { key: 'revision', label: '方案版本' }, statusColumn, created], actions: [
+    { label: '受理审核', path: 'review', fixed: { decision: 'IN_REVIEW' }, fields: [note], kind: 'primary' }, { label: '要求补件', path: 'review', fixed: { decision: 'NEEDS_INFO' }, fields: [note] }, { label: '拒绝申请', path: 'review', fixed: { decision: 'REJECTED' }, fields: [note], kind: 'danger' },
+    { label: '发布最终方案', path: 'final-plan', warning: '发布会生成新方案版本和商业条款哈希；客户确认后才形成订单。请核对全部金额与日期。', kind: 'primary', fields: [{ key: 'revision', label: '当前方案版本', type: 'number', required: true, readOnly: true, min: 0 }, ...planFields.filter(f => f.key !== 'name'), amount('depositAmount', '押金'), { key: 'startDate', label: '起租日期', type: 'date', required: true }, { key: 'firstDueDate', label: '首期到期日', type: 'date', required: true }, { key: 'commercialTerms', label: '逐单商业条款（14项）', type: 'commercial', required: true, hint: '明确填写范围、责任和计算规则；不适用的项目请逐项注明。金额与起租、付款日期采用上方结构化字段，不在此重复填写。' }] }
+  ] },
+  { key: 'orders', title: '订阅订单', singular: '订单', subtitle: '追踪客户确认后的正式订阅和方案快照。', columns: [{ key: 'id', label: '订单编号' }, { key: 'customer.name', label: '客户' }, { key: 'vehicle.title', label: '车辆' }, statusColumn, created], actions: [{ label: '安全取消订单', path: 'cancel', fields: [area('reason', '取消原因', true), { key: 'terminationFileId', label: '正式终止协议（如合同已签）', type: 'files', uploadPurpose: 'evidence', hint: '已签合同须上传已签署的正式终止PDF；所有实付须完成退款后才能取消' }], warning: '服务端将核验尚未交付、无渠道处理中付款、全部实付退款及合同终止证据，再取消订单与释放车辆。', kind: 'danger' }] },
+  { key: 'contracts', title: '电子合同', singular: '合同', subtitle: '签约状态来自可信回调与渠道查询。', columns: [{ key: 'id', label: '合同编号' }, { key: 'orderId', label: '订单' }, { key: 'version', label: '文档版本' }, statusColumn, created], actions: [{ label: '准备PDF与签署复核', path: 'prepare-signature', fields: prepareFields('SUBSCRIPTION'), warning: '服务端将检查实名证书、正式文案、策略与用印权限，生成不可变PDF和待双人复核的签署计划。此操作不会向供应商发起签署。', kind: 'primary' }, { label: '发起签署', path: 'send', warning: '此操作会调用真实电子签供应商，为本合同创建签署任务。', kind: 'primary' }, { label: '同步签署状态', path: 'sync' }] },
+  { key: 'bills', title: '月度账单', singular: '费用账单', create: true, fields: [ref('orderId', '关联订单', 'orders'), { ...select('type', '费用类型', ['EXTRA_FEE', 'RETURN_SETTLEMENT']), hint: '退车结算须先完成退车交接；费用草稿需另一名人员复核' }, amount('amount', '应付金额'), { key: 'dueDate', label: '应付日期', type: 'date', required: true }, area('description', '费用与结算说明', true), { key: 'fileIds', label: '费用证据附件', type: 'files', uploadPurpose: 'evidence' }], subtitle: '核对订阅费用后发布应付账单。', columns: [{ key: 'id', label: '账单编号' }, { key: 'orderId', label: '订单' }, { key: 'amount', label: '应付金额', format: 'money' }, { key: 'dueDate', label: '到期日', format: 'date' }, statusColumn], actions: [{ label: '审核费用账单', path: 'review', fields: [select('decision', '审核结论', ['APPROVED', 'REJECTED']), note], warning: '费用账单须由创建人之外的另一名财务或管理员复核，审核通过后方可发布。', kind: 'primary' }, { label: '发布账单', path: 'publish', warning: '发布后客户可查看并主动支付本账单。', kind: 'primary' }] },
+  { key: 'payments', title: '支付记录', singular: '支付', subtitle: '到账结果以微信支付回调或主动查询为准。', columns: [{ key: 'id', label: '支付编号' }, { key: 'billId', label: '账单' }, { key: 'amount', label: '金额', format: 'money' }, statusColumn, created], actions: [{ label: '查询支付结果', path: 'sync' }, { label: '关闭未完成支付', path: 'close', kind: 'danger', warning: '关闭前服务端会核对渠道状态。仅未完成且符合恢复条件的支付可关闭；已到账款项不会由此撤销。' }] },
+  { key: 'deposits', title: '押金台账', singular: '押金', subtitle: '独立追踪押金收取、使用与退回。', columns: [{ key: 'id', label: '台账编号' }, { key: 'orderId', label: '订单' }, { key: 'amount', label: '押金金额', format: 'money' }, statusColumn, created] },
+  { key: 'refunds', title: '退款审核', singular: '退款申请', subtitle: '退款经过审核后由支付渠道执行，保留完整记录。', create: true, columns: [{ key: 'id', label: '退款编号' }, { key: 'paymentId', label: '原支付' }, { key: 'amount', label: '退款金额', format: 'money' }, statusColumn, created], fields: [ref('paymentId', '原支付记录', 'payments'), amount('amount', '退款金额'), area('reason', '退款原因', true)], actions: [{ label: '审核通过', path: 'approve', warning: '通过后会发起真实渠道退款。请核对原支付、退款金额与申请原因。', kind: 'danger' }, { label: '拒绝退款', path: 'reject', fields: [area('reason', '拒绝原因', true)] }, { label: '查询退款结果', path: 'sync' }, { label: '重试已批准退款', path: 'retry', warning: '仅对已批准且处理中退款恢复渠道请求，沿用原退款编号。请先查询渠道结果；服务端执行冷却与幂等校验。', kind: 'danger' }] },
+  { key: 'handovers', title: '车辆交接', singular: '交接单', subtitle: '记录证据、客户确认与独立签署后，再完成交付。', create: true, columns: [{ key: 'id', label: '交接编号' }, { key: 'orderId', label: '订单' }, { key: 'type', label: '交接类型' }, { key: 'readingKm', label: '仪表里程 / km' }, statusColumn], fields: [ref('orderId', '关联订单', 'orders'), select('type', '交接类型', ['DELIVERY', 'RETURN']), num('readingKm', '仪表里程（km）'), { key: 'fileIds', label: '交接照片与附件', type: 'files', required: true }, { key: 'checklist', label: '交接核对清单', type: 'checklist', requireFacts: true, required: true, hint: '逐项记录车辆状态；发布后由服务端生成清单哈希' }], actions: [{ label: '处理异议并修订交接', path: 'revise', fields: [num('readingKm', '修订仪表里程（km）'), { key: 'fileIds', label: '修订交接证据', type: 'files', uploadPurpose: 'handover', required: true }, { key: 'checklist', label: '修订核对清单', type: 'checklist', requireFacts: true, required: true }, area('resolutionNote', '异议处理说明', true)], warning: '保留原交接单与客户异议，另建新版本草稿。修订证据须重新发布、由客户核对确认并独立签署。', kind: 'primary' }, { label: '准备交接签署复核', path: 'prepare-signature', fields: prepareFields('HANDOVER'), warning: '客户事实确认后，可生成交接单PDF与签署复核计划；此操作不会向供应商发起签署。', kind: 'primary' }, { label: '发布交接单', path: 'publish', warning: '发布后客户可阅读证据并确认或提出异议。', kind: 'primary' }, { label: '确认完成交接', path: 'complete', warning: '服务端会核验合同、到账、客户确认和交接签署条件。', kind: 'primary' }] },
+  { key: 'mileages', title: '里程申报', singular: '里程', subtitle: '核验客户申报读数与仪表照片；审核读数独立留痕。', columns: [{ key: 'id', label: '申报编号' }, { key: 'orderId', label: '订单' }, { key: 'readingKm', label: '申报里程 / km' }, statusColumn, created], actions: [{ label: '通过里程审核', path: 'review', fixed: { decision: 'APPROVED' }, fields: [note], kind: 'primary' }, { label: '拒绝里程申报', path: 'review', fixed: { decision: 'REJECTED' }, fields: [note], kind: 'danger' }] },
+  { key: 'services', title: '服务工单', singular: '工单', subtitle: '人工受理、联系客户、派单与进度回填。', statuses: ['SUBMITTED', 'ACCEPTED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'], columns: [{ key: 'id', label: '工单编号' }, { key: 'type', label: '服务类型' }, { key: 'mobile', label: '联系电话' }, { key: 'providerName', label: '服务方' }, statusColumn, created], actions: [{ label: '人工派单', path: 'assign', fields: [text('providerName', '服务方名称'), text('contact', '服务方联系方式'), text('assigneeId', '后台处理人 ID', false), note], kind: 'primary' }, { label: '更新处理进度', path: 'status', fields: [select('status', '工单状态', ['ACCEPTED', 'IN_PROGRESS', 'COMPLETED']), note] }] },
+  { key: 'entitlements', title: '订阅权益', singular: '权益', subtitle: '维护订单权益与使用状态。', create: true, edit: true, columns: [{ key: 'title', label: '权益名称' }, { key: 'orderId', label: '订单' }, statusColumn, created], fields: [ref('orderId', '关联订单', 'orders'), text('title', '权益名称'), area('description', '权益说明', true), select('status', '状态', ['PENDING', 'ACTIVE', 'EXPIRED'])] },
+  { key: 'notifications', title: '站内通知', singular: '通知', subtitle: '向客户发送业务进展通知，追踪已读状态。', create: true, columns: [{ key: 'title', label: '通知标题' }, { key: 'customerId', label: '客户' }, { key: 'readAt', label: '阅读时间', format: 'date' }, created], fields: [ref('customerId', '客户', 'customers'), text('title', '标题'), area('content', '通知正文', true), text('resourceType', '关联资源类型', false), text('resourceId', '关联资源 ID', false)] },
+  { key: 'users', title: '后台账号', singular: '账号', subtitle: '按职责分配运营、财务、客服与管理权限。', create: true, edit: true, columns: [{ key: 'name', label: '姓名' }, { key: 'username', label: '用户名' }, { key: 'role', label: '角色' }, { key: 'active', label: '启用' }, created], fields: [text('username', '用户名'), text('name', '姓名'), { key: 'password', label: '密码', type: 'password', hint: '新建必填；编辑留空则保留当前密码' }, select('role', '角色', ['OPERATIONS', 'FINANCE', 'SUPPORT', 'ADMIN']), { key: 'active', label: '允许登录', type: 'boolean' }] },
+  { key: 'audit-logs', title: '操作审计', singular: '审计记录', subtitle: '留存操作者、业务对象与状态变化，审计记录不可编辑。', columns: [{ key: 'action', label: '操作' }, { key: 'actorId', label: '操作人' }, { key: 'resourceType', label: '资源类型' }, { key: 'resourceId', label: '业务对象' }, created] },
+  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
+  ...esignResources,
+];
+export const groups = [
+  { label: '车源与商品', keys: ['vehicles', 'model-definitions', 'plans'] },
+  { label: '客户与订阅', keys: ['applications', 'customers', 'orders', 'contracts'] },
+  { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds'] },
+  { label: '交付与服务', keys: ['handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
+  { label: '签章运营', keys: ['enterprise-seals', 'seal-authorities', 'signature-policies', 'esign-approvals'] },
+  { label: '系统管理', keys: ['users', 'audit-logs', 'legal-documents'] },
+];
+export function valueAt(entity: Entity, key: string): unknown { return key.split('.').reduce<unknown>((obj, part) => typeof obj === 'object' && obj !== null ? (obj as Record<string, unknown>)[part] : undefined, entity); }
+export function display(value: unknown): string { if (value == null || value === '') return '—'; if (typeof value === 'boolean') return value ? '已启用' : '已停用'; if (typeof value === 'object') return JSON.stringify(value); return statusLabel(String(value)); }
+
+export function actionAllowed(resource: string, action: Action, entity: Entity, userId?: string): boolean {
+  const status = String(entity.status ?? '');
+  if (resource === 'vehicles') return !entity.reservedOrderId && (action.path === 'publish' ? ['DRAFT', 'UNPUBLISHED'].includes(status) : status === 'PUBLISHED');
+  if (resource === 'plans') return action.path === 'activate' ? !entity.active : !!entity.active;
+  if (resource === 'applications') return action.path === 'review' ? ['SUBMITTED', 'IN_REVIEW', 'NEEDS_INFO'].includes(status) : ['IN_REVIEW', 'AWAITING_CONFIRMATION'].includes(status);
+  if (resource === 'contracts') return action.path === 'prepare-signature' ? status === 'DRAFT' : action.path === 'send' ? ['DRAFT', 'REJECTED', 'EXPIRED'].includes(status) : status === 'PENDING';
+  if (resource === 'bills') {
+    const manual = ['EXTRA_FEE', 'RETURN_SETTLEMENT'].includes(String(entity.type));
+    return action.path === 'review' ? manual && status === 'DRAFT' && !!userId && entity.createdBy !== userId : manual ? status === 'REVIEWED' : status === 'DRAFT';
+  }
+  if (resource === 'payments') return action.path === 'close' ? status === 'PENDING' || (status === 'CREATING' && Date.now() - new Date(String(entity.createdAt)).getTime() >= 45000) : ['CREATING', 'PENDING'].includes(status);
+  if (resource === 'refunds') return action.path === 'sync' ? ['PROCESSING', 'SUCCEEDED'].includes(status) : action.path === 'retry' ? status === 'PROCESSING' && !!entity.approvedBy : status === 'PENDING_APPROVAL';
+  if (resource === 'handovers') return action.path === 'revise' ? status === 'OBJECTION_SUBMITTED' : action.path === 'publish' ? status === 'DRAFT' : status === 'CUSTOMER_CONFIRMED';
+  if (resource === 'orders') return ['AWAITING_SIGNATURE', 'AWAITING_PAYMENT', 'AWAITING_HANDOVER'].includes(status);
+  if (resource === 'esign-approvals') {
+    if (action.path === 'renew') return status === 'APPROVED' && !!userId && new Date(String(entity.expiresAt)).getTime() <= Date.now() && (entity.renewalEligibility as { eligible?: boolean } | undefined)?.eligible === true;
+    return status === 'PENDING' && !!userId && entity.requesterId !== userId && (action.path === 'reject' || new Date(String(entity.expiresAt)).getTime() > Date.now());
+  }
+  if (resource === 'enterprise-seals') return action.path === 'activate' ? status === 'DRAFT' && !!userId && entity.confirmedBy !== userId : status === 'ACTIVE';
+  if (resource === 'seal-authorities') return status === 'ACTIVE';
+  if (resource === 'signature-policies') return action.path === 'activate' ? ['DRAFT', 'DISABLED'].includes(status) : status === 'ACTIVE';
+  if (resource === 'mileages') return status === 'SUBMITTED';
+  if (resource === 'services') return action.path === 'assign' ? ['SUBMITTED', 'ACCEPTED', 'ASSIGNED'].includes(status) : ['SUBMITTED', 'ACCEPTED', 'ASSIGNED', 'IN_PROGRESS'].includes(status);
+  return true;
+}
+
+export function detailFor(resource: string, entity: Entity): Record<string, unknown> {
+  const pick = (source: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
+  if (resource === 'enterprise-seals') return pick(entity, ['id', 'sealName', 'organizationName', 'providerCustomerId', 'providerSignatureId', 'evidenceFileId', 'status', 'confirmedBy', 'confirmedAt', 'createdAt']);
+  if (resource === 'applications') return {
+    ...pick(entity, ['id', 'status', 'customerId', 'vehicleId', 'subscriptionPlanId', 'revision']),
+    finalPlan: entity.finalPlan && typeof entity.finalPlan === 'object' ? pick(entity.finalPlan as Record<string, unknown>, ['revision', 'commercialHash', 'monthlyFeeAmount', 'depositAmount', 'months', 'mileagePerMonthKm', 'excessMileagePriceAmount', 'energyDescription', 'benefits', 'conditions', 'startDate', 'firstDueDate', 'commercialTerms']) : undefined,
+    profile: entity.profile,
+    ...(entity.vehicle && typeof entity.vehicle === 'object' ? { vehicle: pick(entity.vehicle as Record<string, unknown>, ['title', 'brand', 'model', 'year', 'city', 'mileageKm', 'batteryHealthPercent', 'conditionDisclosure', 'coverFileId', 'mediaFileIds']) } : {}),
+    ...pick(entity, ['consents', 'note', 'createdAt', 'updatedAt']),
+  };
+  return Object.fromEntries(Object.entries(entity).filter(([key]) => !['requestHash', 'idempotencyKey', 'providerCustomerId', 'clientParameters', 'storagePath', 'sha256', 'actions', 'documents', 'details', 'timeline', 'nextAction', 'statusText', 'typeText'].includes(key)));
+}

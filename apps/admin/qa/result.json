@@ -1,0 +1,51 @@
+{
+  "checks": [
+    "real cookie login and dashboard",
+    "vehicle create, authenticated real image upload and list reread",
+    "plan create exact cents, activate and state reread",
+    "vehicle publish and server state confirmation",
+    "legal document integer version and draft-only save",
+    "390px responsive navigation and no horizontal viewport overflow",
+    "cookie session restoration after reload"
+  ],
+  "errors": [],
+  "networkFailures": [
+    {
+      "url": "http://127.0.0.1:3100/api/admin/dashboard",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3100/api/admin/vehicles",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3100/api/admin/plans",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3100/api/admin/vehicles",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3100/api/admin/legal-documents",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3100/api/admin/applications",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3100/api/admin/vehicles",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3100/api/admin/vehicles",
+      "error": "net::ERR_ABORTED"
+    }
+  ],
+  "records": {
+    "vehicleId": "cmvaharv50004urhkdnfdyi6y",
+    "planId": "cmvahasnd0007urhk5ye5xe5z",
+    "legalId": "cmvahauyj000burhk6ny9dax8"
+  }
+}

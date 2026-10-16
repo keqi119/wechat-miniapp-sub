@@ -1,0 +1,96 @@
+{
+  "repository": "https://github.com/keqi119/subscription-Saas",
+  "commit": "453da778dcfefd3727813179382490903644ef26",
+  "files": [
+    {
+      "source": "apps/api/test/fadada-digest.spec.ts",
+      "target": "apps/api/test/fadada-digest.spec.ts",
+      "sha256": "da08a4c805203e1ed48e6c5d262045f7da707a80729706fc247d975d1da604e0",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/test/fadada-api-client.spec.ts",
+      "target": "apps/api/test/fadada-api-client.spec.ts",
+      "sha256": "eb71f37b86c73b1bf63c5a807225c11d86938f9571dea2ec22f1acf07434c4b0",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/test/enterprise-seal-policy.spec.ts",
+      "target": "apps/api/test/enterprise-seal-policy.spec.ts",
+      "sha256": "692036c86de66577eda2fcc1d0b0f41b5419235901f6276808bc0a278cc579ad",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/test/enterprise-seal-signing-plan.spec.ts",
+      "target": "apps/api/test/enterprise-seal-signing-plan.spec.ts",
+      "sha256": "6c5eece615b0d98f373a5a8f3375c373102e72bed2b134e1d5cab27b65b939c1",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/esign.provider.ts",
+      "target": "apps/api/src/esign/esign.provider.ts",
+      "sha256": "63b912dfc4b581cbe6d8a07148e65c872c9ede7037cad7b6d03176e0e12d90b6",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/fadada/fadada.types.ts",
+      "target": "apps/api/src/esign/fadada/fadada.types.ts",
+      "sha256": "a59e722b56f535051b9ef0c840cddcebdb87413fb9b7c85dcef4c33ea9b933d1",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/fadada/fadada-digest.ts",
+      "target": "apps/api/src/esign/fadada/fadada-digest.ts",
+      "sha256": "ae533c75537ece253b2af43c7d662efcf72766e04fcdacd38ebf13e5cbadd795",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/fadada/fadada-request-builder.ts",
+      "target": "apps/api/src/esign/fadada/fadada-request-builder.ts",
+      "sha256": "b94cf2898ce8ecadb98a10d795fb238a6401b12cdecfdc8aa206862cbd43d4ac",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/fadada/fadada-http-client.ts",
+      "target": "apps/api/src/esign/fadada/fadada-http-client.ts",
+      "sha256": "949ab0c2ea723be1160df61d3f0da6903782ca288071955977561c60e8391b3e",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/fadada/fadada-api.client.ts",
+      "target": "apps/api/src/esign/fadada/fadada-api.client.ts",
+      "sha256": "04d14fec451d4d87ef072bfd0cf144fba9730e578a37629a7e9a6034dbf00242",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/enterprise-seal/enterprise-seal.types.ts",
+      "target": "apps/api/src/esign/enterprise-seal/enterprise-seal.types.ts",
+      "sha256": "26b0c4abc091b5eea7125b243ad8490ee86ddbcd2729db31ef20c0d95cce6bef",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/enterprise-seal/signature-policy-engine.ts",
+      "target": "apps/api/src/esign/enterprise-seal/signature-policy-engine.ts",
+      "sha256": "60687a40983c1080fff4b2040acd8ed91795b299d9dd09bde5bfaa9bfce7ba91",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/enterprise-seal/signing-plan-compiler.ts",
+      "target": "apps/api/src/esign/enterprise-seal/signing-plan-compiler.ts",
+      "sha256": "388733de3667cdb52b0567b1860d6cdbd5dbc82854187a35e7d6727dabc1f8a0",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/enterprise-seal/signing-plan-hash.ts",
+      "target": "apps/api/src/esign/enterprise-seal/signing-plan-hash.ts",
+      "sha256": "fd8ab0cb8aa36eff9a16e946a02433e56bd430211b1c2ecaab7cdeeae7290331",
+      "adaptation": "none"
+    },
+    {
+      "source": "apps/api/src/esign/enterprise-seal/enterprise-seal-mask.ts",
+      "target": "apps/api/src/esign/enterprise-seal/enterprise-seal-mask.ts",
+      "sha256": "b5c3dae81f0b04e6161a2dce99bc4c49fead2715886b1dcd8f8516e1e16a6ec8",
+      "adaptation": "none"
+    }
+  ]
+}

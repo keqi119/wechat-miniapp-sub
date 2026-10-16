@@ -1,0 +1,48 @@
+name: chundian-prod
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chundian_prod
+      POSTGRES_DB: chundian_prod
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    command: [postgres, -c, shared_buffers=64MB, -c, max_connections=30, -c, work_mem=4MB]
+    volumes:
+      - chundian-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U chundian_prod -d chundian_prod']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: '3' }
+  api:
+    image: ${API_IMAGE:?required}
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    env_file: ../.env.production
+    environment:
+      HOST: 0.0.0.0
+      PORT: '3101'
+      UPLOAD_DIR: /app/uploads
+      NODE_ENV: production
+      APP_ENV: production
+    ports: ['127.0.0.1:13101:3101']
+    volumes:
+      - ../uploads:/app/uploads
+      - ../secrets:/run/chundian-secrets:ro
+    read_only: true
+    tmpfs: ['/tmp:size=32m,mode=1777']
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 384m
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: '3' }
+volumes:
+  chundian-db:
+    name: chundian-prod-db

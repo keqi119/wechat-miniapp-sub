@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "real independent rejection preserves source PDF and original plan hash",
+    "rejection creates no provider signing task",
+    "requester has no approval/rejection buttons and real API denies self-rejection"
+  ],
+  "errors": [],
+  "fixture": "local QA pending review metadata; not a successful contract preparation"
+}

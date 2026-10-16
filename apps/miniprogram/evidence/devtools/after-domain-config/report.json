@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-16T05:53:10.328Z",
+  "scope": "Production public native wx.request and DevTools page rendering only. No mocks, login, SMS, storage writes, customer business writes, payments, identity verification or signing.",
+  "requests": [],
+  "pages": [],
+  "exceptions": [],
+  "domainCheck": {
+    "projectUrlCheck": true,
+    "privateUrlCheck": null,
+    "effectiveUrlCheck": true
+  },
+  "sdkError": "Failed connecting to ws://127.0.0.1:9420, check if target project window is opened with automation enabled",
+  "summary": {
+    "requests": 0,
+    "successfulRequests": 0,
+    "nativePages": 0,
+    "pageErrors": 0,
+    "exceptions": 0,
+    "screenshots": 0
+  }
+}

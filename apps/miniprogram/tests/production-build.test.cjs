@@ -1,0 +1,19 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+test('production package includes real registered native pages and rejects dormant demo data', () => {
+  const { build } = require('../scripts/build.cjs');
+  const output = path.resolve(__dirname, '../.artifacts/production-test');
+  const result = build({ destination: output });
+  const app = JSON.parse(fs.readFileSync(path.join(output, 'src/app.json')));
+  assert.equal(app.pages.length, 16);
+  assert.equal(app.tabBar.list.length, 4);
+  assert.equal(fs.existsSync(path.join(output, 'src/services/mock.js')), false);
+  assert.equal(fs.existsSync(path.join(output, 'tests')), false);
+  assert.equal(result.files > 70, true);
+  const bad = path.resolve(__dirname, '../.artifacts/bad-build-src');
+  fs.mkdirSync(path.join(bad, 'services'), { recursive: true });
+  fs.writeFileSync(path.join(bad, 'services/mock.js'), 'module.exports = {};');
+  assert.throws(() => build({ source: bad, destination: path.resolve(__dirname, '../.artifacts/bad-build-output') }), /production|演示|Mock/);
+});
