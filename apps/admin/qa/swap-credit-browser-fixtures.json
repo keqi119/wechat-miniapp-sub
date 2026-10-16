@@ -1,0 +1,69 @@
+{
+  "mode": "isolated-B3-fixtures-not-real-http-or-channel",
+  "checks": [
+    "ADMIN: close strict unpaid capability, original request key after 409",
+    "FINANCE: close strict unpaid capability, original request key after 409",
+    "OPERATIONS: safe read only, no create/edit/grant/pay or private material",
+    "SUPPORT: safe read only, no create/edit/grant/pay or private material",
+    "fixed full refund follows original payment, stable key and source after 409; no editable amount",
+    "late money remains received and frozen for manual review, never closed or automatically spent",
+    "unknown/inflight refund blocks second refund and restore even if inconsistent capability is supplied",
+    "restore explicit reason and server-selected rejected refund, never amount or new credit",
+    "real five paid counts, purchase linkage/null cycle, full terms and disabled purchase coexist without fabricated vehicle",
+    "empty source list has no demo or forced purchase",
+    "offline is an error, not empty successful data"
+  ],
+  "errors": [],
+  "writes": [
+    {
+      "path": "/admin/swap-credit-purchases/qa-purchase/close",
+      "body": {
+        "idempotencyKey": "4e1b03e8-c197-4a1a-abfa-8f8348a7c45d"
+      }
+    },
+    {
+      "path": "/admin/swap-credit-purchases/qa-purchase/close",
+      "body": {
+        "idempotencyKey": "4e1b03e8-c197-4a1a-abfa-8f8348a7c45d"
+      }
+    },
+    {
+      "path": "/admin/swap-credit-purchases/qa-purchase/close",
+      "body": {
+        "idempotencyKey": "8f8d448d-1bcf-489b-acbc-a0789a0e1b2e"
+      }
+    },
+    {
+      "path": "/admin/swap-credit-purchases/qa-purchase/close",
+      "body": {
+        "idempotencyKey": "8f8d448d-1bcf-489b-acbc-a0789a0e1b2e"
+      }
+    },
+    {
+      "path": "/admin/refunds",
+      "body": {
+        "paymentId": "qa-payment",
+        "amount": 80000,
+        "reason": "QA 完整未用来源的明确例外退款",
+        "idempotencyKey": "94d0f580-84f6-4312-8a63-ac8026ddc336"
+      }
+    },
+    {
+      "path": "/admin/refunds",
+      "body": {
+        "paymentId": "qa-payment",
+        "amount": 80000,
+        "reason": "QA 完整未用来源的明确例外退款",
+        "idempotencyKey": "94d0f580-84f6-4312-8a63-ac8026ddc336"
+      }
+    },
+    {
+      "path": "/admin/swap-credit-purchases/qa-purchase/restore",
+      "body": {
+        "refundId": "qa-rejected",
+        "reason": "QA 核对全部未经审批即被拒绝，无使用无预占",
+        "idempotencyKey": "96dbcabd-fbe2-4ffd-b7d8-630e6bf84728"
+      }
+    }
+  ]
+}

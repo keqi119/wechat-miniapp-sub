@@ -6,6 +6,7 @@ import { commercialTermLabels, handoverFactLabels, normaliseHandoverChecklist } 
 import { display, type Field, statusLabel, verificationReviewNotice } from './resources';
 import { creditDepositPreview, creditBandLabels } from './credit';
 import { shanghaiDateTime, usageStatusLabel } from './usage';
+import {swapCreditStatusLabel} from './swap-credits';
 
 export function PaymentVerificationReviewNotice({ entity }: { entity: Entity }) {
   const notice = verificationReviewNotice(entity);
@@ -20,7 +21,7 @@ export function Loading({ label = '正在读取真实数据' }: { label?: string
 export function Status({ value, resource }: { value: unknown; resource?: string }) {
   const text = String(value ?? '');
   const tone = /PAID|SIGNED|APPROVED|COMPLETED|ACTIVE|AVAILABLE|PUBLISHED|SUCCEEDED|RESOLVED/.test(text) ? 'green' : /FAIL|REJECT|OVERDUE|CANCEL/.test(text) ? 'red' : /PENDING|AWAITING|REVIEW|SUBMITTED|OPEN|PROCESS|NEEDS|ACCEPTED/.test(text) ? 'orange' : 'neutral';
-  return <span className={`status ${tone}`}><i/>{usageStatusLabel(resource, text) ?? (statusLabel(text) || '未设置')}</span>;
+  return <span className={`status ${tone}`}><i/>{swapCreditStatusLabel(resource,text)??usageStatusLabel(resource, text) ?? (statusLabel(text) || '未设置')}</span>;
 }
 export function Drawer({ title, subtitle, children, onClose }: { title: string; subtitle?: string; children: ReactNode; onClose: () => void }) {
   const panel = useRef<HTMLElement>(null);

@@ -17,7 +17,7 @@
       "path": "/api/admin/order-changes/qa-change/quotes",
       "body": {
         "revision": 4,
-        "idempotencyKey": "5f6ee312-a000-4011-abac-a3b32ef54c6e",
+        "idempotencyKey": "282c1b48-9dd6-408e-accc-15bd49a4754a",
         "expiresAt": "2099-01-01T04:34:00.000Z",
         "externalCompensationRequired": true,
         "newStartDate": "2026-11-16",
@@ -106,7 +106,7 @@
       "path": "/api/admin/order-changes/qa-change/quotes",
       "body": {
         "revision": 4,
-        "idempotencyKey": "5f6ee312-a000-4011-abac-a3b32ef54c6e",
+        "idempotencyKey": "282c1b48-9dd6-408e-accc-15bd49a4754a",
         "expiresAt": "2099-01-01T04:34:00.000Z",
         "externalCompensationRequired": false,
         "newStartDate": "2026-11-16",
@@ -195,7 +195,7 @@
       "path": "/api/admin/order-changes/qa-change/quotes",
       "body": {
         "revision": 4,
-        "idempotencyKey": "5f6ee312-a000-4011-abac-a3b32ef54c6e",
+        "idempotencyKey": "282c1b48-9dd6-408e-accc-15bd49a4754a",
         "expiresAt": "2099-01-01T04:34:00.000Z",
         "externalCompensationRequired": false,
         "newStartDate": "2026-11-16",
@@ -286,7 +286,7 @@
         "expectedOrderRevision": 3,
         "priorTermsHash": "qa-terms-hash",
         "reason": "QA双方协商延期",
-        "idempotencyKey": "dbd1c6a1-373a-49a2-8135-e761ccf474df"
+        "idempotencyKey": "77dd6376-86ae-4f37-960e-e0740a04b79a"
       }
     }
   ]

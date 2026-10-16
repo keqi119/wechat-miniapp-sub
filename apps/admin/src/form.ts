@@ -38,6 +38,7 @@ export function fieldsForAction(resource: string, action: Action, entity: Entity
   return (action.fields ?? []).map(field => field.key === 'status' ? { ...field, options: (transitions[String(entity.status)] ?? []).map(status => [status, statusLabel(status)] as [string, string]) } : field);
 }
 export function mutationPayload(resource: string, kind: string, body: Record<string, unknown>, idempotencyKey?: string): Record<string, unknown> {
+  if(resource==='swap-credit-purchases'&&kind==='action'){if(!idempotencyKey||idempotencyKey.length<8)throw new Error('业务请求编号缺失，请重新打开表单');return{idempotencyKey};}
   if (!(['refunds', 'bills'].includes(resource) && kind === 'create') && !(['usage-periods', 'return-settlements'].includes(resource) && kind === 'action')) return body;
   if (!idempotencyKey || idempotencyKey.length < 8) throw new Error('业务请求编号缺失，请关闭表单后重新发起');
   return { ...body, idempotencyKey };

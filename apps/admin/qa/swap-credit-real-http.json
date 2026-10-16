@@ -1,0 +1,374 @@
+{
+  "mode": "real-local-http-independent-chundian_b3_ui_acceptance-synthetic-payment-provider",
+  "checks": [
+    "real admin login, empty filter query and ACTIVE list use paginated safe API",
+    "admin browser close rereads VOID original purchase/bill, no payment or credit created",
+    "finance browser submits fixed80000 against original payment, reread freezes same credit and removes available balance",
+    "different admin rejects before provider approval; original source remains frozen until explicit recovery",
+    "explicit finance restore returns same credit/payment, one RESTORE fact and actual available1/frozen0",
+    "operations browser read-only and API role projection omit refund/restore authority and provider secrets"
+  ],
+  "pageErrors": [],
+  "requests": [
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "FINANCE",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases/cmvaxmyoa003durl0kllwj4uy",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "POST",
+      "path": "/api/admin/refunds",
+      "status": 201
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/refunds",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/refunds/cmvaxrsud003ourl0ywewhrlq",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/refunds/cmvaxrsud003ourl0ywewhrlq",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/refunds",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "FINANCE",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "FINANCE",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases/cmvaxmyoa003durl0kllwj4uy",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/refunds",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/refunds/cmvaxrsud003ourl0ywewhrlq",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/refunds/cmvaxrsud003ourl0ywewhrlq/reject",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/refunds/cmvaxrsud003ourl0ywewhrlq",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/refunds",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "POST",
+      "path": "/api/admin/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0/restore",
+      "status": 201
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/swap-credit-purchases",
+      "status": 200
+    }
+  ]
+}

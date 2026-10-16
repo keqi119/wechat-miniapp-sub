@@ -4,6 +4,8 @@ import { commercialTermLabels, handoverFactLabels } from './business-terms.ts';
 import { creditBandLabels, creditReady } from './credit.ts';
 import { usageResources } from './usage-resources.ts';
 import { usageActionAllowed } from './usage.ts';
+import {swapCreditResource} from './swap-credit-resources.ts';
+import {swapPurchaseActionAllowed,swapPurchaseSafe} from './swap-credits.ts';
 
 export type Field = { key: string; label: string; type?: 'text' | 'number' | 'money' | 'textarea' | 'lines' | 'select' | 'date' | 'files' | 'boolean' | 'password' | 'checklist' | 'commercial' | 'attestation' | 'datetime-local'; required?: boolean; readOnly?: boolean; requireFacts?: boolean; submit?: boolean; creditDerived?: boolean; defaultValue?: string; options?: [string, string][]; source?: string; sourceFilters?: Record<string, string>; sourceWhen?: { field: string; value: string; source: string }; uploadPurpose?: string; hint?: string; min?: number; max?: number };
 export type Action = { label: string; path: string; fields?: Field[]; fixed?: Record<string, unknown>; warning?: string; kind?: 'danger' | 'primary'; writeRoles?: string[] };
@@ -43,7 +45,7 @@ export const labels: Record<string, string> = {
   application: '申请须知', privacy: '隐私政策', terms: '用户协议', subscription: '订阅合同', handover: '交接协议',
   LOGIN: '登录后台', CREATE: '新建记录', UPDATE: '更新记录', PUBLISH: '发布', UNPUBLISH: '下架', ACTIVATE: '启用', DEACTIVATE: '停用', REVIEW: '审核', FINAL_PLAN: '发布最终方案', SUBMIT: '提交', CONFIRM: '确认', REQUEST: '发起申请', APPROVE: '审批通过', REJECT: '拒绝', ASSIGN: '派单', UPLOAD: '上传文件', STATUS: '更新状态', COMPLETE: '完成',
   vehicles: '车辆', plans: '套餐', users: '后台账号', applications: '申请', orders: '订单', contracts: '合同', bills: '账单', payments: '支付', deposits: '押金', refunds: '退款', handovers: '交接', mileages: '里程', services: '工单', entitlements: '权益', notifications: '通知', 'legal-documents': '协议', 'model-definitions': '车型', 'audit-logs': '审计', files: '附件', customers: '客户',
-  rescue: '道路救援', accident: '事故报案', SUBSCRIPTION: '订阅费用', DEPOSIT: '押金', RECEIPT: '收取', REFUND: '退回', CUSTOMER: '客户', PROVIDER: '服务商', SWAP_ADJUSTMENT: '换车月费补差', DEPOSIT_ADJUSTMENT: '押金调整', SWAP_HANDOVER_FEE: '换车交接费',
+  rescue: '道路救援', accident: '事故报案', SUBSCRIPTION: '订阅费用', DEPOSIT: '押金', RECEIPT: '收取', REFUND: '退回', CUSTOMER: '客户', PROVIDER: '服务商', SWAP_ADJUSTMENT: '换车月费补差', DEPOSIT_ADJUSTMENT: '押金调整', SWAP_HANDOVER_FEE: '换车交接费', SWAP_CREDIT: '一次换车权益购买', 'vehicle-change':'换车权益及购买说明',
   'enterprise-seals': '企业印章', 'seal-authorities': '用印授权', 'signature-policies': '签署策略', 'esign-approvals': '签署计划审批',
   DISABLED: '已停用', REVOKED: '已撤销', USER: '指定人员', ROLE: '后台角色', REQUEST_USE: '申请用印', APPROVE_USE: '复核用印', SEQUENTIAL: '先客户签署，再企业盖章', HANDOVER: '车辆交接单',
   REVIEWED: '复核已通过', SUPERSEDED: '已被修订版替代', EXTRA_FEE: '额外费用', RETURN_SETTLEMENT: '退车结算', CUSTOMER_SIGN: '客户签署', ENTERPRISE_SEAL: '企业盖章', PLATFORM: '服务平台',
@@ -54,6 +56,7 @@ export const labels: Record<string, string> = {
 export function statusLabel(value: string) { return labels[value] ?? value; }
 Object.assign(labels, commercialTermLabels, handoverFactLabels);
 export const resources: Resource[] = [
+  swapCreditResource,
   { key: 'payment-verifications', title: '支付验收', singular: '支付验收授权', subtitle: '固定0.01元，用于微信支付验证，不生成订阅订单/合同。状态以服务端可信渠道核验为准。', adminOnly: true, create: true, statuses: ['AUTHORIZED', 'CREATING', 'PENDING', 'SUCCEEDED', 'CLOSED', 'FAILED', 'EXPIRED'], columns: [{ key: 'title', label: '验收用途' }, { key: 'customerId', label: '授权客户' }, { key: 'amount', label: '固定验收金额', format: 'money' }, statusColumn, { key: 'expiresAt', label: '授权有效期', format: 'date' }, { key: 'paidAt', label: '可信到账时间', format: 'date' }], fields: [ref('customerId', '指定客户', 'customers'), { key: 'authorizationNote', label: '授权说明', type: 'textarea', required: true, hint: '固定0.01元，用于微信支付验证，不生成订阅订单/合同。授权24小时有效；客户须自行确认微信付款。请记录本次明确授权范围。' }], actions: [{ label: '查询并关闭未付验收', path: 'close', warning: '服务端将先查询渠道结果，再关闭未付款验收。已成功到账不能关闭；未知结果保留原交易，不会自动新建第二笔。', kind: 'danger' }] },
   { key: 'vehicles', title: '车辆管理', singular: '车辆', subtitle: '维护车辆档案、真实车况与可售状态。', create: true, edit: true, statuses: ['DRAFT', 'PUBLISHED', 'UNPUBLISHED', 'RESERVED', 'IN_USE'], columns: [{ key: 'title', label: '车辆' }, { key: 'brand', label: '品牌' }, { key: 'city', label: '所在城市' }, { key: 'mileageKm', label: '里程 / km' }, statusColumn, created], fields: [text('brand', '品牌'), text('model', '车型'), text('title', '车辆标题'), num('year', '上牌年份', 2000, 2100), text('city', '城市'), num('mileageKm', '累计里程（km）'), num('batteryHealthPercent', '电池健康度（%）', 0, 100), area('description', '车辆介绍'), area('conditionDisclosure', '车况披露', true), { key: 'coverFileId', label: '封面照片', type: 'files' }, { key: 'mediaFileIds', label: '车辆照片与附件', type: 'files' }], actions: [{ label: '上架车辆', path: 'publish', warning: '上架后客户可在小程序浏览此车辆及有效套餐。', kind: 'primary' }, { label: '下架车辆', path: 'unpublish', kind: 'danger' }] },
   { key: 'model-definitions', title: '车型资料', singular: '车型', subtitle: '统一车型信息，让车辆目录保持清晰。', create: true, edit: true, columns: [{ key: 'brand', label: '品牌' }, { key: 'name', label: '车型' }, { key: 'bodyType', label: '车身类型' }, created], fields: [text('brand', '品牌'), text('name', '车型名称'), text('bodyType', '车身类型'), area('description', '车型说明')] },
@@ -86,7 +89,7 @@ export const resources: Resource[] = [
 export const groups = [
   { label: '车源与商品', keys: ['vehicles', 'model-definitions', 'plans'] },
   { label: '客户与订阅', keys: ['applications', 'customers', 'orders', 'contracts', 'order-changes', 'vehicle-changes'] },
-  { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds', 'payment-verifications'] },
+  { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds', 'swap-credit-purchases', 'payment-verifications'] },
   { label: '交付与服务', keys: ['handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
   { label: '里程与退订', keys: ['usage-periods', 'return-settlements'] },
   { label: '签章运营', keys: ['enterprise-seals', 'seal-authorities', 'signature-policies', 'esign-approvals'] },
@@ -96,6 +99,7 @@ export function valueAt(entity: Entity, key: string): unknown { return key.split
 export function display(value: unknown): string { if (value == null || value === '') return '—'; if (typeof value === 'boolean') return value ? '已启用' : '已停用'; if (typeof value === 'object') return JSON.stringify(value); return statusLabel(String(value)); }
 
 export function actionAllowed(resource: string, action: Action, entity: Entity, userId?: string): boolean {
+  if(resource==='swap-credit-purchases')return swapPurchaseActionAllowed(action.path,entity);
   const status = String(entity.status ?? '');
   const usageAllowed = usageActionAllowed(resource, action.path, entity); if (usageAllowed !== undefined) return usageAllowed;
   if (resource === 'payment-verifications') return action.path === 'close' && ['AUTHORIZED', 'CREATING', 'PENDING'].includes(status) && entity.canClose === true;
@@ -124,6 +128,7 @@ export function actionAllowed(resource: string, action: Action, entity: Entity, 
 }
 
 export function detailFor(resource: string, entity: Entity): Record<string, unknown> {
+  if(resource==='swap-credit-purchases'){const safe=swapPurchaseSafe(entity);return Object.fromEntries(['id','customerId','createdAt','acceptedAt'].filter(k=>safe[k]!==undefined).map(k=>[k,safe[k]]));}
   const pick = (source: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
   if (resource === 'usage-periods') return pick(entity, ['id', 'orderId', 'sequence', 'startDate', 'endDate', 'effectiveEndDate', 'status', 'revision', 'readingId', ...(Array.isArray(entity.segments) && entity.segments.length ? [] : ['startReadingKm','endReadingKm']), ...(entity.status === 'SETTLED' ? ['usedKm', 'baseUsedKm', 'packUsedKm', 'excessKm', 'excessAmount'] : []), 'billId', 'reviewNote']);
   if (resource === 'return-settlements') return pick(entity, ['id', 'orderId', 'status', 'revision', 'returnedOn', 'unsettledPeriodIds', 'bills', 'disputeReason', 'resolutionNote', 'depositRefundRequiredAmount']);

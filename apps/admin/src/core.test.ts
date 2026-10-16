@@ -81,3 +81,38 @@ test('detail rendering excludes encrypted identity and credentials while retaini
   for (const field of ['identityCiphertext', 'passwordHash', 'appSecret', 'privateKey', 'csrfToken', 'accessToken']) assert.equal(isPrivateField(field), true);
   for (const field of ['signatureStatus', 'realNameStatus', 'sourcePdfHash', 'planHash']) assert.equal(isPrivateField(field), false);
 });
+
+test('late old-account 401 cannot clear a newer login or notify its expiry', async () => {
+  let finish!: (response: Response) => void, expired = 0;
+  const api = new ApiClient(() => new Promise(resolve => { finish = resolve; }));
+  const first = {csrfToken:'first',user:{id:'first',username:'first',permissions:['*']}};
+  const second = {csrfToken:'second',user:{id:'second',username:'second',permissions:['*']}};
+  api.setSession(first); api.onExpired = () => { expired++; };
+  const pending = api.request('/admin/swap-credit-purchases');
+  api.setSession(second); finish(Response.json({error:{code:'SESSION_EXPIRED',message:'旧会话失效'}},{status:401}));
+  await assert.rejects(pending, (error: unknown) => error instanceof ApiError && error.code === 'SESSION_CHANGED');
+  assert.equal(api.session, second); assert.equal(expired, 0);
+});
+
+test('late successful mutation cannot present success in a new account', async () => {
+  let finish!: (response: Response) => void;
+  const api = new ApiClient(() => new Promise(resolve => { finish = resolve; }));
+  const session = {csrfToken:'first',user:{id:'first',username:'first',permissions:['*']}};
+  api.setSession(session);
+  const pending = api.request('/admin/refunds',{method:'POST',body:{}});
+  api.setSession(null); api.setSession(session);
+  finish(Response.json({id:'old-account-refund'}));
+  await assert.rejects(pending, (error: unknown) => error instanceof ApiError && error.code === 'SESSION_CHANGED');
+  assert.equal(api.session, session);
+});
+
+test('account change during delayed JSON parsing discards the old response', async () => {
+  let finish!: (value: unknown) => void;
+  const api = new ApiClient(async () => ({ok:true,status:200,json:()=>new Promise(resolve=>{finish=resolve;})}) as Response);
+  api.setSession({csrfToken:'first',user:{id:'first',username:'first',permissions:['*']}});
+  const pending = api.request('/admin/swap-credit-purchases');
+  await Promise.resolve();
+  api.setSession({csrfToken:'second',user:{id:'second',username:'second',permissions:['*']}});
+  finish({items:[{id:'old-private-record'}]});
+  await assert.rejects(pending, (error: unknown) => error instanceof ApiError && error.code === 'SESSION_CHANGED');
+});

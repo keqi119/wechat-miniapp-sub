@@ -22,7 +22,7 @@
       "path": "/admin/order-changes/qa-swap/quotes",
       "body": {
         "revision": 3,
-        "idempotencyKey": "b3b92c89-c50a-4c3c-bee6-e16502a537e6",
+        "idempotencyKey": "593ebc52-908b-4667-bbf3-36374ee8bf79",
         "targetVehicleId": "qa-target",
         "plannedReturnAt": "2026-10-20T01:00:35.123Z",
         "plannedDeliveryAt": "2026-10-22T03:00:00.000Z",
@@ -191,7 +191,7 @@
       "path": "/admin/order-changes/qa-swap/quotes",
       "body": {
         "revision": 3,
-        "idempotencyKey": "b3b92c89-c50a-4c3c-bee6-e16502a537e6",
+        "idempotencyKey": "593ebc52-908b-4667-bbf3-36374ee8bf79",
         "targetVehicleId": "qa-target",
         "plannedReturnAt": "2026-10-20T01:00:35.123Z",
         "plannedDeliveryAt": "2026-10-22T03:00:00.000Z",
@@ -360,7 +360,7 @@
       "path": "/admin/order-changes/qa-swap/cancel",
       "body": {
         "revision": 3,
-        "idempotencyKey": "92f7af28-192f-425c-85aa-9cfb8d2b49c8",
+        "idempotencyKey": "c58972f2-e302-4e10-b8ec-a3875194bb41",
         "reason": "QA 暂不调整，保留原已签方案"
       }
     },
@@ -368,7 +368,7 @@
       "path": "/admin/order-changes/qa-swap/quotes",
       "body": {
         "revision": 3,
-        "idempotencyKey": "1de8cea1-c3ba-4874-9e21-2e74c7855664",
+        "idempotencyKey": "9f4b84e0-f4b5-42f8-9ee1-5576c90c22bb",
         "targetVehicleId": "qa-target",
         "plannedReturnAt": "2026-10-20T01:00:00.000Z",
         "plannedDeliveryAt": "2026-10-21T03:00:00.000Z",
@@ -537,7 +537,7 @@
       "path": "/admin/order-changes/qa-swap/quotes",
       "body": {
         "revision": 3,
-        "idempotencyKey": "1de8cea1-c3ba-4874-9e21-2e74c7855664",
+        "idempotencyKey": "9f4b84e0-f4b5-42f8-9ee1-5576c90c22bb",
         "targetVehicleId": "qa-target",
         "plannedReturnAt": "2026-10-20T01:00:00.000Z",
         "plannedDeliveryAt": "2026-10-21T03:00:00.000Z",
@@ -706,7 +706,7 @@
       "path": "/admin/order-changes/qa-swap/handovers",
       "body": {
         "revision": 3,
-        "idempotencyKey": "646a59c3-8be4-4776-aabd-4ea054e60fed",
+        "idempotencyKey": "17ddfb18-67f4-4513-bbce-8000d5afbece",
         "side": "DELIVERY",
         "actualAt": "2026-10-21T03:00:00.000Z",
         "readingKm": 150,
@@ -751,7 +751,7 @@
       "path": "/admin/usage-segments/qa-new-segment/request-evidence",
       "body": {
         "revision": 2,
-        "idempotencyKey": "a56a9664-2215-471b-a9e6-8be846874a70",
+        "idempotencyKey": "2ab0babb-9260-4751-a9bf-7a9c1024c41b",
         "reason": "QA 终点照片缺失，请客户补充"
       }
     }

@@ -36,12 +36,15 @@ export class ApiClient {
   onExpired: (() => void) | undefined;
   private fetcher: typeof fetch;
   private base: string;
+  private sessionGeneration = 0;
   constructor(fetcher: typeof fetch = fetch, base = '/api') { this.fetcher = fetcher; this.base = base; }
   fileUrl(id: string): string { return `${this.base}/admin/files/${encodeURIComponent(id)}`; }
-  setSession(value: Session | null) { this.session = value; }
+  setSession(value: Session | null) { this.session = value; this.sessionGeneration++; }
   async request<T = Entity>(path: string, options: Options = {}): Promise<T> {
     const { body, permission, ...init } = options;
     const method = init.method ?? 'GET';
+    const session = this.session, generation = this.sessionGeneration;
+    const assertSession = () => { if (this.session !== session || this.sessionGeneration !== generation) throw new ApiError('登录会话已变化，请在当前账号重新核对原记录', 0, 'SESSION_CHANGED'); };
     const mutating = !['GET', 'HEAD'].includes(method);
     if (permission && !can(this.session?.user.permissions ?? [], permission)) throw new ApiError('当前账号没有此操作权限', 403, 'FORBIDDEN');
     if (mutating && path !== '/admin/auth/login' && !this.session?.csrfToken) throw new ApiError('登录会话已失效，请重新登录', 401, 'UNAUTHORIZED');
@@ -51,13 +54,15 @@ export class ApiClient {
     if (body !== undefined && !(body instanceof FormData)) headers.set('Content-Type', 'application/json');
     let response: Response;
     try { const fetcher = this.fetcher; response = await fetcher(this.base + path, { ...init, method, credentials: 'include', headers, body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body) }); }
-    catch (error) { if (error instanceof Error && error.name === 'AbortError') throw error; throw new ApiError('暂时无法连接服务，请检查网络后重试'); }
+    catch (error) { assertSession(); if (error instanceof Error && error.name === 'AbortError') throw error; throw new ApiError('暂时无法连接服务，请检查网络后重试'); }
+    assertSession();
     if (response.status === 204) return undefined as T;
     let data: unknown;
-    try { data = await response.json(); } catch { throw new ApiError('服务返回了无效响应，请稍后重试', response.status, 'INVALID_RESPONSE'); }
+    try { data = await response.json(); } catch { assertSession(); throw new ApiError('服务返回了无效响应，请稍后重试', response.status, 'INVALID_RESPONSE'); }
+    assertSession();
     if (!response.ok) {
       const failure = data as { error?: { message?: string; code?: string; details?: unknown }; requestId?: string };
-      if (response.status === 401 && path !== '/admin/auth/login') { const hadSession = !!this.session; this.session = null; if (hadSession) this.onExpired?.(); }
+      if (response.status === 401 && path !== '/admin/auth/login') { const hadSession = !!this.session; this.setSession(null); if (hadSession) this.onExpired?.(); }
       throw new ApiError(failure.error?.message ?? '请求失败，请稍后重试', response.status, failure.error?.code ?? 'REQUEST_FAILED', failure.requestId, failure.error?.details);
     }
     return data as T;
