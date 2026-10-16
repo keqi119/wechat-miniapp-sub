@@ -70,6 +70,27 @@
 
 后台默认角色 ADMIN、OPERATIONS、FINANCE、SUPPORT；关键动作权限在服务端强制执行。前端可依据服务端 `permissions:string[]` 隐藏动作。
 
+## 指定客户的 0.01 元支付验收
+
+与 `Bill/Payment/Order` 分离，不改变正式报价，不创建订阅或合同。服务端固定 `amount=1`、`currency=CNY`，默认关闭独立开关。创建授权后24小时内可发起；已在渠道处理中即使过期仍须查询或关单，不自动重新建单。
+
+| 方法 | 路径 | 输入/返回 |
+|---|---|---|
+| POST | /admin/payment-verifications | 仅ADMIN；`{customerId,authorizationNote}` → safe记录 |
+| GET | /admin/payment-verifications | 仅ADMIN；分页 `{items,total,page,pageSize}` |
+| GET | /admin/payment-verifications/:id | 仅ADMIN；safe详情，含 `canClose` |
+| POST | /admin/payment-verifications/:id/close | 仅ADMIN；查询并按可信渠道结果关闭未付单 → safe记录 |
+| GET | /customer/payment-verifications | 仅当前客户；`{items}` |
+| POST | /customer/payment-verifications/:id/pay | 当前客户、OpenID、当前协议同意；返回 `{verification,paymentParams}` |
+| POST | /customer/payment-verifications/:id/query | 当前客户；可信渠道查询 → safe记录 |
+| POST | /callbacks/wechat-pay-verification | 独立验签回调，已登记交易号/1分/CNY及商户应用核验后原子落账 |
+
+safe记录至少含 `{id,amount,currency,status,expiresAt,createdAt,paidAt,canPay,canClose,title,manualReviewRequired,statusMessage}`；状态为 `AUTHORIZED/CREATING/PENDING/SUCCEEDED/CLOSED/FAILED/EXPIRED`。不返回OpenID、预支付ID或供应商原始响应。`paymentParams` 只通过本人已授权发起请求即时返回，客户端不持久化、不写日志。
+
+客户同一时刻不能有第二笔非终态授权，已成功验收后禁止再次授权收费。发起遇可信渠道已终态返回409，客户端再query刷新；未知结果保留同一交易号查询。仅 `SUCCEEDED` 表示服务端已核实到账，客户端微信success不足以记账。退款不在此验收接口中执行。
+
+已开始但渠道始终查不到的记录，只能由ADMIN在原授权到期10分钟后、无活跃请求租约且取得新的可信签名无单查询后结束为EXPIRED。此情况提示人工核对，不表示确定未扣款，保留原交易号并禁止同客户再次授权；迟到的可信成功仍可记账。短时无单、网络超时或验签失败不得据此结束记录。关闭写入校验对应租约，旧请求不能覆盖新的处理或已成功结果。
+
 ## 实现协调
 
 API 实现人员负责把以上入口细化为 DTO、Prisma 实体与共享类型；新增必要字段写入本文并及时通知两个前端。支付和签署的具体 Gateway TypeScript 接口由 API 任务先定义，主控集成时适配接口，不以 placeholder success 代替第三方能力。

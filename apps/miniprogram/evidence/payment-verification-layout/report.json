@@ -1,0 +1,192 @@
+{
+  "generatedAt": "2026-10-16T07:06:25.519Z",
+  "scope": "Offline actual-wcc templates with explicitly synthetic display data; browser layout only. No business API, native SDK, real payment, production customer, preview or upload.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "anonymous",
+      "authenticated": false,
+      "records": [],
+      "overflow": false,
+      "screenshot": "anonymous.png",
+      "passed": true
+    },
+    {
+      "name": "no-authorization",
+      "records": [],
+      "overflow": false,
+      "screenshot": "no-authorization.png",
+      "passed": true
+    },
+    {
+      "name": "authorized",
+      "records": [
+        {
+          "id": "qa-offline-verification",
+          "amount": 1,
+          "currency": "CNY",
+          "title": "微信支付验收",
+          "amountText": "¥0.01",
+          "status": "AUTHORIZED",
+          "statusText": "已授权，尚未付款",
+          "canPay": true,
+          "expiresAt": "2099-01-01T00:00:00Z",
+          "resumeAllowed": false,
+          "canStart": true,
+          "payText": "支付 0.01 元"
+        }
+      ],
+      "pay": "支付 0.01 元",
+      "enabled": true,
+      "overflow": false,
+      "screenshot": "authorized.png",
+      "passed": true
+    },
+    {
+      "name": "consent-required",
+      "records": [
+        {
+          "id": "qa-offline-verification",
+          "amount": 1,
+          "currency": "CNY",
+          "title": "微信支付验收",
+          "amountText": "¥0.01",
+          "status": "AUTHORIZED",
+          "statusText": "已授权，尚未付款",
+          "canPay": true,
+          "expiresAt": "2099-01-01T00:00:00Z",
+          "resumeAllowed": false,
+          "canStart": true,
+          "payText": "支付 0.01 元"
+        }
+      ],
+      "consentCurrent": false,
+      "pay": "支付 0.01 元",
+      "enabled": false,
+      "overflow": false,
+      "screenshot": "consent-required.png",
+      "passed": true
+    },
+    {
+      "name": "pending-query-only",
+      "records": [
+        {
+          "id": "qa-offline-verification",
+          "amount": 1,
+          "currency": "CNY",
+          "title": "微信支付验收",
+          "amountText": "¥0.01",
+          "status": "PENDING",
+          "statusText": "支付结果待确认",
+          "canPay": true,
+          "expiresAt": "2099-01-01T00:00:00Z",
+          "resumeAllowed": false,
+          "canStart": false,
+          "payText": "继续本次验收（0.01 元）"
+        }
+      ],
+      "overflow": false,
+      "screenshot": "pending-query-only.png",
+      "passed": true
+    },
+    {
+      "name": "pending-explicit-resume",
+      "records": [
+        {
+          "id": "qa-offline-verification",
+          "amount": 1,
+          "currency": "CNY",
+          "title": "微信支付验收",
+          "amountText": "¥0.01",
+          "status": "PENDING",
+          "statusText": "支付结果待确认",
+          "canPay": true,
+          "expiresAt": "2099-01-01T00:00:00Z",
+          "resumeAllowed": true,
+          "canStart": true,
+          "payText": "继续本次验收（0.01 元）"
+        }
+      ],
+      "pay": "继续本次验收（0.01 元）",
+      "enabled": true,
+      "overflow": false,
+      "screenshot": "pending-explicit-resume.png",
+      "passed": true
+    },
+    {
+      "name": "query-failed",
+      "records": [
+        {
+          "id": "qa-offline-verification",
+          "amount": 1,
+          "currency": "CNY",
+          "title": "微信支付验收",
+          "amountText": "¥0.01",
+          "status": "PENDING",
+          "statusText": "支付结果待确认",
+          "canPay": true,
+          "expiresAt": "2099-01-01T00:00:00Z",
+          "resumeAllowed": false,
+          "canStart": false,
+          "payText": "继续本次验收（0.01 元）"
+        }
+      ],
+      "verificationError": "查询未完成，结果尚未核实，请稍后重新查询。",
+      "overflow": false,
+      "screenshot": "query-failed.png",
+      "passed": true
+    },
+    {
+      "name": "server-confirmed-paid",
+      "records": [
+        {
+          "id": "qa-offline-verification",
+          "amount": 1,
+          "currency": "CNY",
+          "title": "微信支付验收",
+          "amountText": "¥0.01",
+          "status": "SUCCEEDED",
+          "statusText": "支付成功",
+          "canPay": false,
+          "expiresAt": "2099-01-01T00:00:00Z",
+          "resumeAllowed": false,
+          "canStart": false,
+          "payText": "继续本次验收（0.01 元）"
+        }
+      ],
+      "overflow": false,
+      "screenshot": "server-confirmed-paid.png",
+      "passed": true
+    },
+    {
+      "name": "expired-manual-review",
+      "records": [
+        {
+          "id": "qa-offline-verification",
+          "amount": 1,
+          "currency": "CNY",
+          "title": "微信支付验收",
+          "amountText": "¥0.01",
+          "status": "EXPIRED",
+          "statusText": "需人工核对支付结果",
+          "canPay": false,
+          "expiresAt": "2099-01-01T00:00:00Z",
+          "resumeAllowed": false,
+          "canStart": false,
+          "payText": "继续本次验收（0.01 元）",
+          "manualReviewRequired": true,
+          "statusMessage": "授权已到期，渠道暂未查到本单，需人工核对；不能认定未扣款。"
+        }
+      ],
+      "overflow": false,
+      "screenshot": "expired-manual-review.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

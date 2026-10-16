@@ -18,6 +18,7 @@ global.wx = {
     const route = v.url.replace(/^https:\/\/[^/]+\/api/, '');
     let data = {};
     if (route === '/customer/context') data = { customer: session.customer };
+    else if (route === '/customer/payment-verifications') data = { items: [] };
     else if (route === '/customer/dashboard') data = { subscription: { id: 'o1', orderId: 'o1', vehicleName: '当前车辆' }, handover: { id: handoverId } };
     else if (route.startsWith('/public/vehicles/')) data = { vehicle: { id: 'v1', name: '当前车辆', available: true }, plans: [{ id: 'p1', available: true, monthlyFeeAmount: 0 }] };
     else if (route.startsWith('/public/legal/')) { const type = route.split('/').at(-1); data = { id: type === 'application' ? 'legal-1' : type + '-1', type, version: legalVersion, title: '正式须知', content: '正式文案' }; }

@@ -5,6 +5,48 @@ datasource db {
   provider = "postgresql"
   url = env("DATABASE_URL")
 }
+enum PaymentVerificationStatus {
+ AUTHORIZED
+ CREATING
+ PENDING
+ SUCCEEDED
+ CLOSED
+ FAILED
+ EXPIRED
+}
+
+model PaymentVerification {
+ id String @id @default(cuid())
+ customerId String
+ customer Customer @relation(fields:[customerId],references:[id])
+ createdBy String
+ authorizationNote String
+ amount Int @default(1)
+ currency String @default("CNY")
+ status PaymentVerificationStatus @default(AUTHORIZED)
+ tradeNo String @unique
+ expiresAt DateTime
+ startedAt DateTime?
+ paidAt DateTime?
+ providerTransactionId String? @unique
+ requestSnapshot Json?
+ clientParameters Json?
+ leaseToken String?
+ leaseUntil DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ events PaymentVerificationEvent[]
+ @@index([customerId,createdAt])
+}
+
+model PaymentVerificationEvent {
+ id String @id
+ verificationId String
+ verification PaymentVerification @relation(fields:[verificationId],references:[id])
+ payloadHash String
+ createdAt DateTime @default(now())
+}
+
 enum Role {
  ADMIN
  OPERATIONS
@@ -123,6 +165,7 @@ model Customer {
  orders Order[]
  files StoredFile[]
  acceptedConsents CustomerConsent[]
+ paymentVerifications PaymentVerification[]
 }
 model CustomerSession {
  id String @id

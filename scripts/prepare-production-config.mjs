@@ -41,6 +41,8 @@ const env = {
   HOST: '0.0.0.0',
   PORTAL_SMS_ENABLED: prior.PORTAL_SMS_ENABLED || 'false',
   WECHAT_PAY_ENABLED: prior.WECHAT_PAY_ENABLED || 'false',
+  WECHAT_PAY_VERIFICATION_ENABLED: prior.WECHAT_PAY_VERIFICATION_ENABLED || 'false',
+  WECHAT_PAY_VERIFICATION_NOTIFY_URL: 'https://mini-api.subauto.keybox.cloud/api/callbacks/wechat-pay-verification',
   FADADA_ENABLED: prior.FADADA_ENABLED || 'false',
   FADADA_SIGNING_ENABLED: prior.FADADA_SIGNING_ENABLED || 'false',
   FADADA_ACCOUNT_REGISTER_ENABLED: prior.FADADA_ACCOUNT_REGISTER_ENABLED || 'false',

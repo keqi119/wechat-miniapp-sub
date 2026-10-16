@@ -2,10 +2,10 @@ import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/commo
 import { Db } from '../common/db';
 import { ensure, fail } from '../common/errors';
 import { tokenHash } from './auth.service';
-export const resources = ['model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals'];
+export const resources = ['model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications'];
 export function allowed(role: string, resource: string, write: boolean) {
   if (role === 'ADMIN') return true;
-  if (['users', 'audit-logs'].includes(resource)) return false;
+  if (['users', 'audit-logs', 'payment-verifications'].includes(resource)) return false;
   if (['enterprise-seals','seal-authorities','signature-policies'].includes(resource)) return !write && role === 'OPERATIONS';
   if (resource === 'esign-approvals') return role === 'OPERATIONS';
   if (!write) return true;
@@ -25,7 +25,7 @@ export class Access implements CanActivate {
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
     const path = request.path.replace(/^\/api/, '');
-    if (request.method === 'POST' && ['/callbacks/wechat-pay', '/callbacks/wechat-refund', '/callbacks/fadada-sign', '/callbacks/fadada-identity'].includes(path)) return true;
+    if (request.method === 'POST' && ['/callbacks/wechat-pay', '/callbacks/wechat-refund', '/callbacks/fadada-sign', '/callbacks/fadada-identity', '/callbacks/wechat-pay-verification'].includes(path)) return true;
     if (path.startsWith('/public/') || path === '/health') return true;
     if (path === '/admin/auth/login') { adminOrigin(request); return true; }
     if (['/customer/auth/wechat','/customer/auth/sms/request','/customer/auth/sms/login'].includes(path)) return true;

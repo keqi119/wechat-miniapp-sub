@@ -44,10 +44,11 @@ export class WechatPaymentGateway extends PaymentGateway {
     }
     return result;
   }
-  async create(input: { paymentId: string; amount: number; openId: string; description: string }) {
+  async create(input: { paymentId: string; amount: number; openId: string; description: string; expiresAt?: string }) {
     identifier(input.paymentId); ensure(cents(input.amount) && input.openId, 400, 'PAYMENT_INVALID', '支付金额或微信身份无效');
     ensure(/^https:\/\//.test(this.settings.notifyUrl), 503, 'PAYMENT_NOTIFY_INVALID', '支付回调地址未配置');
-    const result = await this.request('POST', '/v3/pay/transactions/jsapi', { appid: this.settings.appId, mchid: this.settings.merchantId, out_trade_no: input.paymentId, description: boundedText(input.description, 127), notify_url: this.settings.notifyUrl, amount: { total: input.amount, currency: 'CNY' }, payer: { openid: input.openId } });
+    if (input.expiresAt) ensure(Number.isFinite(Date.parse(input.expiresAt)) && Date.parse(input.expiresAt) > this.clock(), 400, 'PAYMENT_EXPIRED', '支付授权已过期');
+    const result = await this.request('POST', '/v3/pay/transactions/jsapi', { appid: this.settings.appId, mchid: this.settings.merchantId, out_trade_no: input.paymentId, description: boundedText(input.description, 127), notify_url: this.settings.notifyUrl, ...(input.expiresAt ? { time_expire: input.expiresAt } : {}), amount: { total: input.amount, currency: 'CNY' }, payer: { openid: input.openId } });
     ensure(typeof result.prepay_id === 'string' && result.prepay_id.length > 0, 502, 'PAYMENT_PREPAY_MISSING', '微信支付未返回支付凭据');
     const timeStamp = Math.floor(this.clock() / 1000).toString(), nonceStr = randomBytes(16).toString('hex'), packageValue = `prepay_id=${result.prepay_id}`;
     return { timeStamp, nonceStr, package: packageValue, signType: 'RSA', paySign: sign(`${this.settings.appId}\n${timeStamp}\n${nonceStr}\n${packageValue}\n`, this.settings.privateKey) };
@@ -59,7 +60,7 @@ export class WechatPaymentGateway extends PaymentGateway {
     const status = ({ SUCCESS: 'SUCCEEDED', REFUND: 'SUCCEEDED', NOTPAY: 'PENDING', USERPAYING: 'PENDING', CLOSED: 'CLOSED', REVOKED: 'CLOSED', PAYERROR: 'FAILED' } as const)[data.trade_state as string as 'SUCCESS'];
     ensure(status, 502, 'PAYMENT_STATE_INVALID', '支付状态暂无法识别');
     ensure(status !== 'SUCCEEDED' || typeof data.transaction_id === 'string', 400, 'PAYMENT_TRANSACTION_MISSING', '支付凭据缺失');
-    return { paymentId: data.out_trade_no as string, status: status as 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CLOSED', transactionId: data.transaction_id as string | undefined, amount: data.amount.total as number };
+    return { paymentId: data.out_trade_no as string, status: status as 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CLOSED', transactionId: data.transaction_id as string | undefined, amount: data.amount.total as number, payerOpenId: data.payer?.openid as string | undefined };
   }
   async query(paymentId: string) { identifier(paymentId); return this.transaction(await this.request('GET', `/v3/pay/transactions/out-trade-no/${encodeURIComponent(paymentId)}?mchid=${encodeURIComponent(this.settings.merchantId)}`), paymentId); }
   async close(paymentId: string) { identifier(paymentId); await this.request('POST', `/v3/pay/transactions/out-trade-no/${encodeURIComponent(paymentId)}/close`, { mchid: this.settings.merchantId }); }

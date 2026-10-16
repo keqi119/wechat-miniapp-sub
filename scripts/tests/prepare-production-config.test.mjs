@@ -135,3 +135,21 @@ test('copies a single PEM collection and retains previously enabled business swi
   assert.equal(env.FADADA_SIGNING_ENABLED, 'true');
   assert.equal(env.WECHAT_PAY_ENABLED, 'true');
 });
+
+test('payment verification remains disabled by default despite provider input', t => {
+  const env = assertSucceeded(fixture(t).run({
+    WECHAT_PAY_VERIFICATION_ENABLED: 'true',
+    WECHAT_PAY_VERIFICATION_NOTIFY_URL: 'https://wrong.example/callback',
+  }));
+  assert.equal(env.WECHAT_PAY_VERIFICATION_ENABLED, 'false');
+  assert.equal(env.WECHAT_PAY_VERIFICATION_NOTIFY_URL, 'https://mini-api.subauto.keybox.cloud/api/callbacks/wechat-pay-verification');
+  assert.equal(env.WECHAT_PAY_ENABLED, 'false');
+});
+
+test('preserves explicitly enabled verification without enabling ordinary payments', t => {
+  const env = assertSucceeded(fixture(t).run({}, {
+    WECHAT_PAY_VERIFICATION_ENABLED: 'true', WECHAT_PAY_ENABLED: 'false',
+  }));
+  assert.equal(env.WECHAT_PAY_VERIFICATION_ENABLED, 'true');
+  assert.equal(env.WECHAT_PAY_ENABLED, 'false');
+});

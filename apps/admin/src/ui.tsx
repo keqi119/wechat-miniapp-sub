@@ -3,7 +3,12 @@ import { AlertCircle, ArrowUpRight, Check, FileText, LoaderCircle, Plus, Upload,
 import { api, ApiError, date, money, isPrivateField, type Entity, type Page } from './core';
 import { serializeForm } from './form';
 import { commercialTermLabels, handoverFactLabels, normaliseHandoverChecklist } from './business-terms';
-import { display, type Field, statusLabel } from './resources';
+import { display, type Field, statusLabel, verificationReviewNotice } from './resources';
+
+export function PaymentVerificationReviewNotice({ entity }: { entity: Entity }) {
+  const notice = verificationReviewNotice(entity);
+  return notice ? <section className="esign-card approval-summary" role="note"><header><AlertCircle size={18}/><h3>{notice.title}</h3></header><p>{notice.message}</p></section> : null;
+}
 
 export function ErrorNotice({ error, retry }: { error: unknown; retry?: () => void }) {
   const message = error instanceof Error ? error.message : '请求失败，请稍后重试';
@@ -116,9 +121,11 @@ Object.assign(detailLabels, { sealName: '印章名称', organizationName: '企�
 Object.assign(relations, { sealId: 'enterprise-seals', policyId: 'signature-policies' });
 Object.assign(detailLabels, { renewal: '同任务重新授权来源', renewalEligibility: '重新授权资格', eligible: '符合重新授权条件', taskId: '原签署任务', priorApprovalId: '此前授权计划' });
 Object.assign(relations, { priorApprovalId: 'esign-approvals' });
+Object.assign(detailLabels, { currency: '币种', authorizationNote: '验收授权说明' });
+Object.assign(detailLabels, { manualReviewRequired: '需人工核对', statusMessage: '可信渠道状态说明' });
 Object.assign(detailLabels, { evidenceFileIds: '费用证据附件', createdBy: '创建人员', reviewNote: '复核意见', reviewedAt: '复核时间', terminationFileId: '正式终止协议', cancellationReason: '取消原因', cancelledAt: '取消时间', previousHandoverId: '上一版交接单', resolutionNote: '异议处理说明', resolvedBy: '异议处理人员' });
 Object.assign(relations, { previousHandoverId: 'handovers' });
 Object.assign(detailLabels, commercialTermLabels, { commercialTerms: '逐单商业条款' });
 export function DetailValues({ entity }: { entity: Record<string, unknown> }) {
-return <dl className="detail-values">{Object.entries(entity).filter(([key, value]) => value != null && !isPrivateField(key)).map(([key, value]) => <div key={key} className={typeof value === 'object' || String(value).length > 75 ? 'full' : ''}><dt>{detailLabels[key] ?? key}</dt><dd>{relations[key] && typeof value === 'string' ? <a href={`#${relations[key]}?record=${encodeURIComponent(value)}`}>{value}<ArrowUpRight size={12}/></a> : key === 'kind' ? value === 'SUBSCRIPTION' ? '订阅合同' : value === 'HANDOVER' ? '车辆交接单' : display(value) : key === 'status' ? <Status value={value}/> : /Amount$|^amount$/.test(key) ? money(value) : /At$|Date$/.test(key) ? date(value, /Date$/.test(key)) : /FileId$/.test(key) && typeof value === 'string' ? <a target="_blank" rel="noreferrer" href={api.fileUrl(value)}>查看附件 <ArrowUpRight size={13}/></a> : Array.isArray(value) ? <div className="detail-array">{value.map((item, index) => /fileIds$/i.test(key) && typeof item === 'string' ? <a key={index} target="_blank" rel="noreferrer" href={api.fileUrl(item)}>附件 {index + 1} <ArrowUpRight size={12}/></a> : typeof item === 'object' && item !== null ? <DetailValues key={index} entity={item as Record<string, unknown>}/> : <span key={index}>{display(item)}</span>)}</div> : typeof value === 'object' ? <DetailValues entity={value as Record<string, unknown>}/> : display(value)}</dd></div>)}</dl>;
+return <dl className="detail-values">{Object.entries(entity).filter(([key, value]) => value != null && !isPrivateField(key)).map(([key, value]) => <div key={key} className={typeof value === 'object' || String(value).length > 75 ? 'full' : ''}><dt>{detailLabels[key] ?? key}</dt><dd>{relations[key] && typeof value === 'string' ? <a href={`#${relations[key]}?record=${encodeURIComponent(value)}`}>{value}<ArrowUpRight size={12}/></a> : key === 'manualReviewRequired' ? value === true ? '需人工核对' : '无需人工核对' : key === 'kind' ? value === 'SUBSCRIPTION' ? '订阅合同' : value === 'HANDOVER' ? '车辆交接单' : display(value) : key === 'status' ? <Status value={value}/> : /Amount$|^amount$/.test(key) ? money(value) : /At$|Date$/.test(key) ? date(value, /Date$/.test(key)) : /FileId$/.test(key) && typeof value === 'string' ? <a target="_blank" rel="noreferrer" href={api.fileUrl(value)}>查看附件 <ArrowUpRight size={13}/></a> : Array.isArray(value) ? <div className="detail-array">{value.map((item, index) => /fileIds$/i.test(key) && typeof item === 'string' ? <a key={index} target="_blank" rel="noreferrer" href={api.fileUrl(item)}>附件 {index + 1} <ArrowUpRight size={12}/></a> : typeof item === 'object' && item !== null ? <DetailValues key={index} entity={item as Record<string, unknown>}/> : <span key={index}>{display(item)}</span>)}</div> : typeof value === 'object' ? <DetailValues entity={value as Record<string, unknown>}/> : display(value)}</dd></div>)}</dl>;
 }

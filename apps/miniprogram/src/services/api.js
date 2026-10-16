@@ -1,5 +1,6 @@
 const { money, date } = require('../utils/format');
 const TYPES = ['applications', 'orders', 'contracts', 'bills', 'payments', 'deposits', 'entitlements', 'notifications', 'services', 'mileages'];
+const VERIFICATION_STATUS = { AUTHORIZED: '已授权，尚未付款', CREATING: '支付准备结果待确认', PENDING: '支付结果待确认', SUCCEEDED: '支付成功', CLOSED: '验收已关闭', FAILED: '支付失败，不能继续付款', EXPIRED: '验收授权已过期' };
 const COMMERCIAL_FIELDS = { vehicleIdentification: '车辆及 VIN/车牌', permittedUse: '城市、使用性质、驾驶人及限制', conditionDisclosure: '车辆状况及已披露问题', customerAddress: '合同联系地址', mileageCarryRule: '里程累计与结转方式', excessMileageCalculation: '超里程计算及上限', usageCosts: '充电、停车、通行及违章承担', insuranceDetails: '保险机构、保单、险种、保额、免赔及免责', maintenanceRule: '保养、维修及正常磨损责任', serviceCoverage: '救援等权益覆盖、时间、次数及电话', handoverArrangement: '交还车地点、时间及延迟处理', earlyTerminationRule: '提前解约计算、上限及退费', depositRefundRule: '押金结算与退款期限', otherFees: '其他已明确收费项目' };
 function commercialDetails(plan) {
   const commercialRows = Object.keys(COMMERCIAL_FIELDS).map(key => ({ key, label: COMMERCIAL_FIELDS[key], value: plan.commercialTerms?.[key] || '' }));
@@ -26,6 +27,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const storageKey = options.storageKey || 'ev-subscription:customer-session:v1';
   const pendingKey = storageKey + ':pending';
   const paymentKeys = new Map();
+  const verificationPayments = new Set();
   function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); }
   function session() {
     const value = platform.getStorageSync(storageKey);
@@ -245,6 +247,44 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (nativeFailure && !cancelled) throw error('支付未完成，请刷新账单查询结果后重试。', 'PAYMENT_FAILED');
     return { status: cancelled ? 'CANCELLED' : payment.status || 'PENDING', payment, message: cancelled ? '已取消支付，可返回账单重新发起。' : '支付结果确认中，请稍后刷新账单。' };
   }
+  function verificationView(value) {
+    if (!value || typeof value.id !== 'string' || !Object.prototype.hasOwnProperty.call(VERIFICATION_STATUS,value.status)) throw error('支付验收记录格式无效，请重新查询。','RESPONSE');
+    const amountValid=value.amount===1&&value.currency==='CNY';
+    const active=Number.isFinite(Date.parse(value.expiresAt))&&Date.parse(value.expiresAt)>Date.now();
+    const manualReviewRequired=value.manualReviewRequired===true;
+    const statusMessage=typeof value.statusMessage==='string'?value.statusMessage.trim().slice(0,1000):'';
+    return {id:value.id,amount:value.amount,currency:value.currency,status:value.status,expiresAt:value.expiresAt,createdAt:value.createdAt,paidAt:value.paidAt||null,title:'微信支付验收',amountText:amountValid?'¥0.01':'金额或币种异常',statusText:manualReviewRequired?'需人工核对支付结果':VERIFICATION_STATUS[value.status],manualReviewRequired,statusMessage:statusMessage||(manualReviewRequired?'渠道结果尚未核实，需人工核对；不能认定未扣款。':''),canPay:!manualReviewRequired&&value.canPay===true&&amountValid&&active&&['AUTHORIZED','CREATING','PENDING'].includes(value.status),unavailableReason:!amountValid?'验收仅支持人民币0.01元，当前记录不可付款。':!active&&value.status!=='SUCCEEDED'?'验收授权已过期或有效期异常。':''};
+  }
+  async function getPaymentVerifications() {
+    const result=await call('GET','/customer/payment-verifications');
+    if(!Array.isArray(result?.items))throw error('支付验收列表格式无效。','RESPONSE');
+    return result.items.map(verificationView);
+  }
+  async function queryPaymentVerification(id) { const result=verificationView(await call('POST','/customer/payment-verifications/'+identifier(id)+'/query',{}));if(result.id!==id)throw error('支付验收查询记录不匹配。','RESPONSE');return result; }
+  async function payPaymentVerification(id,options={}) {
+    identifier(id);
+    if(verificationPayments.has(id))throw error('本次支付验收正在处理中，请等待结果。','PAYMENT_VERIFICATION_BUSY');
+    verificationPayments.add(id);
+    try{
+      const record=(await getPaymentVerifications()).find(item=>item.id===id);
+      if(!record)throw error('当前账户没有这份支付验收授权。','PAYMENT_VERIFICATION_NOT_AUTHORIZED');
+      if(!record.canPay)throw error(record.unavailableReason||'当前支付验收状态不可付款，请查询最新结果。','PAYMENT_VERIFICATION_STATE');
+      if(record.status!=='AUTHORIZED'&&options.resume!==true)throw error('请先手动查询本次验收状态，再决定是否继续同一次付款。','PAYMENT_VERIFICATION_QUERY_REQUIRED');
+      const [context,documents]=await Promise.all([refreshContext(),Promise.all(['terms','privacy'].map(type=>call('GET','/public/legal/'+type,undefined,false)))]);
+      if(documents.some((doc,index)=>!doc?.id||doc.type!==['terms','privacy'][index]||!Number.isInteger(doc.version)||!doc.content||!context.consents.some(consent=>consent.documentId===doc.id&&consent.version===doc.version)))throw error('请先阅读并同意当前正式用户协议与隐私政策。','CONSENT_REQUIRED');
+      let result;
+      try{result=await call('POST','/customer/payment-verifications/'+identifier(id)+'/pay',{});}
+      catch(failure){if(failure.statusCode!==409)throw failure;const verification=await queryPaymentVerification(id);return{verification,nativeOutcome:'NOT_STARTED',message:verification.manualReviewRequired?verification.statusMessage:verification.status==='SUCCEEDED'?'微信支付验收支付成功。':verification.statusText+'，请以当前服务端状态为准。'};}
+      const response=verificationView(result?.verification),payment=result?.paymentParams;
+      if(response.id!==id||response.amount!==1||response.currency!=='CNY'||!['AUTHORIZED','CREATING','PENDING'].includes(response.status)||!Number.isFinite(Date.parse(response.expiresAt))||Date.parse(response.expiresAt)<=Date.now()||!payment||typeof payment.timeStamp!=='string'||!/^\d{1,16}$/.test(payment.timeStamp)||['nonceStr','package','signType','paySign'].some(key=>typeof payment[key]!=='string'||!payment[key].trim()||payment[key].length>4096)||payment.signType!=='RSA'||!/^prepay_id=[^\s]+$/.test(payment.package))throw error('支付验收参数无效，请查询本次验收，不要重复付款。','RESPONSE');
+      let nativeOutcome='COMPLETED';
+      try{await native('requestPayment',{timeStamp:payment.timeStamp,nonceStr:payment.nonceStr,package:payment.package,signType:payment.signType,paySign:payment.paySign});}
+      catch(failure){nativeOutcome=/cancel/i.test(failure?.errMsg||failure?.message||'')?'CANCELLED':'FAILED';}
+      let verification;
+      try{verification=await queryPaymentVerification(id);}catch(failure){throw error('支付验收结果尚未核实，请手动查询状态，不要重复付款。','PAYMENT_VERIFICATION_QUERY_REQUIRED',{statusCode:failure.statusCode});}
+      return{verification,nativeOutcome,message:verification.manualReviewRequired?verification.statusMessage:verification.status==='SUCCEEDED'?'微信支付验收支付成功。':['CLOSED','FAILED','EXPIRED'].includes(verification.status)?verification.statusText+'，本次验收不可继续付款。':nativeOutcome==='CANCELLED'?'已取消微信付款，请查询本次验收；不会自动关闭或再次付款。':nativeOutcome==='FAILED'?'微信付款结果未完成，请查询本次验收。':'服务端结果待确认，请查询本次验收，不要重复付款。'};
+    }finally{verificationPayments.delete(id);}
+  }
   async function performAction(type, id, action, payload = {}) {
     const value = identifier(id);
     if (type === 'application' && ['cancel', 'confirm', 'reject'].includes(action)) {
@@ -288,7 +328,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     registerESign: () => call('POST', '/customer/esign/register', {}),
     startESignVerification: async input => { await call('POST', '/customer/esign/register', {}); const result = await call('POST', '/customer/esign/verify', input); validateSignUrl(result.url); const id = session().customer.id; platform.setStorageSync(pendingKey, { kind: 'identity', id, task: { taskId: 'identity', url: result.url, status: 'PENDING' } }); await native('navigateTo', { url: '/pages/sign/index?kind=identity&id=' + identifier(id) }); return result; },
     getLegal: type => call('GET', '/public/legal/' + identifier(type), undefined, false),
-    getRecords, getRecord, performAction, saveProfile, submitApplication, uploadFile, submitService, submitMileage, submitHandover,
+    getRecords, getRecord, performAction, saveProfile, submitApplication, uploadFile, submitService, submitMileage, submitHandover,getPaymentVerifications,payPaymentVerification,queryPaymentVerification,
     getHandover: id => call('GET', '/customer/handovers/' + identifier(id)), getSignStatus, getSigningTask, validateSignUrl, resumePayment, idempotencyKey, openPrivateFile,
     clearSigningCache: () => platform.removeStorageSync(pendingKey),
     openSigningMiniProgram: task => native('navigateToMiniProgram', task.miniProgram),

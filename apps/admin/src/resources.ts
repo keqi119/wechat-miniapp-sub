@@ -4,7 +4,14 @@ import { commercialTermLabels, handoverFactLabels } from './business-terms.ts';
 
 export type Field = { key: string; label: string; type?: 'text' | 'number' | 'money' | 'textarea' | 'lines' | 'select' | 'date' | 'files' | 'boolean' | 'password' | 'checklist' | 'commercial'; required?: boolean; readOnly?: boolean; requireFacts?: boolean; defaultValue?: string; options?: [string, string][]; source?: string; sourceFilters?: Record<string, string>; sourceWhen?: { field: string; value: string; source: string }; uploadPurpose?: string; hint?: string; min?: number; max?: number };
 export type Action = { label: string; path: string; fields?: Field[]; fixed?: Record<string, unknown>; warning?: string; kind?: 'danger' | 'primary' };
-export type Resource = { key: string; title: string; singular: string; subtitle: string; fields?: Field[]; columns: { key: string; label: string; format?: 'money' | 'date' }[]; actions?: Action[]; create?: boolean; edit?: boolean; statuses?: string[] };
+export type Resource = { key: string; title: string; singular: string; subtitle: string; fields?: Field[]; columns: { key: string; label: string; format?: 'money' | 'date' }[]; actions?: Action[]; create?: boolean; edit?: boolean; statuses?: string[]; adminOnly?: boolean };
+export function resourceAccessible(resource: Resource | undefined, permissions: string[], role?: string): boolean {
+  return !!resource && (!resource.adminOnly || role === 'ADMIN') && (permissions.includes('*') || permissions.includes(`${resource.key}.read`));
+}
+export function verificationReviewNotice(entity: Entity): { title: string; message: string } | undefined {
+  if (entity.manualReviewRequired !== true) return undefined;
+  return { title: '需人工核对', message: typeof entity.statusMessage === 'string' && entity.statusMessage.trim() ? entity.statusMessage : '授权已到期，渠道结果仍需人工核对；不能据此认定未扣款或再次授权。' };
+}
 const text = (key: string, label: string, required = true): Field => ({ key, label, required });
 const num = (key: string, label: string, min = 0, max?: number): Field => ({ key, label, type: 'number', required: true, min, max });
 const amount = (key: string, label: string): Field => ({ key, label, type: 'money', required: true, hint: '单位：元 · 保存时精确换算为整数分' });
@@ -32,10 +39,12 @@ export const labels: Record<string, string> = {
   DISABLED: '已停用', REVOKED: '已撤销', USER: '指定人员', ROLE: '后台角色', REQUEST_USE: '申请用印', APPROVE_USE: '复核用印', SEQUENTIAL: '先客户签署，再企业盖章', HANDOVER: '车辆交接单',
   REVIEWED: '复核已通过', SUPERSEDED: '已被修订版替代', EXTRA_FEE: '额外费用', RETURN_SETTLEMENT: '退车结算', CUSTOMER_SIGN: '客户签署', ENTERPRISE_SEAL: '企业盖章', PLATFORM: '服务平台',
   SEAL_DRAFT_CREATED: '印章建档', SEAL_ACTIVATED: '印章核验启用', SEAL_DISABLED: '停用印章', SEAL_AUTHORITY_GRANTED: '授予用印权限', SEAL_AUTHORITY_REVOKED: '撤销用印权限', SIGNATURE_REVIEW_REQUESTED: '提交签署复核', SIGNATURE_REVIEW_APPROVED: '签署复核通过', SIGNATURE_POLICY_DRAFT: '新建签署策略', SIGNATURE_POLICY_ACTIVATED: '启用签署策略', SIGNATURE_POLICY_DISABLED: '停用签署策略',
+  AUTHORIZED: '已授权', 'payment-verifications': '支付验收', CNY: '人民币',
 };
 export function statusLabel(value: string) { return labels[value] ?? value; }
 Object.assign(labels, commercialTermLabels, handoverFactLabels);
 export const resources: Resource[] = [
+  { key: 'payment-verifications', title: '支付验收', singular: '支付验收授权', subtitle: '固定0.01元，用于微信支付验证，不生成订阅订单/合同。状态以服务端可信渠道核验为准。', adminOnly: true, create: true, statuses: ['AUTHORIZED', 'CREATING', 'PENDING', 'SUCCEEDED', 'CLOSED', 'FAILED', 'EXPIRED'], columns: [{ key: 'title', label: '验收用途' }, { key: 'customerId', label: '授权客户' }, { key: 'amount', label: '固定验收金额', format: 'money' }, statusColumn, { key: 'expiresAt', label: '授权有效期', format: 'date' }, { key: 'paidAt', label: '可信到账时间', format: 'date' }], fields: [ref('customerId', '指定客户', 'customers'), { key: 'authorizationNote', label: '授权说明', type: 'textarea', required: true, hint: '固定0.01元，用于微信支付验证，不生成订阅订单/合同。授权24小时有效；客户须自行确认微信付款。请记录本次明确授权范围。' }], actions: [{ label: '查询并关闭未付验收', path: 'close', warning: '服务端将先查询渠道结果，再关闭未付款验收。已成功到账不能关闭；未知结果保留原交易，不会自动新建第二笔。', kind: 'danger' }] },
   { key: 'vehicles', title: '车辆管理', singular: '车辆', subtitle: '维护车辆档案、真实车况与可售状态。', create: true, edit: true, statuses: ['DRAFT', 'PUBLISHED', 'UNPUBLISHED', 'RESERVED', 'IN_USE'], columns: [{ key: 'title', label: '车辆' }, { key: 'brand', label: '品牌' }, { key: 'city', label: '所在城市' }, { key: 'mileageKm', label: '里程 / km' }, statusColumn, created], fields: [text('brand', '品牌'), text('model', '车型'), text('title', '车辆标题'), num('year', '上牌年份', 2000, 2100), text('city', '城市'), num('mileageKm', '累计里程（km）'), num('batteryHealthPercent', '电池健康度（%）', 0, 100), area('description', '车辆介绍'), area('conditionDisclosure', '车况披露', true), { key: 'coverFileId', label: '封面照片', type: 'files' }, { key: 'mediaFileIds', label: '车辆照片与附件', type: 'files' }], actions: [{ label: '上架车辆', path: 'publish', warning: '上架后客户可在小程序浏览此车辆及有效套餐。', kind: 'primary' }, { label: '下架车辆', path: 'unpublish', kind: 'danger' }] },
   { key: 'model-definitions', title: '车型资料', singular: '车型', subtitle: '统一车型信息，让车辆目录保持清晰。', create: true, edit: true, columns: [{ key: 'brand', label: '品牌' }, { key: 'name', label: '车型' }, { key: 'bodyType', label: '车身类型' }, created], fields: [text('brand', '品牌'), text('name', '车型名称'), text('bodyType', '车身类型'), area('description', '车型说明')] },
   { key: 'plans', title: '订阅套餐', singular: '套餐', subtitle: '车辆绑定套餐；金额以整数分入库。', create: true, edit: true, columns: [{ key: 'name', label: '套餐名称' }, { key: 'vehicleId', label: '关联车辆' }, { key: 'months', label: '期限 / 月' }, { key: 'monthlyFeeAmount', label: '月费', format: 'money' }, { key: 'active', label: '启用' }, created], fields: [ref('vehicleId', '关联车辆', 'vehicles'), ...planFields], actions: [{ label: '启用套餐', path: 'activate', kind: 'primary' }, { label: '停用套餐', path: 'deactivate', kind: 'danger' }] },
@@ -63,7 +72,7 @@ export const resources: Resource[] = [
 export const groups = [
   { label: '车源与商品', keys: ['vehicles', 'model-definitions', 'plans'] },
   { label: '客户与订阅', keys: ['applications', 'customers', 'orders', 'contracts'] },
-  { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds'] },
+  { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds', 'payment-verifications'] },
   { label: '交付与服务', keys: ['handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
   { label: '签章运营', keys: ['enterprise-seals', 'seal-authorities', 'signature-policies', 'esign-approvals'] },
   { label: '系统管理', keys: ['users', 'audit-logs', 'legal-documents'] },
@@ -73,6 +82,7 @@ export function display(value: unknown): string { if (value == null || value ===
 
 export function actionAllowed(resource: string, action: Action, entity: Entity, userId?: string): boolean {
   const status = String(entity.status ?? '');
+  if (resource === 'payment-verifications') return action.path === 'close' && ['AUTHORIZED', 'CREATING', 'PENDING'].includes(status) && entity.canClose === true;
   if (resource === 'vehicles') return !entity.reservedOrderId && (action.path === 'publish' ? ['DRAFT', 'UNPUBLISHED'].includes(status) : status === 'PUBLISHED');
   if (resource === 'plans') return action.path === 'activate' ? !entity.active : !!entity.active;
   if (resource === 'applications') return action.path === 'review' ? ['SUBMITTED', 'IN_REVIEW', 'NEEDS_INFO'].includes(status) : ['IN_REVIEW', 'AWAITING_CONFIRMATION'].includes(status);
@@ -99,6 +109,7 @@ export function actionAllowed(resource: string, action: Action, entity: Entity, 
 
 export function detailFor(resource: string, entity: Entity): Record<string, unknown> {
   const pick = (source: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
+  if (resource === 'payment-verifications') return pick(entity, ['id', 'title', 'amount', 'currency', 'status', 'customerId', 'authorizationNote', 'expiresAt', 'createdAt', 'paidAt', 'manualReviewRequired', 'statusMessage']);
   if (resource === 'enterprise-seals') return pick(entity, ['id', 'sealName', 'organizationName', 'providerCustomerId', 'providerSignatureId', 'evidenceFileId', 'status', 'confirmedBy', 'confirmedAt', 'createdAt']);
   if (resource === 'applications') return {
     ...pick(entity, ['id', 'status', 'customerId', 'vehicleId', 'subscriptionPlanId', 'revision']),
