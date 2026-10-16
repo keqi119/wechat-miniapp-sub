@@ -1,0 +1,27 @@
+{
+  "mode": "actual-built-bundle-intercepted-network-no-real-login",
+  "expectedBase": "https://qa-api.invalid/api",
+  "requests": [
+    {
+      "url": "https://qa-api.invalid/api/admin/auth/me",
+      "method": "GET",
+      "credentials": "include"
+    },
+    {
+      "url": "https://qa-api.invalid/api/admin/auth/login",
+      "method": "POST",
+      "credentials": "include"
+    }
+  ],
+  "observed": [
+    {
+      "url": "https://qa-api.invalid/api/admin/auth/me",
+      "method": "GET"
+    },
+    {
+      "url": "https://qa-api.invalid/api/admin/auth/login",
+      "method": "POST"
+    }
+  ],
+  "pageErrors": []
+}

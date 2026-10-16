@@ -1,0 +1,27 @@
+{
+  "mode": "actual-built-bundle-intercepted-network-no-real-login",
+  "expectedBase": "https://mini-api.subauto.keybox.cloud/api",
+  "requests": [
+    {
+      "url": "https://mini-api.subauto.keybox.cloud/api/admin/auth/me",
+      "method": "GET",
+      "credentials": "include"
+    },
+    {
+      "url": "https://mini-api.subauto.keybox.cloud/api/admin/auth/login",
+      "method": "POST",
+      "credentials": "include"
+    }
+  ],
+  "observed": [
+    {
+      "url": "https://mini-api.subauto.keybox.cloud/api/admin/auth/me",
+      "method": "GET"
+    },
+    {
+      "url": "https://mini-api.subauto.keybox.cloud/api/admin/auth/login",
+      "method": "POST"
+    }
+  ],
+  "pageErrors": []
+}

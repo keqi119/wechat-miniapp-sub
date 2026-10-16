@@ -63,5 +63,5 @@ export class ApiClient {
     return data as T;
   }
 }
-export const api = new ApiClient(fetch, import.meta.env?.VITE_API_BASE_URL || '/api');
+export const api = new ApiClient(fetch, import.meta.env?.VITE_API_BASE_URL || (import.meta.env?.PROD ? 'https://mini-api.subauto.keybox.cloud/api' : '/api'));
 export function isPrivateField(key: string): boolean { return /password|token|secret|csrf|ciphertext|privateKey|credential/i.test(key); }
