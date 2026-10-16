@@ -1,0 +1,13 @@
+{
+  "backupArchive": "/opt/wechat-miniapp-sub/backups/20261016T140350Z.tar.enc",
+  "createdAt": "2026-10-16T14:03:50Z",
+  "scope": "Independent chundian_prod database and its uploads; old project untouched",
+  "sourceRelease": "20261016-vehicle-change-v1",
+  "sourceAppliedMigrations": 18,
+  "encryptedArchiveDigestVerified": true,
+  "isolatedRestoreVerified": true,
+  "restoredPublicTables": 56,
+  "restoreVerificationDatabaseRemoved": true,
+  "productionDatabaseOverwritten": false,
+  "technicalReleaseDeployed": false
+}

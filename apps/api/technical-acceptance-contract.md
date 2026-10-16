@@ -8,7 +8,7 @@
 
 - status: AWAITING_CONFIRMATION / CONFIRMED / PENDING / SIGNED / STOPPED / REJECTED / EXPIRED / PURGED。停止与迟到签署事实分开：stoppedAt 始终保留；signatureStatus 为 DRAFT/PENDING/SIGNED/REJECTED/EXPIRED，只有双方可信签署+归档为 SIGNED。
 - document: `{id,type:'technical-signing-verification',version,title,templateHash,bodyHash,documentHash,sourcePdfHash,content}`；content 是已解析全文，不含完整手机或证件号。列表只返回上述基础状态/能力和 document 的 hash/版本，省 content、disclosure、PDF ID。
-- approval: `null | {id,status,expiresAt,requesterId,approverId,planHash}`。能力来自服务端，缺省不得推断允许。
+- approval: `null | {id,status,expiresAt,requesterId,approverId,planHash}`。`planHash` 沿用既有用印计划格式 `sha256:` 加64位十六进制；不要用文档/PDF的裸64位摘要规则拒绝该值。能力来自服务端，缺省不得推断允许。
 - disclosure: `{version:'1',text,privacyDocumentId,privacyVersion}`，本人确认时独立未默认勾选。内容说明本份文件、实名姓名/已绑定手机号/法大大客户关联及签署凭据提供给法大大，仅此次验证及180天规则。
 - enabled 只表示独立验收开关；canSign 还要求本人确认、有效双人复核、原生入口及供应商配置。关闭/停止仍可读取、核对已发出任务和归档，不发新签署或企业章。
 - retentionStatus: RETAINED / REVIEW_DUE / HELD / PURGED。purge 为授权人工操作，实际删除本验证独立文件并匿名化独立数据；共享实名/证书不删。存在渠道未决/争议/法定留存时不允许清理。

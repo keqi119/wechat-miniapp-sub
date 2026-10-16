@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-16T14:05:56.135Z",
+  "kind": "SYNTHETIC_ONLY",
+  "pdfSha256": "1ab19c2249f92119ce47e7a4721013b64d5901d6db880839647e6b8618142dbd",
+  "pages": 3,
+  "allPagesVisuallyReviewed": true,
+  "maskedPhoneMarkersPreserved": true,
+  "headingAndPageNumbersVerified": true,
+  "signatureBoxesVisible": true,
+  "noClippingOrOverlap": true,
+  "sourceTemplate": "docs/legal/versions/technical-signing/technical-signing-verification-v1.md",
+  "actualCustomerSignature": false
+}
