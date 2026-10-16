@@ -74,9 +74,9 @@ function createOrderChangesApi({ call, identifier, error, idempotencyKey, getCon
       if (current.revision !== payload.revision || (action === 'confirm' && current.quote?.commercialHash !== payload.commercialHash)) throw error('延期方案版本已改变，请刷新后重新阅读。', 'CHANGE_STALE');
       const capability = { confirm: 'canConfirm', reject: 'canReject', sign: 'canSign', sync: 'canSync' }[action];
       if (!capability || !current[capability]) throw error('当前延期流程不可执行此操作，请刷新或联系人工。', 'CHANGE_UNAVAILABLE');
-      if (action === 'sign') return enterSigning('order-change', id);
       const body = { revision: current.revision, ...(action === 'confirm' ? { commercialHash: current.quote.commercialHash } : {}), ...(action === 'reject' ? { reason: payload.reason.trim() } : {}) };
       const key = JSON.stringify([getContext().customer?.id, id, action, body]); if (!keys.has(key)) keys.set(key, idempotencyKey('order-change'));
+      if (action === 'sign') return enterSigning('order-change', id, { ...body, idempotencyKey: keys.get(key) });
       const result = await call('POST', '/customer/order-changes/' + identifier(id) + '/' + action, { ...body, idempotencyKey: keys.get(key) });
       const mapped = view(result, id); keys.delete(key); return mapped;
     } finally { running.delete(busyKey); }

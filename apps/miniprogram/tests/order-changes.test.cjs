@@ -13,12 +13,12 @@ function setup(extra = {}) {
     if (failure === 'NETWORK') return v.fail({ errMsg: 'synthetic network failure' });
     if (failure && v.method === 'POST') return v.success({ statusCode: failure, data: { error: { message: '合成失败状态', code: 'CONFLICT' } } });
     let data;
-    if (route === '/public/signing-config') return v.success({ statusCode: 200, data: { mode: 'SERVICE_ACCOUNT_H5', entryUrl: 'https://app.subauto.keybox.cloud/miniapp-sign/', enabled: true } });
+    if (route === '/public/signing-config') return v.success({ statusCode: 200, data: { mode: 'MINIAPP_WEBVIEW', enabled: true, signProviderConfigured: true, providerHosts: ['textapi17.fadada.com', 'realnameverify16.fadada.com'], returnUrl: 'https://mini-api.subauto.keybox.cloud/api/public/esign-return' } });
     if (route === '/customer/order-changes') { const { id, orderId, kind, status, revision, reason, createdAt, quote } = current; data = { items: [{ id, orderId, kind, status, revision, reason, createdAt, quoteSummary: quote ? { id: quote.id, revision: quote.revision, newStartDate: quote.newStartDate, newEndDate: quote.newEndDate, months: quote.months, commercialHash: quote.commercialHash, expiresAt: quote.expiresAt } : null }], total: 1, page: 1, pageSize: 50 }; }
     else if (route === '/customer/order-changes/dc1' && v.method === 'GET') data = current;
     else if (route.endsWith('/confirm')) { current = { ...current, status: 'AWAITING_SIGNATURE', revision: 4, canConfirm: false, canSign: true }; data = current; }
     else if (route.endsWith('/reject')) { current = { ...current, status: 'REJECTED', revision: 4, canConfirm: false, canReject: false }; data = current; }
-    else if (route.endsWith('/sign')) data = extra.sign || { taskId: 'task1', url: 'https://sign.example.test/current', status: 'PENDING' };
+    else if (route.endsWith('/sign')) data = extra.sign || { taskId: 'task1', url: 'https://textapi17.fadada.com/api2/current', status: 'PENDING' };
     else if (route.endsWith('/sync')) data = { ...current, contract: { id: 'am1', status: extra.signed ? 'SIGNED' : 'PENDING', sourceFileId: 'pdf1', signedFileId: extra.signed ? 'signed1' : null } };
     else if (route === '/customer/records/orders/o1') data = { id: 'o1', title: '合成订单', statusText: '待交车', details: [], timeline: [], documents: [], actions: [] };
     else throw Error('Unexpected route ' + route);
@@ -64,11 +64,11 @@ test('reject requires reason and current server capability and never signs or pa
   const result = await env.api.rejectOrderChange('dc1', { revision: 3, reason: '新交车日不合适' }); assert.equal(result.status, 'REJECTED');
   assert.equal(env.calls.filter(v => v.method === 'POST').length, 1); assert.equal(env.calls.at(-1).data.reason, '新交车日不合适');
 });
-test('change sign only opens H5 guide after current capability check and does not POST a signing task', async () => {
+test('change native sign posts bound revision after current capability check and stores only opaque context', async () => {
   const env = setup({ change: change({ status: 'AWAITING_SIGNATURE', canConfirm: false, canSign: true }) });
   await env.api.signOrderChange('dc1', { revision: 3 }); assert.equal(env.navigations.at(-1), '/pages/sign/index?kind=order-change&id=dc1');
   assert.equal(env.storage.get(config.storageKey + ':pending').kind, 'order-change');
-  assert.equal(env.calls.some(value => value.method === 'POST'), false); assert.deepEqual(env.storage.get(config.storageKey + ':pending'), { kind: 'order-change', id: 'dc1' });
+  assert.equal(env.calls.filter(value => value.method === 'POST').length, 1); assert.equal(env.calls.find(value => value.method === 'POST').data.revision, 3); assert.deepEqual(env.storage.get(config.storageKey + ':pending'), { kind: 'order-change', id: 'dc1' });
 });
 test('sign status fresh-reads change revision then POST sync; only archived server SIGNED is success', async () => {
   const env = setup({ change: change({ revision: 8, status: 'AWAITING_SIGNATURE', canSync: true, canConfirm: false }) });

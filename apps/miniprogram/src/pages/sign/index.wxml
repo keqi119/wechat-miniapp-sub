@@ -1,6 +1,12 @@
-<view class="page bottom-space"><view class="eyebrow">SIGNATURE / 签约指引</view><view class="title">在微信网页中签署。</view>
-  <view wx:if="{{loading}}" class="empty">正在读取签约中心配置…</view>
-  <view wx:if="{{error}}" class="notice" role="alert">{{error}}<button class="text-button" bindtap="reload">重新读取入口配置</button></view>
-  <view wx:if="{{signing}}" class="card"><view class="section-title">{{signing.title}}</view><view class="field">1. 点击复制签约入口，在微信中打开。</view><view class="field">2. 使用与小程序相同手机号，通过短信登录。</view><view class="field">3. 核对本人资料、正式文档与业务记录，自行操作签署。</view><view class="field">4. 完成后手动返回此页，查询最新结果。</view><view class="notice">请使用与小程序相同手机号登录。完成签署后，手动返回小程序查询结果；网页返回或复制入口都不代表签署完成。</view><view wx:if="{{!signing.enabled}}" class="notice" role="alert">签约入口尚未启用，请联系运营。</view><button wx:if="{{signing.enabled}}" class="primary" bindtap="copyEntry" loading="{{busy}}" disabled="{{busy}}">复制签约入口</button></view>
-  <view class="card"><view class="section-title">签署进度</view><view wx:if="{{status === 'SIGNED'}}" class="tag">双方签署已归档</view><view wx:elif="{{status === 'VERIFIED'}}" class="tag">实名与证书已就绪</view><view wx:elif="{{status === 'REJECTED' || status === 'EXPIRED'}}" class="tag">本次签署已终止或过期</view><view wx:else class="tag">结果待核实</view><view wx:if="{{message}}" class="notice" role="status">{{message}}</view><view wx:if="{{statusError}}" class="notice" role="alert">{{statusError}}</view><button class="secondary" bindtap="refreshStatus" disabled="{{busy}}">查询最新结果</button></view><button class="text-button" bindtap="back">返回原业务记录</button>
+<web-view wx:if="{{url && !error}}" src="{{url}}" bindload="onWebLoad" binderror="onWebError" bindmessage="onWebMessage"/>
+<view wx:else class="page">
+  <view class="eyebrow">SIGNATURE / 实名与签署</view><view class="title">{{title}}</view>
+  <view wx:if="{{loading}}" class="empty">正在核对当前流程…</view>
+  <block wx:else>
+    <view wx:if="{{error}}" class="notice" role="alert">{{error}}</view>
+    <view class="card"><view class="section-title">当前服务端结果</view><view class="tag">{{status === 'SIGNED' ? '双方签署已归档' : status === 'VERIFIED' ? '实名与证书已就绪' : status === 'PENDING' ? '处理中，待确认' : '结果待核实'}}</view><view wx:if="{{message}}" class="notice">{{message}}</view><view wx:if="{{statusError}}" class="notice" role="alert">{{statusError}}</view><button class="secondary" bindtap="refreshStatus" disabled="{{busy}}">查询最新结果</button></view>
+    <view wx:if="{{!enabled}}" class="notice">小程序内实名与签署暂未启用，已有结果仍可查询；请联系运营。</view>
+    <view wx:elif="{{status !== 'SIGNED' && status !== 'VERIFIED'}}" class="card"><view class="muted">页面已关闭或入口已过期时，请主动重新进入当前流程。不会自动提交资料或新建签署。</view><button class="primary" bindtap="retry" disabled="{{busy}}" loading="{{busy}}">{{kind === 'identity' ? '返回账户重新核对实名资料' : '重新进入本记录签署'}}</button></view>
+    <button class="text-button" bindtap="back">返回原业务记录</button>
+  </block>
 </view>

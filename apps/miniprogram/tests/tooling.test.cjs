@@ -49,6 +49,10 @@ test('static checks detect routes, handlers, assets and literal WXML directives'
   assert.match(errors, /unregistered route pages\/nope\/index/);
   assert.match(errors, /missing asset assets\/missing.png/);
 });
+test('static checks validate registered subpackage pages instead of silently omitting the official face middle path', (t) => {
+  const { root, put } = fixture(t); put('app.json', JSON.stringify({ pages: ['pages/home/index'], subPackages: [{ root: 'pagesFace', pages: ['pages/middle/middle'] }] })); assert.match(check(root).join('\n'), /Missing pagesFace\/pages\/middle\/middle\.js/);
+  for (const [ext, source] of [['js', 'Page({});'], ['json', '{}'], ['wxml', '<view>桥接前置条件核对</view>'], ['wxss', '']]) put('pagesFace/pages/middle/middle.' + ext, source); assert.deepEqual(check(root), []);
+});
 
 test('official wcc evaluates real conditions, loops and data bindings', (t) => {
   const { root } = fixture(t);

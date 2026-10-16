@@ -1,24 +1,32 @@
 const services = require('../../services/index');
-const { load } = require('../../utils/page');
+const { load, go } = require('../../utils/page');
 Page({
-  data: { loading: true, error: '', signing: null, status: 'UNKNOWN', statusError: '', message: '', busy: false },
-  onLoad(options) { this.id = options.id || ''; this.kind = options.kind || 'contract'; this.reload(); },
-  reload() { this.setData({ signing: null }); return load(this, async () => ({ signing: await services.getSigningGuidance(this.kind, this.id) })); },
-  async onShow() { if (!this.id || !['contract', 'handover', 'order-change', 'identity'].includes(this.kind)) return; await this.refreshStatus(); },
-  async refreshStatus() {
-    if (this._statusBusy) return;
-    this._statusBusy = true; this.setData({ statusError: '' });
-    try {
-      const result = await services.getSignStatus(this.id, this.kind);
-      this.setData({ status: result.status, message: result.status === 'SIGNED' ? '服务端已确认双方签署并归档。实际交付、资金结清或变更生效请查看原业务进度。' : result.status === 'VERIFIED' ? '服务端已确认实名与证书就绪。' : ['REJECTED', 'EXPIRED'].includes(result.status) ? '本次签署已终止或过期，请返回业务记录联系运营处理。' : '服务端尚未确认完成。请在签约网页核对流程，完成后手动返回小程序再查询。' });
-    } catch (error) { this.setData({ status: 'UNKNOWN', statusError: error.message, message: '查询未完成，结果尚未核实；复制或返回小程序都不代表签署成功。' }); }
-    finally { this._statusBusy = false; }
+  data: { loading: true, error: '', url: '', kind: '', title: '实名与签署', status: 'UNKNOWN', statusError: '', message: '', busy: false, enabled: false, faceBridgeConfigured: false },
+  onLoad(options = {}) { this.id = options.id || ''; this.kind = options.kind || ''; this._disposed = false; this._pageGeneration = (this._pageGeneration || 0) + 1; this._terminal = false; this._statusRevision = 0; this.setData({ kind: this.kind }); this.reload(); },
+  onUnload() { this._disposed = true; this._pageGeneration++; this._loadRevision = (this._loadRevision || 0) + 1; this.setData({ url: '' }); },
+  reload() {
+    if (this._disposed) return;
+    const statusRevision = this._statusRevision;
+    this.setData({ url: '', error: '' });
+    return load(this, async () => { services.getSigningTask(this.kind, this.id); const config = await services.getSigningConfig(); const task = services.getSigningTask(this.kind, this.id); return { title: task.title, url: config.enabled && config.signProviderConfigured && !this._terminal ? task.url : '', enabled: config.enabled && config.signProviderConfigured, faceBridgeConfigured: false, ...(statusRevision === this._statusRevision ? { status: task.status } : {}) }; });
   },
-  async copyEntry() {
-    if (this.data.busy) return;
-    this.setData({ busy: true, error: '', message: '' });
-    try { const result = await services.copySigningEntry(this.kind, this.id); this.setData({ message: result.message }); }
-    catch (error) { await this.reload(); this.setData({ error: error.message }); }
+  async onShow() { if (this.id && ['contract', 'handover', 'order-change', 'identity'].includes(this.kind)) await this.refreshStatus(); },
+  async refreshStatus() {
+    if (this._querying || this._disposed) return; const generation = this._pageGeneration; this._querying = true; this._statusRevision = (this._statusRevision || 0) + 1; this.setData({ statusError: '' });
+    try { const result = await services.getSignStatus(this.id, this.kind); if (this._disposed || generation !== this._pageGeneration) return; this._statusRevision++; const done = ['SIGNED', 'VERIFIED', 'REJECTED', 'EXPIRED', 'CLOSED'].includes(result.status); if (done) { this._terminal = true; services.forgetSigningTask(this.kind, this.id); } this.setData({ status: result.status, message: result.status === 'SIGNED' ? '服务端已确认双方签署并归档。实际交付、资金或变更生效请查看原业务进度。' : result.status === 'VERIFIED' ? '服务端已确认实名与证书就绪。' : done ? '本流程已终止或过期，请联系运营。' : '服务端尚未确认完成。页面返回或提示完成都不代表已实名或已签署，请查询最新结果。', ...(done ? { url: '' } : {}) }); }
+    catch (error) { if (this._disposed || generation !== this._pageGeneration) return; this._statusRevision++; this.setData({ status: 'UNKNOWN', url: '', statusError: error.message, message: '结果尚未核实，请稍后重新查询；不会按页面消息认定成功。' }); }
+    finally { this._querying = false; }
+  },
+  reloadPage(url) { try { this.setData({ url: services.reloadSigningPage(this.kind, this.id, url), statusError: '' }); return true; } catch (error) { this.setData({ url: '', statusError: error.message }); return false; } },
+  onWebLoad() { this.setData({ message: '请在实名或签署页面自行核对并操作，返回后查询真实结果。' }); },
+  onWebError() { this.setData({ url: '', error: '实名或签署页面暂时无法打开，请联系运营核对业务域名，或返回原记录查询。' }); },
+  onWebMessage() { return this.refreshStatus(); },
+  async retry() {
+    if (this.data.busy || !this.data.enabled) return;
+    if (this.kind === 'identity') return go('/pages/settings/index');
+    this.setData({ busy: true, error: '' });
+    try { if (this.kind === 'order-change') { const current = await services.getOrderChange(this.id); await services.signOrderChange(this.id, { revision: current.revision }); } else if (['contract', 'handover'].includes(this.kind)) await services.performAction(this.kind === 'handover' ? 'handovers' : 'contracts', this.id, 'sign'); else throw new Error('请从原业务记录重新进入。'); }
+    catch (error) { this.setData({ error: error.message }); }
     finally { this.setData({ busy: false }); }
   },
   back() { wx.navigateBack({ delta: 1 }); },

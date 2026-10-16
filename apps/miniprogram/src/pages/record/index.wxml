@@ -36,7 +36,7 @@
       <view wx:if="{{changeError}}" class="notice" role="alert">{{changeError}}</view><view wx:if="{{message}}" class="notice" role="status">{{message}}</view>
       <view wx:if="{{change.canConfirm}}" class="card"><checkbox-group bindchange="onChangeRead"><label class="delay-agreement"><checkbox value="change" checked="{{changeRead}}" disabled="{{busy}}" color="#252723"/><text>我已完整阅读并确认本版本的新起止日期、逐期费用、原款沿用、补收退款、交接取消安排及正式补充条款。</text></label></checkbox-group><button class="primary" disabled="{{busy || !changeRead}}" loading="{{busy}}" bindtap="confirmChange">确认本版本延期方案</button></view>
       <view wx:if="{{change.canReject}}" class="card"><view class="label">如不同意，请说明原因</view><textarea class="textarea" value="{{changeRejectReason}}" bindinput="inputChangeRejectReason" maxlength="500" disabled="{{busy}}" placeholder="请填写拒绝此版本的原因"/><button class="secondary" disabled="{{busy}}" bindtap="rejectChange">拒绝此版本，转人工沟通</button></view>
-      <button wx:if="{{change.canSign}}" class="primary" disabled="{{busy}}" loading="{{busy}}" bindtap="signChange">查看补充协议签约指引</button><button wx:if="{{change.canSync}}" class="secondary" disabled="{{busy}}" loading="{{busy}}" bindtap="syncChange">查询签署与资金进度</button><button class="text-button" disabled="{{busy}}" bindtap="reload">刷新真实流程状态</button><button class="text-button back-link" bindtap="openList">查看全部延期记录 →</button>
+      <button wx:if="{{change.canSign}}" class="primary" disabled="{{busy}}" loading="{{busy}}" bindtap="signChange">签署本版本补充协议</button><button wx:if="{{change.canSync}}" class="secondary" disabled="{{busy}}" loading="{{busy}}" bindtap="syncChange">查询签署与资金进度</button><button class="text-button" disabled="{{busy}}" bindtap="reload">刷新真实流程状态</button><button class="text-button back-link" bindtap="openList">查看全部延期记录 →</button>
     </block><block wx:else><view class="eyebrow">RECORD DETAIL / 详情</view><view class="title">{{record.title}}</view
     ><view class="record-summary"
       ><text class="tag">{{record.statusText}}</text
@@ -77,7 +77,7 @@
         disabled="{{busy}}"
         data-action="{{item.id}}"
         bindtap="act"
-        >{{item.id === 'sign' ? '查看签约指引' : item.label}}</button
+        >{{item.id === 'sign' ? '签署本记录' : item.label}}</button
       ></view
     ><button wx:if="{{type === 'orders'}}" class="secondary" bindtap="openOrderUsage">查看本订阅月里程、里程包及退订结算</button><button wx:if="{{type === 'orders'}}" class="secondary" bindtap="openOrderChanges">查看延期交车方案与进度</button><button class="text-button back-link" bindtap="openList">查看全部记录 →</button></block></block
   ></view
