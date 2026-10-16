@@ -1,3 +1,6 @@
+import {guardSwapPayment,grantSwapCredit,guardSwapRefund,settleSwapRefund} from '../swap-purchases/ledger';
+import {USAGE_CLOCK} from '../usage/rules';
+import {purchaseEnabled} from '../swap-purchases/rules';
 import {serviceBillSequences} from '../order-changes/obligations';
 import { guardDelayPayment,allocateDelayPayment } from '../order-changes/finance';
 import { guardPackRefund, settlePackRefund } from '../usage/refunds';
@@ -12,19 +15,21 @@ import { ensure } from '../common/errors';
 import { audit, fileIds, hash, key, money, notify, text } from '../common/data';
 @Injectable()
 export class BillingService {
-  constructor(@Inject(Db) private db: Db, @Inject(PaymentGateway) private gateway: PaymentGateway) {}
+  constructor(@Inject(Db) private db: Db, @Inject(PaymentGateway) private gateway: PaymentGateway, @Inject(USAGE_CLOCK) private clock:()=>Date=()=>new Date()) {}
   private code(error: unknown) { return error instanceof HttpException ? (error.getResponse() as any)?.error?.code : undefined; }
   private freshParameters(parameters: any) { const timestamp = Number(parameters?.timeStamp); return Number.isFinite(timestamp) && Date.now() / 1000 - timestamp >= 0 && Date.now() / 1000 - timestamp < 110 * 60; }
   async settleRefund(refundId: string, event: { status: 'PROCESSING'|'SUCCEEDED'|'FAILED'; providerRefundId?: string; paymentId: string; amount: number; totalAmount: number }) {
     return this.db.serial(async tx => {
-      const refund = await tx.refund.findUnique({ where: { id: refundId }, include: { payment: { include: { bill: true } } } });
+      const reference = await tx.refund.findUnique({ where: { id: refundId }, include: { payment: { include: { bill: true } } } });
+      if(reference?.payment.bill.type==='SWAP_CREDIT')await tx.order.update({where:{id:reference.payment.bill.orderId},data:{revision:{increment:1}}});
+      const refund = reference?.payment.bill.type==='SWAP_CREDIT'?await tx.refund.findUnique({where:{id:refundId},include:{payment:{include:{bill:true}}}}):reference;
       ensure(refund && refund.paymentId === event.paymentId && refund.amount === event.amount && refund.payment.amount === event.totalAmount, 409, 'REFUND_MISMATCH', '退款归属或金额不匹配');
       ensure(['PROCESSING','SUCCEEDED'].includes(refund.status), 409, 'REFUND_STATE', '退款未获批准或已终止');
       if (refund.status === 'SUCCEEDED') { ensure(!event.providerRefundId || event.providerRefundId === refund.providerRefundId, 409, 'REFUND_MISMATCH', '退款渠道单号不匹配'); return refund; }
       const updated = await tx.refund.update({ where: { id: refundId }, data: { status: event.status, ...(event.providerRefundId ? { providerRefundId: event.providerRefundId } : {}) } });
       if (event.status === 'SUCCEEDED') {
         ensure(event.providerRefundId, 409, 'REFUND_MISMATCH', '渠道退款单号缺失');
-        await settlePackRefund(tx,refund);
+        await settleSwapRefund(tx,refund);await settlePackRefund(tx,refund);
         if (['DEPOSIT','DEPOSIT_ADJUSTMENT'].includes(refund.payment.bill.type)) await tx.depositEntry.create({ data: { customerId: refund.customerId, orderId: refund.payment.bill.orderId, refundId, type: 'REFUND', amount: refund.amount } });
       }
       await audit(tx, 'payment-provider', 'REFUND_STATUS', 'refunds', refundId, { status: event.status, amount: event.amount }, 'PROVIDER');
@@ -33,15 +38,19 @@ export class BillingService {
   }
   async settle(paymentId: string, event: { status: 'PENDING'|'SUCCEEDED'|'FAILED'|'CLOSED'; amount: number; transactionId?: string }) {
     return this.db.serial(async tx => {
-      const payment = await tx.payment.findUnique({ where: { id: paymentId }, include: { bill: true } }); ensure(payment, 404, 'NOT_FOUND', '支付记录不存在');
+      const reference = await tx.payment.findUnique({ where: { id: paymentId }, include: { bill: true } });
+      // Acquire the same order lock before touching money rows. Close/return
+      // already lock order first; reversing that order can deadlock a receipt.
+      if(reference?.bill.type==='SWAP_CREDIT')await tx.order.update({where:{id:reference.bill.orderId},data:{revision:{increment:1}}});
+      const payment = reference?.bill.type==='SWAP_CREDIT'?await tx.payment.findUnique({where:{id:paymentId},include:{bill:true}}):reference; ensure(payment, 404, 'NOT_FOUND', '支付记录不存在');
       ensure(event.amount === payment.amount, 409, 'PAYMENT_MISMATCH', '支付金额不匹配');
       if (payment.status === 'SUCCEEDED') { ensure(event.status !== 'SUCCEEDED' || event.transactionId === payment.providerTransactionId, 409, 'PAYMENT_MISMATCH', '支付交易号不匹配'); return payment; }
       if (payment.status === 'CLOSED' && event.status !== 'SUCCEEDED') return payment;
       if (event.status === 'SUCCEEDED') {
         ensure(event.transactionId, 409, 'PAYMENT_MISMATCH', '渠道交易号缺失');
-        ensure(payment.bill.status === 'PENDING' && payment.bill.paidAmount === 0 && payment.amount === payment.bill.amount, 409, 'BILL_CONFLICT', '账单已处理，请人工核对支付');
+        ensure((payment.bill.status === 'PENDING'||(payment.bill.type==='SWAP_CREDIT'&&payment.bill.status==='VOID')) && payment.bill.paidAmount === 0 && payment.amount === payment.bill.amount, 409, 'BILL_CONFLICT', '账单已处理，请人工核对支付');
         await tx.bill.update({ where: { id: payment.billId }, data: { paidAmount: payment.amount, status: 'PAID' } });
-        await grantPaidPack(tx,payment.bill,payment.id); await allocateDelayPayment(tx,payment);
+        await grantSwapCredit(tx,payment.bill,payment.id,this.clock()); await grantPaidPack(tx,payment.bill,payment.id); await allocateDelayPayment(tx,payment);
         if (['DEPOSIT','DEPOSIT_ADJUSTMENT'].includes(payment.bill.type)) await tx.depositEntry.create({ data: { customerId: payment.customerId, orderId: payment.bill.orderId, paymentId: payment.id, type: 'RECEIPT', amount: payment.amount } });
         await notify(tx, payment.customerId, '付款已确认', '渠道已核验付款到账。', 'payments', payment.id);
       }
@@ -55,7 +64,8 @@ export class BillingService {
     ensure(customer.openId, 409, 'WECHAT_REQUIRED', '支付前请绑定当前小程序微信身份');
     const claim = await this.db.serial(async tx => {
       const bill = await tx.bill.findFirst({ where: { id: billId, customerId: customer.id } }); ensure(bill, 404, 'NOT_FOUND', '账单不存在'); ensure(bill.status === 'PENDING' && bill.paidAmount === 0, 409, 'BILL_NOT_PAYABLE', '账单当前不可支付');
-      await guardDelayPayment(tx,bill);
+      if(bill.type==='SWAP_CREDIT')ensure(purchaseEnabled(),503,'SWAP_PURCHASE_DISABLED','付费换车次数购买暂未开放');
+      await guardSwapPayment(tx,bill,this.clock());await guardDelayPayment(tx,bill);
       const usage=await tx.usageAccount.findUnique({where:{orderId:bill.orderId}});
       if(usage){await tx.usageAccount.update({where:{id:usage.id},data:{revision:{increment:1}}});if(usage.returnedOn){const last=await tx.usagePeriod.aggregate({where:{accountId:usage.id,status:{not:'CANCELLED'}},_max:{sequence:true}});const sequence=(await serviceBillSequences(tx,bill.orderId)).get(bill.id);ensure(!sequence||sequence<=(last._max.sequence||0),409,'RETURN_FUTURE_BILL','车辆已交还，未来未履行月份须先结算，不可继续支付');}}
       await guardPackPayment(tx,bill);
@@ -153,7 +163,7 @@ export class BillingController {
       if (existing) { ensure(existing.paymentId === input.paymentId && existing.amount === input.amount && existing.reason === input.reason, 409, 'IDEMPOTENCY_CONFLICT', '退款请求编号与内容冲突'); return existing; }
       const payment = await tx.payment.findUnique({ where: { id: input.paymentId } }); ensure(payment?.status === 'SUCCEEDED', 409, 'PAYMENT_STATE', '仅成功支付可申请退款');
       const bill=await tx.bill.findUniqueOrThrow({where:{id:payment.billId}});await tx.order.update({where:{id:bill.orderId},data:{revision:{increment:1}}});ensure(await tx.orderChange.count({where:{orderId:bill.orderId,status:{notIn:['APPLIED','CANCELLED','REJECTED']}}})===0,409,'CHANGE_REFUND_MANAGED','订单变更期间退款须使用已签补充协议生成的退款安排');
-      await guardPackRefund(tx,payment,input.amount);
+      await guardSwapRefund(tx,payment,input.amount);await guardPackRefund(tx,payment,input.amount);
       const sum = await tx.refund.aggregate({ where: { paymentId: input.paymentId, status: { in: ['PENDING_APPROVAL','PROCESSING','SUCCEEDED'] } }, _sum: { amount: true } });
       ensure((sum._sum.amount || 0) + input.amount <= payment.amount, 409, 'REFUND_LIMIT', '退款累计金额不可超过实付');
       const refund = await tx.refund.create({ data: { ...input, customerId: payment.customerId, requestedBy: request.admin.id } }); await audit(tx, request.admin.id, 'REQUEST', 'refunds', refund.id, input); return refund;
@@ -161,7 +171,7 @@ export class BillingController {
   }
   @Post('admin/refunds/:id/reject') reject(@Param('id') id: string, @Body() body: any, @Req() request: any) { const { reason } = z.object({ reason: text }).parse(body); return this.db.serial(async tx => { const refund = await tx.refund.findUnique({ where: { id } }); ensure(refund?.status === 'PENDING_APPROVAL', 409, 'STATE_CONFLICT', '退款请求已处理'); const updated = await tx.refund.update({ where: { id }, data: { status: 'REJECTED', reason } }); await audit(tx, request.admin.id, 'REJECT', 'refunds', id, { reason }); return updated; }); }
   @Post('admin/refunds/:id/approve') async approve(@Param('id') id: string, @Req() request: any) {
-    const refund = await this.db.serial(async tx => { const item = await tx.refund.findUnique({ where: { id }, include: { payment: true } }); ensure(item?.status === 'PENDING_APPROVAL', 409, 'STATE_CONFLICT', '退款请求已处理'); ensure(item.requestedBy !== request.admin.id, 403, 'DUAL_APPROVAL', '退款须由另一名有权限人员复核'); await guardPackRefund(tx,item.payment,item.amount,true); const updated = await tx.refund.update({ where: { id }, data: { status: 'PROCESSING', approvedBy: request.admin.id }, include: { payment: true } }); await audit(tx, request.admin.id, 'APPROVE', 'refunds', id); return updated; });
+    const refund = await this.db.serial(async tx => { const item = await tx.refund.findUnique({ where: { id }, include: { payment: true } }); ensure(item?.status === 'PENDING_APPROVAL', 409, 'STATE_CONFLICT', '退款请求已处理'); ensure(item.requestedBy !== request.admin.id, 403, 'DUAL_APPROVAL', '退款须由另一名有权限人员复核'); await guardSwapRefund(tx,item.payment,item.amount);await guardPackRefund(tx,item.payment,item.amount,true); const updated = await tx.refund.update({ where: { id }, data: { status: 'PROCESSING', approvedBy: request.admin.id }, include: { payment: true } }); await audit(tx, request.admin.id, 'APPROVE', 'refunds', id); return updated; });
     try {
       const result = await this.gateway.refund({ refundId: id, paymentId: refund.paymentId, amount: refund.amount, totalAmount: refund.payment.amount, reason: refund.reason });
       return this.billing.settleRefund(id, { ...result, paymentId: refund.paymentId, amount: refund.amount, totalAmount: refund.payment.amount });

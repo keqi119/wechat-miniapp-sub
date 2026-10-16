@@ -1046,6 +1046,7 @@ model SwapCredit {
  cycleSequence Int?
  sourcePaymentId String? @unique
  consumedChangeId String? @unique
+ status SwapCreditStatus @default(ACTIVE)
  createdAt DateTime @default(now())
  reservations SwapReservation[]
  @@unique([orderId,cycleSequence])
@@ -1063,7 +1064,8 @@ model SwapReservation {
 model SwapLedger {
  id String @id @default(cuid())
  orderId String
- changeId String
+ changeId String?
+ purchaseId String?
  creditId String
  source SwapCreditSource
  cycleSequence Int?
@@ -1071,4 +1073,43 @@ model SwapLedger {
  sourceKey String @unique
  actualAt DateTime?
  recordedAt DateTime @default(now())
+}
+
+enum SwapCreditStatus {
+ ACTIVE
+ FROZEN
+ EXPIRED
+ REFUNDED
+}
+enum SwapPurchaseStatus {
+ PENDING_PAYMENT
+ ACTIVE
+ CONSUMED
+ EXPIRED
+ PAYMENT_REVIEW
+ REFUND_PENDING
+ REFUNDED
+ VOID
+}
+model SwapCreditPurchase {
+ id String @id @default(cuid())
+ orderId String
+ customerId String
+ quantity Int @default(1)
+ amount Int @default(80000)
+ currency String @default("CNY")
+ status SwapPurchaseStatus @default(PENDING_PAYMENT)
+ billId String @unique
+ paymentId String? @unique
+ creditId String? @unique
+ termsSnapshot Json
+ acceptedAt DateTime
+ expiresAt DateTime
+ idempotencyKey String
+ requestHash String
+ paidAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([orderId,idempotencyKey])
+ @@index([customerId,status])
 }

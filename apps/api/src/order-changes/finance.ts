@@ -9,6 +9,8 @@ export async function guardDelayPayment(tx:any,bill:any){
   await tx.order.update({where:{id:bill.orderId},data:{revision:{increment:1}}});
   const active=await tx.orderChange.findFirst({where:{orderId:bill.orderId,status:{notIn:terminal}}});
   if(!active)return;
+  // SWAP_CREDIT is independently consented and already checked by guardSwapPayment.
+  if(bill.type==='SWAP_CREDIT'&&active.kind==='VEHICLE_CHANGE')return;
   ensure(active.activeQuoteId,409,'ORDER_CHANGE_PAYMENT_BLOCKED','订单正在变更，尚无已签资金方案');const financialId=financeQuoteId(await tx.delayQuote.findUniqueOrThrow({where:{id:active.activeQuoteId}}));
   ensure(['AWAITING_FINANCE','SWAP_RETURNED','READY'].includes(active.status)&&(bill.type==='DEPOSIT'||(active.kind==='VEHICLE_CHANGE'&&bill.idempotencyKey?.startsWith(`swap-${financialId}-`))||await tx.serviceObligation.count({where:{quoteId:financialId,chargeBillId:bill.id}})),409,'ORDER_CHANGE_PAYMENT_BLOCKED','订单正在变更，请按已签补充协议的新账单付款');
 }

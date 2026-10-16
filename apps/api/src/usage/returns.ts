@@ -1,3 +1,4 @@
+import {expireSwapPurchases} from '../swap-purchases/ledger';
 import {closeAssignment} from '../vehicle-changes/handovers';
 import {serviceBillSequences} from '../order-changes/obligations';
 import { Prisma } from '@prisma/client';
@@ -17,6 +18,7 @@ export async function recordUsageReturn(tx:Prisma.TransactionClient,order:any,ha
   await tx.usagePeriod.update({where:{id:last.id},data:{effectiveEndDate:date,status:ready?'READY':'AWAITING_READING',readingId:null,endReadingKm:ready?handover.readingKm:null,reviewNote:'请提交与归还交接相同读数的仪表照片',revision:{increment:1}}});
   await tx.usagePeriod.updateMany({where:{accountId:a.id,sequence:{gt:last.sequence}},data:{status:'CANCELLED',revision:{increment:1}}});
   await tx.usageAccount.update({where:{id:a.id},data:{returnedOn:date,returnReadingKm:handover.readingKm,packStatus:'FROZEN'}});
+  await expireSwapPurchases(tx,order.id,new Date(),true);
   return tx.returnSettlement.create({data:{accountId:a.id,orderId:order.id,customerId:order.customerId,returnedOn:date}});
 }
 export async function returnView(tx:Prisma.TransactionClient,record:any,financial=false){
@@ -29,8 +31,9 @@ export async function returnView(tx:Prisma.TransactionClient,record:any,financia
   const futureUnrefunded=future.some(b=>b.paidAmount>b.payments.flatMap(p=>p.refunds).filter(r=>r.status==='SUCCEEDED').reduce((s,r)=>s+r.amount,0));
   const invalidPacks=await tx.mileagePurchase.count({where:{accountId:a.id,applicableFromSequence:{gt:max._max.sequence||0},status:{notIn:['VOID','REFUNDED']}}});
   const frozen=await tx.mileagePurchase.count({where:{accountId:a.id,status:'REFUND_PENDING'}});
+  const frozenSwaps=await tx.swapCreditPurchase.count({where:{orderId:record.orderId,status:{in:['PAYMENT_REVIEW','REFUND_PENDING']}}});
   const unpaid=bills.some(b=>!future.some(f=>f.id===b.id)&&!['PAID','VOID'].includes(b.status));
-  return{id:record.id,orderId:record.orderId,status:record.status,revision:record.revision,returnedOn:day(record.returnedOn),unsettledPeriodIds:periods.map(p=>p.id),bills:bills.map(b=>({id:b.id,type:b.type,amount:b.amount,paidAmount:b.paidAmount,status:b.status,dueDate:day(b.dueDate),description:b.description})),disputeReason:record.disputeReason,resolutionNote:record.resolutionNote,depositRefundRequiredAmount,canDispute:record.status!=='COMPLETED',canResolve:financial&&record.status==='DISPUTED',canComplete:financial&&record.status==='PENDING_PAYMENT'&&!periods.length&&!pending&&!unpaid&&!futureUnrefunded&&!invalidPacks&&!frozen&&depositRefundRequiredAmount===0};
+  return{id:record.id,orderId:record.orderId,status:record.status,revision:record.revision,returnedOn:day(record.returnedOn),unsettledPeriodIds:periods.map(p=>p.id),bills:bills.map(b=>({id:b.id,type:b.type,amount:b.amount,paidAmount:b.paidAmount,status:b.status,dueDate:day(b.dueDate),description:b.description})),disputeReason:record.disputeReason,resolutionNote:record.resolutionNote,depositRefundRequiredAmount,canDispute:record.status!=='COMPLETED',canResolve:financial&&record.status==='DISPUTED',canComplete:financial&&record.status==='PENDING_PAYMENT'&&!periods.length&&!pending&&!unpaid&&!futureUnrefunded&&!invalidPacks&&!frozen&&!frozenSwaps&&depositRefundRequiredAmount===0};
 }
 export async function returnAction(tx:Prisma.TransactionClient,record:any,action:'DISPUTE'|'RESOLVE'|'COMPLETE',input:any,actorId:string){
   const a=await lockAccount(tx,record.orderId),requestHash=hash(input);

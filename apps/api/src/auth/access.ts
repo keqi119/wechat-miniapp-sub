@@ -5,13 +5,14 @@ import { tokenHash } from './auth.service';
 import {h5Access} from '../h5-sign/access';
 import {requireNativeSigning} from '../esign/native-signing';
 import {requireCurrentConsents} from './consents';
-export const resources = ['usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
+export const resources = ['swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
 export function allowed(role: string, resource: string, write: boolean) {
   if (role === 'ADMIN') return true;
   if (['users', 'audit-logs', 'payment-verifications'].includes(resource)) return false;
   if (['enterprise-seals','seal-authorities','signature-policies'].includes(resource)) return !write && role === 'OPERATIONS';
   if (resource === 'esign-approvals') return role === 'OPERATIONS';
   if (!write) return true;
+  if(resource==='swap-credit-purchases')return role==='FINANCE';
   if(resource==='usage-segments')return role==='OPERATIONS';
   if (['usage-periods','order-changes'].includes(resource)) return ['OPERATIONS','FINANCE'].includes(role);
   if (resource === 'files') return ['OPERATIONS','SUPPORT','FINANCE'].includes(role);
