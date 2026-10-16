@@ -1,7 +1,7 @@
 const { money, date } = require('../utils/format');
 const { createUsageApi } = require('./usage');
 const { createOrderChangesApi } = require('./order-changes');
-const { createH5SigningApi } = require('./h5-signing');
+const { createNativeSigningApi } = require('./native-signing');
 const { createSwapApi } = require('./swap');
 const { assignmentView } = require('./vehicle-assignments');
 const TYPES = ['applications', 'orders', 'contracts', 'bills', 'payments', 'deposits', 'entitlements', 'notifications', 'services', 'mileages'];
@@ -38,9 +38,9 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const creditKeys = new Map();
   const usageApi = createUsageApi({ call, identifier, error, idempotencyKey, getContext });
   const swapApi = createSwapApi({ call, identifier, error, idempotencyKey, getContext });
-  const changesApi = createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, enterSigning: (kind, id) => h5Signing.enterH5SigningGuide(kind, id) });
-  const h5Signing = createH5SigningApi({ call, native, error, identifier, getContext, getSignStatus, platform, pendingKey });
-  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); swapApi.clearSwapKeys(); changesApi.clearChangeKeys(); }
+  const changesApi = createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, enterSigning: (kind, id, body) => nativeSigning.startSigning(kind, id, body) });
+  const nativeSigning = createNativeSigningApi({ call, native, error, identifier, getContext, sessionKey: () => session()?.token, getSignStatus, platform, pendingKey });
+  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); swapApi.clearSwapKeys(); changesApi.clearChangeKeys(); nativeSigning.clearSigningState(); }
   function session() {
     const value = platform.getStorageSync(storageKey);
     if (!value) return null;
@@ -73,6 +73,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
       url: base + '/api' + path, method, data, timeout: options.requestTimeout || 15000,
       header: { Accept: 'application/json', 'Content-Type': 'application/json', ...(current ? { Authorization: 'Bearer ' + current.token } : {}) },
       success(response) {
+        if (current && (session()?.token !== current.token || session()?.customer.id !== current.customer.id)) return reject(error('登录会话已变化，已忽略原账号请求结果。', 'SESSION_CHANGED'));
         if (response.statusCode >= 200 && response.statusCode < 300) resolve(response.data);
         else reject(failure(response, current?.token));
       },
@@ -359,8 +360,8 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
       return call('POST', '/customer/applications/' + value + '/' + action, action === 'confirm' ? { revision: payload.revision, commercialHash: payload.commercialHash } : action === 'reject' ? { revision: payload.revision, reason: payload.reason.trim() } : { reason: payload.reason });
     }
     if (type === 'bills' && action === 'pay') return pay(id, payload);
-    if (type === 'contracts' && action === 'sign') return h5Signing.enterH5SigningGuide('contract', id);
-    if (type === 'handovers' && action === 'sign') return h5Signing.enterH5SigningGuide('handover', id);
+    if (type === 'contracts' && action === 'sign') return nativeSigning.startSigning('contract', id);
+    if (type === 'handovers' && action === 'sign') return nativeSigning.startSigning('handover', id);
     if (type === 'notifications' && action === 'read') return call('POST', '/customer/notifications/' + value + '/read', {});
     if (type === 'services' && action === 'cancel') return call('POST', '/customer/services/' + value + '/cancel', { reason: payload.reason });
     throw error('当前记录不支持此操作，请刷新状态。', 'VALIDATION');
@@ -382,7 +383,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (/^image\//i.test(contentType)) await native('previewImage', { current: downloaded.tempFilePath, urls: [downloaded.tempFilePath] });
     else await native('openDocument', { filePath: downloaded.tempFilePath, showMenu: false });
   }
-  return { ...usageApi, ...swapApi, ...changesApi, ...h5Signing, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
+  return { ...usageApi, ...swapApi, ...changesApi, ...nativeSigning, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
     getModelDefinitions: async () => list(await call('GET', '/public/model-definitions', undefined, false)).items,
     getDashboard: async () => { const result = await call('GET', '/customer/dashboard'); const tracked = result.subscription && Object.prototype.hasOwnProperty.call(result.subscription, 'currentAssignment'); const assignment = tracked ? assignmentView(result.subscription.currentAssignment, () => { throw error('当前车辆分配尚未核实。', 'RESPONSE'); }) : null; return { ...result, ...(result.application ? { application: application(result.application) } : {}), ...(result.subscription ? { subscription: { ...result.subscription, ...(tracked ? { currentAssignment: assignment, vehicleName: assignment ? assignment.vehicle.title : '当前暂无车辆，换车待交付' } : {}), ...(tracked && !assignment ? { mileageText: '暂无当前车辆读数' } : {}), imageUrl: tracked && !assignment ? '' : media(result.subscription.imageUrl) } } : {}) }; },
     getApplication: async id => application(await call('GET', '/customer/applications/' + identifier(id))),
@@ -390,8 +391,6 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     getLoginDocuments: () => Promise.all(['terms','privacy'].map(type => call('GET', '/public/legal/' + type, undefined, false))),
     acceptConsents: consents => call('POST', '/customer/consents', { consents: consentSnapshot(consents) }),
     getESignReadiness: () => call('GET', '/customer/esign/readiness'),
-    refreshESignReadiness: () => call('GET', '/customer/esign/readiness'),
-    startESignVerification: () => h5Signing.enterH5SigningGuide('identity', session()?.customer.id),
     getLegal: type => call('GET', '/public/legal/' + identifier(type), undefined, false),
     getRecords, getRecord, performAction, saveProfile, submitApplication, uploadFile, submitService, submitMileage, submitHandover,getPaymentVerifications,payPaymentVerification,queryPaymentVerification,getCreditReview,submitCreditConsent,withdrawCreditConsent,
     getHandover, getSignStatus, resumePayment, idempotencyKey, openPrivateFile,

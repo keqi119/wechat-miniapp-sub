@@ -1,0 +1,158 @@
+{
+  "generatedAt": "2026-10-16T11:48:32.986Z",
+  "scope": "Offline actual-wcc synthetic layout only. No API, SDK, clipboard, browser external navigation, QR, SMS, payment, signing, preview or upload.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "native-webview-identity",
+      "kind": "identity",
+      "webview": true,
+      "text": "离线供应商页面容器",
+      "overflow": false,
+      "screenshot": "native-webview-identity.png",
+      "passed": true
+    },
+    {
+      "name": "native-webview-contract",
+      "kind": "contract",
+      "webview": true,
+      "text": "离线供应商页面容器",
+      "overflow": false,
+      "screenshot": "native-webview-contract.png",
+      "passed": true
+    },
+    {
+      "name": "native-webview-handover",
+      "kind": "handover",
+      "webview": true,
+      "text": "离线供应商页面容器",
+      "overflow": false,
+      "screenshot": "native-webview-handover.png",
+      "passed": true
+    },
+    {
+      "name": "native-webview-order-change",
+      "kind": "order-change",
+      "webview": true,
+      "text": "离线供应商页面容器",
+      "overflow": false,
+      "screenshot": "native-webview-order-change.png",
+      "passed": true
+    },
+    {
+      "name": "native-disabled",
+      "kind": "contract",
+      "enabled": false,
+      "status": "PENDING",
+      "text": "暂未启用",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-disabled.png",
+      "passed": true
+    },
+    {
+      "name": "native-cold-pending",
+      "kind": "contract",
+      "enabled": true,
+      "status": "PENDING",
+      "text": "不会自动提交资料",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-cold-pending.png",
+      "passed": true
+    },
+    {
+      "name": "native-returned-signed",
+      "kind": "contract",
+      "enabled": true,
+      "status": "SIGNED",
+      "text": "双方签署已归档",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-returned-signed.png",
+      "passed": true
+    },
+    {
+      "name": "native-identity-verified",
+      "kind": "identity",
+      "enabled": true,
+      "status": "VERIFIED",
+      "text": "实名与证书已就绪",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-identity-verified.png",
+      "passed": true
+    },
+    {
+      "name": "native-query-error-contract",
+      "kind": "contract",
+      "enabled": true,
+      "status": "UNKNOWN",
+      "statusError": "合成403/409或网络错误，查询尚未完成",
+      "text": "结果待核实",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-query-error-contract.png",
+      "passed": true
+    },
+    {
+      "name": "native-query-error-handover",
+      "kind": "handover",
+      "enabled": true,
+      "status": "UNKNOWN",
+      "statusError": "合成403/409或网络错误，查询尚未完成",
+      "text": "结果待核实",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-query-error-handover.png",
+      "passed": true
+    },
+    {
+      "name": "native-query-error-order-change",
+      "kind": "order-change",
+      "enabled": true,
+      "status": "UNKNOWN",
+      "statusError": "合成403/409或网络错误，查询尚未完成",
+      "text": "结果待核实",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-query-error-order-change.png",
+      "passed": true
+    },
+    {
+      "name": "native-face-config-unavailable",
+      "route": "middle",
+      "text": "刷脸跳转尚未配置完成",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-face-config-unavailable.png",
+      "passed": true
+    },
+    {
+      "name": "native-settings-separate-consent",
+      "route": "settings",
+      "enabled": true,
+      "text": "若供应商要求转入刷脸",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-settings-separate-consent.png",
+      "passed": true
+    },
+    {
+      "name": "native-settings-disabled",
+      "route": "settings",
+      "enabled": false,
+      "text": "小程序内实名与签署暂未启用",
+      "webview": false,
+      "overflow": false,
+      "screenshot": "native-settings-disabled.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

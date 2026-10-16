@@ -1,3 +1,5 @@
+当前有效流程：2026-10-16已恢复小程序内web-view实名/三kind签署，H5历史记录不再描述当前主入口。最新137/137、build93文件/17WXML18WXSS、14离线截图及刷脸条件分支边界见 evidence/native-signing-report.md；API只读交叉审查见 evidence/native-signing-api-review.md。
+
 真实接口以 ../../docs/api-contract.md 为准。适配器 src/services/api.js 保持源公开服务方法；getContext 同步读取有效会话快照，refreshContext 异步回读服务端。所有写入只调用 /api/customer/*，公开浏览调用 /api/public/*。
 
 生产错误不会退回样例，401清会话，403/404/409/供应商失败分别保留错误码；最终方案确认传revision+commercialHash；申请传documentId/version；附件传fileIds；里程传orderId/readingKm；交接传manifestHash/readFileIds。接口版本变化须同步测试。

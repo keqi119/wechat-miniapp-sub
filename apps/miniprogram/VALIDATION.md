@@ -1,3 +1,5 @@
+当前有效流程：2026-10-16已恢复小程序内web-view实名/三kind签署，H5历史记录不再描述当前主入口。最新137/137、build93文件/17WXML18WXSS、14离线截图及刷脸条件分支边界见 evidence/native-signing-report.md；API只读交叉审查见 evidence/native-signing-api-review.md。
+
 验证证据见 ../../docs/evidence/miniapp-verification.md。本包45项测试通过；原样副本28项基线通过；生产源码包85文件，wcc16 WXML/wcsc17 WXSS。真实微信开发工具SDK只读18路由，18原生page根节点、0JS异常、13成功截图/5截图超时。旧合法域名阻断保留；主控配置后刷新本项目缓存，effectiveUrlCheck=true，原生health/vehicles/五种公开协议7/7 HTTP200，首页/空目录/三个常规协议5页无错误、5PNG成功、0JS异常，见evidence/devtools/after-domain-config-rendered。未做鉴权上传/下载、物理真机或真实资金/签章测试。
 
 用户要求账户设置协议改链接后，现有针对性16/16及build通过；仅settings WXML去正文/重复入口，保留title/version、勾选与服务端同意流程。原生SDK实际tap两链接到完整terms/privacy页，v1正文回读正常、0JS异常、4PNG保存，见evidence/devtools/settings-legal-links。未触发登录/短信/同意提交。
@@ -25,3 +27,5 @@ B1只读安全审查后授权兼容：list summary和详情分离、详情坚持
 
 
 B2恢复报价收尾：新增3红→绿，B2专项16/16、全包140/140、build90文件/16WXML17WXSS、Mock109×2零差异。最近已签恢复基线与原资金来源分离，历史补收退款不当作新收费，已完成旧侧仅查看。详见evidence/vehicle-change-report.md末节。原生0a4f378仍由主控后续合并。
+
+B2与原生合并后的最新验证：受影响54/54、完整153/153、build95文件/17WXML18WXSS、Mock109×2零差异；B2 16及native14离线版面通过，无外部请求。见evidence/b2-native-integration-report.md。当前root业务接线已恢复原生，无H5 fallback，未部署B2。

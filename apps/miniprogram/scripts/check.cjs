@@ -32,9 +32,14 @@ function check(root = path.resolve(__dirname, '../src')) {
   }
   const app = json['app.json'];
   if (!app || !Array.isArray(app.pages)) return [...errors, 'app.json must register pages'];
-  const registered = new Set(app.pages);
-  if (registered.size !== app.pages.length) errors.push('app.json: duplicate page registration');
-  for (const page of app.pages) {
+  const packagePages = [];
+  for (const item of app.subPackages || app.subpackages || []) {
+    if (typeof item.root !== 'string' || !/^[A-Za-z0-9_-]+$/.test(item.root) || !Array.isArray(item.pages) || item.pages.some(page => typeof page !== 'string' || !/^[A-Za-z0-9_/-]+$/.test(page))) { errors.push('app.json: invalid subpackage registration'); continue; }
+    packagePages.push(...item.pages.map(page => item.root + '/' + page));
+  }
+  const allPages = [...app.pages, ...packagePages], registered = new Set(allPages);
+  if (registered.size !== allPages.length) errors.push('app.json: duplicate page registration');
+  for (const page of allPages) {
     for (const extension of ['.js', '.json', '.wxml', '.wxss'])
       if (!exists(page + extension)) errors.push(`Missing ${page + extension}`);
   }
