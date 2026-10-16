@@ -161,7 +161,7 @@ test('H5 stays disabled by default and never imports the old portal return URL',
     FADADA_VERIFY_RETURN_URL: 'https://old.example/portal/contracts',
   }));
   assert.equal(env.H5_SIGNING_ENABLED, 'false');
-  assert.equal(env.FADADA_SIGN_RETURN_URL, 'https://app.subauto.keybox.cloud/miniapp-sign/return/');
+  assert.equal(env.FADADA_SIGN_RETURN_URL, 'https://mini-api.subauto.keybox.cloud/api/public/esign-return');
   assert.equal(env.FADADA_VERIFY_RETURN_URL, env.FADADA_SIGN_RETURN_URL);
 });
 
@@ -172,4 +172,29 @@ test('keeps the independently activated H5 switch and checked provider hosts', t
   assert.equal(env.H5_SIGNING_ENABLED, 'true');
   assert.equal(env.H5_SIGNING_PROVIDER_HOSTS, 'textapi.fadada.com,realnameverify.fadada.com');
   assert.equal(env.FADADA_SIGNING_ENABLED, 'false');
+});
+
+test('native signing defaults closed and does not import old application activation', t => {
+  const env = assertSucceeded(fixture(t).run({
+    MINIAPP_SIGNING_ENABLED: 'true', MINIAPP_SIGNING_PROVIDER_HOSTS: 'unapproved.example',
+  }));
+  assert.equal(env.MINIAPP_SIGNING_ENABLED, 'false');
+  assert.equal(env.MINIAPP_SIGNING_PROVIDER_HOSTS, '');
+  assert.equal(env.H5_SIGNING_ENABLED, 'false');
+});
+
+test('preserves the checked native API and activation through config regeneration', t => {
+  const env = assertSucceeded(fixture(t).run({ FADADA_BASE_URL: 'https://textapi.fadada.com/api2/' }, {
+    FADADA_BASE_URL: 'https://textapi17.fadada.com/api2/',
+    MINIAPP_SIGNING_ENABLED: 'true',
+    MINIAPP_SIGNING_PROVIDER_HOSTS: 'textapi17.fadada.com,realnameverify16.fadada.com',
+    FADADA_SIGN_RETURN_URL: 'https://app.subauto.keybox.cloud/miniapp-sign/return/',
+  }));
+  assert.equal(env.FADADA_BASE_URL, 'https://textapi17.fadada.com/api2/');
+  assert.equal(env.MINIAPP_SIGNING_ENABLED, 'true');
+  assert.equal(env.MINIAPP_SIGNING_PROVIDER_HOSTS, 'textapi17.fadada.com,realnameverify16.fadada.com');
+  assert.equal(env.FADADA_SIGN_RETURN_URL, 'https://mini-api.subauto.keybox.cloud/api/public/esign-return');
+  assert.equal(env.FADADA_VERIFY_RETURN_URL, env.FADADA_SIGN_RETURN_URL);
+  assert.equal(env.FADADA_SIGNING_ENABLED, 'false');
+  assert.equal(env.H5_SIGNING_ENABLED, 'false');
 });
