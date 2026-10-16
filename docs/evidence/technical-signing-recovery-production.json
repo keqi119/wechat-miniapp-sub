@@ -1,0 +1,126 @@
+{
+  "host": {
+    "checkedAt": "2026-10-16T15:44:43.927132+00:00",
+    "release": "20261016-technical-signing-v2",
+    "apiImage": "chundian-api:20261016-technical-signing-v2",
+    "sourceCommit": "111f536f7167c0efb904d00b5c52e6932b8fa311",
+    "appliedMigrationCount": 19,
+    "technicalMigrationSha256": "0f8da11bab0e15606e27ac1f2583e4d6e80209bc41d1cf4ea58d8feb5188305a",
+    "existingSwapForeignKeysPreserved": 6,
+    "technicalAcceptanceEnabled": true,
+    "commercialSigningDisabled": true,
+    "ordinaryPaymentDisabled": true,
+    "providerSettingsPreserved": true,
+    "currentReleaseVerified": true,
+    "freeBytes": 1129725952
+  },
+  "readback": {
+    "checkedAt": "2026-10-16T15:44:44.789Z",
+    "release": "20261016-technical-signing-v2",
+    "state": {
+      "recordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+      "revision": 2,
+      "status": "PENDING",
+      "signatureStatus": "PENDING",
+      "statusMessage": "本人签署或归档尚待核验",
+      "canSign": true,
+      "canSync": true,
+      "signedFileId": null,
+      "customerSignedAt": null,
+      "platformSignedAt": null,
+      "sealRequestedAt": null,
+      "signedPdfHash": null
+    },
+    "queries": [
+      {
+        "signer": "CUSTOMER",
+        "status": "SIGNED",
+        "resultCode": "3000",
+        "absent": false,
+        "queryIdentityBindingVerified": true
+      },
+      {
+        "signer": "PLATFORM",
+        "status": "UNKNOWN",
+        "resultCode": null,
+        "absent": true,
+        "queryIdentityBindingVerified": true
+      }
+    ],
+    "businessWrites": false,
+    "signingOrSealingCalls": false
+  },
+  "artifacts": {
+    "release": "20261016-technical-signing-v2",
+    "createdAt": "2026-10-16T15:40:58.646Z",
+    "sourceCommit": "111f536f7167c0efb904d00b5c52e6932b8fa311",
+    "sourceWorktree": "D:\\wechat-miniapp-sub",
+    "apiImageId": "sha256:9e5e1c480edb8d06eb67f67e8d78742c22d963d12d07fbc50be0ccf92f1ee820",
+    "adminManifestSha256": "d193bd90556e0ea69b4daa60a6225937b42efa358d787b214509500a40e67208",
+    "adminFiles": 3,
+    "miniappFiles": 101,
+    "miniappManifestSha256": "837a5343535068f719238dbaa50039611a7ab2e60a64ca512ba6a21cd2b07afe",
+    "miniappConfigSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c",
+    "files": [
+      {
+        "path": ".runtime/static-20261016-technical-signing-v2.tar.gz",
+        "bytes": 392139,
+        "sha256": "32202fbd9b2a7e942d1beebacd29ad665bd408f557d11aead062e757b73784b5"
+      },
+      {
+        "path": ".runtime/chundian-api-20261016-technical-signing-v2.tar.gz",
+        "bytes": 282426836,
+        "sha256": "5b8b4ddbe5ce60c7b36821bf3beef48716b53dbb28a0a796bb949e4785fa7741"
+      },
+      {
+        "path": ".runtime/deploy-20261016-technical-signing-v2.tar.gz",
+        "bytes": 38124,
+        "sha256": "e21db31250e9f08e24c29bd00d6f6a4694f246beb48f00afc162c19782d0aea3"
+      }
+    ]
+  },
+  "returnPage": {
+    "httpStatus": 200,
+    "sha256": "89b04d599a6c1ad06a5b921f28a546123694b18544ab907cee5b4b5db5dbf076",
+    "matchesBuiltSource": true,
+    "cacheControl": "no-store",
+    "referrerPolicy": "no-referrer",
+    "deviceNavigationNotYetReverified": true
+  },
+  "adminFilesVerified": 3,
+  "preview": {
+    "size": {
+      "total": 492217,
+      "packages": [
+        {
+          "name": "TOTAL",
+          "size": 492217
+        },
+        {
+          "name": "main",
+          "size": 491008
+        },
+        {
+          "name": "/pagesFace/",
+          "size": 1209
+        }
+      ]
+    },
+    "qrSha256": "d870eaa918d9950366f4f1eed9dab011181a8309451faf5b713a024c80505765",
+    "officialDevToolsPreviewSucceeded": true
+  },
+  "backup": {
+    "before": "/opt/wechat-miniapp-sub/backups/20261016T153746Z.tar.enc",
+    "isolatedRestoreVerified": true,
+    "restoredTables": 58,
+    "activation": "/opt/wechat-miniapp-sub/backups/20261016T154358Z.tar.enc"
+  },
+  "activationScriptSha256": "c2ddcb7c8ad9426a49539b7a6e09b78ab52fa0830e23e6407fe78c35a7d47e9a",
+  "tests": {
+    "api": 230,
+    "admin": 94,
+    "miniprogram": 217,
+    "signingH5": 10
+  },
+  "next": "User explicitly syncs the same file; do not sign again or create a new task."
+}
