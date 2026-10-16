@@ -9,3 +9,7 @@
 @media(max-width:520px){.esign-card{padding:15px}.esign-card>header>span{margin-left:26px}.esign-checks{grid-template-columns:1fr}.esign-card h3{font-size:11px}.esign-card p{font-size:10px}}
 .commercial-fields{border:1px solid #e2e8d8;background:#f8faf3;border-radius:6px;padding:18px;display:grid;gap:18px}.commercial-field{display:flex;flex-direction:column;gap:8px}.commercial-field>label{font-size:11px;color:#6a7b57;display:flex;align-items:center;gap:8px}.commercial-field>label>span{font-family:Arial,sans-serif;font-size:9px;color:#a2ae92}.commercial-field>label>i{font-style:normal;color:#b7854f}.commercial-field textarea{background:#fffefa}.checklist-row input[readonly]{background:#f0f4e9;color:#6b8055}.field a{text-decoration:underline;text-underline-offset:3px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.credit-document { margin-top: 18px; border-top: 1px solid var(--border, #dedfd5); padding-top: 14px; }
+.credit-document summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; }
+.credit-document > div { white-space: pre-wrap; line-height: 1.8; margin-top: 14px; font-size: 12px; }
+.field input[type="checkbox"] { width: 20px; height: 20px; accent-color: #252723; }

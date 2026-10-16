@@ -59,7 +59,7 @@
 
 - `/vehicles/:id/publish`、`/unpublish`；`/plans/:id/activate`、`/deactivate`。
 - `/applications/:id/review {decision:'IN_REVIEW'|'NEEDS_INFO'|'REJECTED',note}`。
-- `/applications/:id/final-plan {revision,monthlyFeeAmount,depositAmount,months,mileagePerMonthKm,excessMileagePriceAmount,energyDescription,benefits,conditions,startDate,firstDueDate}`；服务端产生 revision 和 commercialHash。
+- `/applications/:id/final-plan {revision,creditVerificationId,monthlyFeeAmount,months,mileagePerMonthKm,excessMileagePriceAmount,energyDescription,benefits,conditions,startDate,firstDueDate,commercialTerms}`；服务端按当前有效信用档位计算depositAmount，若兼容传入该金额则须严格一致。生成新revision和commercialHash，绑定核验ID、规则、档位与信用版本。
 - `/contracts/:id/send`、`/sync`；`/bills/:id/publish`；`/payments/:id/sync`。
 - `/refunds {paymentId,amount,reason}` 建立审核请求；`/refunds/:id/approve`、`/reject {reason}`。
 - `/handovers {orderId,type,readingKm,fileIds,checklist}`；`/handovers/:id/publish`、`/complete`。
@@ -69,6 +69,20 @@
 - `/files` multipart 上传；`/files/:id` 授权读取。
 
 后台默认角色 ADMIN、OPERATIONS、FINANCE、SUPPORT；关键动作权限在服务端强制执行。前端可依据服务端 `permissions:string[]` 隐藏动作。
+
+## 本申请的人工信用核验
+
+`GET /customer/applications/:id/credit-review` 与 `GET /admin/applications/:id/credit-review` 返回申请级safe状态。客户限本人；后台信用读取及录入仅ADMIN/OPERATIONS。FINANCE/SUPPORT的普通申请/订单响应移除信用档位、核验ID、规则与信用版本，保留业务所需押金金额。
+
+客户独立操作：
+
+- `POST /customer/applications/:id/credit-consent {documentId,version,decision:'ACCEPT'|'DECLINE',idempotencyKey}`。ACCEPT要求当前terms/privacy已同意，并绑定当前已发布credit-verification文案；一般同意不能替代本申请的明确选择。
+- `POST /customer/applications/:id/credit-consent/withdraw {consentId,idempotencyKey}`。撤回后不能继续核验或确认未成立方案；历史已确认订单不被改写。
+- `POST /admin/applications/:id/credit-verifications {consentId,creditRevision,band,customerPresented:true,idempotencyKey}`。band只能为GE750/B700_749/B650_699/LT650/UNVERIFIABLE。核验人与时间取服务端，不接受精确分数、图片、自由证据备注或客户端指定操作人。
+
+safe包含current document、申请独立consent、最新verification、creditRevision、ruleVersion、status，以及 `canConsent/canDecline/canWithdraw/canVerify/canFinalize/consentRequirementsMet/verificationCurrent/canConfirmFinalPlan/depositMultiplier`。客户确认使用canConfirmFinalPlan和方案绑定快照，不能误用后台canFinalize。
+
+核验历史追加保存；新核验或授权变化使尚未确认方案回到审核并更新版本，旧版本确认被拒绝。前三档月费倍数为0/1/2，后两档转人工并禁止最终方案。后台可读状态不等于已获客户授权。
 
 ## 指定客户的 0.01 元支付验收
 

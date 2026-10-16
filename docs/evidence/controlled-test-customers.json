@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-10-16T07:33:08.432Z",
+  "authorizedBy": "用户在当前聊天明确指定两个手机号，要求新增受控测试客户",
+  "newCustomers": 2,
+  "totalCustomersAfterEnrollment": 3,
+  "enrollmentAuditAction": "CONTROLLED_TEST_ENROLLED",
+  "newCustomersWithOpenId": 0,
+  "newCustomerConsentsCreated": 0,
+  "newCustomerSessionsCreated": 0,
+  "newPaymentAuthorizations": 0,
+  "smsSent": false,
+  "ordinaryOrders": 0,
+  "scope": "仅业务客户预登记及审计；本人仍须正常验证登录。未赋予微信公众平台体验成员权限或跳过身份/信用/协议流程。",
+  "privacy": "手机号及客户ID仅留在受控生产记录和本地忽略目录，不写入本证据或Git仓库。"
+}

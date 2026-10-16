@@ -1,6 +1,8 @@
 const { money, date } = require('../utils/format');
 const TYPES = ['applications', 'orders', 'contracts', 'bills', 'payments', 'deposits', 'entitlements', 'notifications', 'services', 'mileages'];
 const VERIFICATION_STATUS = { AUTHORIZED: '已授权，尚未付款', CREATING: '支付准备结果待确认', PENDING: '支付结果待确认', SUCCEEDED: '支付成功', CLOSED: '验收已关闭', FAILED: '支付失败，不能继续付款', EXPIRED: '验收授权已过期' };
+const CREDIT_BANDS = { GE750: '750分及以上', B700_749: '700—749分', B650_699: '650—699分', LT650: '低于650分', UNVERIFIABLE: '无法核验' };
+const CREDIT_MULTIPLIERS = { GE750: 0, B700_749: 1, B650_699: 2, LT650: null, UNVERIFIABLE: null };
 const COMMERCIAL_FIELDS = { vehicleIdentification: '车辆及 VIN/车牌', permittedUse: '城市、使用性质、驾驶人及限制', conditionDisclosure: '车辆状况及已披露问题', customerAddress: '合同联系地址', mileageCarryRule: '里程累计与结转方式', excessMileageCalculation: '超里程计算及上限', usageCosts: '充电、停车、通行及违章承担', insuranceDetails: '保险机构、保单、险种、保额、免赔及免责', maintenanceRule: '保养、维修及正常磨损责任', serviceCoverage: '救援等权益覆盖、时间、次数及电话', handoverArrangement: '交还车地点、时间及延迟处理', earlyTerminationRule: '提前解约计算、上限及退费', depositRefundRule: '押金结算与退款期限', otherFees: '其他已明确收费项目' };
 function commercialDetails(plan) {
   const commercialRows = Object.keys(COMMERCIAL_FIELDS).map(key => ({ key, label: COMMERCIAL_FIELDS[key], value: plan.commercialTerms?.[key] || '' }));
@@ -28,7 +30,8 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const pendingKey = storageKey + ':pending';
   const paymentKeys = new Map();
   const verificationPayments = new Set();
-  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); }
+  const creditKeys = new Map();
+  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); }
   function session() {
     const value = platform.getStorageSync(storageKey);
     if (!value) return null;
@@ -122,6 +125,55 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     const current = session();
     if (current) platform.setStorageSync(storageKey, { ...current, customer: result.customer || current.customer, profile: result.profile || result.customer?.profile || current.customer.profile, consents: result.consents || [] });
     return getContext();
+  }
+  function creditView(value, applicationId) {
+    const statuses = { CONSENT_REQUIRED: '等待本申请单独授权', AWAITING_VERIFICATION: '已授权，等待人工核验', MANUAL_REVIEW: '转人工联系处理', VERIFIED: '人工核验已记录', HISTORICAL: '申请结束后的历史核验' };
+    if (!value || value.applicationId !== applicationId || !Number.isInteger(value.creditRevision) || value.creditRevision < 0 || value.ruleVersion !== 'ZHIMA_MANUAL_V1' || !Object.prototype.hasOwnProperty.call(statuses, value.status)) throw error('本申请信用核验状态无效，请刷新或联系人工。', 'RESPONSE');
+    const raw = value.document;
+    const document = raw && typeof raw.id === 'string' && raw.id && raw.type === 'credit-verification' && Number.isInteger(raw.version) && raw.version >= 1 && typeof raw.content === 'string' && raw.content.trim() && typeof raw.title === 'string' && raw.title.trim()
+      ? { id: raw.id, type: raw.type, version: raw.version, title: raw.title, content: raw.content } : null;
+    const originalConsent = value.consent;
+    if (originalConsent && (typeof originalConsent.id !== 'string' || !['ACCEPTED', 'DECLINED', 'WITHDRAWN'].includes(originalConsent.status))) throw error('本申请授权记录无效，请刷新。', 'RESPONSE');
+    const consent = originalConsent ? { id: originalConsent.id, status: originalConsent.status, documentId: originalConsent.documentId, version: originalConsent.version, acceptedAt: originalConsent.acceptedAt || null, withdrawnAt: originalConsent.withdrawnAt || null } : null;
+    const originalVerification = value.verification;
+    if (originalVerification && (typeof originalVerification.id !== 'string' || !Object.prototype.hasOwnProperty.call(CREDIT_BANDS, originalVerification.band))) throw error('人工核验档位无效，请联系运营核对。', 'RESPONSE');
+    const verification = originalVerification ? { id: originalVerification.id, band: originalVerification.band, verifiedAt: originalVerification.verifiedAt, consentId: originalVerification.consentId } : null;
+    const multiplier = [0, 1, 2].includes(value.depositMultiplier) ? value.depositMultiplier : null;
+    if ((value.depositMultiplier != null && multiplier === null) || (multiplier !== null && (!verification || CREDIT_MULTIPLIERS[verification.band] !== multiplier))) throw error('核验档位与押金规则不匹配，请联系运营核对。', 'RESPONSE');
+    const currentConsent = Boolean(document && consent?.status === 'ACCEPTED' && consent.documentId === document.id && consent.version === document.version);
+    const verificationCurrent = Boolean(value.verificationCurrent === true && currentConsent && verification?.consentId === consent.id);
+    const verifiedDate = verification && new Date(verification.verifiedAt);
+    return {
+      applicationId, creditRevision: value.creditRevision, ruleVersion: value.ruleVersion, document, consent, verification, consentCurrent: currentConsent,
+      status: value.status, statusText: statuses[value.status], consentRequirementsMet: value.consentRequirementsMet === true,
+      canConsent: Boolean(value.status !== 'HISTORICAL' && document && value.canConsent === true && value.consentRequirementsMet === true),
+      canDecline: Boolean(value.status !== 'HISTORICAL' && document && value.canDecline === true), canWithdraw: Boolean(consent?.status === 'ACCEPTED' && value.canWithdraw === true),
+      verificationCurrent,
+      canConfirmFinalPlan: Boolean(value.canConfirmFinalPlan === true && value.consentRequirementsMet === true && value.status === 'VERIFIED' && verificationCurrent && multiplier !== null && CREDIT_MULTIPLIERS[verification.band] === multiplier),
+      depositMultiplier: multiplier, bandText: verification ? CREDIT_BANDS[verification.band] : '尚未人工核验',
+      verifiedAtText: verifiedDate && Number.isFinite(verifiedDate.getTime()) ? new Date(verifiedDate.getTime() + 8 * 3600000).toISOString().slice(0, 19).replace('T', ' ') + '（北京时间）' : '尚未核验',
+      depositRuleText: multiplier === 0 ? '押金0元' : multiplier !== null ? '押金为最终方案中' + multiplier + '个月订阅费' : '转人工处理，暂不生成正式方案',
+      consentStatusText: { ACCEPTED: '已单独授权本申请', DECLINED: '已选择暂不授权', WITHDRAWN: '已撤回后续核验授权' }[consent?.status] || '尚未单独授权',
+    };
+  }
+  async function getCreditReview(id) { return creditView(await call('GET', '/customer/applications/' + identifier(id) + '/credit-review'), id); }
+  async function submitCreditConsent(id, payload) {
+    if (!payload || !['ACCEPT', 'DECLINE'].includes(payload.decision) || typeof payload.documentId !== 'string' || !Number.isInteger(payload.version)) throw error('请明确选择本申请当前说明的授权决定。', 'VALIDATION');
+    const current = await getCreditReview(id);
+    if (!current.document || current.document.id !== payload.documentId || current.document.version !== payload.version) throw error('信用核验说明已更新或尚未发布，请重新阅读。', 'CREDIT_DOCUMENT_CHANGED');
+    if (!(payload.decision === 'ACCEPT' ? current.canConsent : current.canDecline)) throw error(payload.decision === 'ACCEPT' && !current.consentRequirementsMet ? '请先到账户设置同意当前用户协议和隐私政策。' : '本申请当前不可修改核验授权，请刷新或联系人工。', 'CREDIT_CONSENT_UNAVAILABLE');
+    const key = [session()?.customer.id, id, payload.decision, payload.documentId, payload.version].join(':');
+    if (!creditKeys.has(key)) creditKeys.set(key, idempotencyKey('credit-consent'));
+    const result = creditView(await call('POST', '/customer/applications/' + identifier(id) + '/credit-consent', { documentId: payload.documentId, version: payload.version, decision: payload.decision, idempotencyKey: creditKeys.get(key) }), id);
+    creditKeys.delete(key); return result;
+  }
+  async function withdrawCreditConsent(id, payload) {
+    const current = await getCreditReview(id);
+    if (!current.canWithdraw || !payload?.consentId || current.consent?.id !== payload.consentId) throw error('授权已变更或不可撤回，请刷新本申请状态。', 'CREDIT_CONSENT_CHANGED');
+    const key = [session()?.customer.id, id, 'withdraw', payload.consentId].join(':');
+    if (!creditKeys.has(key)) creditKeys.set(key, idempotencyKey('credit-withdraw'));
+    const result = creditView(await call('POST', '/customer/applications/' + identifier(id) + '/credit-consent/withdraw', { consentId: payload.consentId, idempotencyKey: creditKeys.get(key) }), id);
+    creditKeys.delete(key); return result;
   }
   function application(row) {
     if (!row) return row;
@@ -328,7 +380,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     registerESign: () => call('POST', '/customer/esign/register', {}),
     startESignVerification: async input => { await call('POST', '/customer/esign/register', {}); const result = await call('POST', '/customer/esign/verify', input); validateSignUrl(result.url); const id = session().customer.id; platform.setStorageSync(pendingKey, { kind: 'identity', id, task: { taskId: 'identity', url: result.url, status: 'PENDING' } }); await native('navigateTo', { url: '/pages/sign/index?kind=identity&id=' + identifier(id) }); return result; },
     getLegal: type => call('GET', '/public/legal/' + identifier(type), undefined, false),
-    getRecords, getRecord, performAction, saveProfile, submitApplication, uploadFile, submitService, submitMileage, submitHandover,getPaymentVerifications,payPaymentVerification,queryPaymentVerification,
+    getRecords, getRecord, performAction, saveProfile, submitApplication, uploadFile, submitService, submitMileage, submitHandover,getPaymentVerifications,payPaymentVerification,queryPaymentVerification,getCreditReview,submitCreditConsent,withdrawCreditConsent,
     getHandover: id => call('GET', '/customer/handovers/' + identifier(id)), getSignStatus, getSigningTask, validateSignUrl, resumePayment, idempotencyKey, openPrivateFile,
     clearSigningCache: () => platform.removeStorageSync(pendingKey),
     openSigningMiniProgram: task => native('navigateToMiniProgram', task.miniProgram),

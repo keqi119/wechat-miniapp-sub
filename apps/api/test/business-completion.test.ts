@@ -10,6 +10,7 @@ import { CustomerController } from '../src/orders/customer';
 import { AdminController } from '../src/operations/admin';
 import { BillingController, BillingService } from '../src/billing/billing';
 import { AuthController } from '../src/auth/auth.controller';
+import { CreditReviewController } from '../src/applications/credit-review';
 let db: Db, workflows: WorkflowsController;
 const admin = {admin:{id:'completion-operator',role:'ADMIN'}};
 before(()=>{assert.ok(process.env.TEST_DATABASE_URL?.includes('_test'));db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});workflows=new WorkflowsController(db,unavailableESign,new SignatureService(db));});
@@ -126,8 +127,15 @@ test('return settlement requires completed return and a successful bill payment 
 
 test('final commercial terms are mandatory, reject placeholders and change the immutable hash',async()=>{
  const f=await fixture();await db.application.update({where:{id:f.application.id},data:{status:'IN_REVIEW'}});const applications=new ApplicationsController(db);
+ const credits=new CreditReviewController(db),auth=new AuthController(db,{} as any),docs=[];
+ for(const type of ['terms','privacy'])docs.push(await db.legalDocument.findFirstOrThrow({where:{type,status:'PUBLISHED',confirmedAt:{not:null}},orderBy:{version:'desc'}}));
+ await auth.accept({consents:docs.map(d=>({documentId:d.id,version:d.version}))},f.request);
+ const max=await db.legalDocument.aggregate({where:{type:'credit-verification'},_max:{version:true}});
+ const creditDoc=await db.legalDocument.create({data:{type:'credit-verification',version:(max._max.version||0)+1,title:'测试授权',content:'合成测试',status:'PUBLISHED',confirmedBy:'fixture',confirmedAt:new Date()}});
+ const c=await credits.consent(f.application.id,{documentId:creditDoc.id,version:creditDoc.version,decision:'ACCEPT',idempotencyKey:'terms-credit-consent'},f.request);
+ const verified=await credits.verify(f.application.id,{consentId:c.consent!.id,creditRevision:c.creditRevision,band:'GE750',customerPresented:true,idempotencyKey:'terms-credit-verify'},admin);
  const terms=Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key=>[key,'测试正式约定：'+key]));
- const input={revision:0,monthlyFeeAmount:10000,depositAmount:0,months:2,mileagePerMonthKm:1000,excessMileagePriceAmount:100,energyDescription:'自费',benefits:[],conditions:'测试约定',startDate:'2026-11-01',firstDueDate:'2026-11-01'};
+ const input={creditVerificationId:verified.verification!.id,revision:0,monthlyFeeAmount:10000,depositAmount:0,months:2,mileagePerMonthKm:1000,excessMileagePriceAmount:100,energyDescription:'自费',benefits:[],conditions:'测试约定',startDate:'2026-11-01',firstDueDate:'2026-11-01'};
  await assert.rejects(()=>applications.finalPlan(f.application.id,input,admin));await assert.rejects(()=>applications.finalPlan(f.application.id,{...input,commercialTerms:{...terms,depositRefundRule:'待确认'}},admin));
  const first=await applications.finalPlan(f.application.id,{...input,commercialTerms:terms},admin);assert.deepEqual(first.finalPlan.commercialTerms,terms);
  const revised=await applications.finalPlan(f.application.id,{...input,revision:1,commercialTerms:{...terms,depositRefundRule:'双方约定七日内结算'}},admin);assert.notEqual(revised.commercialHash,first.commercialHash);

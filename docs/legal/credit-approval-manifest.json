@@ -1,0 +1,37 @@
+{
+  "status": "APPROVED",
+  "approvedOn": "2026-10-16",
+  "recordedAt": "2026-10-16T07:06:44.251Z",
+  "approvedBy": "用户代表上海晓浪网络科技有限公司",
+  "approvalStatement": "已审阅，批准这三份文本",
+  "approvalQuestionId": "call_5960e1cf27bf43459f5224b88c60d33e",
+  "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
+  "published": false,
+  "editorialChanges": "更换草稿状态标记；新增说明仅提取客户告知及单独同意内容，移除内部发布步骤，不改变业务规则。保留完整获批源文件。",
+  "documents": [
+    {
+      "type": "credit-verification",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/manual-credit-verification-v1.md",
+      "approvedSourceSha256": "55ac6de89375f1c2ab03d82bc1619be2a7703ad23e8d71fb93640e70e61674bc",
+      "finalFile": "docs/legal/versions/credit-update/manual-credit-verification-v1.md",
+      "finalSha256": "551c3fc531f20d7fbb8fde068f10cb383c8d99fdc5434fcf3f065e9d91eea068"
+    },
+    {
+      "type": "privacy",
+      "version": 2,
+      "approvedSource": "docs/legal/drafts/privacy-policy-v2.md",
+      "approvedSourceSha256": "73f1fdf4bd454417604f6ad36c92b7992dd3d932a0bb365eaf3848ddc0e54f0a",
+      "finalFile": "docs/legal/versions/credit-update/privacy-policy-v2.md",
+      "finalSha256": "ccb1bbac7635b9044e9fd347df5921074393862795e9adb995e1b670332f3292"
+    },
+    {
+      "type": "application",
+      "version": 2,
+      "approvedSource": "docs/legal/drafts/application-notice-v2.md",
+      "approvedSourceSha256": "155eaa93cfb8a2c9dc3494b639cf1cdc6b97864ec34380984554ee463061a87a",
+      "finalFile": "docs/legal/versions/credit-update/application-notice-v2.md",
+      "finalSha256": "8c40111252bd17591dabb79e1b3fe7130f2fd1f6c8052cd233e0bf543cecaab3"
+    }
+  ]
+}

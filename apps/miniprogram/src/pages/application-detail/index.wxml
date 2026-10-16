@@ -36,6 +36,30 @@
         ><text>{{application.depositText || '待审核确认'}}</text></view
       ></view
     >
+    <view class="card">
+      <view class="section-title">本申请的人工信用核验</view>
+      <view class="muted">由运营核对你主动出示的本人页面，仅记录档位；请勿上传信用页面截图或提供账号密码、验证码。</view>
+      <view wx:if="{{creditError}}" class="notice" role="alert">{{creditError}}</view>
+      <view wx:if="{{creditMessage}}" class="notice" role="status">{{creditMessage}}</view>
+      <block wx:if="{{creditReview}}">
+        <view>{{creditReview.statusText}}</view><view class="muted">{{creditReview.consentStatusText}}</view>
+        <button wx:if="{{creditReview.document}}" class="text-button" bindtap="openCreditExplanation">{{creditReview.document.title}} · 版本 {{creditReview.document.version}} →</button>
+        <view wx:else class="notice">当前正式核验说明暂不可用，不能提交授权；可联系人工处理。</view>
+        <block wx:if="{{creditReview.document}}">
+          <view class="muted small">750分及以上：押金0元；700—749分：最终方案中1个月订阅费；650—699分：2个月订阅费。低于650分或无法核验转人工处理，暂不生成正式方案。月费不因核验改变，金额以最终确认方案为准。</view>
+          <block wx:if="{{!creditReview.consentRequirementsMet && creditReview.status !== 'HISTORICAL'}}"><view class="notice">接受核验授权前，请先更新当前用户协议与隐私政策的同意记录；暂不授权或撤回仍可操作。</view><button class="secondary" bindtap="openCreditSettings" disabled="{{busy}}">到账户设置查看并更新协议</button></block>
+          <block wx:if="{{creditReview.canConsent && !creditReview.consentCurrent}}">
+            <checkbox-group bindchange="onCreditAccepted"><label class="plan-read"><checkbox value="credit" color="#B44919" checked="{{creditAccepted}}" disabled="{{busy}}"/><text>我已阅读上述说明，单独同意为审核本次申请及确定押金，由运营核对我主动出示的本人芝麻分，并按说明记录档位及核验信息。我了解可以拒绝、撤回或申请人工复核。</text></label></checkbox-group>
+            <button class="primary" bindtap="acceptCreditConsent" disabled="{{busy || !creditAccepted}}" loading="{{busy}}">单独授权本申请人工核验</button>
+          </block>
+          <button wx:if="{{creditReview.canDecline}}" class="secondary" bindtap="declineCreditConsent" disabled="{{busy}}">暂不授权，转人工联系处理</button>
+        </block>
+        <block wx:if="{{creditReview.verification}}"><view class="section-title">运营已记录的核验</view><view>档位：{{creditReview.bandText}}</view><view class="muted small">核验时间：{{creditReview.verifiedAtText}}</view><view>{{creditReview.depositRuleText}}</view><view class="muted small">押金规则 {{creditReview.ruleVersion}}</view><view wx:if="{{!creditReview.verificationCurrent}}" class="notice">此记录不能用于继续确认新的方案；当前申请状态或授权发生变化时，请联系人工核对。已有合同保留当时确认的押金依据。</view></block>
+        <button wx:if="{{creditReview.canWithdraw}}" class="text-button" bindtap="withdrawCreditConsent" disabled="{{busy}}">撤回本申请后续核验授权</button>
+      </block>
+      <button class="secondary" bindtap="contactCreditService" disabled="{{busy}}">联系人工客服</button>
+      <button class="text-button" bindtap="refresh" disabled="{{busy}}">刷新申请与核验状态</button>
+    </view>
     <view class="progress-section"
       ><view class="section-title">办理进度</view
       ><view

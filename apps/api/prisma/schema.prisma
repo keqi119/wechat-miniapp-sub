@@ -263,6 +263,9 @@ model Application {
  idempotencyKey String
  requestHash String
  revision Int @default(0)
+ creditRevision Int @default(0)
+ creditConsents CreditConsent[]
+ creditVerifications CreditVerification[]
  note String @default("")
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
@@ -278,6 +281,11 @@ model FinalPlan {
  revision Int
  commercialTerms Json?
  commercialHash String
+ creditVerificationId String?
+ creditVerification CreditVerification? @relation(fields:[creditVerificationId],references:[id])
+ creditRevision Int?
+ creditBand CreditBand?
+ creditRuleVersion String?
  monthlyFeeAmount Int
  depositAmount Int
  months Int
@@ -289,6 +297,54 @@ model FinalPlan {
  startDate DateTime @db.Date
  firstDueDate DateTime @db.Date
  createdAt DateTime @default(now())
+ @@unique([applicationId,revision])
+}
+enum CreditBand {
+ GE750
+ B700_749
+ B650_699
+ LT650
+ UNVERIFIABLE
+}
+enum CreditConsentStatus {
+ ACCEPTED
+ DECLINED
+ WITHDRAWN
+}
+model CreditConsent {
+ id String @id @default(cuid())
+ applicationId String
+ application Application @relation(fields:[applicationId],references:[id])
+ customerId String
+ documentId String
+ version Int
+ status CreditConsentStatus
+ revision Int
+ acceptedAt DateTime?
+ withdrawnAt DateTime?
+ withdrawalKey String?
+ idempotencyKey String
+ requestHash String
+ createdAt DateTime @default(now())
+ verifications CreditVerification[]
+ @@unique([applicationId,idempotencyKey])
+ @@unique([applicationId,revision])
+}
+model CreditVerification {
+ id String @id @default(cuid())
+ applicationId String
+ application Application @relation(fields:[applicationId],references:[id])
+ consentId String
+ consent CreditConsent @relation(fields:[consentId],references:[id])
+ band CreditBand
+ revision Int
+ ruleVersion String
+ verifiedBy String
+ verifiedAt DateTime @default(now())
+ idempotencyKey String
+ requestHash String
+ finalPlans FinalPlan[]
+ @@unique([applicationId,idempotencyKey])
  @@unique([applicationId,revision])
 }
 model Order {

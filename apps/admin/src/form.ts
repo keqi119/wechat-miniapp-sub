@@ -5,6 +5,7 @@ import { parseCommercialTerms, handoverFactLabels } from './business-terms.ts';
 export function serializeForm(fields: Field[], values: Record<string, string>): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   for (const field of fields) {
+    if (field.submit === false) continue;
     const value = values[field.key] ?? '';
     if (field.required && !value.trim()) throw new Error(`请填写${field.label}`);
     if (field.type === 'password' && !value) continue;
@@ -14,7 +15,8 @@ export function serializeForm(fields: Field[], values: Record<string, string>): 
       const n = Number(value);
       if (!Number.isSafeInteger(n) || (field.min !== undefined && n < field.min) || (field.max !== undefined && n > field.max)) throw new Error(`${field.label}超出范围或不是有效整数`);
       body[field.key] = n;
-    } else if (field.type === 'boolean') body[field.key] = value === 'true';
+    } else if (field.type === 'attestation') { if (value !== 'true') throw new Error('请确认已核对客户主动出示页面'); body[field.key] = true; }
+    else if (field.type === 'boolean') body[field.key] = value === 'true';
     else if (field.type === 'lines' || (field.type === 'files' && !field.key.endsWith('FileId'))) body[field.key] = value.split('\n').map(item => item.trim()).filter(Boolean);
     else if (field.type === 'checklist') {
       const rows: unknown = JSON.parse(value);

@@ -13,11 +13,16 @@ const schemas: Record<string, z.ZodObject<any>> = {
   'model-definitions': z.object({ brand: text, name: text, bodyType: z.string().max(100).default(''), description: z.string().max(5000).default('') }),
   vehicles: vehicleDto, plans: planDto,
   users: z.object({ username: z.string().min(3).max(100), password: z.string().min(16).max(256), name: text, role: z.enum(['ADMIN','OPERATIONS','FINANCE','SUPPORT']), active: z.boolean().default(true) }),
-  'legal-documents': z.object({ type: z.enum(['application','privacy','terms','subscription','handover']), version: z.number().int().positive(), title: text, content: z.string().min(1).max(100000), confirmedBy: z.string().min(1).optional(), confirmedAt: z.string().datetime().optional() }),
+  'legal-documents': z.object({ type: z.enum(['application','privacy','terms','subscription','handover','credit-verification']), version: z.number().int().positive(), title: text, content: z.string().min(1).max(100000), confirmedBy: z.string().min(1).optional(), confirmedAt: z.string().datetime().optional() }),
   entitlements: z.object({ orderId: text, title: text, description: text, status: z.enum(['PENDING','ACTIVE','EXPIRED']).default('PENDING') }),
   notifications: z.object({ customerId: text, title: text, content: z.string().min(1).max(5000), resourceType: text.optional(), resourceId: text.optional() }),
 };
-function safe(resource: string, value: any) { if (!value) return value; if (resource === 'users') { const { passwordHash: _, ...rest } = value; return rest; } if (resource === 'customers') { const { openId: _, providerCustomerId: __, ...rest } = value; return rest; } return value; }
+function withoutCredit(value:any):any {
+  if(Array.isArray(value))return value.map(withoutCredit);
+  if(!value||typeof value!=='object'||value instanceof Date)return value;
+  return Object.fromEntries(Object.entries(value).filter(([key])=>!['creditBand','creditVerificationId','creditRevision','creditRuleVersion'].includes(key)).map(([key,item])=>[key,withoutCredit(item)]));
+}
+function safe(resource: string, value: any, role?:string) { if (!value) return value; if (resource === 'users') { const { passwordHash: _, ...rest } = value; return rest; } if (resource === 'customers') { const { openId: _, providerCustomerId: __, ...rest } = value; return rest; } if(['applications','orders'].includes(resource)&&!['ADMIN','OPERATIONS'].includes(role||''))return withoutCredit(value); return value; }
 @Controller('admin')
 export class AdminController {
   constructor(@Inject(Db) private db: Db) {}
@@ -25,18 +30,18 @@ export class AdminController {
     const [applications, contracts, bills, handovers, services, recentActivity, refunds] = await Promise.all([this.db.application.count({ where: { status: { in: ['SUBMITTED','IN_REVIEW','NEEDS_INFO'] } } }), this.db.contract.count({ where: { status: { in: ['DRAFT','PENDING'] } } }), this.db.bill.count({ where: { status: 'PENDING' } }), this.db.handover.count({ where: { status: { notIn: ['COMPLETED','SUPERSEDED'] } } }), this.db.serviceRequest.count({ where: { status: { in: ['SUBMITTED','ACCEPTED','ASSIGNED','IN_PROGRESS'] } } }), allowed(request.admin.role, 'audit-logs', false) ? this.db.auditLog.findMany({ take: 10, orderBy: { createdAt: 'desc' } }) : Promise.resolve([]), this.db.refund.count({ where: { status: { in: ['PENDING_APPROVAL','PROCESSING'] } } })]);
     return { counts: { applications, contracts, bills, handovers, services, refunds }, recentActivity };
   }
-  @Get(':resource') async list(@Param('resource') resource: string, @Query() query: any) {
+  @Get(':resource') async list(@Param('resource') resource: string, @Query() query: any, @Req() request:any) {
     const delegate = delegates[resource]; ensure(delegate, 404, 'NOT_FOUND', '资源不存在'); const p = pagination(query); const where: any = {};
     if (query.status && !['customers','users','audit-logs','model-definitions','notifications','deposits'].includes(resource)) where.status = query.status;
     const searchFields: Record<string,string[]> = { vehicles: ['title','brand','model'], 'model-definitions': ['name','brand'], plans: ['name'], customers: ['name','mobile'], users: ['name','username'], 'legal-documents': ['title'], services: ['description','mobile'], notifications: ['title','content'] };
     if (query.keyword) where.OR = (searchFields[resource] || ['id']).map(field => ({ [field]: { contains: String(query.keyword), mode: 'insensitive' } }));
     const model = (this.db as any)[delegate]; const [items, total] = await Promise.all([model.findMany({ where, skip: p.skip, take: p.take, orderBy: { createdAt: 'desc' }, ...(['applications','orders'].includes(resource) ? { include: { customer: { select: { id:true,name:true,mobile:true } },vehicle: { select: { id:true,title:true } } } } : {}) }), model.count({ where })]);
-    return { items: items.map((i: any) => safe(resource, i)), total, page: p.page, pageSize: p.pageSize };
+    return { items: items.map((i: any) => safe(resource, i, request.admin.role)), total, page: p.page, pageSize: p.pageSize };
   }
-  @Get(':resource/:id') async detail(@Param('resource') resource: string, @Param('id') id: string) {
+  @Get(':resource/:id') async detail(@Param('resource') resource: string, @Param('id') id: string, @Req() request:any) {
     ensure(delegates[resource], 404, 'NOT_FOUND', '资源不存在');
     const value = await (this.db as any)[delegates[resource]].findUnique({ where: { id }, ...(resource === 'applications' ? { include: applicationInclude } : {}) });
-    ensure(value, 404, 'NOT_FOUND', '记录不存在'); return resource === 'applications' ? applicationView(value) : safe(resource, value);
+    ensure(value, 404, 'NOT_FOUND', '记录不存在'); return safe(resource, resource === 'applications' ? applicationView(value) : value, request.admin.role);
   }
   @Post(':resource') create(@Param('resource') resource: string, @Body() body: any, @Req() request: any) { return this.write(resource, undefined, body, request); }
   @Patch(':resource/:id') patch(@Param('resource') resource: string, @Param('id') id: string, @Body() body: any, @Req() request: any) { return this.write(resource, id, body, request); }

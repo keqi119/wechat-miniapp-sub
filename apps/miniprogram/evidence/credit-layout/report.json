@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-10-16T07:27:27.623Z",
+  "scope": "Offline actual-wcc templates with synthetic application/credit display data. Browser layout only; no business API, native SDK, real consent/credit review, preview or upload.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "unpublished",
+      "text": "当前正式核验说明暂不可用",
+      "overflow": false,
+      "screenshot": "unpublished.png",
+      "passed": true
+    },
+    {
+      "name": "separate-consent-required",
+      "checkbox": true,
+      "text": "单独授权本申请人工核验",
+      "overflow": false,
+      "screenshot": "separate-consent-required.png",
+      "passed": true
+    },
+    {
+      "name": "privacy-update-required",
+      "text": "到账户设置查看并更新协议",
+      "decline": true,
+      "overflow": false,
+      "screenshot": "privacy-update-required.png",
+      "passed": true
+    },
+    {
+      "name": "accepted-awaiting-review",
+      "text": "已授权，等待人工核验",
+      "overflow": false,
+      "screenshot": "accepted-awaiting-review.png",
+      "passed": true
+    },
+    {
+      "name": "verified-ge750",
+      "text": "档位：750分及以上",
+      "overflow": false,
+      "screenshot": "verified-ge750.png",
+      "passed": true
+    },
+    {
+      "name": "verified-b700_749",
+      "text": "档位：700—749分",
+      "overflow": false,
+      "screenshot": "verified-b700_749.png",
+      "passed": true
+    },
+    {
+      "name": "verified-b650_699",
+      "text": "档位：650—699分",
+      "overflow": false,
+      "screenshot": "verified-b650_699.png",
+      "passed": true
+    },
+    {
+      "name": "verified-lt650",
+      "text": "档位：低于650分",
+      "overflow": false,
+      "screenshot": "verified-lt650.png",
+      "passed": true
+    },
+    {
+      "name": "verified-unverifiable",
+      "text": "档位：无法核验",
+      "overflow": false,
+      "screenshot": "verified-unverifiable.png",
+      "passed": true
+    },
+    {
+      "name": "withdrawn",
+      "text": "已撤回后续核验授权",
+      "checkbox": true,
+      "overflow": false,
+      "screenshot": "withdrawn.png",
+      "passed": true
+    },
+    {
+      "name": "historical-contract",
+      "text": "申请结束后的历史核验",
+      "overflow": false,
+      "screenshot": "historical-contract.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

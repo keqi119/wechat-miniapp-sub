@@ -76,15 +76,22 @@ test('application idempotency and ownership: repeated submit is one record, diff
   assert.equal((await req(`/customer/applications/${application.id}/cancel`, 'POST', {}, 'other')).status, 404);
 });
 test('final plan optimistic revisions and concurrent confirmation allocate one vehicle atomically', async () => {
+  const creditDoc=await db.legalDocument.create({data:{type:'credit-verification',version:1,title:'测试人工信用授权',content:'合成测试',status:'PUBLISHED',confirmedBy:'fixture',confirmedAt:new Date()}});
+  async function authorizeCredit(applicationId:string,who:'customer'|'other') {
+    const consent=await req(`/customer/applications/${applicationId}/credit-consent`,'POST',{documentId:creditDoc.id,version:creditDoc.version,decision:'ACCEPT',idempotencyKey:'credit-consent-test-0001'},who);
+    assert.equal(consent.status,201);
+    const verified=await req(`/admin/applications/${applicationId}/credit-verifications`,'POST',{consentId:consent.data.consent.id,creditRevision:consent.data.creditRevision,band:'B700_749',customerPresented:true,idempotencyKey:'credit-verify-test-0001'});
+    assert.equal(verified.status,201); return verified.data.verification.id;
+  }
   const commercialTerms = Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key => [key, '测试明确条款：' + key]));
-  const p = { commercialTerms, revision: 0, monthlyFeeAmount: 300000, depositAmount: 500000, months: 3, mileagePerMonthKm: 1500, excessMileagePriceAmount: 100, energyDescription: '自费', benefits: ['救援'], conditions: '测试', startDate: '2026-12-31', firstDueDate: '2026-12-31' };
+  const p = { creditVerificationId:await authorizeCredit(application.id,'customer'), commercialTerms, revision: 0, monthlyFeeAmount: 300000, depositAmount: 300000, months: 3, mileagePerMonthKm: 1500, excessMileagePriceAmount: 100, energyDescription: '自费', benefits: ['救援'], conditions: '测试', startDate: '2026-12-31', firstDueDate: '2026-12-31' };
   assert.equal((await req(`/admin/applications/${application.id}/review`, 'POST', { decision: 'IN_REVIEW', note: '审核' })).status, 201);
   const f = await req(`/admin/applications/${application.id}/final-plan`, 'POST', p); assert.equal(f.status, 201); final = f.data.finalPlan;
   assert.equal((await req(`/admin/applications/${application.id}/final-plan`, 'POST', p)).status, 409);
   assert.equal((await req(`/customer/applications/${application.id}/confirm`, 'POST', { revision: 0, commercialHash: final.commercialHash }, 'customer')).status, 409);
   const otherApplication = (await req('/customer/applications', 'POST', { vehicleId: vehicle.id, subscriptionPlanId: plan.id, profile: { name: '另一客户' }, consents: [{ documentId: doc.id, version: 1 }], idempotencyKey: key }, 'other')).data;
   await req(`/admin/applications/${otherApplication.id}/review`, 'POST', { decision: 'IN_REVIEW', note: '审核' });
-  const otherFinal = (await req(`/admin/applications/${otherApplication.id}/final-plan`, 'POST', p)).data.finalPlan;
+  const otherFinal = (await req(`/admin/applications/${otherApplication.id}/final-plan`, 'POST', {...p,creditVerificationId:await authorizeCredit(otherApplication.id,'other')})).data.finalPlan;
   const results = await Promise.all([req(`/customer/applications/${application.id}/confirm`, 'POST', { revision: final.revision, commercialHash: final.commercialHash }, 'customer'), req(`/customer/applications/${otherApplication.id}/confirm`, 'POST', { revision: otherFinal.revision, commercialHash: otherFinal.commercialHash }, 'other')]);
   assert.deepEqual(results.map(r => r.status).sort(), [201, 409]);
   assert.equal(await db.order.count(), 1); assert.equal(await db.contract.count(), 1); assert.equal(await db.bill.count(), 4);
@@ -118,14 +125,14 @@ test('payment and refund settlement reject mismatches and replay without duplica
   const billing = app.get(BillingService) as BillingService;
   const deposit = await db.bill.findFirstOrThrow({ where: { orderId: order.id, type: 'DEPOSIT' } });
   await db.bill.update({ where: { id: deposit.id }, data: { status: 'PENDING' } });
-  const payment = await db.payment.create({ data: { customerId: order.customerId, billId: deposit.id, amount: 500000, idempotencyKey: 'settle-deposit-0001', status: 'PENDING' } });
+  const payment = await db.payment.create({ data: { customerId: order.customerId, billId: deposit.id, amount: 300000, idempotencyKey: 'settle-deposit-0001', status: 'PENDING' } });
   await assert.rejects(() => billing.settle(payment.id, { status: 'SUCCEEDED', amount: 499999, transactionId: 'test-provider-txn' }));
   assert.equal((await db.bill.findUniqueOrThrow({ where: { id: deposit.id } })).paidAmount, 0);
-  await Promise.all([billing.settle(payment.id, { status: 'SUCCEEDED', amount: 500000, transactionId: 'test-provider-txn' }), billing.settle(payment.id, { status: 'SUCCEEDED', amount: 500000, transactionId: 'test-provider-txn' })]);
+  await Promise.all([billing.settle(payment.id, { status: 'SUCCEEDED', amount: 300000, transactionId: 'test-provider-txn' }), billing.settle(payment.id, { status: 'SUCCEEDED', amount: 300000, transactionId: 'test-provider-txn' })]);
   assert.equal(await db.depositEntry.count({ where: { paymentId: payment.id, type: 'RECEIPT' } }), 1);
-  assert.equal((await db.bill.findUniqueOrThrow({ where: { id: deposit.id } })).paidAmount, 500000);
+  assert.equal((await db.bill.findUniqueOrThrow({ where: { id: deposit.id } })).paidAmount, 300000);
   const refund = await db.refund.create({ data: { customerId: order.customerId, paymentId: payment.id, amount: 10000, reason: '测试退款', status: 'PROCESSING', requestedBy: 'test-requester', approvedBy: 'test-approver' } });
-  const event = { status: 'SUCCEEDED' as const, providerRefundId: 'test-provider-refund', paymentId: payment.id, amount: 10000, totalAmount: 500000 };
+  const event = { status: 'SUCCEEDED' as const, providerRefundId: 'test-provider-refund', paymentId: payment.id, amount: 10000, totalAmount: 300000 };
   await assert.rejects(() => billing.settleRefund(refund.id, { ...event, amount: 10001 }));
   assert.equal(await db.depositEntry.count({ where: { refundId: refund.id } }), 0);
   await Promise.all([billing.settleRefund(refund.id, event), billing.settleRefund(refund.id, event)]);

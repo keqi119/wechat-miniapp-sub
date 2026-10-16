@@ -1,0 +1,15 @@
+{
+  "uploadedOn": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "version": "1.0.1",
+  "channel": "development",
+  "uploadStatus": "SUCCEEDED",
+  "totalBytes": 327242,
+  "sourceCommit": "60fe5f99ca2078e0875dbc54d0859ecb46933740",
+  "frozenProject": ".runtime/releases/20261016-1545/miniprogram",
+  "sizeSource": ".runtime/miniapp-upload-1.0.1-info.json",
+  "method": "已登录官方微信开发者工具CLI upload，退出0并返回upload成功",
+  "reviewSubmitted": false,
+  "productionReleased": false,
+  "scope": "真实登录、协议链接和指定客户1分钱支付验收；不含正在开发的信用核验及权益结算更新。"
+}
