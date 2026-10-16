@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { ensure } from '../../common/errors';
 import { verifyFadadaCallbackDigest } from './fadada-digest';
+import { matchesFadadaQuery } from '../fadada-query-binding';
 export function accountReadiness(account: any, now = new Date()) {
   const providerBacked = account?.verificationSource === 'QUERY' || account?.verificationSource === 'CALLBACK';
   const recent = account?.checkedAt && now.getTime() - new Date(account.checkedAt).getTime() < 24 * 60 * 60 * 1000;
@@ -29,7 +30,7 @@ export function verifiedCallback(payload: unknown, config: { appId: string; appS
   return { record, transactionId, providerContractId: record.contract_id };
 }
 export function assertSignerResult(value: any, expected: { contractId: string; customerId: string; transactionId: string }) {
-  ensure(value.providerContractId === expected.contractId && value.providerCustomerId === expected.customerId && value.providerTransactionId === expected.transactionId,502,'PROVIDER_IDENTITY_MISMATCH','签署结果身份不匹配');
+  ensure(matchesFadadaQuery(value,expected),502,'PROVIDER_IDENTITY_MISMATCH','签署结果身份不匹配');
 }
 export function assertApprovedText(document: any) { ensure(document?.status === 'PUBLISHED' && document.confirmedBy && document.confirmedAt && typeof document.content === 'string' && document.content.trim().length > 0,409,'LEGAL_NOT_APPROVED','正式文案尚未审定发布'); ensure(!/\{\{[^}]*\}\}|待补齐|待填写/.test(document.content),409,'LEGAL_PLACEHOLDERS','正式文案仍有未填写字段'); }
 export function certificateCurrentlyValid(raw: unknown, now = Date.now()) {

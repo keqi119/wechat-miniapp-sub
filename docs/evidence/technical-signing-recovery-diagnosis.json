@@ -1,0 +1,170 @@
+{
+  "checkedAt": "2026-10-16T15:16:22.831Z",
+  "recordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+  "task": {
+    "id": "3637ec9a-d896-49ce-b6ad-5980ddc8b5ce",
+    "status": "PENDING",
+    "uploadedAt": "2026-10-16T15:09:22.866Z",
+    "customerSignedAt": null,
+    "platformSignedAt": null,
+    "sealRequestedAt": null,
+    "processingUntil": null,
+    "createdAt": "2026-10-16T15:09:21.992Z",
+    "updatedAt": "2026-10-16T15:09:22.868Z"
+  },
+  "actions": [
+    {
+      "action": "CREATE",
+      "createdAt": "2026-10-16T14:40:27.274Z"
+    },
+    {
+      "action": "CONFIRM",
+      "createdAt": "2026-10-16T14:53:19.763Z"
+    },
+    {
+      "action": "PREPARE",
+      "createdAt": "2026-10-16T14:58:17.989Z"
+    },
+    {
+      "action": "PREPARE",
+      "createdAt": "2026-10-16T15:05:05.577Z"
+    },
+    {
+      "action": "SIGN",
+      "createdAt": "2026-10-16T15:09:21.924Z"
+    },
+    {
+      "action": "SYNC",
+      "createdAt": "2026-10-16T15:12:12.143Z"
+    }
+  ],
+  "audits": [
+    {
+      "action": "TECHNICAL_ACCEPTANCE_CREATED",
+      "createdAt": "2026-10-16T14:40:27.278Z"
+    },
+    {
+      "action": "TECHNICAL_ACCEPTANCE_CONSENT",
+      "createdAt": "2026-10-16T14:53:19.785Z"
+    },
+    {
+      "action": "SIGNATURE_REVIEW_REQUESTED",
+      "createdAt": "2026-10-16T15:05:05.691Z"
+    },
+    {
+      "action": "SIGNATURE_REVIEW_APPROVED",
+      "createdAt": "2026-10-16T15:06:15.468Z"
+    }
+  ],
+  "events": [
+    {
+      "provider": "FADADA_SIGN",
+      "status": "PROCESSING",
+      "createdAt": "2026-10-16T15:10:10.595Z"
+    }
+  ],
+  "providerQueries": [
+    {
+      "signer": "CUSTOMER",
+      "mappedStatus": "SIGNED",
+      "mappedResultCode": "3000",
+      "recordEmpty": false,
+      "contractMatches": false,
+      "customerMatches": false,
+      "transactionMatches": false,
+      "fields": [
+        {
+          "path": "code",
+          "type": "number"
+        },
+        {
+          "path": "data",
+          "type": "object"
+        },
+        {
+          "path": "data.download_url",
+          "type": "string"
+        },
+        {
+          "path": "data.endTime",
+          "type": "string"
+        },
+        {
+          "path": "data.result",
+          "type": "string"
+        },
+        {
+          "path": "data.result_desc",
+          "type": "string"
+        },
+        {
+          "path": "data.view_url",
+          "type": "string"
+        },
+        {
+          "path": "msg",
+          "type": "string"
+        }
+      ],
+      "statusFields": [
+        {
+          "path": "code",
+          "value": 1
+        },
+        {
+          "path": "data.result",
+          "value": "3000"
+        }
+      ],
+      "identities": []
+    },
+    {
+      "signer": "PLATFORM",
+      "mappedStatus": "UNKNOWN",
+      "mappedResultCode": null,
+      "recordEmpty": true,
+      "contractMatches": false,
+      "customerMatches": false,
+      "transactionMatches": false,
+      "fields": [
+        {
+          "path": "code",
+          "type": "number"
+        },
+        {
+          "path": "data",
+          "type": "object"
+        },
+        {
+          "path": "msg",
+          "type": "string"
+        }
+      ],
+      "statusFields": [
+        {
+          "path": "code",
+          "value": 1201
+        }
+      ],
+      "identities": []
+    }
+  ],
+  "calls": [
+    {
+      "endpoint": "/api2/query_sign_result.api",
+      "httpStatus": 200
+    },
+    {
+      "endpoint": "/api2/query_sign_result.api",
+      "httpStatus": 200
+    }
+  ],
+  "businessWrites": false,
+  "signingOrSealingCalls": false,
+  "interpretation": "Provider customer result3000 is SIGNED; missing echoes are documented, not mismatched identities. Previous gateway rejected them. Enterprise seal not requested at this read.",
+  "returnPageEvidence": {
+    "at": "2026-10-16T15:10:13Z",
+    "httpStatus": 200,
+    "previousBehavior": "static text without miniProgram navigation"
+  }
+}

@@ -1,4 +1,5 @@
 import {TechnicalAcceptanceSigning} from '../technical-acceptance/signing';
+import {esignReturnPage} from './return-page';
 import {MINIAPP_RETURN,runNativeSigning,nativeRealnameUrl} from './native-signing';
 import {realnameInput,recordRealnameConsent} from './realname-consent';
 import { Body, Controller, Get, Inject, Param, Post, Req, Res } from '@nestjs/common';
@@ -61,5 +62,5 @@ export class FadadaCallbacksController {
 }
 @Controller()
 export class ESignPublicController {
-  @Get('public/esign-return')returnPage(@Res()response:any){response.type('html').send('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>返回小程序</title><body style="font-family:sans-serif;padding:32px"><h2>请返回小程序查询结果</h2><p>点击左上角返回，签署与实名状态以服务端查询为准。</p></body></html>');}
+  @Get('public/esign-return')returnPage(@Res()response:any){response.set('Cache-Control','no-store').set('Referrer-Policy','no-referrer').type('html').send(esignReturnPage);}
 }

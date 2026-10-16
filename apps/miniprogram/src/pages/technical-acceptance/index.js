@@ -16,11 +16,11 @@ Page({
   onShow() { return this.reload(); },
   onDocumentRead(event) { if (!this.data.busy) this.setData({ documentRead: event.detail.value.includes('read'), error: '' }); },
   onDataConsent(event) { if (!this.data.busy) this.setData({ dataAccepted: event.detail.value.includes('data'), error: '' }); },
-  async run(work) {
+  async run(work, feedback = false) {
     if (this.data.busy || this._disposed) return; const stamp = this.stamp(), lease = { stamp }; this._operation = lease; this._loadRevision = (this._loadRevision || 0) + 1;
     const current = () => this.current(stamp) && this._operation === lease;
     this.setData({ busy: true, error: '', message: '' });
-    try { await work(current); } catch (error) { if (current()) { this.setData({ documentRead: false, dataAccepted: false }); if (error.statusCode === 409) await this.reload({ force: true }); if (current()) { const consentUpdateRequired = ['CONSENT_REQUIRED','CONSENT_VERSION','CONSENT_STALE'].includes(error.code); this.setData({ ...(consentUpdateRequired ? { consentUpdateRequired: true } : {}), error: consentUpdateRequired ? '请到账户设置阅读并明确同意当前用户协议与隐私政策，再返回本份文件重新阅读和选择单独同意；无需重复实名。' : error.message + ' 请读取本份最新结果，不要重复提交。' }); } } }
+    try { await work(current); if (feedback && current()) wx.showToast({ title: '核验结果已更新', icon: 'none' }); } catch (error) { if (current()) { if (feedback) wx.showToast({ title: '核验失败，请查看按钮下方提示', icon: 'none' }); this.setData({ documentRead: false, dataAccepted: false }); if (error.statusCode === 409) await this.reload({ force: true }); if (current()) { const consentUpdateRequired = ['CONSENT_REQUIRED','CONSENT_VERSION','CONSENT_STALE'].includes(error.code); this.setData({ ...(consentUpdateRequired ? { consentUpdateRequired: true } : {}), error: consentUpdateRequired ? '请到账户设置阅读并明确同意当前用户协议与隐私政策，再返回本份文件重新阅读和选择单独同意；无需重复实名。' : error.message + ' 请读取本份最新结果，不要重复提交。' }); } } }
     finally { if (current()) this.setData({ busy: false }); if (this._operation === lease) this._operation = null; }
   },
   async confirmDocument() {
@@ -33,7 +33,7 @@ Page({
     });
   },
   async signDocument() { if (!this.data.record?.canSign) return; return this.run(async current => { if (!(await confirm('进入本人签署？', '请在法大大页面核对本份验证文件并自行签署。打开或返回页面不代表双方已签署归档。')) || !current()) return; await services.signTechnicalAcceptance(this.id); if (current()) this.setData({ message: '完成本人操作后返回，主动核验双方签署与归档结果。' }); }); },
-  async syncSignature() { if (!this.data.record?.canSync) return; return this.run(async current => { const record = await services.syncTechnicalAcceptance(this.id); if (current()) this.setData({ record, documentRead: false, dataAccepted: false, message: record.signatureCompleted ? '服务端已确认本份双方签署并归档；不表示整套系统或商业服务验收通过。' : record.statusMessage || '双方签署或归档尚未完成，请核对真实结果。' }); }); },
+  async syncSignature() { if (!this.data.record?.canSync) return; return this.run(async current => { const record = await services.syncTechnicalAcceptance(this.id); if (current()) this.setData({ record, documentRead: false, dataAccepted: false, message: record.signatureCompleted ? '服务端已确认本份双方签署并归档；不表示整套系统或商业服务验收通过。' : record.statusMessage || '双方签署或归档尚未完成，请核对真实结果。' }); }, true); },
   async stopParticipation() { if (!this.data.record?.canStop) return; return this.run(async current => { if (!(await confirm('停止后续验证？', '停止后不再发起新的签署或企业章，不表示供应商在途任务已撤销；已经发生和迟到的签署事实仍须核验保存，不产生租赁或收费义务。')) || !current()) return; const record = await services.stopTechnicalAcceptance(this.id); if (current()) this.setData({ record, documentRead: false, dataAccepted: false, message: '停止请求已记录。渠道在途结果仍待按事实核对，不能认定供应商已撤销。' }); }); },
   async openFile(event) { const id = event.currentTarget.dataset.id; if (!this.data.record || ![this.data.record.sourceFileId,this.data.record.signedFileId].includes(id)) return; return this.run(async () => { await services.openTechnicalAcceptanceFile(this.id,id); }); },
   openSettings() { go('/pages/settings/index'); },

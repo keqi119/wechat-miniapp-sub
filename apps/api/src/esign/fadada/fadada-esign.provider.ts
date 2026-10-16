@@ -10,6 +10,7 @@ import { SignaturePolicyService } from '../enterprise-seal/signature-policy.serv
 import { FadadaSettings } from '../esign.settings';
 import { FadadaApiClient } from './fadada-api.client';
 import { accountReadiness, assertSignerResult, decryptIdentity, verifiedCallback } from './fadada-safety';
+import {isFadadaQueryAbsent} from '../fadada-query-binding';
 export class FadadaESignGateway extends ESignGateway {
   constructor(private db:Db,private config:FadadaSettings,private api:FadadaApiClient,private writer:ContractPdfArtifactWriterService,private policies:SignaturePolicyService){super();}
   private enabled(kind?:string,readOnly=false){ensure(this.config.enabled&&(kind===TECHNICAL_KIND?(readOnly||technicalEnabled()):this.config.signingEnabled),503,'FADADA_SIGNING_DISABLED','法大大真实签署尚未启用');}
@@ -53,6 +54,7 @@ export class FadadaESignGateway extends ESignGateway {
     }
     ensure(task.customerId===input.customerId&&task.approvalId===context.approval.id&&task.sourcePdfHash===context.approval.sourcePdfHash&&task.customerProviderId===account.providerCustomerId&&task.platformProviderId===context.seal.providerCustomerId,409,'SIGNING_TASK_MISMATCH','签署任务身份或文档版本不匹配');
     ensure(!['SIGNED','REJECTED','EXPIRED'].includes(task.status),409,'SIGNATURE_STATE','当前签署任务不可重新发起');
+    ensure(!task.customerSignedAt,409,'SIGNER_ALREADY_SIGNED','本人签署已核验，请继续核验企业签署与归档，无需重复签署');
     if(!task.uploadedAt){
       const uploadLeaseUntil=new Date(Date.now()+60000);
       const claim=await this.db.fadadaTask.updateMany({where:{id:task.id,uploadedAt:null,OR:[{processingUntil:null},{processingUntil:{lt:new Date()}}]},data:{processingUntil:uploadLeaseUntil}});
@@ -68,7 +70,7 @@ export class FadadaESignGateway extends ESignGateway {
   private async providerStatus(task:any,platform:boolean){
     const expected={contractId:task.providerEnvelopeId,customerId:platform?task.platformProviderId:task.customerProviderId,transactionId:platform?task.platformTransactionId:task.customerTransactionId};
     const result=await this.api.querySignResult(expected);
-    const absent=result.status==='UNKNOWN'&&!result.resultCode&&result.resultDesc?.trim()==='签署记录为空'&&!result.providerContractId&&!result.providerCustomerId&&!result.providerTransactionId;
+    const absent=isFadadaQueryAbsent(result,expected);
     if(!absent)assertSignerResult(result,expected);
     return {...result,absent};
   }

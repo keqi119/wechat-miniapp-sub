@@ -133,3 +133,11 @@ test('approval hashes use the existing canonical sha256 prefix and malformed pla
   for(const planHash of ['d'.repeat(64),'sha256:bad','md5:'+'d'.repeat(64),'sha256:'+'g'.repeat(64)]){env.set(ready({approval:{...ready().approval,planHash}}));await assert.rejects(env.api.signTechnicalAcceptance('ta1'));assert.equal(env.calls.some(v=>v.route.endsWith('/sign')),false);}
 });
 module.exports={setup,signingConfig};
+test('explicit verification gives visible result feedback even when the document is scrolled to its actions',async()=>{
+ for(const fails of [false,true]){
+  const env=setup({value:ready()}),p=page(env,'technical-acceptance'),toasts=[];env.platform.showToast=v=>toasts.push(v);
+  await p.reload();if(fails)env.fail(502);await p.syncSignature();
+  assert.equal(toasts.length,1);assert.match(toasts[0].title,fails?/失败/:/更新/);assert.equal(p.data.busy,false);
+  assert.ok(fails?p.data.error:p.data.message);
+ }
+});

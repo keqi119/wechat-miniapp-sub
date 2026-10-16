@@ -27,10 +27,10 @@ test('callback uses pinned digest scheme, rejects duplicate fields and binds tra
   assert.throws(() => verifiedCallback({ ...payload, transaction_id: 'OTHER', msg_digest: digest }, { appId: 'fixture-app', appSecret: 'fixture-secret' }), code('CALLBACK_SIGNATURE'));
   assert.throws(() => verifiedCallback('transaction_id=A&transaction_id=B', { appId: 'a', appSecret: 'b' }), code('CALLBACK_FIELDS'));
 });
-test('provider signer success without exact envelope, customer and transaction cannot settle either party', () => {
+test('caller-provided signer status and echoed IDs cannot settle either party without live query binding', () => {
   const expected = { contractId: 'envelope', customerId: 'person', transactionId: 'transaction' };
   const signed = { status: 'SIGNED', providerContractId: 'envelope', providerCustomerId: 'person', providerTransactionId: 'transaction' };
-  assert.doesNotThrow(() => assertSignerResult(signed, expected));
+  assert.throws(() => assertSignerResult(signed, expected), code('PROVIDER_IDENTITY_MISMATCH'));
   assert.throws(() => assertSignerResult({ ...signed, providerCustomerId: 'other-person' }, expected), code('PROVIDER_IDENTITY_MISMATCH'));
   assert.throws(() => assertSignerResult({ status: 'SIGNED' }, expected), code('PROVIDER_IDENTITY_MISMATCH'));
 });

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {encryptIdentity} from '../src/esign/fadada/fadada-safety';
+import {NativeAwareFadadaClient,NativeAwareFadadaHttp} from '../src/esign/native-fadada-adapter';
 import {FadadaESignGateway} from '../src/esign/fadada/fadada-esign.provider';
 import {SignaturePolicyService} from '../src/esign/enterprise-seal/signature-policy.service';
 import {ContractPdfArtifactWriterService} from '../src/contract/contract-pdf-artifact-writer.service';
@@ -36,7 +37,9 @@ before(async()=>{
  app=await createApp({db,esign:proxy,extraProviders:[{provide:FadadaESignGateway,useValue:proxy}]});base=await listenForHttpTests(app);
  const writer=app.get(ContractPdfArtifactWriterService),policies=app.get(SignaturePolicyService);
  const settings:any={enabled:true,signingEnabled:false,identityEncryptionKey:identityKey,signNotifyUrl:'https://mini-api.subauto.keybox.cloud/api/callbacks/fadada-sign',signReturnUrl:'https://mini-api.subauto.keybox.cloud/api/public/esign-return',signUrlValidityMinutes:30,appId:'synthetic',appSecret:'synthetic'};
- const api:any={uploadDocs:async()=>{uploads++;return{raw:{code:'1'}};},createExternalSignUrl:async()=>({signUrl:'https://textapi17.fadada.com/sign?opaque=a%2Fb'}),querySignResult:async(i:any)=>{const platform=i.customerId==='synthetic-platform',signed=platform?platformSigned:customerSigned;return platform&&!signed?{status:'UNKNOWN',resultDesc:'签署记录为空'}:{status:signed?'SIGNED':'PENDING',providerContractId:i.contractId,providerCustomerId:i.customerId,providerTransactionId:i.transactionId};},autoSealContract:async()=>{seals++;platformSigned=true;return{resultCode:'3000'};},downloadSignedContract:async(i:any)=>{if(downloadFail)throw Error('synthetic download failure');const t=await db.fadadaTask.findUniqueOrThrow({where:{providerEnvelopeId:i.contractId}});return{buffer:await writer.readVerified(t.sourceFileId,t.sourcePdfHash)};}};
+ const queryConfig:any={enabled:true,appId:'synthetic',appSecret:'synthetic',apiVersion:'2.0',requestTimeoutMs:1000,baseUrl:'https://textapi17.fadada.com/api2/'};
+ const queryClient=new NativeAwareFadadaClient(queryConfig,new NativeAwareFadadaHttp(queryConfig,async request=>{const platform=new URLSearchParams(String(request.body)).get('customer_id')==='synthetic-platform',signed=platform?platformSigned:customerSigned;return{status:200,headers:{},bodyText:JSON.stringify(platform&&!signed?{code:1201,data:null,msg:'签署记录为空'}:{code:1,data:{result:signed?'3000':'9999',result_desc:signed?'签章成功':'待签署'},msg:'success'})};}));
+ const api:any={uploadDocs:async()=>{uploads++;return{raw:{code:'1'}};},createExternalSignUrl:async()=>({signUrl:'https://textapi17.fadada.com/sign?opaque=a%2Fb'}),querySignResult:(i:any)=>queryClient.querySignResult(i),autoSealContract:async()=>{seals++;platformSigned=true;return{resultCode:'3000'};},downloadSignedContract:async(i:any)=>{if(downloadFail)throw Error('synthetic download failure');const t=await db.fadadaTask.findUniqueOrThrow({where:{providerEnvelopeId:i.contractId}});return{buffer:await writer.readVerified(t.sourceFileId,t.sourcePdfHash)};}};
  realGateway=new FadadaESignGateway(db,settings,api,writer,policies);
 });
 test('published approved text produces an immutable standalone PDF; consent and two people are required',async()=>{
@@ -65,6 +68,12 @@ test('technical query while independent flag closed never creates an enterprise 
  assert.ok(record);customerSigned=true;process.env.TECHNICAL_ACCEPTANCE_SIGNING_ENABLED='false';
  const r=await request('customer/technical-acceptances/'+record.id+'/sign-status');assert.equal(r.status,200);assert.equal(seals,0);
  const sync=await request('customer/technical-acceptances/'+record.id+'/sync','POST',{revision:r.data.revision,idempotencyKey:randomUUID()});assert.equal(sync.status,201,JSON.stringify(sync.data));assert.equal(sync.data.signatureStatus,'PENDING');assert.equal(seals,0);
+ process.env.TECHNICAL_ACCEPTANCE_SIGNING_ENABLED='true';
+ const current=(await request('customer/technical-acceptances/'+record.id)).data;
+ assert.equal(current.canSign,false);assert.match(current.statusMessage,/本人.*签署/);
+ const repeat=await request('customer/technical-acceptances/'+record.id+'/sign','POST',{revision:current.revision,idempotencyKey:randomUUID()});
+ assert.equal(repeat.status,409);assert.equal(repeat.data.error.code,'SIGNER_ALREADY_SIGNED');assert.equal(seals,0);
+ process.env.TECHNICAL_ACCEPTANCE_SIGNING_ENABLED='false';
 });
 test('stopping a pending technical record blocks new seals while preserving late trustworthy archival',async()=>{
  let r=(await request('customer/technical-acceptances/'+record.id)).data;

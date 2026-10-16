@@ -5,8 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import PDFDocument from 'pdfkit';
 import { Db } from '../src/common/db';
 import { FadadaESignGateway } from '../src/esign/fadada/fadada-esign.provider';
-import { FadadaApiClient } from '../src/esign/fadada/fadada-api.client';
-import { FadadaHttpClient } from '../src/esign/fadada/fadada-http-client';
+import {NativeAwareFadadaClient,NativeAwareFadadaHttp} from '../src/esign/native-fadada-adapter';
 import { encryptIdentity } from '../src/esign/fadada/fadada-safety';
 import { buildFadadaMsgDigest } from '../src/esign/fadada/fadada-digest';
 import { ContractPdfArtifactWriterService } from '../src/contract/contract-pdf-artifact-writer.service';
@@ -20,7 +19,7 @@ before(async()=>{
   account=await db.eSignAccount.create({data:{customerId:customer.id,providerCustomerId:prefix,registrationStatus:'REGISTERED',realNameStatus:'VERIFIED',verificationSource:'QUERY',verifiedAt:new Date(),checkedAt:new Date(),certStatus:'BOUND',certSerialNo:'certificate',identityCiphertext,verifiedIdentityHash:createHash('sha256').update(identityCiphertext).digest('hex'),verifiedSerialNo:'synthetic-serial',verificationTransactionNo:prefix+'-verification'}});
   const doc=new PDFDocument();const chunks:Buffer[]=[];const done=new Promise<Buffer>(resolve=>{doc.on('data',c=>chunks.push(c));doc.on('end',()=>resolve(Buffer.concat(chunks)));});doc.text('Synthetic signing source');doc.end();pdf=await done;
   const sourceHash=createHash('sha256').update(pdf).digest('hex');
-  settings={enabled:true,signingEnabled:true,appId:'fixture-app',appSecret:'fixture-secret',baseUrl:'https://api.fadada.com/api/',apiVersion:'2.0',env:'sandbox',requestTimeoutMs:1000,signUrlQuantity:1,signUrlValidityMinutes:30,identityEncryptionKey:key,signNotifyUrl:'https://mini-api.subauto.keybox.cloud/api/callbacks/fadada-sign',signReturnUrl:'https://mini-api.subauto.keybox.cloud/api/public/esign-return'};
+  settings={enabled:true,signingEnabled:true,appId:'fixture-app',appSecret:'fixture-secret',baseUrl:'https://textapi17.fadada.com/api2/',apiVersion:'2.0',env:'sandbox',requestTimeoutMs:1000,signUrlQuantity:1,signUrlValidityMinutes:30,identityEncryptionKey:key,signNotifyUrl:'https://mini-api.subauto.keybox.cloud/api/callbacks/fadada-sign',signReturnUrl:'https://mini-api.subauto.keybox.cloud/api/public/esign-return'};
   const realWriter=new ContractPdfArtifactWriterService(db);
   const resource={id:prefix,customerId:customer.id,orderId:prefix,status:'DRAFT',documentHash:'a'.repeat(64)};
   const writer:any={resource:async()=>resource,readVerified:async()=>pdf,persistPdf:(...args:any[])=>realWriter.persistPdf(args[0],args[1])};
@@ -31,13 +30,13 @@ before(async()=>{
     if(req.url.endsWith('uploaddocs.api')){uploadCalls++;return{status:200,headers:{},bodyText:JSON.stringify({code:'1',doc_id:'uploaded'})};}
     if(req.url.endsWith('query_sign_result.api')){
       const platform=fields.get('customer_id')==='platform-fixture';const signed=platform?platformSigned:customerSigned;
-      return{status:200,headers:{},bodyText:JSON.stringify(platform&&!signed?{result_desc:'签署记录为空'}:{contract_id:fields.get('contract_id'),customer_id:fields.get('customer_id'),transaction_id:fields.get('transaction_id'),result_code:signed?'3000':'0',result_desc:signed?'signed':'pending'})};
+      return{status:200,headers:{},bodyText:JSON.stringify(platform&&!signed?{code:1201,data:null,msg:'签署记录为空'}:{code:1,data:{result:signed?'3000':'9999',result_desc:signed?'签章成功':'待签署'},msg:'success'})};
     }
     if(req.url.endsWith('extsign_auto.api')){sealCalls++;platformSigned=true;return{status:200,headers:{},bodyText:JSON.stringify({code:'1',result_code:'3000'})};}
     if(req.url.endsWith('downLoadContract.api')){if(downloadFails)throw new Error('provider download unavailable');if(replaceLease)await db.fadadaTask.update({where:{id:activeTask.taskId},data:{processingUntil:new Date(Date.now()+120000)}});return{status:200,headers:{'content-type':'application/pdf'},bodyBuffer:pdf};}
     throw new Error('Unexpected provider call '+new URL(req.url).pathname);
   };
-  gateway=new FadadaESignGateway(db,settings,new FadadaApiClient(settings,new FadadaHttpClient(settings,transport)),writer,policies);
+  gateway=new FadadaESignGateway(db,settings,new NativeAwareFadadaClient(settings,new NativeAwareFadadaHttp(settings,transport)),writer,policies);
 });
 after(async()=>{if(db){await db.fadadaTask.deleteMany({where:{resourceId:prefix}});await db.eSignApproval.deleteMany({where:{resourceId:prefix}});await db.eSignAccount.deleteMany({where:{customerId:customer?.id}});await db.storedFile.deleteMany({where:{customerId:customer?.id}});await db.customer.deleteMany({where:{id:customer?.id}});await db.$disconnect();}});
 test('approved document creates one persistent task; repeated create reuses upload and transaction identity',async()=>{
