@@ -12,6 +12,7 @@
 .credit-document { margin-top: 18px; border-top: 1px solid var(--border, #dedfd5); padding-top: 14px; }
 .credit-document summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; }
 .credit-document > div { white-space: pre-wrap; line-height: 1.8; margin-top: 14px; font-size: 12px; }
+.technical-document-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; margin-top: 14px; }
 .field input[type="checkbox"] { width: 20px; height: 20px; accent-color: #252723; }
 .usage-account h4 { margin: 22px 0 10px; font-size: 13px; }
 .usage-table { overflow-x: auto; max-width: 100%; margin: 10px 0; }

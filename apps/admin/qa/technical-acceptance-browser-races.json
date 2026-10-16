@@ -1,0 +1,8 @@
+{
+  "mode": "isolated-browser-promise-interleavings-no-db-or-provider",
+  "checks": [
+    "success: stale A cannot replace B detail, navigate approval or clear B action form",
+    "conflict-read: stale A cannot replace B detail, navigate approval or clear B action form"
+  ],
+  "errors": []
+}

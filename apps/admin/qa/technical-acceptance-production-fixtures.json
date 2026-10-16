@@ -1,0 +1,78 @@
+{
+  "mode": "actual-built-technical-acceptance-fixtures-no-db-or-provider",
+  "checks": [
+    "FINANCE: even inconsistent wildcard permissions do not reveal independent technical resource",
+    "SUPPORT: even inconsistent wildcard permissions do not reveal independent technical resource",
+    "OPS mobile frozen full body and cookie-auth PDF link, no identity/provider material or client confirmation/sign action",
+    "unconfirmed or missing capability cannot request use of seal",
+    "prepare returns actual approval, requester cannot approve own plan, back link stays independent and never calls commercial contract",
+    "creation accepts approved exact-type template and existing customer only, no body/money/order and stable request on409",
+    "stop preserves same request after409, never reports external cancellation or signs on a query",
+    "stopped/inflight facts remain pending even with inconsistent prepare flag; no new signer/seal actions",
+    "ADMIN: verified archive distinct from retention; only ADMIN explicitly chooses hold/release without inherited default, purge still blocked",
+    "OPERATIONS: verified archive distinct from retention; only ADMIN explicitly chooses hold/release without inherited default, purge still blocked",
+    "purge requires exact server capability and manual reason, only independent endpoint,409 never fabricates deletion",
+    "purged archive keeps signed history and states deliberate file cleanup without false missing-archive error",
+    "actual PDF byte hash separate from business hash, stale general consent only explained, never accepted by admin",
+    "empty: accurate empty/error, no demo documents",
+    "offline: accurate empty/error, no demo documents"
+  ],
+  "writes": [
+    {
+      "path": "/admin/technical-acceptances/qa-tech/prepare-signature",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "ae161e10-0e16-4dfa-b0f0-2fe78fc7b907",
+        "policyId": "qa-policy"
+      }
+    },
+    {
+      "path": "/admin/technical-acceptances",
+      "body": {
+        "customerId": "qa-customer",
+        "documentId": "qa-doc",
+        "idempotencyKey": "16b89a85-3d18-4b91-ba0c-2ee4a1365fd3"
+      }
+    },
+    {
+      "path": "/admin/technical-acceptances",
+      "body": {
+        "customerId": "qa-customer",
+        "documentId": "qa-doc",
+        "idempotencyKey": "16b89a85-3d18-4b91-ba0c-2ee4a1365fd3"
+      }
+    },
+    {
+      "path": "/admin/technical-acceptances/qa-tech/stop",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "7c91f1e7-54b6-4910-9582-26b987458b2b"
+      }
+    },
+    {
+      "path": "/admin/technical-acceptances/qa-tech/stop",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "7c91f1e7-54b6-4910-9582-26b987458b2b"
+      }
+    },
+    {
+      "path": "/admin/technical-acceptances/qa-tech/retention-review",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "190d3ec6-5ac3-405b-bbf4-9390792e6b97",
+        "legalHold": false,
+        "reason": "QA 核对本验证期满且无未结争议或渠道在途"
+      }
+    },
+    {
+      "path": "/admin/technical-acceptances/qa-tech/purge",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "6cf7c374-0996-47d6-955c-fd1c95de0f1a",
+        "reason": "QA 人工释放后只清理本验证独立文件，不删除共用实名证书"
+      }
+    }
+  ],
+  "errors": []
+}

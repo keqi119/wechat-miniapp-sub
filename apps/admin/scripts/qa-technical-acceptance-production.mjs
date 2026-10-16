@@ -1,0 +1,5 @@
+import {createServer} from 'node:http';import {readFile} from 'node:fs/promises';import {fileURLToPath} from 'node:url';import {resolve} from 'node:path';
+const dist=fileURLToPath(new URL('../qa/technical-acceptance-build/dist/',import.meta.url));
+const server=createServer(async(req,res)=>{const path=new URL(req.url,'http://localhost').pathname,relative=path==='/'?'index.html':/^\/assets\/[A-Za-z0-9_.-]+$/.test(path)?path.slice(1):null;if(!relative){res.writeHead(404);return res.end();}try{const bytes=await readFile(resolve(dist,relative));res.writeHead(200,{'Content-Type':relative.endsWith('.html')?'text/html; charset=utf-8':relative.endsWith('.css')?'text/css':'text/javascript'});res.end(bytes);}catch{res.writeHead(404);res.end();}});
+await new Promise(resolve=>server.listen(3105,'127.0.0.1',resolve));process.env.ADMIN_QA_ORIGIN='http://127.0.0.1:3105';process.env.ADMIN_QA_DIST='qa/technical-acceptance-build/dist';
+try{await import('./qa-technical-acceptance-ui.mjs');}finally{await new Promise(resolve=>server.close(resolve));}

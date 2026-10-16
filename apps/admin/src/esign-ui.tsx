@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowUpRight, FileCheck2, FileText, RefreshCw, ShieldCheck } from 'lucide-react';
 import { api, date, type Entity, type Page } from './core';
 import { ErrorNotice, Loading, Status } from './ui';
+import {signingResourcePath} from './technical-acceptance';
 
 type Readiness = { readyForSigning: boolean; signingEligible: boolean; state: string; realNameStatus: string; certBound: boolean; nextAction: string };
 const readinessStates: Record<string, string> = { SIGNING_ENABLED: '实名与证书已准备', NOT_STARTED: '尚未注册签署账号', REALNAME_PENDING: '待客户完成实名', CERT_BINDING_PENDING: '待绑定实名证书', UNKNOWN: '待查询供应商状态' };
@@ -28,7 +29,7 @@ export function SigningPreparation({ entity, kind }: { entity: Entity; kind: 'SU
 }
 export function SigningApprovalSummary({ entity, userId }: { entity: Entity; userId: string }) {
   const samePerson = entity.requesterId === userId;
-  return <section className="esign-card approval-summary"><header><ShieldCheck size={18}/><h3>双人复核要求</h3></header><p>{samePerson ? '您是该计划的申请人，请交由另一名具备此印章复核授权的人员审批。' : '请阅读冻结 PDF，核对文档与印章、签署位置及有效期。审批按当前计划哈希提交，服务端会重新核验授权、文档和策略。'}</p><div className="esign-links">{typeof entity.sourceFileId === 'string' ? <a href={api.fileUrl(entity.sourceFileId)} target="_blank" rel="noreferrer"><FileText size={14}/>阅读冻结 PDF<ArrowUpRight size={12}/></a> : null}{entity.resourceId ? <a href={`#${entity.kind === 'HANDOVER' ? 'handovers' : 'contracts'}?record=${encodeURIComponent(String(entity.resourceId))}`}>查看业务文档<ArrowUpRight size={12}/></a> : null}</div></section>;
+  return <section className="esign-card approval-summary"><header><ShieldCheck size={18}/><h3>双人复核要求</h3></header><p>{samePerson ? '您是该计划的申请人，请交由另一名具备此印章复核授权的人员审批。' : '请阅读冻结 PDF，核对文档与印章、签署位置及有效期。审批按当前计划哈希提交，服务端会重新核验授权、文档和策略。'}</p><div className="esign-links">{typeof entity.sourceFileId === 'string' ? <a href={api.fileUrl(entity.sourceFileId)} target="_blank" rel="noreferrer"><FileText size={14}/>阅读冻结 PDF<ArrowUpRight size={12}/></a> : null}{entity.resourceId ? <a href={signingResourcePath(entity.kind,String(entity.resourceId))}>查看业务文档<ArrowUpRight size={12}/></a> : null}</div></section>;
 }
 
 export function SigningRenewalFacts({ entity }: { entity: Entity }) {

@@ -1,0 +1,502 @@
+{
+  "mode": "real-local-http-independent-technical_signing_ui_acceptance-synthetic-esign",
+  "fixtureDocumentId": "cmvb1qby20006uru0eni3nhq7",
+  "checks": [
+    "ADMIN browser creates one independent assigned file, frozen full body/source PDF real SHA match and cannot prepare before customer confirmation",
+    "dedicated local synthetic next privacy version published via real admin API for native explicit consent-upgrade test; no customer consent accepted by admin",
+    "ADMIN explicitly reviews due-date advanced synthetic retention record then purges its actual PDF; shared VERIFIED/CERT remains, OPS no cleanup, FINANCE/SUPPORT API denied",
+    "OPS browser requests actual TECHNICAL_ACCEPTANCE approval, cannot self-approve; separate ADMIN browser approves original hash without signing or invoking supplier",
+    "ADMIN browser stops a separate unconfirmed technical file, preserves DRAFT and no signed archive or provider task, never mutates main customer flow",
+    "after native explicit synthetic sign/sync, ADMIN sees actual both-signed archive and authorized signed PDF, not a URL-result success",
+    "native explicit stop reread keeps prior signed/PDF fact and forbids new signing/preparation without claiming supplier cancellation"
+  ],
+  "requests": [
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/legal-documents",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/customers",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/technical-acceptances",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "FINANCE",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "FINANCE",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "SUPPORT",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "SUPPORT",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "SUPPORT",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "SUPPORT",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/ab8bf002-2902-45f6-b09a-04d37c71717f",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/technical-acceptances/ab8bf002-2902-45f6-b09a-04d37c71717f/retention-review",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/ab8bf002-2902-45f6-b09a-04d37c71717f",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/ab8bf002-2902-45f6-b09a-04d37c71717f",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/technical-acceptances/ab8bf002-2902-45f6-b09a-04d37c71717f/purge",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/ab8bf002-2902-45f6-b09a-04d37c71717f",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/signature-policies",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "POST",
+      "path": "/api/admin/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62/prepare-signature",
+      "status": 201
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/esign-approvals",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/esign-approvals/cmvb1u677001kuru050ggdmgf",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/esign-approvals",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/esign-approvals/cmvb1u677001kuru050ggdmgf",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/esign-approvals/cmvb1u677001kuru050ggdmgf/approve",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/esign-approvals",
+      "status": 200
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "OPERATIONS",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/customers",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/legal-documents",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/technical-acceptances",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/9d0e82c8-a384-4942-ba72-9e20a759a9c8",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/technical-acceptances/9d0e82c8-a384-4942-ba72-9e20a759a9c8/stop",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/9d0e82c8-a384-4942-ba72-9e20a759a9c8",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/auth/me",
+      "status": 401
+    },
+    {
+      "role": "ADMIN",
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "status": 201
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances",
+      "status": 200
+    },
+    {
+      "role": "ADMIN",
+      "method": "GET",
+      "path": "/api/admin/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    }
+  ],
+  "pageErrors": []
+}

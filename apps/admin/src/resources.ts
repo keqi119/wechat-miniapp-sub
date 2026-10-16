@@ -6,12 +6,14 @@ import { usageResources } from './usage-resources.ts';
 import { usageActionAllowed } from './usage.ts';
 import {swapCreditResource} from './swap-credit-resources.ts';
 import {swapPurchaseActionAllowed,swapPurchaseSafe} from './swap-credits.ts';
+import {technicalResource} from './technical-acceptance-resources.ts';
+import {technicalAllowed,technicalSafe} from './technical-acceptance.ts';
 
 export type Field = { key: string; label: string; type?: 'text' | 'number' | 'money' | 'textarea' | 'lines' | 'select' | 'date' | 'files' | 'boolean' | 'password' | 'checklist' | 'commercial' | 'attestation' | 'datetime-local'; required?: boolean; readOnly?: boolean; requireFacts?: boolean; submit?: boolean; creditDerived?: boolean; defaultValue?: string; options?: [string, string][]; source?: string; sourceFilters?: Record<string, string>; sourceWhen?: { field: string; value: string; source: string }; uploadPurpose?: string; hint?: string; min?: number; max?: number };
 export type Action = { label: string; path: string; fields?: Field[]; fixed?: Record<string, unknown>; warning?: string; kind?: 'danger' | 'primary'; writeRoles?: string[] };
-export type Resource = { key: string; permissionResource?: string; title: string; singular: string; subtitle: string; fields?: Field[]; columns: { key: string; label: string; format?: 'money' | 'date' }[]; actions?: Action[]; create?: boolean; edit?: boolean; statuses?: string[]; adminOnly?: boolean; writeRoles?: string[] };
+export type Resource = { key: string; permissionResource?: string; title: string; singular: string; subtitle: string; fields?: Field[]; columns: { key: string; label: string; format?: 'money' | 'date' }[]; actions?: Action[]; create?: boolean; edit?: boolean; statuses?: string[]; adminOnly?: boolean; readRoles?: string[]; writeRoles?: string[] };
 export function resourceAccessible(resource: Resource | undefined, permissions: string[], role?: string): boolean {
-  return !!resource && (!resource.adminOnly || role === 'ADMIN') && (permissions.includes('*') || permissions.includes(`${resource.permissionResource ?? resource.key}.read`));
+  return !!resource && (!resource.adminOnly || role === 'ADMIN') && (!resource.readRoles || resource.readRoles.includes(role??'')) && (permissions.includes('*') || permissions.includes(`${resource.permissionResource ?? resource.key}.read`));
 }
 export function resourceWritable(resource: Resource, permissions: string[], role?: string): boolean {
   return (!resource.adminOnly || role === 'ADMIN') && (!resource.writeRoles || resource.writeRoles.includes(role ?? '')) && (permissions.includes('*') || permissions.includes(`${resource.permissionResource ?? resource.key}.write`));
@@ -55,7 +57,9 @@ export const labels: Record<string, string> = {
 };
 export function statusLabel(value: string) { return labels[value] ?? value; }
 Object.assign(labels, commercialTermLabels, handoverFactLabels);
+Object.assign(labels,{TECHNICAL_ACCEPTANCE:'独立技术验收文件','technical-signing-verification':'技术签署验证确认书','technical-acceptances':'签署技术验收',STOPPED:'已记录停止',PURGED:'独立资料已清理',RETAINED:'期限内保留',REVIEW_DUE:'到期等待人工复核',HELD:'必要留存中'});
 export const resources: Resource[] = [
+  technicalResource,
   swapCreditResource,
   { key: 'payment-verifications', title: '支付验收', singular: '支付验收授权', subtitle: '固定0.01元，用于微信支付验证，不生成订阅订单/合同。状态以服务端可信渠道核验为准。', adminOnly: true, create: true, statuses: ['AUTHORIZED', 'CREATING', 'PENDING', 'SUCCEEDED', 'CLOSED', 'FAILED', 'EXPIRED'], columns: [{ key: 'title', label: '验收用途' }, { key: 'customerId', label: '授权客户' }, { key: 'amount', label: '固定验收金额', format: 'money' }, statusColumn, { key: 'expiresAt', label: '授权有效期', format: 'date' }, { key: 'paidAt', label: '可信到账时间', format: 'date' }], fields: [ref('customerId', '指定客户', 'customers'), { key: 'authorizationNote', label: '授权说明', type: 'textarea', required: true, hint: '固定0.01元，用于微信支付验证，不生成订阅订单/合同。授权24小时有效；客户须自行确认微信付款。请记录本次明确授权范围。' }], actions: [{ label: '查询并关闭未付验收', path: 'close', warning: '服务端将先查询渠道结果，再关闭未付款验收。已成功到账不能关闭；未知结果保留原交易，不会自动新建第二笔。', kind: 'danger' }] },
   { key: 'vehicles', title: '车辆管理', singular: '车辆', subtitle: '维护车辆档案、真实车况与可售状态。', create: true, edit: true, statuses: ['DRAFT', 'PUBLISHED', 'UNPUBLISHED', 'RESERVED', 'IN_USE'], columns: [{ key: 'title', label: '车辆' }, { key: 'brand', label: '品牌' }, { key: 'city', label: '所在城市' }, { key: 'mileageKm', label: '里程 / km' }, statusColumn, created], fields: [text('brand', '品牌'), text('model', '车型'), text('title', '车辆标题'), num('year', '上牌年份', 2000, 2100), text('city', '城市'), num('mileageKm', '累计里程（km）'), num('batteryHealthPercent', '电池健康度（%）', 0, 100), area('description', '车辆介绍'), area('conditionDisclosure', '车况披露', true), { key: 'coverFileId', label: '封面照片', type: 'files' }, { key: 'mediaFileIds', label: '车辆照片与附件', type: 'files' }], actions: [{ label: '上架车辆', path: 'publish', warning: '上架后客户可在小程序浏览此车辆及有效套餐。', kind: 'primary' }, { label: '下架车辆', path: 'unpublish', kind: 'danger' }] },
@@ -80,7 +84,7 @@ export const resources: Resource[] = [
   { key: 'notifications', title: '站内通知', singular: '通知', subtitle: '向客户发送业务进展通知，追踪已读状态。', create: true, columns: [{ key: 'title', label: '通知标题' }, { key: 'customerId', label: '客户' }, { key: 'readAt', label: '阅读时间', format: 'date' }, created], fields: [ref('customerId', '客户', 'customers'), text('title', '标题'), area('content', '通知正文', true), text('resourceType', '关联资源类型', false), text('resourceId', '关联资源 ID', false)] },
   { key: 'users', title: '后台账号', singular: '账号', subtitle: '按职责分配运营、财务、客服与管理权限。', create: true, edit: true, columns: [{ key: 'name', label: '姓名' }, { key: 'username', label: '用户名' }, { key: 'role', label: '角色' }, { key: 'active', label: '启用' }, created], fields: [text('username', '用户名'), text('name', '姓名'), { key: 'password', label: '密码', type: 'password', hint: '新建必填；编辑留空则保留当前密码' }, select('role', '角色', ['OPERATIONS', 'FINANCE', 'SUPPORT', 'ADMIN']), { key: 'active', label: '允许登录', type: 'boolean' }] },
   { key: 'audit-logs', title: '操作审计', singular: '审计记录', subtitle: '留存操作者、业务对象与状态变化，审计记录不可编辑。', columns: [{ key: 'action', label: '操作' }, { key: 'actorId', label: '操作人' }, { key: 'resourceType', label: '资源类型' }, { key: 'resourceId', label: '业务对象' }, created] },
-  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy', 'delivery-delay-amendment', 'vehicle-change-amendment']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
+  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy', 'delivery-delay-amendment', 'vehicle-change-amendment', 'technical-signing-verification']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
   ...esignResources,
   ...usageResources,
   { key: 'order-changes', title: '交车延期', singular: '延期变更', subtitle: '逐单确认报价、补充协议与资金后生效延期。', columns: [] },
@@ -92,13 +96,14 @@ export const groups = [
   { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds', 'swap-credit-purchases', 'payment-verifications'] },
   { label: '交付与服务', keys: ['handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
   { label: '里程与退订', keys: ['usage-periods', 'return-settlements'] },
-  { label: '签章运营', keys: ['enterprise-seals', 'seal-authorities', 'signature-policies', 'esign-approvals'] },
+  { label: '签章运营', keys: ['technical-acceptances', 'enterprise-seals', 'seal-authorities', 'signature-policies', 'esign-approvals'] },
   { label: '系统管理', keys: ['users', 'audit-logs', 'legal-documents'] },
 ];
 export function valueAt(entity: Entity, key: string): unknown { return key.split('.').reduce<unknown>((obj, part) => typeof obj === 'object' && obj !== null ? (obj as Record<string, unknown>)[part] : undefined, entity); }
 export function display(value: unknown): string { if (value == null || value === '') return '—'; if (typeof value === 'boolean') return value ? '已启用' : '已停用'; if (typeof value === 'object') return JSON.stringify(value); return statusLabel(String(value)); }
 
 export function actionAllowed(resource: string, action: Action, entity: Entity, userId?: string): boolean {
+  if(resource==='technical-acceptances')return technicalAllowed(action.path,entity);
   if(resource==='swap-credit-purchases')return swapPurchaseActionAllowed(action.path,entity);
   const status = String(entity.status ?? '');
   const usageAllowed = usageActionAllowed(resource, action.path, entity); if (usageAllowed !== undefined) return usageAllowed;
@@ -128,6 +133,7 @@ export function actionAllowed(resource: string, action: Action, entity: Entity, 
 }
 
 export function detailFor(resource: string, entity: Entity): Record<string, unknown> {
+  if(resource==='technical-acceptances'){const safe=technicalSafe(entity);return Object.fromEntries(['id','customerId','createdAt'].filter(key=>safe[key]!==undefined).map(key=>[key,safe[key]]));}
   if(resource==='swap-credit-purchases'){const safe=swapPurchaseSafe(entity);return Object.fromEntries(['id','customerId','createdAt','acceptedAt'].filter(k=>safe[k]!==undefined).map(k=>[k,safe[k]]));}
   const pick = (source: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
   if (resource === 'usage-periods') return pick(entity, ['id', 'orderId', 'sequence', 'startDate', 'endDate', 'effectiveEndDate', 'status', 'revision', 'readingId', ...(Array.isArray(entity.segments) && entity.segments.length ? [] : ['startReadingKm','endReadingKm']), ...(entity.status === 'SETTLED' ? ['usedKm', 'baseUsedKm', 'packUsedKm', 'excessKm', 'excessAmount'] : []), 'billId', 'reviewNote']);
