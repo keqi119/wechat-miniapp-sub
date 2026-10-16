@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-16T08:59:38.880Z",
+  "host": "mini-api.subauto.keybox.cloud",
+  "path": "/G1wS8MuuaR.txt",
+  "publicStatus": 200,
+  "bytes": 32,
+  "sha256": "acfbe275a2e863d5aa45255aec3fa3a5be1c4d91ef8ebd8858fa23f8271d3983",
+  "exactBytesVerified": true,
+  "nginxConfigValidated": true,
+  "apiHealth": {
+    "status": "ok",
+    "database": "connected",
+    "version": "20261016-usage-v1"
+  },
+  "adminStatus": 200,
+  "unlistedPathStatus": 404,
+  "wechatBusinessDomainRegistrationConfirmed": false,
+  "fadadaDomainVerificationConfirmed": false,
+  "apiAccountChanged": false
+}
