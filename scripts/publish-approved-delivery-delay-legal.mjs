@@ -7,7 +7,7 @@ const env = require('dotenv').parse(readFileSync('.runtime/production/.env.produ
 const manifestPath = 'docs/legal/delivery-delay-approval-manifest.json';
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const expectedRelease = process.argv[2];
-if (!expectedRelease || !/^20261016-h5-signing-v\d+$/.test(expectedRelease)) throw new Error('Specify the verified H5 release');
+if (!expectedRelease || !/^20261016-(?:h5|native)-signing-v\d+$/.test(expectedRelease)) throw new Error('Specify the verified signing release');
 if (manifest.status !== 'APPROVED' || manifest.documents.length !== 1) throw new Error('Template approval required');
 const input = manifest.documents[0];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
