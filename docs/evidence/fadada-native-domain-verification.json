@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-10-16T10:40:31.625Z",
+  "decision": "用户确认法大大小程序业务域名校验通过，恢复小程序内实名和签约原方案。",
+  "providerEvidence": "用户提供的法大大API交付支持邮件截图，正式环境配置。",
+  "apiBaseUrl": "https://textapi17.fadada.com/api2/",
+  "realnameOrigin": "https://realnameverify16.fadada.com",
+  "verificationFile": {
+    "filename": "G1wS8MuuaR.txt",
+    "sha256": "acfbe275a2e863d5aa45255aec3fa3a5be1c4d91ef8ebd8858fa23f8271d3983",
+    "bytes": 32,
+    "hosts": ["textapi17.fadada.com", "realnameverify16.fadada.com"],
+    "bothHttp200": true,
+    "bothExactLocalFileMatch": true
+  },
+  "readOnlyApiCheck": {
+    "operation": "query_signature.api",
+    "existingAccountMatches": true,
+    "httpStatus": 200,
+    "providerCode": "1",
+    "selectedSealFound": true,
+    "signingCalled": false,
+    "productionConfigChanged": false
+  },
+  "wechatConsoleRegistration": "用户确认已通过；本次尚未从控制台独立读取最终域名列表。",
+  "realDeviceSigningVerified": false,
+  "faceMiniappAppIdAndPathVerified": false
+}
