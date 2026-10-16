@@ -16,7 +16,7 @@ export class ESignCustomerController {
   constructor(@Inject(CustomerESignOnboardingService)private accounts:CustomerESignOnboardingService,@Inject(Db)private db:Db){}
   @Get('customer/esign/readiness')readiness(@Req()request:any){return this.accounts.readiness(request.customer.id);}
   @Post('customer/esign/register')register(@Req()request:any,@Body()body:any){z.object({}).strict().parse(body);return runNativeSigning(()=>this.accounts.register(request.customer.id));}
-  @Post('customer/esign/verify')async verify(@Req()request:any,@Body()body:any){const input=realnameInput.parse(body);await recordRealnameConsent(this.db,request.customer.id,input.consent,'MINIAPP');return runNativeSigning(async()=>{const result=await this.accounts.verify(request.customer.id,{name:input.name,idCardNo:input.idCardNo},MINIAPP_RETURN);return{...result,url:nativeRealnameUrl(result.url)};});}
+  @Post('customer/esign/verify')async verify(@Req()request:any,@Body()body:any){ensure(body?.consent!==undefined,400,'ESIGN_CLIENT_UPDATE','请重新打开最新版小程序并单独同意实名说明');const input=realnameInput.parse(body);await recordRealnameConsent(this.db,request.customer.id,input.consent,'MINIAPP');return runNativeSigning(async()=>{const result=await this.accounts.verify(request.customer.id,{name:input.name,idCardNo:input.idCardNo},MINIAPP_RETURN);return{...result,url:nativeRealnameUrl(result.url)};});}
   @Post('customer/esign/refresh')refresh(@Req()request:any,@Body()body:any){z.object({}).strict().parse(body);return runNativeSigning(()=>this.accounts.refresh(request.customer.id));}
   @Get('admin/customers/:id/esign-readiness')adminReadiness(@Param('id')id:string){return this.accounts.readiness(id);}
 }
