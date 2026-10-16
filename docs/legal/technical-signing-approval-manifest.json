@@ -6,7 +6,7 @@
   "approvalStatement": "已审阅，批准该技术验收文本；本人签署与本份文件用印另行操作",
   "approvalQuestionId": "call_11e43ff0ffcb41f4a371e8e2cd288074",
   "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
-  "published": false,
+  "published": true,
   "customerSignatureAuthorizedByTemplateApproval": false,
   "enterpriseSealUseAuthorizedByTemplateApproval": false,
   "editorialChanges": "仅将审阅稿状态改为已批准模板状态，完整已批准源文件原样保存。",
@@ -19,5 +19,6 @@
       "finalFile": "docs/legal/versions/technical-signing/technical-signing-verification-v1.md",
       "finalSha256": "8ffa334fca34abc2328b6577e9a36e0ed111d3f6992f4c5a1a9a5bf44786c67b"
     }
-  ]
+  ],
+  "publicationEvidence": "docs/evidence/technical-signing-legal-publication.json"
 }

@@ -9,5 +9,15 @@
   "restoredPublicTables": 56,
   "restoreVerificationDatabaseRemoved": true,
   "productionDatabaseOverwritten": false,
-  "technicalReleaseDeployed": false
+  "technicalReleaseDeployed": false,
+  "activationBackup": {
+    "archive": "/opt/wechat-miniapp-sub/backups/20261016T143907Z.tar.enc",
+    "createdAt": "2026-10-16T14:39:07Z",
+    "sourceAppliedMigrations": 18,
+    "encryptedArchiveDigestVerified": true,
+    "isolatedRestoreVerified": true,
+    "restoredPublicTables": 56,
+    "restoreVerificationDatabaseRemoved": true,
+    "productionDatabaseOverwritten": false
+  }
 }

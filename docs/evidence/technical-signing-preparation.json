@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-10-16T14:40:27.411Z",
+  "release": "20261016-technical-signing-v1",
+  "recordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+  "verificationNo": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+  "status": "AWAITING_CONFIRMATION",
+  "signatureStatus": "DRAFT",
+  "sourceFileId": "cmvb2rev0000cpc01wdm9h6o6",
+  "documentHash": "a7ffe83dbb8cbbd515641fdde9518811cff771da9f20834c6e3d4445b9335783",
+  "bodyHash": "998925d3e04b1e68dfffdb361016d99f3868339266ba720dcacaed6e9ae169d4",
+  "templateHash": "0d9fedff4148fbdb40e04b5d901168bdca14e8f22e2c7745c03d432bc6e1a7fb",
+  "policyId": "cmvb2rdnv0005pc01x05rt3cp",
+  "perDocumentApprovalRequested": false,
+  "perDocumentApprovalGranted": false,
+  "customerConfirmed": false,
+  "signatureInitiated": false,
+  "sourcePdfSha256": "9fdd1d26284b027327269bcd35855e65360ed4a922c2b92b8b956f51156d0d94",
+  "sourcePdfBytes": 159004,
+  "sourcePdfReadbackVerifiedAt": "2026-10-16T14:40:28.333Z",
+  "generalConsentsCurrent": true
+}

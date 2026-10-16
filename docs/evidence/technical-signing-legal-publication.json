@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-16T14:40:05.923Z",
+  "release": "20261016-technical-signing-v1",
+  "type": "technical-signing-verification",
+  "version": 1,
+  "id": "cmvb2qy750001pc01tfuob3uj",
+  "sha256": "8ffa334fca34abc2328b6577e9a36e0ed111d3f6992f4c5a1a9a5bf44786c67b",
+  "publishedAt": "2026-10-16T14:40:07.163Z",
+  "customerAgreementImplied": false,
+  "actualSignatureCreated": false,
+  "enterpriseSealUseApproved": false
+}

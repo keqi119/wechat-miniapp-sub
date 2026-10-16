@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-10-16T14:43:06.737Z",
+  "release": "20261016-technical-signing-v1",
+  "recordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+  "pdfSha256": "9fdd1d26284b027327269bcd35855e65360ed4a922c2b92b8b956f51156d0d94",
+  "pdfBytes": 159004,
+  "pages": 3,
+  "productionFont": "NotoSansCJK-Regular.ttc",
+  "allPagesVisuallyReviewed": true,
+  "maskedPhonePreserved": true,
+  "noUnresolvedVariables": true,
+  "noClippingOrOverlap": true,
+  "signatureBoxesVisible": true,
+  "actualSignature": false,
+  "privatePdfKeptOutsideGit": true
+}

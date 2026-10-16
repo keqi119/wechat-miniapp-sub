@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-16T14:43:06.738Z",
+  "release": "20261016-technical-signing-v1",
+  "sourceCommit": "4aabd9ef6f2b7cdb9a73b59d8b2eec20f5f9f4b3",
+  "tool": "WeChat DevTools CLI preview",
+  "result": "SUCCESS",
+  "appId": "wxa7089edf4a34a7f5",
+  "packageBytes": 491725,
+  "packages": [
+    {
+      "name": "TOTAL",
+      "size": 491725
+    },
+    {
+      "name": "main",
+      "size": 490516
+    },
+    {
+      "name": "/pagesFace/",
+      "size": 1209
+    }
+  ],
+  "sourceFiles": 101,
+  "manifestSha256": "b31b5bab484a804176af5f2b946b09c793c02be7d3ee3d7dce680e66cfc1919a",
+  "configSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c",
+  "sourceAndManifestCheckedBeforePackaging": true,
+  "frozenPackageCheckedAfterPreview": true,
+  "qrSha256": "e8f248994c8229884cc37b639ab9b77e94a7dbbded5ed94d233edc163751f5f3",
+  "realDeviceCustomerConfirmationPending": true,
+  "actualSignatureVerified": false,
+  "wechatReviewSubmitted": false,
+  "wechatFormalReleaseCompleted": false
+}

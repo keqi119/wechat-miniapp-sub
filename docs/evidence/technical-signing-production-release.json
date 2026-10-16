@@ -1,0 +1,84 @@
+{
+  "checkedAt": "2026-10-16T14:41:56.413Z",
+  "release": "20261016-technical-signing-v1",
+  "sourceCommit": "4aabd9ef6f2b7cdb9a73b59d8b2eec20f5f9f4b3",
+  "host": {
+    "checkedAt": "2026-10-16T14:41:56.756048+00:00",
+    "release": "20261016-technical-signing-v1",
+    "apiImage": "chundian-api:20261016-technical-signing-v1",
+    "sourceCommit": "4aabd9ef6f2b7cdb9a73b59d8b2eec20f5f9f4b3",
+    "appliedMigrationCount": 19,
+    "technicalMigrationSha256": "0f8da11bab0e15606e27ac1f2583e4d6e80209bc41d1cf4ea58d8feb5188305a",
+    "existingSwapForeignKeysPreserved": 6,
+    "technicalAcceptanceEnabled": true,
+    "commercialSigningDisabled": true,
+    "ordinaryPaymentDisabled": true,
+    "providerSettingsPreserved": true,
+    "currentReleaseVerified": true,
+    "freeBytes": 1162383360
+  },
+  "packages": [
+    {
+      "path": ".runtime/static-20261016-technical-signing-v1.tar.gz",
+      "bytes": 392018,
+      "sha256": "ef3f5ade1e34f5b9de3131c0e4d22e3e2b521ef699617a83bab2f9933ddca060"
+    },
+    {
+      "path": ".runtime/chundian-api-20261016-technical-signing-v1.tar.gz",
+      "bytes": 282422743,
+      "sha256": "c1f64ba3d5f37bea915d023b38334a72cba8ac064e82b1b2c5046c631dbe9190"
+    },
+    {
+      "path": ".runtime/deploy-20261016-technical-signing-v1.tar.gz",
+      "bytes": 23855,
+      "sha256": "59dcb32e591ff3601ac75c3141dfb1c4dc3cdf19e6d9c6f229bab7dfc9a536c1"
+    }
+  ],
+  "admin": {
+    "apiBaseUrl": "https://mini-api.subauto.keybox.cloud/api",
+    "sourceHash": "13862cf86eb46590d83cec19e7d5265bb01a196defc9c4747cdb9cb4519a0156",
+    "manifestSha256": "d193bd90556e0ea69b4daa60a6225937b42efa358d787b214509500a40e67208",
+    "checkedAssets": [
+      {
+        "path": "assets/index-BR69LfsS.css",
+        "bytes": 29200,
+        "sha256": "dccaa858baec95d6bf47f0500ddb94335281b95727ccf4692812c12e37db1d66",
+        "status": 200
+      },
+      {
+        "path": "assets/index-DgJ-haOG.js",
+        "bytes": 445448,
+        "sha256": "4d410febc2f70aa29c2e07ab14c1db2a0afe145ca3b8273c952f2a93cee7f0af",
+        "status": 200
+      },
+      {
+        "path": "index.html",
+        "bytes": 498,
+        "sha256": "f926c5451c84291fbf2a7801d67279a9dff3c148b36bb6ee1b45e584fba05c79",
+        "status": 200
+      }
+    ]
+  },
+  "miniapp": {
+    "files": 101,
+    "manifestSha256": "b31b5bab484a804176af5f2b946b09c793c02be7d3ee3d7dce680e66cfc1919a",
+    "configSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c"
+  },
+  "legalPublication": {
+    "type": "technical-signing-verification",
+    "id": "cmvb2qy750001pc01tfuob3uj",
+    "sha256": "8ffa334fca34abc2328b6577e9a36e0ed111d3f6992f4c5a1a9a5bf44786c67b"
+  },
+  "preparedRecord": {
+    "id": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+    "verificationNo": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+    "status": "AWAITING_CONFIRMATION",
+    "sourcePdfSha256": "9fdd1d26284b027327269bcd35855e65360ed4a922c2b92b8b956f51156d0d94",
+    "customerConfirmed": false,
+    "perDocumentApprovalRequested": false,
+    "signatureInitiated": false
+  },
+  "realTechnicalSignatureVerified": false,
+  "wechatReviewSubmitted": false,
+  "wechatFormalReleaseCompleted": false
+}
