@@ -2,6 +2,8 @@ const { money, date } = require('../utils/format');
 const { createUsageApi } = require('./usage');
 const { createOrderChangesApi } = require('./order-changes');
 const { createH5SigningApi } = require('./h5-signing');
+const { createSwapApi } = require('./swap');
+const { assignmentView } = require('./vehicle-assignments');
 const TYPES = ['applications', 'orders', 'contracts', 'bills', 'payments', 'deposits', 'entitlements', 'notifications', 'services', 'mileages'];
 const VERIFICATION_STATUS = { AUTHORIZED: '已授权，尚未付款', CREATING: '支付准备结果待确认', PENDING: '支付结果待确认', SUCCEEDED: '支付成功', CLOSED: '验收已关闭', FAILED: '支付失败，不能继续付款', EXPIRED: '验收授权已过期' };
 const CREDIT_BANDS = { GE750: '750分及以上', B700_749: '700—749分', B650_699: '650—699分', LT650: '低于650分', UNVERIFIABLE: '无法核验' };
@@ -35,9 +37,10 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const verificationPayments = new Set();
   const creditKeys = new Map();
   const usageApi = createUsageApi({ call, identifier, error, idempotencyKey, getContext });
+  const swapApi = createSwapApi({ call, identifier, error, idempotencyKey, getContext });
   const changesApi = createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, enterSigning: (kind, id) => h5Signing.enterH5SigningGuide(kind, id) });
   const h5Signing = createH5SigningApi({ call, native, error, identifier, getContext, getSignStatus, platform, pendingKey });
-  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); changesApi.clearChangeKeys(); }
+  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); swapApi.clearSwapKeys(); changesApi.clearChangeKeys(); }
   function session() {
     const value = platform.getStorageSync(storageKey);
     if (!value) return null;
@@ -282,9 +285,10 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     const value = await call('GET', '/customer/handovers/' + identifier(id));
     if (!value || value.id !== id) throw error('交接记录不匹配，请刷新。', 'RESPONSE');
     const time = typeof value.actualAt === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value.actualAt) ? Date.parse(value.actualAt) : NaN;
-    const actualAtValid = Number.isFinite(time) && time <= Date.now() + 300000 && ['DELIVERY','RETURN'].includes(value.type);
+    const swap = ['SWAP_RETURN', 'SWAP_DELIVERY'].includes(value.type);
+    const actualAtValid = Number.isFinite(time) && time <= Date.now() + 300000 && ['DELIVERY','RETURN', 'SWAP_RETURN', 'SWAP_DELIVERY'].includes(value.type) && (!swap || (typeof value.vehicleId === 'string' && value.vehicleId && typeof value.vehicleTitle === 'string' && value.vehicleTitle && typeof value.changeId === 'string' && value.changeId));
     const actualAtDisplay = actualAtValid ? new Date(time + 8 * 3600000).toISOString().slice(0,19).replace('T',' ') : '缺少有效实际时间';
-    return { ...value, actualAtValid, actualAtDisplay, actualAtLabel: value.type === 'DELIVERY' ? '实际交车时间' : value.type === 'RETURN' ? '实际还车时间' : '实际交接时间（类型待核对）', actualAtText: actualAtValid ? actualAtDisplay + '（北京时间）' : '缺少有效实际时间，待后台核对' };
+    return { ...value, isSwap: swap, actualAtValid: Boolean(actualAtValid), actualAtDisplay, actualAtLabel: { DELIVERY: '实际交车时间', RETURN: '实际还车时间', SWAP_RETURN: '旧车实际交还时间', SWAP_DELIVERY: '新车实际交付时间' }[value.type] || '实际交接时间（类型待核对）', actualAtText: actualAtValid ? actualAtDisplay + '（北京时间）' : '缺少有效实际时间，待后台核对' };
   }
   async function getSignStatus(id, kind = 'contract') {
     if (!['contract', 'handover', 'order-change', 'identity'].includes(kind)) throw error('签署业务类型无效。', 'SIGN_CONTEXT');
@@ -378,9 +382,9 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (/^image\//i.test(contentType)) await native('previewImage', { current: downloaded.tempFilePath, urls: [downloaded.tempFilePath] });
     else await native('openDocument', { filePath: downloaded.tempFilePath, showMenu: false });
   }
-  return { ...usageApi, ...changesApi, ...h5Signing, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
+  return { ...usageApi, ...swapApi, ...changesApi, ...h5Signing, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
     getModelDefinitions: async () => list(await call('GET', '/public/model-definitions', undefined, false)).items,
-    getDashboard: async () => { const result = await call('GET', '/customer/dashboard'); return { ...result, ...(result.application ? { application: application(result.application) } : {}), ...(result.subscription ? { subscription: { ...result.subscription, imageUrl: media(result.subscription.imageUrl) } } : {}) }; },
+    getDashboard: async () => { const result = await call('GET', '/customer/dashboard'); const tracked = result.subscription && Object.prototype.hasOwnProperty.call(result.subscription, 'currentAssignment'); const assignment = tracked ? assignmentView(result.subscription.currentAssignment, () => { throw error('当前车辆分配尚未核实。', 'RESPONSE'); }) : null; return { ...result, ...(result.application ? { application: application(result.application) } : {}), ...(result.subscription ? { subscription: { ...result.subscription, ...(tracked ? { currentAssignment: assignment, vehicleName: assignment ? assignment.vehicle.title : '当前暂无车辆，换车待交付' } : {}), ...(tracked && !assignment ? { mileageText: '暂无当前车辆读数' } : {}), imageUrl: tracked && !assignment ? '' : media(result.subscription.imageUrl) } } : {}) }; },
     getApplication: async id => application(await call('GET', '/customer/applications/' + identifier(id))),
     amendApplication: (id, payload) => call('POST', '/customer/applications/' + identifier(id) + '/amend', { profile: { name: payload.profile.name, drivingYears: payload.profile.drivingYears, fileIds: fileIds({ fileIds: payload.profile.fileIds || [] }) }, note: payload.note || '', idempotencyKey: payload.idempotencyKey || idempotencyKey('amend') }),
     getLoginDocuments: () => Promise.all(['terms','privacy'].map(type => call('GET', '/public/legal/' + type, undefined, false))),

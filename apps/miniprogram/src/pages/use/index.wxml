@@ -30,7 +30,7 @@
         ></view
       ><button class="text-button" data-url="/pages/records/index?type=orders" bindtap="open"
         >查看订阅详情 →</button
-      ><button wx:if="{{subscription.deliveryDelayChangeId}}" class="secondary" bindtap="openDeliveryDelay">查看本订阅延期交车方案</button></view
+      ><button wx:if="{{subscription.deliveryDelayChangeId}}" class="secondary" bindtap="openDeliveryDelay">查看本订阅延期交车方案</button><button wx:if="{{subscription.activeChangeId && !subscription.deliveryDelayChangeId}}" class="secondary" bindtap="openVehicleChange">查看本订阅换车进度</button><button class="text-button" bindtap="openSwapAccount">免费换车次数与申请 →</button></view
     >
     <view wx:elif="{{application}}" class="card"
       ><view class="tag">{{application.statusText}}</view

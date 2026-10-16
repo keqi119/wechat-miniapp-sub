@@ -42,4 +42,6 @@ Page({
       go('/pages/record/index?type=bills&id=' + encodeURIComponent(this.data.bill.id));
   },
   openDeliveryDelay() { const id = this.data.subscription?.deliveryDelayChangeId; if (id) go('/pages/record/index?type=orderchanges&id=' + encodeURIComponent(id)); },
+  openVehicleChange() { const id = this.data.subscription?.activeChangeId; if (id) go('/pages/record/index?type=orderchanges&id=' + encodeURIComponent(id)); else this.openSwapAccount(); },
+  openSwapAccount() { const id = this.data.subscription?.orderId || this.data.subscription?.id; if (id) go('/pages/records/index?type=entitlements&orderId=' + encodeURIComponent(id)); },
 });

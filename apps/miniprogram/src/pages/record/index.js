@@ -61,6 +61,7 @@ Page({
   },
   openOrderUsage() { if (this.data.type === 'orders' && this.data.record) go('/pages/records/index?type=entitlements&orderId=' + encodeURIComponent(this.data.record.id)); },
   openOrderChanges() { go('/pages/records/index?type=orderchanges'); },
+  openChangeHandover(event) { const id = event.currentTarget.dataset.id; if (id && [this.data.change?.returnHandover?.id, this.data.change?.deliveryHandover?.id].includes(id)) go('/pages/handover/index?id=' + encodeURIComponent(id)); },
   onChangeRead(e) { if (!this.data.busy) this.setData({ changeRead: e.detail.value.includes('change'), changeError: '' }); },
   inputChangeRejectReason(e) { if (!this.data.busy) this.setData({ changeRejectReason: e.detail.value }); },
   confirmChange() { return this.changeAction('confirm'); },
@@ -71,10 +72,10 @@ Page({
     if (this.data.busy || !this.data.change) return;
     const current = this.data.change;
     if (action === 'confirm' && !this.data.changeRead) { this.setData({ changeError: '请完整阅读日期、逐期款项安排及正式补充条款，再勾选确认。' }); return; }
-    if (action === 'reject' && !this.data.changeRejectReason.trim()) { this.setData({ changeError: '请填写拒绝当前延期方案的原因。' }); return; }
+    if (action === 'reject' && !this.data.changeRejectReason.trim()) { this.setData({ changeError: '请填写拒绝当前方案的原因。' }); return; }
     this.setData({ busy: true, changeError: '', message: '' });
     try {
-      if (action !== 'sync' && !(await confirm(action === 'confirm' ? '确认本版本延期方案？' : action === 'reject' ? '拒绝本版本延期方案？' : '查看补充协议签约指引？', action === 'confirm' ? '请核对新起止日期、原款沿用、补收及退款安排。确认后仍需正式签署与资金核对，不代表已经交车或方案已生效。' : action === 'reject' ? '此意见将提交运营处理，不会自动退订或退款。' : '请主动复制签约入口，用相同手机号登录后核对正式文档。签署后手动返回小程序查询。'))) return;
+      if (action !== 'sync' && !(await confirm(action === 'confirm' ? (current.isSwap ? '确认本版本换车方案？' : '确认本版本延期方案？') : action === 'reject' ? '拒绝本版本方案？' : '查看补充协议签约指引？', action === 'confirm' ? (current.isSwap ? '请核对两侧车辆、原期限与月界、逐项费用及旧车交还前资金门槛。确认后仍需补充签署和两侧真实交接，不代表换车已完成或次数已消费。' : '请核对新起止日期、原款沿用、补收及退款安排。确认后仍需正式签署与资金核对，不代表已经交车或方案已生效。') : action === 'reject' ? '此意见将提交运营处理，不会自动退订或退款。' : '请主动复制签约入口，用相同手机号登录后核对正式文档。签署后手动返回小程序查询。'))) return;
       const method = { confirm: 'confirmOrderChange', reject: 'rejectOrderChange', sign: 'signOrderChange', sync: 'syncOrderChange' }[action];
       await services[method](current.id, { revision: current.revision, commercialHash: current.quote?.commercialHash, read: this.data.changeRead, reason: this.data.changeRejectReason.trim() });
       await this.reload();

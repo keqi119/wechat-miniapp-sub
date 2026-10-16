@@ -14,12 +14,12 @@
     ><button class="secondary" bindtap="openUse">返回用车</button></view
   ><block wx:else
     ><view class="card"
-      ><view class="label">{{subscription.vehicleName}} · 订阅月台账</view
-      ><view class="price">每订阅月 {{usage.baseAllowanceKm}} 公里</view><view class="muted">从实际交车日起按订阅月计算，基础优先使用、期末清零；里程包余额 {{usage.packBalanceKm}} 公里 · {{usage.packStatusText}}</view></view
+      ><view class="label">本订阅逐车月台账</view
+      ><view wx:if="{{usage.assignmentTracked && !usage.currentAssignment}}" class="notice">当前暂无分配车辆，换车待交付；仍可核对历史段及月界证据，不把旧车当作当前用车。</view><view class="price">每订阅月 {{usage.baseAllowanceKm}} 公里</view><view class="muted">从实际交车日起按订阅月计算，基础优先使用、期末清零；里程包余额 {{usage.packBalanceKm}} 公里 · {{usage.packStatusText}}</view></view
     ><view class="card"><view class="section-title">选择需要申报或补证的订阅月</view><view wx:if="{{!usage.periods.length}}" class="muted">尚无可读取月份，请联系运营核对实际交车日期。</view><radio-group bindchange="selectUsagePeriod"><label wx:for="{{usage.periods}}" wx:key="id" class="attachment-row"><radio value="{{item.id}}" checked="{{periodId === item.id}}" disabled="{{busy || choosing || !item.canSubmit}}" color="#B44919"/><view><view>第 {{item.sequence}} 月 · {{item.periodText}}</view><view class="muted small">{{item.statusText}} · 月界/归还日 {{item.boundaryDateText}}</view><view wx:if="{{item.reviewNote}}" class="notice">{{item.reviewNote}}</view></view></label></radio-group></view
     ><view class="notice"
-      >仅申报所选订阅月月界或归还日的实际仪表照片与累计读数。缺报、照片不足须补证，尚未人工审核时不会估算或跨月平均分摊，也不表示费用已结算。</view
-    ><block wx:if="{{selectedPeriod}}"><view class="card"><view class="section-title">第 {{selectedPeriod.sequence}} 月 · {{selectedPeriod.periodText}}</view><view class="muted">期初确认读数 {{selectedPeriod.startReadingKm == null ? "待前月结算核对" : selectedPeriod.startReadingKm + " km"}}；请使用 {{selectedPeriod.boundaryDateText}} 实际拍摄的仪表照片。</view><view class="field"><view class="label">照片实际拍摄日期（北京时间）</view><picker mode="date" start="{{selectedPeriod.effectiveEndDate}}" end="{{selectedPeriod.effectiveEndDate}}" value="{{recordedDate}}" bindchange="captureDate" disabled="{{busy}}"><view class="input">{{recordedDate || '请选择实际拍摄日期'}}</view></picker></view><view class="field"><view class="label">照片实际拍摄时间（北京时间）</view><picker mode="time" value="{{recordedTime}}" bindchange="captureTime" disabled="{{busy}}"><view class="input">{{recordedTime || '请选择实际拍摄时分'}}</view></picker></view></view><view class="card"
+      >仅申报所选订阅月和车辆分配段月界或归还日的实际仪表照片与累计读数。缺报、照片不足须补证，尚未人工审核时不会估算或跨月平均分摊，也不表示费用已结算。</view
+    ><block wx:if="{{selectedPeriod}}"><view wx:if="{{selectedPeriod.segmented}}" class="card"><view class="section-title">选择本月需要申报的车辆段</view><view class="notice">每辆车分别使用本车仪表基线和照片；不同车辆不能相减。本月全部段核验后仅合计一次基础与包额度，缺证据仍待补。</view><view wx:if="{{!selectedPeriod.segments.length}}" class="muted">分配证据待运营核对，不能按旧车仪表申报。</view><radio-group bindchange="selectUsageSegment"><label wx:for="{{selectedPeriod.segments}}" wx:key="id" class="attachment-row"><radio value="{{item.id}}" checked="{{segmentId === item.id}}" disabled="{{busy || choosing || !item.canSubmit}}" color="#B44919"/><view><view>{{item.vehicleTitle}} · {{item.statusText}}</view><view class="muted small">{{item.startAtText}} — {{item.endAtText}}</view><view>本车仪表 {{item.startReadingKm == null ? '待证据' : item.startReadingKm}} → {{item.endReadingKm == null ? '待证据' : item.endReadingKm}} km</view></view></label></radio-group></view><block wx:if="{{!selectedPeriod.segmented || selectedSegment}}"><view class="card"><view class="section-title">第 {{selectedPeriod.sequence}} 月 · {{selectedPeriod.periodText}}</view><view wx:if="{{selectedSegment}}" class="section-title">{{selectedSegment.vehicleTitle}}</view><view class="muted">本车期初确认读数 {{selectedPeriod.segmented ? (selectedSegment.startReadingKm == null ? "待证据" : selectedSegment.startReadingKm + " km") : (selectedPeriod.startReadingKm == null ? "待前月结算核对" : selectedPeriod.startReadingKm + " km")}}；请使用 {{boundaryDate}} 实际拍摄的仪表照片。</view><view class="field"><view class="label">照片实际拍摄日期（北京时间）</view><picker mode="date" start="{{boundaryDate}}" end="{{boundaryDate}}" value="{{recordedDate}}" bindchange="captureDate" disabled="{{busy}}"><view class="input">{{recordedDate || '请选择实际拍摄日期'}}</view></picker></view><view class="field"><view class="label">照片实际拍摄时间（北京时间）</view><picker mode="time" value="{{recordedTime}}" bindchange="captureTime" disabled="{{busy}}"><view class="input">{{recordedTime || '请选择实际拍摄时分'}}</view></picker></view></view><view class="card"
       ><view class="field"
         ><view class="label">累计里程（km）</view
         ><input
@@ -55,6 +55,6 @@
       ></view
     ><button class="primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || choosing || !reading || !recordedDate || !recordedTime || !attachments.length}}"
       >提交本订阅月仪表证据</button
-    ></block><button class="secondary" bindtap="openUsage">查看月结算、里程包及退订结算</button></block
+    ></block></block><button class="secondary" bindtap="openUsage">查看月结算、里程包及退订结算</button></block
   ></view
 >

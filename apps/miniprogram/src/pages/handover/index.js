@@ -2,16 +2,16 @@ const services = require('../../services/index');
 const { load, go, toastError } = require('../../utils/page');
 Page({
   data: { loading: true, error: '', subscription: null, handover: null, decision: 'confirm', name: '', note: '', evidenceOpen: false, evidenceRead: false, readFileIds: [], accepted: false, busy: false, submitted: null },
-  onLoad() { this.reload(); },
+  onLoad(options = {}) { this.handoverId = options.id || ''; this.reload(); },
   reload() {
     return load(this, async () => {
       const dashboard = await services.getDashboard();
-      const handoverId = dashboard.handover?.id || dashboard.subscription?.handoverId;
+      const handoverId = this.handoverId || dashboard.handover?.id || dashboard.subscription?.handoverId;
       const handover = handoverId ? await services.getHandover(handoverId) : null;
       const same = handover && this.data.handover?.id === handover.id && this.data.handover?.manifestHash === handover.manifestHash && this.data.handover?.actualAt === handover.actualAt;
       if (!same) this._submitKey = null;
       const responded = handover && (handover.customerResponse || ['CUSTOMER_CONFIRMED','OBJECTION_SUBMITTED','COMPLETED','SUPERSEDED'].includes(handover.status));
-      return { subscription: handover ? dashboard.subscription : null, handover, name: services.getContext().profile?.name || '', submitted: responded ? handover : null, decision: responded ? (handover.customerResponse === 'OBJECT' ? 'dispute' : 'confirm') : (same ? this.data.decision : 'confirm'), note: responded ? handover.responseReason || '' : (same ? this.data.note : ''), evidenceRead: same ? this.data.evidenceRead : false, evidenceOpen: same ? this.data.evidenceOpen : false, accepted: same ? this.data.accepted : false, readFileIds: same ? this.data.readFileIds : [] };
+      return { subscription: handover ? { ...dashboard.subscription, ...(handover.vehicleTitle ? { vehicleName: handover.vehicleTitle } : {}) } : null, handover, name: services.getContext().profile?.name || '', submitted: responded ? handover : null, decision: responded ? (handover.customerResponse === 'OBJECT' ? 'dispute' : 'confirm') : (same ? this.data.decision : 'confirm'), note: responded ? handover.responseReason || '' : (same ? this.data.note : ''), evidenceRead: same ? this.data.evidenceRead : false, evidenceOpen: same ? this.data.evidenceOpen : false, accepted: same ? this.data.accepted : false, readFileIds: same ? this.data.readFileIds : [] };
     });
   },
   onShow() { if (this.data.handover) this.reload(); },

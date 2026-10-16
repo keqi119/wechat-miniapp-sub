@@ -11,3 +11,10 @@ B1延期：GET /customer/order-changes及/:id；POST /:id/confirm、reject、sig
 B1安全审查后的最终DTO兼容：list items仅{id,orderId,kind,status,revision,reason,createdAt,quoteSummary:{id,revision,newStartDate,newEndDate,months,commercialHash,expiresAt}|null}，不含quote正文/contract/finance；详情document.content为已填正文，hash=bodyHash，templateHash另存。quote.expiresAt是带时区ISO的首次客户确认截止时间，过期/缺有效时间禁止confirm；已确认后的sign/sync/历史继续按业务能力，不能误用该期限代替印章approval有效期。
 
 H5指引切片：公开GET /public/signing-config -> {mode:SERVICE_ACCOUNT_H5,entryUrl:https://app.subauto.keybox.cloud/miniapp-sign/,enabled:boolean}，复制时重新校验enabled与精确固定地址；用户点击才setClipboardData，绝不附token/phone/idcard/id/signUrl。所有原生sign/identity发起只导航本地指引，无sign/register/verify/refresh POST；身份读取GETreadiness，主/交接GETsign-status，延期fresh revision POSTsync。SIGNED必须有归档；旧外链缓存清理，pending只kind/id。
+# B2原生增量（2026-10-16）
+
+契约来源 `apps/api/b2-contract.md`。新增本人 `GET /customer/orders/:id/swap-account` 与 `POST /customer/orders/:id/vehicle-changes {reason,idempotencyKey}`，申请前fresh能力、稳定失败重试key及busy；只用真实返回id进入详情，不本地扣次。account.cycle.endDate不含；预占/释放/消费分列。B3无购买方法/按钮，paidAvailable按本轮固定0解析、canPurchase始终false。
+
+order-changes同时精确支持DELIVERY_DELAY与VEHICLE_CHANGE，新增SWAP_RETURNED。换车quote全文类型须vehicle-change-amendment，沿revision/commercialHash/expiresAt及显式阅读守门；显示冻结oldVehicleIdentification/targetVehicleIdentification、原期限/逐期钱款、新月费/押金补退/交接费、保险责任/无车间隔、BEFORE_RETURN资金门槛。当前/原分配与目标车及两侧交接只读，完整本版本已填正文始终必需；AMENDMENT仍仅H5指引，没有原生sign POST。
+
+handover页支持明确id打开SWAP_RETURN/SWAP_DELIVERY，不用dashboard当前车替代本单vehicleTitle。actualAt+manifestHash fresh守门继续；新type还需vehicleId/changeId/vehicleTitle，缺失仅可查看/异议。逐车用量读取currentAssignment/assignments/period.segments；segments存在时必须选真实segment，仅POST /customer/usage-segments/:id/readings，不传vehicleId/assignmentId/usedKm，不跨车比较读数。开放段拍摄日期取period.effectiveEndDate；封闭段取endAt上海日，仍以server.canSubmit为准。无当前分配显示待交付，未知状态不默认为ACTIVE。

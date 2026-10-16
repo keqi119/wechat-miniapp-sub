@@ -11,10 +11,10 @@ const TITLES = {
   notifications: '消息通知',
   services: '服务记录',
   mileages: '里程复核',
-  orderchanges: '延期交车方案',
+  orderchanges: '订阅变更方案',
 };
 Page({
-  data: { type: '', title: '记录', loading: true, error: '', items: [], usage: null, usageError: '', settlement: null, settlementError: '', selectedProductId: '', selectedProduct: null, purchaseAccepted: false, purchase: null, busy: false, purchaseError: '', usageMessage: '', disputeReason: '' },
+  data: { type: '', title: '记录', loading: true, error: '', items: [], usage: null, usageError: '', swap: null, swapError: '', swapReason: '', swapMessage: '', settlement: null, settlementError: '', selectedProductId: '', selectedProduct: null, purchaseAccepted: false, purchase: null, busy: false, purchaseError: '', usageMessage: '', disputeReason: '' },
   onLoad(options) {
     const type = options.type || 'orders';
     this.orderId = options.orderId || '';
@@ -25,7 +25,7 @@ Page({
     this.reload();
   },
   reload() {
-    this.setData({ purchaseAccepted: false, selectedProductId: '', selectedProduct: null, usage: null, settlement: null, usageError: '', settlementError: '' });
+    this.setData({ purchaseAccepted: false, selectedProductId: '', selectedProduct: null, usage: null, swap: null, swapError: '', settlement: null, usageError: '', settlementError: '' });
     return load(this, async () => {
       if (!TITLES[this.data.type]) throw new Error('无法识别记录类型，请从“我的”重新进入。');
       const items = await services.getRecords(this.data.type);
@@ -34,13 +34,31 @@ Page({
         const current = this.orderId ? null : (await services.getDashboard()).subscription;
         const id = this.orderId || current?.orderId || current?.id;
         if (!id) return { items, usage: null };
-        const usage = await services.getUsageAccount(id);
+        this.resolvedOrderId = id;
+        const [usageResult, swapResult] = await Promise.allSettled([services.getUsageAccount(id), services.getSwapAccount(id)]);
+        const usage = usageResult.status === 'fulfilled' ? usageResult.value : null;
+        const swap = swapResult.status === 'fulfilled' ? swapResult.value : null;
         let settlement = null, settlementError = '';
-        if (usage.returnSettlement) { try { settlement = await services.getReturnSettlement(usage.returnSettlement.id, id); } catch (error) { settlementError = error.message; } }
-        return { items, usage, settlement, settlementError };
+        if (usage?.returnSettlement) { try { settlement = await services.getReturnSettlement(usage.returnSettlement.id, id); } catch (error) { settlementError = error.message; } }
+        return { items, usage, swap, usageError: usageResult.status === 'rejected' ? usageResult.reason.message : '', swapError: swapResult.status === 'rejected' ? swapResult.reason.message : '', settlement, settlementError };
       } catch (error) { return { items, usage: null, usageError: error.message }; }
     });
   },
+  inputSwapReason(event) { if (!this.data.busy) this.setData({ swapReason: event.detail.value, swapError: '' }); },
+  async requestSwap() {
+    if (this.data.busy || !this.data.swap?.canRequest) return;
+    if (!this.data.swapReason.trim()) { this.setData({ swapError: '请填写真实换车原因，运营将据此联系并出具逐单报价。' }); return; }
+    this.setData({ busy: true, swapError: '', swapMessage: '' });
+    try {
+      if (!(await confirm('提交换车申请？', '这里只提交申请，不扣次数、不付款。后续需完整报价确认、补充协议签署、资金核对及两侧真实交接；原订阅期限和里程月不重置。'))) return;
+      const result = await services.requestVehicleChange(this.data.swap.orderId, { reason: this.data.swapReason.trim() });
+      this.setData({ swapReason: '', swapMessage: result.message });
+      await this.reload(); go('/pages/record/index?type=orderchanges&id=' + encodeURIComponent(result.id));
+    } catch (error) { await this.reload(); this.setData({ swapError: error.message + ' 请查询已有变更记录，不要反复申请。', swapMessage: '' }); }
+    finally { this.setData({ busy: false }); }
+  },
+  openSwapChange(event) { const id = event.currentTarget.dataset.id; if (id) go('/pages/record/index?type=orderchanges&id=' + encodeURIComponent(id)); },
+  openAllChanges() { go('/pages/records/index?type=orderchanges'); },
   selectMileageProduct(event) {
     if (this.data.busy) return;
     const selectedProduct = this.data.usage?.products.find(row => row.id === event.detail.value) || null;

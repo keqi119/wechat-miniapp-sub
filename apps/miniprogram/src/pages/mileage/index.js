@@ -14,6 +14,9 @@ Page({
     usage: null,
     periodId: '',
     selectedPeriod: null,
+    segmentId: '',
+    selectedSegment: null,
+    boundaryDate: '',
     recordedDate: '',
     recordedTime: '',
   },
@@ -25,14 +28,18 @@ Page({
   onShow() { if (this.data.usage && !this.data.busy && !this.data.choosing) this.reload(); },
   reload() {
     const selectedId = this.data.periodId || this.requestedPeriodId;
-    this.setData({ usage: null, selectedPeriod: null, periodId: '' });
+    const selectedSegmentId = this.data.segmentId;
+    const previous = JSON.stringify([this.data.selectedPeriod?.revision, this.data.selectedSegment]);
+    this.setData({ usage: null, selectedPeriod: null, selectedSegment: null, periodId: '', segmentId: '', boundaryDate: '' });
     return load(this, async () => {
       const current = (await services.getDashboard()).subscription;
       const id = this.orderId || current?.orderId || current?.id;
       if (!id) return { subscription: null, usage: null };
       const usage = await services.getUsageAccount(id);
       const selectedPeriod = usage.periods.find(row => row.id === selectedId && row.canSubmit) || null;
-      return { subscription: current && (current.orderId || current.id) === id ? current : { id, orderId: id, vehicleName: '本订阅的月度里程' }, usage, selectedPeriod, periodId: selectedPeriod?.id || '' };
+      const selectedSegment = selectedPeriod?.segments.find(row => row.id === selectedSegmentId && row.canSubmit) || null;
+      const changed = previous !== JSON.stringify([selectedPeriod?.revision, selectedSegment]);
+      return { subscription: current && (current.orderId || current.id) === id ? current : { id, orderId: id, vehicleName: '本订阅的月度里程' }, usage, selectedPeriod, periodId: selectedPeriod?.id || '', selectedSegment, segmentId: selectedSegment?.id || '', boundaryDate: selectedSegment?.boundaryDate || (selectedPeriod && !selectedPeriod.segmented ? selectedPeriod.effectiveEndDate : ''), ...(changed ? { reading: '', recordedDate: '', recordedTime: '', attachments: [], submitted: null } : {}) };
     });
   },
   selectUsagePeriod(event) {
@@ -40,7 +47,13 @@ Page({
     const selectedPeriod = this.data.usage?.periods.find(row => row.id === event.detail.value && row.canSubmit);
     if (!selectedPeriod) return;
     this.requestedPeriodId = '';
-    this.setData({ periodId: selectedPeriod.id, selectedPeriod, reading: '', recordedDate: '', recordedTime: '', comment: '', attachments: [], submitted: null });
+    this.setData({ periodId: selectedPeriod.id, selectedPeriod, selectedSegment: null, segmentId: '', boundaryDate: selectedPeriod.segmented ? '' : selectedPeriod.effectiveEndDate, reading: '', recordedDate: '', recordedTime: '', comment: '', attachments: [], submitted: null });
+  },
+  selectUsageSegment(event) {
+    if (this.data.busy || this.data.choosing) return;
+    const selectedSegment = this.data.selectedPeriod?.segments.find(row => row.id === event.detail.value && row.canSubmit);
+    if (!selectedSegment) return;
+    this.setData({ selectedSegment, segmentId: selectedSegment.id, boundaryDate: selectedSegment.boundaryDate, reading: '', recordedDate: '', recordedTime: '', comment: '', attachments: [], submitted: null });
   },
   captureDate(event) { if (!this.data.busy) this.setData({ recordedDate: event.detail.value }); },
   captureTime(event) { if (!this.data.busy) this.setData({ recordedTime: event.detail.value }); },
@@ -50,7 +63,7 @@ Page({
   },
   async chooseAttachments() {
     if (this.data.busy || this.data.choosing) return;
-    if (!this.data.selectedPeriod?.canSubmit) return toastError(new Error('请先选择需要申报或补证的订阅月'));
+    if (!this.data.selectedPeriod?.canSubmit || (this.data.selectedPeriod.segmented && !this.data.selectedSegment?.canSubmit)) return toastError(new Error('请先选择需要申报或补证的订阅月及车辆段'));
     if (this.data.attachments.length >= 4) return toastError(new Error('最多添加 4 张凭证'));
     this.setData({ choosing: true });
     try {
@@ -87,7 +100,7 @@ Page({
   },
   async submit() {
     if (this.data.busy || this.data.choosing || this.data.submitted) return;
-    if (!this.data.usage || !this.data.selectedPeriod?.canSubmit) return toastError(new Error('请先选择服务端允许申报的订阅月'));
+    if (!this.data.usage || !this.data.selectedPeriod?.canSubmit || (this.data.selectedPeriod.segmented && !this.data.selectedSegment?.canSubmit)) return toastError(new Error('请先选择服务端允许申报的订阅月及本车用量段'));
     const reading = Number(this.data.reading);
     if (
       String(this.data.reading).trim() === '' ||
@@ -108,6 +121,7 @@ Page({
         fileIds: this.data.attachments.map(file => file.id),
         orderId: this.data.usage.orderId,
         periodId: this.data.periodId,
+        segmentId: this.data.segmentId || undefined,
       });
       this.setData({ submitted });
     } catch (error) {
@@ -121,7 +135,7 @@ Page({
     if (this.data.submitted)
       go('/pages/record/index?type=mileages&id=' + encodeURIComponent(this.data.submitted.id));
   },
-  returnToPeriods() { this.setData({ submitted: null, periodId: '', selectedPeriod: null, attachments: [], reading: '', recordedDate: '', recordedTime: '' }); return this.reload(); },
+  returnToPeriods() { this.setData({ submitted: null, periodId: '', selectedPeriod: null, selectedSegment: null, segmentId: '', boundaryDate: '', attachments: [], reading: '', recordedDate: '', recordedTime: '' }); return this.reload(); },
   openUse() {
     go('/pages/use/index');
   },

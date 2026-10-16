@@ -1,0 +1,144 @@
+{
+  "generatedAt": "2026-10-16T11:43:39.927Z",
+  "scope": "Offline actual-wcc synthetic display only. No API/DB/SDK, SMS, payment, signing, preview, QR or upload.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "swap-free-available",
+      "route": "records",
+      "text": "免费可用",
+      "forbidden": "购买换车次数",
+      "overflow": false,
+      "screenshot": "swap-free-available.png",
+      "passed": true
+    },
+    {
+      "name": "swap-reserved-not-consumed",
+      "route": "records",
+      "text": "已预占，尚未消费",
+      "overflow": false,
+      "screenshot": "swap-reserved-not-consumed.png",
+      "passed": true
+    },
+    {
+      "name": "swap-account-no-car",
+      "route": "records",
+      "text": "当前暂无车辆，换车待交付",
+      "overflow": false,
+      "screenshot": "swap-account-no-car.png",
+      "passed": true
+    },
+    {
+      "name": "swap-formal-unchecked",
+      "text": "旧车交还前核清",
+      "checked": false,
+      "confirm": false,
+      "overflow": false,
+      "screenshot": "swap-formal-unchecked.png",
+      "passed": true
+    },
+    {
+      "name": "swap-formal-explicit-reading",
+      "text": "确认本版本换车方案",
+      "checked": true,
+      "confirm": true,
+      "overflow": false,
+      "screenshot": "swap-formal-explicit-reading.png",
+      "passed": true
+    },
+    {
+      "name": "swap-unapproved-document",
+      "text": "正式换车补充条款尚不可用",
+      "confirm": false,
+      "overflow": false,
+      "screenshot": "swap-unapproved-document.png",
+      "passed": true
+    },
+    {
+      "name": "swap-expired-quote",
+      "text": "本版本客户确认期限已过",
+      "confirm": false,
+      "overflow": false,
+      "screenshot": "swap-expired-quote.png",
+      "passed": true
+    },
+    {
+      "name": "swap-one-side-gap",
+      "text": "已还旧车，待交新车",
+      "overflow": false,
+      "screenshot": "swap-one-side-gap.png",
+      "passed": true
+    },
+    {
+      "name": "swap-recovery-new-version",
+      "text": "本次仅重新确认日期",
+      "checked": false,
+      "confirm": false,
+      "overflow": false,
+      "screenshot": "swap-recovery-new-version.png",
+      "passed": true
+    },
+    {
+      "name": "swap-recovery-restored-signed",
+      "text": "查看已完成交接及归档记录",
+      "overflow": false,
+      "screenshot": "swap-recovery-restored-signed.png",
+      "passed": true
+    },
+    {
+      "name": "swap-applied-server-state",
+      "text": "换车已实际完成并生效",
+      "overflow": false,
+      "screenshot": "swap-applied-server-state.png",
+      "passed": true
+    },
+    {
+      "name": "swap-return-handover",
+      "route": "handover",
+      "text": "本单仅确认旧车交还，不是退订",
+      "overflow": false,
+      "screenshot": "swap-return-handover.png",
+      "passed": true
+    },
+    {
+      "name": "swap-delivery-handover",
+      "route": "handover",
+      "text": "新车实际交付时间",
+      "overflow": false,
+      "screenshot": "swap-delivery-handover.png",
+      "passed": true
+    },
+    {
+      "name": "swap-mileage-missing-selection",
+      "route": "mileage",
+      "text": "合成新车 · 待本车月界证据",
+      "segment": false,
+      "overflow": false,
+      "screenshot": "swap-mileage-missing-selection.png",
+      "passed": true
+    },
+    {
+      "name": "swap-mileage-selected-new-car",
+      "route": "mileage",
+      "text": "本车期初确认读数 20 km",
+      "segment": true,
+      "overflow": false,
+      "screenshot": "swap-mileage-selected-new-car.png",
+      "passed": true
+    },
+    {
+      "name": "swap-current-car-gap",
+      "route": "use",
+      "text": "当前暂无车辆，换车待交付",
+      "overflow": false,
+      "screenshot": "swap-current-car-gap.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

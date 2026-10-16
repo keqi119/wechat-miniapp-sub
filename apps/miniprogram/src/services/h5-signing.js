@@ -1,5 +1,5 @@
 const ENTRY = 'https://app.subauto.keybox.cloud/miniapp-sign/';
-const KINDS = { identity: '实名与证书准备', contract: '主合同签署', handover: '交接单签署', 'order-change': '延期补充协议签署' };
+const KINDS = { identity: '实名与证书准备', contract: '主合同签署', handover: '交接单签署', 'order-change': '订阅变更补充协议签署' };
 function createH5SigningApi({ call, native, error, identifier, getContext, getSignStatus, platform, pendingKey }) {
   function context(kind, id) {
     const current = getContext();
