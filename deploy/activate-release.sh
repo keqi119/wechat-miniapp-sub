@@ -5,6 +5,15 @@ release=${1:?Release ID required}
 [[ "$release" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$ ]] || exit 1
 target="$root/releases/$release"
 test -f "$target/admin/index.html"
+# Static artifacts are public files. Packaging on Windows or a private umask
+# must not leave their release directory unreadable by the Nginx worker.
+chmod 755 "$target"
+for site in admin signing-h5; do
+  if [ -d "$target/$site" ]; then
+    find "$target/$site" -type d -exec chmod 755 {} +
+    find "$target/$site" -type f -exec chmod 644 {} +
+  fi
+done
 test -f "$root/.env.production"
 test -f "$root/tls/live/chundian-mini/fullchain.pem"
 compose=(docker compose --env-file "$root/.env.production" -f "$root/deploy/compose.production.yml")
