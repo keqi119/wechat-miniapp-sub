@@ -27,7 +27,14 @@ def transition(source, release, phase):
         if key in controlled:
             if key in values or match.group(2) != '=':
                 raise ValueError('Ambiguous deployment configuration')
-            values[key] = line[match.end():].strip().strip('"\'')
+            raw = line[match.end():].strip()
+            if raw[:1] in ('"', "'"):
+                if len(raw) < 2 or raw[-1] != raw[0]:
+                    raise ValueError('Malformed deployment value')
+                raw = raw[1:-1]
+            if '"' in raw or "'" in raw:
+                raise ValueError('Malformed deployment value')
+            values[key] = raw
         rows.append((key, line))
     if any(values.get(key) != value for key, value in expected.items()):
         raise ValueError('Deployment baseline or channel configuration changed')

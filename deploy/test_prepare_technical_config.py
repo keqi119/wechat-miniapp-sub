@@ -52,5 +52,9 @@ class TechnicalConfigTest(unittest.TestCase):
         for release, phase in [('../../other', 'prepare'), ('20261016-technical-signing-v0', 'prepare'), (self.release, 'anything')]:
             with self.assertRaises(ValueError): module.transition(self.baseline, release, phase)
 
+    def test_rejects_mismatched_or_repeated_quotes(self):
+        for value in ['"false\'', '\'false"', '""false""']:
+            with self.assertRaises(ValueError): module.transition(self.baseline.replace('WECHAT_PAY_ENABLED=false', 'WECHAT_PAY_ENABLED=' + value), self.release, 'prepare')
+
 
 if __name__ == '__main__': unittest.main()
