@@ -21,7 +21,8 @@
     "signingCalled": false,
     "productionConfigChanged": false
   },
-  "wechatConsoleRegistration": "用户确认已通过；本次尚未从控制台独立读取最终域名列表。",
+  "wechatConsoleRegistration": "2026-10-16 用户明确反馈三个业务域名均已添加成功；此前18:54控制台仍为空，此次人工保存确认替代此前未完成状态。未另行声称自动化读回成功。",
+  "wechatBusinessDomainsConfirmedByUser": ["textapi17.fadada.com", "realnameverify16.fadada.com", "mini-api.subauto.keybox.cloud"],
   "realDeviceSigningVerified": false,
   "faceMiniappAppIdAndPathVerified": false
 }

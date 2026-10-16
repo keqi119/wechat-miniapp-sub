@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-16T10:15:41.547Z",
+  "targetSeal": "1783852637391749",
+  "authorizationQuery": {
+    "checkedAt": "2026-10-16T10:15:02.506Z",
+    "endpoint": "find_signature_auth_list.api",
+    "type1ProviderCode": "1",
+    "type1HasAuthorization": false,
+    "type2ProviderCode": "1",
+    "type2HolderCount": 0,
+    "ownershipConfirmedByTheseQueries": false
+  },
+  "companyCertificateQuery": {
+    "providerCode": "1",
+    "certificateBound": true,
+    "returnedCompanyNameMatches": true,
+    "parsedX509SubjectMatched": false
+  },
+  "interpretation": "The configured enterprise account has a bound certificate and its returned data contains the expected company name. The authorization/holder queries returned no affirmative seal relationship. These results do not prove seal ownership or that signing can succeed; actual administrator mapping review and real signing remain outstanding.",
+  "readOnly": true,
+  "signingCalled": false,
+  "providerAuthorizationChanged": false,
+  "productionFlagsChanged": false
+}

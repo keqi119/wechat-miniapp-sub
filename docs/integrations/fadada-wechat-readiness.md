@@ -132,6 +132,8 @@ Projects参考核对范围为auto-subscription-platform主源码及相关微信�
 
 正式 API 地址改为 `https://textapi17.fadada.com/api2/`，实名认证业务 origin 为 `https://realnameverify16.fadada.com`。两个域名根目录的 `G1wS8MuuaR.txt` 均实际 GET 返回 200，与用户原始 32 字节校验文件完全一致。用既有账号在新 API 地址执行只读 `query_signature.api` 返回 200 / code 1，找到用户指定印章；未发起实名、签署、授权或修改生产配置。证据见 `docs/evidence/fadada-native-domain-verification.json`。
 
+2026-10-16 后续用户明确反馈 `textapi17.fadada.com`、`realnameverify16.fadada.com` 和 `mini-api.subauto.keybox.cloud` 三个业务域名均已在微信侧添加成功。此前自动操作弹窗超时，最后自动读取仍为空；本次登记结果依据用户完成保存及扫码后的明确反馈，未把供应商文件部署等同于微信登记。
+
 恢复工程从冻结版本的隔离工作区实施：小程序内 web-view 承载实名、主合同、交接单及补充协议签署；通过原 API 的客户归属、文档哈希、双人用印批准、状态机和可信渠道查询/回调更新结果。精确映射法大大通用返回域名到上述已核验域名，不接受任意 URL 或未知刷脸小程序身份。用户必须主动发起实名和签署；网页返回本身不证明成功。已开发的换车功能保留在主工作区，待单独验证后集成。
 
 此前 H5 发布尝试均已回滚，旧 API 继续健康运行，新增数据库迁移为兼容性迁移；H5 备用代码保留但不作为当前主流程发布。仍需验证原生中间页、刷脸小程序精确 AppID/path、真机往返与签后归档，不能把域名校验或只读接口成功视为签约验收完成。

@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-16T11:09:18.497Z",
+  "release": "20261016-usage-v1",
+  "sealId": "cmvaui9yu0004qq01q3vyjjpe",
+  "status": "ACTIVE",
+  "confirmedAt": "2026-10-16T11:07:30.594Z",
+  "confirmedByUsername": "keqi_118",
+  "independentReviewerVerified": true,
+  "authorities": [
+    {
+      "id": "cmvav7d2h000cqq01ogz2u8w5",
+      "authorityType": "REQUEST_USE",
+      "subjectId": "cmvaia6qx0000sa01od6y2g4p"
+    },
+    {
+      "id": "cmvav7d4a000eqq01xa3ckn3p",
+      "authorityType": "APPROVE_USE",
+      "subjectId": "cmvat0x44000fo901txkwpi8u"
+    }
+  ],
+  "policies": [
+    {
+      "id": "cmvav7d7o000gqq011uj8y60b",
+      "kind": "SUBSCRIPTION",
+      "policyCode": "CHUNDIAN_SUBSCRIPTION_V1",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "cmvav7db8000jqq01932td9qw",
+      "kind": "HANDOVER",
+      "policyCode": "CHUNDIAN_HANDOVER_V1",
+      "status": "ACTIVE"
+    }
+  ],
+  "pendingPolicyKinds": [
+    "AMENDMENT"
+  ],
+  "perDocumentApprovalStillRequired": true,
+  "realSigningPerformed": false
+}
