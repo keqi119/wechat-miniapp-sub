@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-10-16T08:42:28.007Z",
+  "release": "20261016-usage-v1",
+  "sourceCommit": "465304919064bff4d90b574d497590d42c6c0726",
+  "imageId": "sha256:96cb4c2be5ecf2b23916e2e7a6535755bdf341dcb590e81feb480cee6dc76717",
+  "apiArchiveSha256": "6d387d3b7e4f31cb0a5e4252ea177e01cad837d209a84c5a1375ac23f2817483",
+  "adminArchiveSha256": "3166fa0d09fafdedf6e2fbd24ec5b5b23e25f5e4417b0de5bdbd3b31a5cf4086",
+  "adminScript": "index-h9SVnexX.js",
+  "tests": {
+    "api": 123,
+    "admin": 47,
+    "miniprogram": 94
+  },
+  "native": {
+    "sourceFiles": 86,
+    "wxml": 16,
+    "wxss": 17,
+    "layoutCases": 14
+  },
+  "preActivationBackup": "20261016T083159Z",
+  "postMigrationBackup": "20261016T083507Z",
+  "isolatedRestore": {
+    "passed": true,
+    "restoredTables": 43
+  },
+  "retainedPriorRelease": "20261016-credit-v1",
+  "ordinaryPaymentsEnabled": false,
+  "fadadaSigningEnabled": false
+}

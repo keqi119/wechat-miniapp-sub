@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-16T08:41:01.315Z",
+  "release": "20261016-usage-v1",
+  "checks": [
+    "HTTPS API health/version",
+    "Unauthenticated new business routes denied",
+    "Authenticated admin usage/return lists are empty",
+    "All three approved usage documents match SHA-256",
+    "Production admin files match frozen build bytes",
+    "Frozen native 86-file manifest matches"
+  ],
+  "authenticationOnlyWrites": true,
+  "commercialWrites": false
+}

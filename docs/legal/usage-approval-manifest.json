@@ -6,7 +6,7 @@
   "approvalStatement": "已审阅，批准三份条款",
   "approvalQuestionId": "call_0feea3f7132e47b79886c73b115b8d3b",
   "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
-  "published": false,
+  "published": true,
   "editorialChanges": "仅将审阅稿状态改为正式文本；保留当时完整审阅源文件及哈希。客户逐单及购买授权仍须实际取得。",
   "documents": [
     {
@@ -33,5 +33,6 @@
       "finalFile": "docs/legal/versions/usage-update/vehicle-change-v1.md",
       "finalSha256": "fe5d171f4a93e6dcc1ac67bf7358f34c343e8107d0fd1ed6d5a1cee9baaad11a"
     }
-  ]
+  ],
+  "publicationEvidence": "docs/evidence/usage-legal-publication.json"
 }

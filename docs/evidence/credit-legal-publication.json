@@ -29,6 +29,25 @@
     "source": "user-confirmation",
     "statement": "隐私保护指引V2版本已完成微信平台提交",
     "recordedAt": "2026-10-16T07:59:27.886Z",
-    "independentUiVerification": false
+    "independentUiVerification": true,
+    "uiVerification": {
+      "recordedAt": "2026-10-16T08:42:28.007Z",
+      "surface": "WeChat official platform submitted privacy guide",
+      "displayedUpdatedDate": "2026-10-16",
+      "observed": [
+        "phone",
+        "identity number",
+        "selected photos",
+        "camera",
+        "orders",
+        "operation logs",
+        "custom contact/driver details and separately authorized manual credit band",
+        "shortest necessary retention",
+        "active confirmation before purpose changes",
+        "approved telephone/email",
+        "supplement document link"
+      ],
+      "supplementFileBytesIndependentlyDownloaded": false
+    }
   }
 }

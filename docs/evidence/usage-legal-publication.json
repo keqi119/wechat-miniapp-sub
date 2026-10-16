@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-16T08:33:49.333Z",
+  "release": "20261016-usage-v1",
+  "documents": [
+    {
+      "type": "usage-policy",
+      "version": 1,
+      "id": "cmvapnw840001o9010ax4ocj8",
+      "sha256": "3299366929cdaff10d811f94b9c9e3835da95ae7468b0dc34d84fe96b85d5b3f",
+      "publishedAt": "2026-10-16T08:33:49.641Z"
+    },
+    {
+      "type": "mileage-pack",
+      "version": 1,
+      "id": "cmvapnwj40004o901tfxusyqy",
+      "sha256": "2fd8c35a07b6c21e292840adead7c200f31905d50e5ae8dc26bdbefa3bb07c9d",
+      "publishedAt": "2026-10-16T08:33:50.100Z"
+    },
+    {
+      "type": "vehicle-change",
+      "version": 1,
+      "id": "cmvapnwtc0007o9014ztnca1i",
+      "sha256": "fe5d171f4a93e6dcc1ac67bf7358f34c343e8107d0fd1ed6d5a1cee9baaad11a",
+      "publishedAt": "2026-10-16T08:33:50.370Z"
+    }
+  ],
+  "customerConsentImplied": false,
+  "vehicleChangeFeatureImplemented": false
+}

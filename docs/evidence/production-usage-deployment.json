@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-10-16T08:34:05.924Z",
+  "release": "20261016-usage-v1",
+  "sourceCommit": "465304919064bff4d90b574d497590d42c6c0726",
+  "migrationCount": 14,
+  "latestMigration": "202610160014_pack_refund",
+  "counts": {
+    "customers": 3,
+    "applications": 0,
+    "creditConsents": 0,
+    "creditVerifications": 0,
+    "orders": 0,
+    "bills": 0,
+    "contracts": 0,
+    "usageAccounts": 0,
+    "usagePeriods": 0,
+    "mileagePurchases": 0,
+    "mileageLedger": 0,
+    "returnSettlements": 0,
+    "activePlans": 0
+  },
+  "products": [
+    {
+      "version": 1,
+      "km": 1000,
+      "amount": 80000,
+      "active": true
+    },
+    {
+      "version": 1,
+      "km": 2000,
+      "amount": 150000,
+      "active": true
+    },
+    {
+      "version": 1,
+      "km": 3000,
+      "amount": 200000,
+      "active": true
+    }
+  ],
+  "verification": [
+    {
+      "status": "SUCCEEDED",
+      "amount": 1,
+      "currency": "CNY",
+      "paidAt": "2026-10-16T07:18:28.114Z"
+    }
+  ],
+  "legal": [
+    {
+      "type": "mileage-pack",
+      "version": 1,
+      "status": "PUBLISHED",
+      "publishedAt": "2026-10-16T08:33:50.100Z"
+    },
+    {
+      "type": "usage-policy",
+      "version": 1,
+      "status": "PUBLISHED",
+      "publishedAt": "2026-10-16T08:33:49.641Z"
+    },
+    {
+      "type": "vehicle-change",
+      "version": 1,
+      "status": "PUBLISHED",
+      "publishedAt": "2026-10-16T08:33:50.370Z"
+    }
+  ],
+  "flags": {
+    "sms": true,
+    "ordinaryPay": false,
+    "verificationPay": true,
+    "fadada": false,
+    "fadadaSigning": false
+  },
+  "userSpecifiedSealConfigured": true
+}

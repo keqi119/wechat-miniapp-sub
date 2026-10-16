@@ -1,0 +1,11 @@
+{
+  "recordedAt": "2026-10-16T08:42:28.007Z",
+  "version": "1.0.3",
+  "sourceCommit": "465304919064bff4d90b574d497590d42c6c0726",
+  "release": "20261016-usage-v1",
+  "channel": "WeChat developer tools CLI",
+  "result": "upload succeeded",
+  "packageBytes": 371307,
+  "formalReviewSubmitted": false,
+  "formalRelease": false
+}
