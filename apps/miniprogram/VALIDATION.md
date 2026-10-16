@@ -33,3 +33,5 @@ B2与原生合并后的最新验证：受影响54/54、完整153/153、build95�
 B3付费次数：新增23行为回归（18项观察红→绿），B3冻结时完整176/176；固定80000分一次、独立默认未选全文、稳定原单/原payment可信查询、8状态及五余额、预占与例外退款/RESTORE只读。18actual-wcc离线版面/18PNG无溢出/异常/外部请求；独立合成UI库真实HTTP11项/19请求，另冻结与原权益恢复两节点各3请求，DI渠道替身，无wx.requestPayment/真实渠道。详见evidence/paid-swap-report.md。
 
 设置页实名完成最小修复：另8项实际红→绿，最新完整184/184、check/build96文件/17WXML18WXSS、Mock109×2零差异。仅服务端VERIFIED显示“已完成实名核验”、隐藏再提交表单、证书独立状态；onShow/主动核验共享版本与session隔离，旧回包/错误/finally/unload不覆盖新状态。5actual-wcc离线图含实名完成+证书就绪/尚待核验，零异常/外部请求/溢出；evidence/settings-readiness-report.md。未接触生产/真实渠道/SDK/预览上传。
+
+独立技术签署验收：新增32行为回归（31实际红→绿），最新完整216/216、受影响60/60、check/build101源文件/18WXML19WXSS、Mock109×2零差异。15actual-wcc离线状态/23PNG无溢出/异常/外部请求；稳定独立库真实HTTP13请求一般consent升级/本人confirm节点、原双审记录恢复段16检查/24请求通过（本人sign仅捕获本地导航、纯GET未伪成功、主动sync可信归档、本人/跨归属PDF、本人stop留已签事实）。联调发现审批planHash既有sha256:64hex格式并TDD修正，未重建/重确认原记录。无商业请求、真实供应商/SDK/付款/预览上传；见evidence/technical-acceptance-report.md及HTTP证据。

@@ -3,6 +3,7 @@ const { createUsageApi } = require('./usage');
 const { createOrderChangesApi } = require('./order-changes');
 const { createNativeSigningApi } = require('./native-signing');
 const { createSwapApi } = require('./swap');
+const { createTechnicalAcceptanceApi } = require('./technical-acceptance');
 const { assignmentView } = require('./vehicle-assignments');
 const TYPES = ['applications', 'orders', 'contracts', 'bills', 'payments', 'deposits', 'entitlements', 'notifications', 'services', 'mileages'];
 const VERIFICATION_STATUS = { AUTHORIZED: '已授权，尚未付款', CREATING: '支付准备结果待确认', PENDING: '支付结果待确认', SUCCEEDED: '支付成功', CLOSED: '验收已关闭', FAILED: '支付失败，不能继续付款', EXPIRED: '验收授权已过期' };
@@ -31,6 +32,7 @@ function identifier(value) {
   return encodeURIComponent(value);
 }
 function createApi(options, request, platform = typeof wx !== 'undefined' ? wx : {}) {
+  let sessionVersion = 0;
   const storageKey = options.storageKey || 'ev-subscription:customer-session:v1';
   const pendingKey = storageKey + ':pending';
   const paymentKeys = new Map();
@@ -40,7 +42,8 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const swapApi = createSwapApi({ call, identifier, error, idempotencyKey, getContext, sessionKey: () => session()?.token });
   const changesApi = createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, enterSigning: (kind, id, body) => nativeSigning.startSigning(kind, id, body) });
   const nativeSigning = createNativeSigningApi({ call, native, error, identifier, getContext, sessionKey: () => session()?.token, getSignStatus, platform, pendingKey });
-  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); swapApi.clearSwapKeys(); changesApi.clearChangeKeys(); nativeSigning.clearSigningState(); }
+  const technicalApi = createTechnicalAcceptanceApi({ call, error, identifier, idempotencyKey, getContext, sessionKey: () => session()?.token, enterSigning: (...args) => nativeSigning.startSigning(...args), forgetSigningTask: (...args) => nativeSigning.forgetSigningTask(...args), openPrivateFile });
+  function clearSession() { sessionVersion++; platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); swapApi.clearSwapKeys(); changesApi.clearChangeKeys(); nativeSigning.clearSigningState(); technicalApi.clearTechnicalState(); }
   function session() {
     const value = platform.getStorageSync(storageKey);
     if (!value) return null;
@@ -61,7 +64,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   }
   function failure(response, token) {
     const body = response.data || {};
-    if (response.statusCode === 401 && (!token || session()?.token === token)) clearSession();
+    if (response.statusCode === 401 && token && session()?.token === token) clearSession();
     const messages = { 401: '登录已过期，请重新登录。', 403: '无权查看或操作此记录。', 404: '记录不存在或暂不可用。', 409: '内容或状态已更新，请刷新后重试。', 429: '操作频繁，请稍后重试。' };
     return error(body.error?.message || messages[response.statusCode] || '后台暂时无法处理请求，请稍后重试。', body.error?.code || `HTTP_${response.statusCode}`, { statusCode: response.statusCode, details: body.error?.details, requestId: body.requestId });
   }
@@ -82,6 +85,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   }
   function validateSession(value) {
     if (!value || typeof value.token !== 'string' || !value.token || !value.customer?.id || !Number.isFinite(Date.parse(value.expiresAt)) || Date.parse(value.expiresAt) <= Date.now()) throw error('后台登录响应无效，请重新登录。', 'RESPONSE');
+    sessionVersion++;
     platform.setStorageSync(storageKey, { token: value.token, expiresAt: value.expiresAt, customer: value.customer, consents: value.consents || [] });
     return getContext();
   }
@@ -292,6 +296,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     return { ...value, isSwap: swap, actualAtValid: Boolean(actualAtValid), actualAtDisplay, actualAtLabel: { DELIVERY: '实际交车时间', RETURN: '实际还车时间', SWAP_RETURN: '旧车实际交还时间', SWAP_DELIVERY: '新车实际交付时间' }[value.type] || '实际交接时间（类型待核对）', actualAtText: actualAtValid ? actualAtDisplay + '（北京时间）' : '缺少有效实际时间，待后台核对' };
   }
   async function getSignStatus(id, kind = 'contract') {
+    if (kind === 'technical-acceptance') return technicalApi.technicalSignStatus(id);
     if (!['contract', 'handover', 'order-change', 'identity'].includes(kind)) throw error('签署业务类型无效。', 'SIGN_CONTEXT');
     if (kind === 'order-change') return changesApi.queryOrderChangeSignature(id);
     if (kind === 'identity') { if (id !== session()?.customer.id) throw error('实名记录不属于当前账户。', 'SIGN_CONTEXT'); const readiness = await call('GET', '/customer/esign/readiness'); return { ...readiness, status: readiness.readyForSigning === true ? 'VERIFIED' : 'PENDING' }; }
@@ -374,16 +379,17 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     return result;
   }
   async function openPrivateFile(id) {
-    const current = session();
+    const current = session(), version = sessionVersion;
     if (!current) throw error('请先登录再查看文件。', 'AUTH_REQUIRED');
     const downloaded = await native('downloadFile', { url: validateBase(options.apiBase) + '/api/customer/files/' + identifier(id), header: { Authorization: 'Bearer ' + current.token }, timeout: 60000 });
+    if (sessionVersion !== version || session()?.token !== current.token || session()?.customer.id !== current.customer.id) throw error('登录会话已变化，不能打开上一账户的文件。', 'SESSION_CHANGED');
     if (downloaded.statusCode !== 200) throw failure({ statusCode: downloaded.statusCode }, current.token);
     if (!downloaded.tempFilePath) throw error('文件下载未完成，请重试。', 'FILE_DOWNLOAD');
     const contentType = downloaded.header?.['Content-Type'] || downloaded.header?.['content-type'] || '';
     if (/^image\//i.test(contentType)) await native('previewImage', { current: downloaded.tempFilePath, urls: [downloaded.tempFilePath] });
     else await native('openDocument', { filePath: downloaded.tempFilePath, showMenu: false });
   }
-  return { ...usageApi, ...swapApi, ...changesApi, ...nativeSigning, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
+  return { ...usageApi, ...swapApi, ...changesApi, ...nativeSigning, ...technicalApi, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
     getModelDefinitions: async () => list(await call('GET', '/public/model-definitions', undefined, false)).items,
     getDashboard: async () => { const result = await call('GET', '/customer/dashboard'); const tracked = result.subscription && Object.prototype.hasOwnProperty.call(result.subscription, 'currentAssignment'); const assignment = tracked ? assignmentView(result.subscription.currentAssignment, () => { throw error('当前车辆分配尚未核实。', 'RESPONSE'); }) : null; return { ...result, ...(result.application ? { application: application(result.application) } : {}), ...(result.subscription ? { subscription: { ...result.subscription, ...(tracked ? { currentAssignment: assignment, vehicleName: assignment ? assignment.vehicle.title : '当前暂无车辆，换车待交付' } : {}), ...(tracked && !assignment ? { mileageText: '暂无当前车辆读数' } : {}), imageUrl: tracked && !assignment ? '' : media(result.subscription.imageUrl) } } : {}) }; },
     getApplication: async id => application(await call('GET', '/customer/applications/' + identifier(id))),

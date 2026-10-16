@@ -1,0 +1,164 @@
+{
+  "generatedAt": "2026-10-16T14:22:09.680Z",
+  "scope": "Real local HTTP/createApp/auth and independent technical_signing_ui_acceptance DB with fully synthetic provider. Native navigation captured; no supplier webpage, SDK, real identity, signature/seal, payment, preview/upload or production.",
+  "checks": {
+    "safeSummary": true,
+    "staleGeneralConsentBlocked": true,
+    "explicitExistingConsentUpdate": true,
+    "fullBodyAndFourHashes": true,
+    "frozenPdfShaMatches": true,
+    "explicitPerDocumentConfirm": true,
+    "doubleApprovalReadback": true,
+    "onlyTechnicalNativeRoute": true,
+    "shortUrlPersistentValues": 0,
+    "passiveGetNotSigned": true,
+    "explicitSyncArchived": true,
+    "ownSourceAndSignedPdf": true,
+    "crossCustomerDetailDenied": true,
+    "crossCustomerBothFilesDenied": true,
+    "stopPreservesArchivedFact": true,
+    "stoppedCannotSign": true
+  },
+  "recordId": "151b0371-19a8-4475-b13f-799897062d62",
+  "sourceFileId": "cmvb1sc8k000xuru0sxijf40n",
+  "signedFileId": "cmvb23uj9002buru0dhjp7lap",
+  "downloads": [
+    {
+      "fileId": "cmvb1sc8k000xuru0sxijf40n",
+      "sha256": "0d6712142fe35e26652f08efe46fa8c6305874e3fb95d11346ece86ffbcb1018",
+      "size": 76965
+    },
+    {
+      "fileId": "cmvb23uj9002buru0dhjp7lap",
+      "sha256": "0d6712142fe35e26652f08efe46fa8c6305874e3fb95d11346ece86ffbcb1018",
+      "size": 76965
+    }
+  ],
+  "calls": [
+    {
+      "method": "GET",
+      "route": "/public/legal/terms",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/public/legal/privacy",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/auth/sms/login",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/files/cmvb1sc8k000xuru0sxijf40n",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/public/signing-config",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62/sign",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62/sign-status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62/sync",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/files/cmvb23uj9002buru0dhjp7lap",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/auth/sms/login",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "route": "/customer/files/cmvb1sc8k000xuru0sxijf40n",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "route": "/customer/files/cmvb23uj9002buru0dhjp7lap",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62/stop",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/technical-acceptances/151b0371-19a8-4475-b13f-799897062d62/sign-status",
+      "status": 200
+    }
+  ],
+  "previousObservedCheckpoint": {
+    "stage": "CONFIRMED_WAITING_FOR_TWO_PERSON_APPROVAL",
+    "httpCalls": 13,
+    "note": "Prior run observed stale general consent, explicit existing consent update and per-document confirmation, then failed before sign on the client planHash prefix bug. Same confirmed/approved record resumed after TDD fix; no recreation, duplicate confirmation or approval."
+  }
+}

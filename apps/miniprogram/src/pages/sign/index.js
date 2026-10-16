@@ -8,22 +8,31 @@ Page({
     if (this._disposed) return;
     const statusRevision = this._statusRevision;
     this.setData({ url: '', error: '' });
-    return load(this, async () => { services.getSigningTask(this.kind, this.id); const config = await services.getSigningConfig(); const task = services.getSigningTask(this.kind, this.id); return { title: task.title, url: config.enabled && config.signProviderConfigured && !this._terminal ? task.url : '', enabled: config.enabled && config.signProviderConfigured, faceBridgeConfigured: false, ...(statusRevision === this._statusRevision ? { status: task.status } : {}) }; });
+    return load(this, async () => {
+      services.getSigningTask(this.kind, this.id);
+      const technical = this.kind === 'technical-acceptance', record = technical ? await services.getTechnicalAcceptance(this.id) : null;
+      const terminal = technical && (record.signatureCompleted || record.stoppedAt || ['REJECTED','EXPIRED','PURGED'].includes(record.status));
+      if (technical && (!record.canSign || terminal)) services.forgetSigningTask(this.kind,this.id);
+      const config = await services.getSigningConfig(), task = services.getSigningTask(this.kind, this.id), enabled = config.enabled && config.signProviderConfigured && (!technical || record.enabled);
+      const status = terminal ? record.signatureCompleted ? 'SIGNED' : record.stoppedAt || record.status === 'PURGED' ? 'CLOSED' : record.signatureStatus : task.status;
+      return { title: task.title, url: enabled && !this._terminal && (!technical || record.canSign && !terminal) ? task.url : '', enabled, faceBridgeConfigured: false, ...(technical ? { technicalStopped: !!record.stoppedAt } : {}), ...(statusRevision === this._statusRevision ? { status } : {}) };
+    });
   },
-  async onShow() { if (this.id && ['contract', 'handover', 'order-change', 'identity'].includes(this.kind)) await this.refreshStatus(); },
-  async refreshStatus() {
+  async onShow() { if (this.id && ['contract', 'handover', 'order-change', 'identity', 'technical-acceptance'].includes(this.kind)) await this.refreshStatus(undefined, true); },
+  async refreshStatus(event, passive = false) {
     if (this._querying || this._disposed) return; const generation = this._pageGeneration; this._querying = true; this._statusRevision = (this._statusRevision || 0) + 1; this.setData({ statusError: '' });
-    try { const result = await services.getSignStatus(this.id, this.kind); if (this._disposed || generation !== this._pageGeneration) return; this._statusRevision++; const done = ['SIGNED', 'VERIFIED', 'REJECTED', 'EXPIRED', 'CLOSED'].includes(result.status); if (done) { this._terminal = true; services.forgetSigningTask(this.kind, this.id); } this.setData({ status: result.status, message: result.status === 'SIGNED' ? '服务端已确认双方签署并归档。实际交付、资金或变更生效请查看原业务进度。' : result.status === 'VERIFIED' ? '服务端已确认实名与证书就绪。' : done ? '本流程已终止或过期，请联系运营。' : '服务端尚未确认完成。页面返回或提示完成都不代表已实名或已签署，请查询最新结果。', ...(done ? { url: '' } : {}) }); }
+    try { const technical = this.kind === 'technical-acceptance'; let result; if (technical && !passive) { const record = await services.syncTechnicalAcceptance(this.id); result = { ...record, status: record.signatureCompleted ? 'SIGNED' : record.stoppedAt ? 'CLOSED' : record.signatureStatus }; } else result = await services.getSignStatus(this.id, this.kind); if (this._disposed || generation !== this._pageGeneration) return; this._statusRevision++; const done = ['SIGNED', 'VERIFIED', 'REJECTED', 'EXPIRED', 'CLOSED'].includes(result.status); if (done || technical && !result.enabled) { this._terminal = true; services.forgetSigningTask(this.kind, this.id); } this.setData({ status: result.status, technicalStopped: technical && !!result.stoppedAt, ...(technical ? { enabled: this.data.enabled && result.enabled && !result.stoppedAt } : {}), message: result.status === 'SIGNED' ? technical ? '本份双方真实签署已核验并归档，不表示整套系统、租赁或商业服务验收通过。' + (result.stoppedAt ? '后续验证已停止，原签署事实保留。' : '') : '服务端已确认双方签署并归档。实际交付、资金或变更生效请查看原业务进度。' : result.status === 'VERIFIED' ? '服务端已确认实名与证书就绪。' : done ? technical && result.stoppedAt ? '后续验证已停止；不能据此认定供应商在途任务已撤销，迟到结果仍按事实核对。' : '本流程已终止或过期，请联系运营。' : '服务端尚未确认完成。页面返回或提示完成都不代表已实名或已签署，请查询最新结果。', ...(done || technical && (!result.enabled || result.stoppedAt) ? { url: '' } : {}) }); }
     catch (error) { if (this._disposed || generation !== this._pageGeneration) return; this._statusRevision++; this.setData({ status: 'UNKNOWN', url: '', statusError: error.message, message: '结果尚未核实，请稍后重新查询；不会按页面消息认定成功。' }); }
     finally { this._querying = false; }
   },
   reloadPage(url) { try { this.setData({ url: services.reloadSigningPage(this.kind, this.id, url), statusError: '' }); return true; } catch (error) { this.setData({ url: '', statusError: error.message }); return false; } },
   onWebLoad() { this.setData({ message: '请在实名或签署页面自行核对并操作，返回后查询真实结果。' }); },
   onWebError() { this.setData({ url: '', error: '实名或签署页面暂时无法打开，请联系运营核对业务域名，或返回原记录查询。' }); },
-  onWebMessage() { return this.refreshStatus(); },
+  onWebMessage() { return this.refreshStatus(undefined, true); },
   async retry() {
     if (this.data.busy || !this.data.enabled) return;
     if (this.kind === 'identity') return go('/pages/settings/index');
+    if (this.kind === 'technical-acceptance') return go('/pages/technical-acceptance/index?id=' + encodeURIComponent(this.id));
     this.setData({ busy: true, error: '' });
     try { if (this.kind === 'order-change') { const current = await services.getOrderChange(this.id); await services.signOrderChange(this.id, { revision: current.revision }); } else if (['contract', 'handover'].includes(this.kind)) await services.performAction(this.kind === 'handover' ? 'handovers' : 'contracts', this.id, 'sign'); else throw new Error('请从原业务记录重新进入。'); }
     catch (error) { this.setData({ error: error.message }); }

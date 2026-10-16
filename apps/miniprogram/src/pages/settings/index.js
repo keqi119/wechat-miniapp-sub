@@ -2,7 +2,7 @@ const services = require('../../services/index');
 const config = require('../../config');
 const { toastError, confirm, go } = require('../../utils/page');
 Page({
-  data: { authenticated: false, profile: null, busy: false, error: '', message: '', mobile: '', code: '', cooldown: 0, accepted: false, legalDocuments: [], consentCurrent: false, customerServiceTelephone: config.customerServiceTelephone, readiness: null, identityVerified: false, identityStatusText: '实名状态尚待核验', certificateStatusText: '签署证书尚待核验', identityName: '', idCardNo: '', identityAccepted: false, signingConfig: null, signingError: '', paymentVerifications: [], verificationError: '', verificationMessage: '' },
+  data: { authenticated: false, profile: null, busy: false, error: '', message: '', mobile: '', code: '', cooldown: 0, accepted: false, legalDocuments: [], consentCurrent: false, customerServiceTelephone: config.customerServiceTelephone, readiness: null, identityVerified: false, identityStatusText: '实名状态尚待核验', certificateStatusText: '签署证书尚待核验', identityName: '', idCardNo: '', identityAccepted: false, signingConfig: null, signingError: '', paymentVerifications: [], verificationError: '', verificationMessage: '', technicalAcceptances: [], technicalError: '' },
   pageSession() { return { customerId: services.getContext().customer?.id || null, token: wx.getStorageSync?.(config.storageKey)?.token || null, generation: this._pageGeneration || 0 }; },
   isCurrentSession(stamp) { const current = this.pageSession(); return !this._disposed && stamp.customerId === current.customerId && stamp.token === current.token && stamp.generation === current.generation; },
   applyReadiness(readiness) {
@@ -19,6 +19,7 @@ Page({
     this._readinessSession = stamp;
     this.setData({ authenticated: context.authenticated, profile: context.profile, error: '', signingConfig: null, signingError: '', ...(!context.authenticated ? { paymentVerifications: [], verificationError: '', verificationMessage: '', consentCurrent: false, identityName: '', idCardNo: '', identityAccepted: false } : {}) });
     try {
+      await this.refreshTechnicalAcceptances(); if (!current()) return;
       const documents = await services.getLoginDocuments();
       if (!current()) return;
       if (documents.length !== 2 || documents.some((doc,index) => doc.type !== ['terms','privacy'][index] || !doc.id || !Number.isInteger(doc.version) || !doc.content)) throw new Error('当前已发布协议暂不可用，请稍后重试。');
@@ -38,6 +39,13 @@ Page({
       try { const signingConfig = await services.getSigningConfig(); if (current()) this.setData({ signingConfig }); } catch (error) { if (current()) this.setData({ signingConfig: null, signingError: error.message }); }
     } catch (error) { if (current()) this.setData({ error: error.message, authenticated: services.getContext().authenticated }); }
   },
+  async refreshTechnicalAcceptances() {
+    const stamp = this.pageSession(), revision = this._technicalRevision = (this._technicalRevision || 0) + 1;
+    this.setData({ technicalAcceptances: [], technicalError: '' }); if (!services.getContext().authenticated) return;
+    try { const items = await services.getTechnicalAcceptances(); if (this.isCurrentSession(stamp) && this._technicalRevision === revision) this.setData({ technicalAcceptances: items }); }
+    catch (error) { if (this.isCurrentSession(stamp) && this._technicalRevision === revision) this.setData({ technicalError: error.message }); }
+  },
+  openTechnicalAcceptance(event) { const id = event.currentTarget.dataset.id; if (this.data.technicalAcceptances.some(row => row.id === id)) go('/pages/technical-acceptance/index?id=' + encodeURIComponent(id)); },
   verificationRow(record,resumeAllowed=false) {
     const active=Number.isFinite(Date.parse(record.expiresAt))&&Date.parse(record.expiresAt)>Date.now();
     const permitted=record.canPay===true&&record.amount===1&&record.currency==='CNY'&&active&&['AUTHORIZED','CREATING','PENDING'].includes(record.status);

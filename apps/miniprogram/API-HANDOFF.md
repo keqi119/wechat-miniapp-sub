@@ -4,6 +4,8 @@
 
 最新B3补充（替代下文历史B2中paidAvailable固定0/购买未开放描述）：契约apps/api/b3-contract.md，swap-account真实五计数与purchaseTerms/product/purchases；POST customer/orders/:id/swap-credits仅固定SWAP_CREDIT_1与独立同意快照，返回普通80000分账单。GET customer/swap-credit-purchases/:id只安全DB读；查询PENDING_PAYMENT且有paymentId才GET customer/payments/:id，再回读原purchase/account。POST原purchase/close稳定key，VOID幂等只读。8状态与nullable PAID cycle/changeId、ledger RESTORE兼容；无客户退款/恢复写入口，无1分验收复用或自动付款。设置页最新仅以服务端realNameStatus===VERIFIED完成实名，certBound/readyForSigning独立显示证书；GET readiness与用户主动POST refresh仍明确分开，onShow不申请证书。
 
+独立技术验收：契约apps/api/technical-acceptance-contract.md；本人GET technical-acceptances及/:id，confirm带revision、documentHash/bodyHash/templateHash与独立disclosure/privacy consent，sourcePdfHash为实际PDF SHA只读。canConfirm按safe及当前一般同意，不因签署enabled=false误阻预先阅读确认；只有sign受技术enabled/双审/canSign及原生通道联合守门。审批planHash沿固定来源严格sha256:64hex。原生kind technical-acceptance；GET sign-status纯DB，App/onShow/网页消息绝不POSTsync；本人主动POSTsync才核验，终态忘记旧URL。stop不代表供应商撤销，STOPPED+signatureStatusSIGNED归档事实并存。文件匹配fresh本人source/signed ID及下载会话generation，未知/错归属不打开。一般协议过期仅引导现有settings明确升级，未新增实名采集或商业动作。
+
 生产错误不会退回样例，401清会话，403/404/409/供应商失败分别保留错误码；最终方案确认传revision+commercialHash；申请传documentId/version；附件传fileIds；里程传orderId/readingKm；交接传manifestHash/readFileIds。接口版本变化须同步测试。
 
 信用第一阶段：GET /customer/applications/:id/credit-review；POST /credit-consent {documentId,version,decision:ACCEPT|DECLINE,idempotencyKey}；POST /credit-consent/withdraw {consentId,idempotencyKey}，两写接口返回同safe。safe新增canDecline、consentRequirementsMet、verificationCurrent、canConfirmFinalPlan；canFinalize属于后台出具动作，原生不依赖它。最终方案须固定creditVerificationId/creditRuleVersion/creditBand/creditRevision，客户确认前与当前有效核验匹配。DECLINE/withdraw不以一般隐私补签为前提。详情加载信用失败仅阻止信用操作及方案确认，不阻断已获授权的申请只读展示。

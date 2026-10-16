@@ -6,7 +6,7 @@ const deferred = () => { let resolve, reject; const promise = new Promise((r, j)
 function setup(extra = {}) {
   let token = 'token-a', customer = 'a', submitted = 0, definition;
   const context = () => ({ authenticated: !!customer, customer: customer ? { id: customer } : null, profile: { name: customer }, consents: docs.map(d => ({ documentId: d.id, version: d.version })) });
-  const services = { getContext: context, getLoginDocuments: async () => docs, refreshContext: async () => context(), getPaymentVerifications: async () => [], getESignReadiness: async () => pending, refreshESignReadiness: async () => verified, getSigningConfig: async () => ({ enabled: true, signProviderConfigured: true }), startESignVerification: async () => { submitted++; }, ...extra };
+  const services = { getContext: context, getLoginDocuments: async () => docs, refreshContext: async () => context(), getPaymentVerifications: async () => [], getTechnicalAcceptances: async () => [], getESignReadiness: async () => pending, refreshESignReadiness: async () => verified, getSigningConfig: async () => ({ enabled: true, signProviderConfigured: true }), startESignVerification: async () => { submitted++; }, ...extra };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../src/pages/settings/index.js'), 'utf8'), { Page: value => { definition = value; }, require: id => id.includes('services') ? services : id.includes('config') ? { storageKey: 'session' } : { toastError() {}, confirm: async () => true, go() {} }, wx: { getStorageSync: () => ({ token }) }, clearInterval() {} });
   const p = { ...definition, data: structuredClone(definition.data), setData(value) { Object.assign(this.data, value); } };
   return { p, services, submitted: () => submitted, switchSession(id, nextToken) { customer = id; token = nextToken; } };
@@ -34,14 +34,14 @@ test('readiness and error responses from an old customer or rotated token cannot
   for (const next of [['b', 'token-b'], ['a', 'token-new'], [null, null]]) {
     const old = deferred(), env = setup({ refreshESignReadiness: () => old.promise }); const query = env.p.refreshIdentity();
     env.switchSession(...next); const snapshot = structuredClone(env.p.data); old.resolve(verified); await query;
-    assert.deepEqual(env.p.data, snapshot);
+    assert.deepEqual(structuredClone(env.p.data), snapshot);
   }
 });
 test('unloaded settings ignores delayed identity and full-page responses', async () => {
   for (const action of ['refreshIdentity', 'refresh']) {
     const old = deferred(), env = setup(action === 'refresh' ? { getLoginDocuments: () => old.promise } : { refreshESignReadiness: () => old.promise });
     const query = env.p[action](); env.p.onUnload(); const snapshot = structuredClone(env.p.data); old.resolve(action === 'refresh' ? docs : verified); await query;
-    assert.deepEqual(env.p.data, snapshot);
+    assert.deepEqual(structuredClone(env.p.data), snapshot);
   }
 });
 test('a stale full-page refresh cannot overwrite a newer session profile or readiness', async () => {

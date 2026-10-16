@@ -6,7 +6,7 @@
     <view wx:if="{{error}}" class="notice" role="alert">{{error}}</view>
     <view class="card"><view class="section-title">当前服务端结果</view><view class="tag">{{status === 'SIGNED' ? '双方签署已归档' : status === 'VERIFIED' ? '实名与证书已就绪' : status === 'PENDING' ? '处理中，待确认' : '结果待核实'}}</view><view wx:if="{{message}}" class="notice">{{message}}</view><view wx:if="{{statusError}}" class="notice" role="alert">{{statusError}}</view><button class="secondary" bindtap="refreshStatus" disabled="{{busy}}">查询最新结果</button></view>
     <view wx:if="{{!enabled}}" class="notice">小程序内实名与签署暂未启用，已有结果仍可查询；请联系运营。</view>
-    <view wx:elif="{{status !== 'SIGNED' && status !== 'VERIFIED'}}" class="card"><view class="muted">页面已关闭或入口已过期时，请主动重新进入当前流程。不会自动提交资料或新建签署。</view><button class="primary" bindtap="retry" disabled="{{busy}}" loading="{{busy}}">{{kind === 'identity' ? '返回账户重新核对实名资料' : '重新进入本记录签署'}}</button></view>
+    <view wx:elif="{{status !== 'SIGNED' && status !== 'VERIFIED' && !technicalStopped}}" class="card"><view class="muted">页面已关闭或入口已过期时，请主动重新进入当前流程。不会自动提交资料或新建签署。</view><button class="primary" bindtap="retry" disabled="{{busy}}" loading="{{busy}}">{{kind === 'identity' ? '返回账户重新核对实名资料' : kind === 'technical-acceptance' ? '返回验证文件重新核对' : '重新进入本记录签署'}}</button></view>
     <button class="text-button" bindtap="back">返回原业务记录</button>
   </block>
 </view>

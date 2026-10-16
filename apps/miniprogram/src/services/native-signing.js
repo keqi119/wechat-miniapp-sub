@@ -1,5 +1,5 @@
 const policy = require('./native-signing-policy');
-const KINDS = { identity: '实名与证书准备', contract: '主合同签署', handover: '交接单签署', 'order-change': '订阅变更补充协议签署' };
+const KINDS = { identity: '实名与证书准备', contract: '主合同签署', handover: '交接单签署', 'order-change': '订阅变更补充协议签署', 'technical-acceptance': '电子签署流程验证确认书' };
 const TTL = 10 * 60 * 1000;
 function createNativeSigningApi({ call, native, identifier, error, getContext, sessionKey = () => null, getSignStatus, platform, pendingKey }) {
   const tasks = new Map(), running = new Map(), flowVersions = new Map(); let generation = 0;
@@ -43,7 +43,7 @@ function createNativeSigningApi({ call, native, identifier, error, getContext, s
     const stamp = snapshot(kind, id);
     if (kind === 'identity') throw error('请从账户设置明确同意后发起实名。', 'SIGN_CONTEXT');
     const key = keyOf(kind, id), lease = {}; if (running.has(key)) throw error('签署页面正在准备，请勿重复点击。', 'SIGN_BUSY'); running.set(key, lease);
-    try { const config = await enabled(); assertCurrent(stamp); const route = kind === 'handover' ? 'handovers' : kind === 'order-change' ? 'order-changes' : 'contracts'; const result = await call('POST', '/customer/' + route + '/' + identifier(id) + '/sign', body); assertCurrent(stamp); return await enter(kind, id, result, config, stamp); }
+    try { const config = await enabled(); assertCurrent(stamp); const route = kind === 'handover' ? 'handovers' : kind === 'order-change' ? 'order-changes' : kind === 'technical-acceptance' ? 'technical-acceptances' : 'contracts'; const result = await call('POST', '/customer/' + route + '/' + identifier(id) + '/sign', body); assertCurrent(stamp); return await enter(kind, id, result, config, stamp); }
     finally { if (running.get(key) === lease) running.delete(key); }
   }
   async function startESignVerification(input) {
@@ -64,7 +64,7 @@ function createNativeSigningApi({ call, native, identifier, error, getContext, s
   async function resumeSigning() {
     purgeLegacySigningCache(); const value = platform.getStorageSync?.(pendingKey); if (!value || !getContext().authenticated) return null;
     const stamp = snapshot(value.kind, value.id); const result = await getSignStatus(value.id, value.kind); assertCurrent(stamp);
-    if (['SIGNED', 'VERIFIED', 'REJECTED', 'EXPIRED'].includes(result.status)) forgetSigningTask(value.kind, value.id);
+    if (['SIGNED', 'VERIFIED', 'REJECTED', 'EXPIRED', 'CLOSED'].includes(result.status) || value.kind === 'technical-acceptance' && !result.enabled) forgetSigningTask(value.kind, value.id);
     return result;
   }
   function forgetSigningTask(kind, id) { context(kind, id); const key = keyOf(kind, id); flowVersions.set(key, (flowVersions.get(key) || 0) + 1); tasks.delete(key); const pending = platform.getStorageSync?.(pendingKey); if (pending?.kind === kind && pending.id === id) platform.removeStorageSync(pendingKey); }

@@ -15,7 +15,8 @@
     "pages/handover/index",
     "pages/settings/index",
     "pages/legal/index",
-    "pages/sign/index"
+    "pages/sign/index",
+    "pages/technical-acceptance/index"
   ],
   "subPackages": [{ "root": "pagesFace", "name": "pagesFace", "pages": ["pages/middle/middle"] }],
   "window": {

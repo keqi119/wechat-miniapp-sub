@@ -1,0 +1,5 @@
+.technical-body { display: block; white-space: pre-wrap; font-size: 28rpx; line-height: 1.9; margin: 28rpx 0; color: #575a52; }
+.technical-hash { display: block; word-break: break-all; font-size: 23rpx; line-height: 1.7; color: #686b65; }
+.hash-label { font-size: 25rpx; margin-top: 24rpx; }
+.setting-heading { margin-top: 32rpx; }
+.card { margin: 24rpx 0; }

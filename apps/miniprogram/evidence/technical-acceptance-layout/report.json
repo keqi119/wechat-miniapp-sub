@@ -1,0 +1,141 @@
+{
+  "generatedAt": "2026-10-16T14:23:28.834Z",
+  "scope": "Offline actual-wcc synthetic account and resolved approved template display only; no real customer/API/DB/channel/SDK/QR/preview/upload. Hashes and file IDs are synthetic.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "technical-unchecked-full-text",
+      "text": "本人逐份确认",
+      "confirm": false,
+      "overflow": false,
+      "screenshot": "technical-unchecked-full-text.png",
+      "passed": true
+    },
+    {
+      "name": "technical-read-without-data-consent",
+      "read": true,
+      "text": "本次必要信息处理",
+      "confirm": false,
+      "overflow": false,
+      "screenshot": "technical-read-without-data-consent.png",
+      "passed": true
+    },
+    {
+      "name": "technical-both-explicit-choices",
+      "read": true,
+      "accepted": true,
+      "text": "本次必要信息处理",
+      "confirm": true,
+      "overflow": false,
+      "screenshot": "technical-both-explicit-choices.png",
+      "passed": true
+    },
+    {
+      "name": "technical-awaiting-independent-approval",
+      "text": "本人确认已记录",
+      "sign": false,
+      "overflow": false,
+      "screenshot": "technical-awaiting-independent-approval.png",
+      "passed": true
+    },
+    {
+      "name": "technical-ready-to-sign",
+      "text": "进入本人签署",
+      "sign": true,
+      "overflow": false,
+      "screenshot": "technical-ready-to-sign.png",
+      "passed": true
+    },
+    {
+      "name": "technical-partial-pending",
+      "text": "签署处理中，尚未完成归档",
+      "sign": false,
+      "overflow": false,
+      "screenshot": "technical-partial-pending.png",
+      "passed": true
+    },
+    {
+      "name": "technical-signed-archived",
+      "text": "本份双方真实签署已核验并归档",
+      "sign": false,
+      "overflow": false,
+      "screenshot": "technical-signed-archived.png",
+      "passed": true
+    },
+    {
+      "name": "technical-stopped-channel-pending",
+      "text": "不能据此认定供应商在途任务已撤销",
+      "sign": false,
+      "overflow": false,
+      "screenshot": "technical-stopped-channel-pending.png",
+      "passed": true
+    },
+    {
+      "name": "technical-stopped-late-archive",
+      "text": "本份双方真实签署已核验并归档",
+      "sign": false,
+      "overflow": false,
+      "screenshot": "technical-stopped-late-archive.png",
+      "passed": true
+    },
+    {
+      "name": "technical-signing-disabled-confirm-allowed",
+      "text": "暂未开放实际签署",
+      "confirm": false,
+      "sign": false,
+      "overflow": false,
+      "screenshot": "technical-signing-disabled-confirm-allowed.png",
+      "passed": true
+    },
+    {
+      "name": "technical-general-consent-update",
+      "text": "前往账户设置阅读当前协议",
+      "confirm": false,
+      "overflow": false,
+      "screenshot": "technical-general-consent-update.png",
+      "passed": true
+    },
+    {
+      "name": "technical-purged-read-only",
+      "text": "独立验证资料已清理",
+      "confirm": false,
+      "sign": false,
+      "overflow": false,
+      "screenshot": "technical-purged-read-only.png",
+      "passed": true
+    },
+    {
+      "name": "technical-purged-historical-signed",
+      "text": "历史记录保留双方签署事实",
+      "confirm": false,
+      "sign": false,
+      "overflow": false,
+      "screenshot": "technical-purged-historical-signed.png",
+      "passed": true
+    },
+    {
+      "name": "technical-settings-assigned",
+      "route": "settings",
+      "assigned": true,
+      "text": "查看本份全文与真实签署结果",
+      "overflow": false,
+      "screenshot": "technical-settings-assigned.png",
+      "passed": true
+    },
+    {
+      "name": "technical-settings-none",
+      "route": "settings",
+      "assigned": false,
+      "text": "电子签署实名准备",
+      "overflow": false,
+      "screenshot": "technical-settings-none.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

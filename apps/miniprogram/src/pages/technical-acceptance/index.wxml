@@ -1,0 +1,24 @@
+<view class="page">
+  <view class="eyebrow">SIGNING VERIFICATION / 独立流程验证</view><view class="title">电子签署流程验证</view>
+  <view class="notice">本次仅验证真实电子签署。不订阅车辆，不产生租赁、订阅费、押金、交车义务或自动扣款授权。</view>
+  <view wx:if="{{loading}}" class="empty">正在读取本人文件…</view><view wx:if="{{error}}" class="notice" role="alert">{{error}}</view><view wx:if="{{message}}" class="notice" role="status">{{message}}</view>
+  <view wx:if="{{consentUpdateRequired}}" class="card"><view class="section-title">请先核对当前账户协议</view><view class="notice">一般用户协议与隐私政策需更新。请阅读后自行选择同意，再返回本份文件重新阅读及单独授权；不需要重复实名，本次授权不会静默代替一般协议同意。</view><button class="secondary" bindtap="openSettings" disabled="{{busy}}">前往账户设置阅读当前协议</button></view>
+  <block wx:if="{{record}}">
+    <view class="card"><view class="section-title">{{record.title}}</view><view class="tag">{{record.statusText}}</view><view class="muted small">验证编号 {{record.verificationNo}} · 当前修订 {{record.revision}}</view><view wx:if="{{record.statusMessage}}" class="notice">{{record.statusMessage}}</view>
+      <view wx:if="{{record.signatureCompleted}}" class="notice">本份双方真实签署已核验并归档。这不表示整套系统、车辆交付或商业服务验收通过。</view>
+      <view wx:if="{{record.status === 'PURGED' && record.signatureStatus === 'SIGNED'}}" class="notice">历史记录保留双方签署事实；本验证独立文件已清理，当前不可下载，不否认此前已完成的签署。</view>
+      <view wx:if="{{record.stoppedAt}}" class="notice">已于 {{record.stoppedAtText}} 停止后续验证。不能据此认定供应商在途任务已撤销；已经发生或迟到的签署事实仍按实际记录。</view>
+      <view wx:if="{{record.confirmedAt}}" class="muted">本人确认已记录：{{record.confirmedAtText}}</view><view wx:if="{{!record.enabled}}" class="notice">本份技术验证暂未开放实际签署；如允许确认，可先核对全文及独立同意，已有记录仍可读取。</view>
+      <view wx:for="{{record.blockers}}" wx:key="*this" class="muted small">{{item}}</view>
+    </view>
+    <view wx:if="{{record.document}}" class="card"><view class="section-title">本份填妥文件全文</view><view class="muted">文案版本 {{record.document.version}}</view><text class="technical-body" user-select="true">{{record.document.content}}</text>
+      <view class="hash-label">模板摘要</view><text class="technical-hash" user-select="true">{{record.document.templateHash}}</text><view class="hash-label">本人正文摘要</view><text class="technical-hash" user-select="true">{{record.document.bodyHash}}</text><view class="hash-label">本份文件摘要</view><text class="technical-hash" user-select="true">{{record.document.documentHash}}</text><view class="hash-label">冻结PDF文件 SHA256</view><text class="technical-hash" user-select="true">{{record.document.sourcePdfHash || '尚未取得，不可确认或签署'}}</text>
+      <button wx:if="{{record.sourceFileId}}" class="secondary" data-id="{{record.sourceFileId}}" bindtap="openFile" disabled="{{busy}}">查看 / 下载本份冻结PDF</button>
+    </view>
+    <view wx:if="{{record.canConfirm}}" class="card"><view class="section-title">本人逐份确认</view><checkbox-group bindchange="onDocumentRead"><label class="consent-row"><checkbox value="read" checked="{{documentRead}}" disabled="{{busy}}" color="#252723"/><text>我已完整阅读以上填妥文件，核对本验证编号、版本及正文及文件摘要，愿意参与本次无租赁、无收费验证。此确认不等于本人已签署。</text></label></checkbox-group>
+      <view class="section-title setting-heading">本次必要信息处理</view><text class="technical-body">{{record.disclosure.text}}</text><view class="muted small">告知版本 {{record.disclosure.version}} · 隐私政策版本 {{record.disclosure.privacyVersion}}</view><checkbox-group bindchange="onDataConsent"><label class="consent-row"><checkbox value="data" checked="{{dataAccepted}}" disabled="{{busy}}" color="#252723"/><text>我已单独阅读上述具体信息范围、用途及保存规则，同意本份验证所需的处理和向法大大提供。此前登录或实名同意不代替本次选择；可以停止参与。</text></label></checkbox-group><button class="primary" bindtap="confirmDocument" disabled="{{busy || !documentRead || !dataAccepted}}" loading="{{busy}}">确认本份文件及单独同意</button>
+    </view>
+    <view class="card"><view class="section-title">签署与真实结果</view><view class="muted">本人明确点击后才进入签署；企业用印须本份文件有效双人复核。页面打开、返回或单方签署不能视为双方签署与归档完成。</view><button wx:if="{{record.canSign}}" class="primary" bindtap="signDocument" disabled="{{busy}}" loading="{{busy}}">进入本人签署</button><button wx:if="{{record.canSync}}" class="secondary" bindtap="syncSignature" disabled="{{busy}}" loading="{{busy}}">主动核验双方签署与归档</button><button class="secondary" bindtap="reload" disabled="{{busy}}">读取已有状态</button><button wx:if="{{record.signedFileId}}" class="secondary" data-id="{{record.signedFileId}}" bindtap="openFile" disabled="{{busy}}">查看 / 下载本份签后文件</button><button wx:if="{{record.canStop}}" class="text-button" bindtap="stopParticipation" disabled="{{busy}}">停止参与后续验证</button></view>
+  </block>
+  <button class="secondary" bindtap="openSettings">返回账户设置</button>
+</view>
