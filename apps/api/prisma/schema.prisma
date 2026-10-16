@@ -195,6 +195,10 @@ model ModelDefinition {
  vehicles Vehicle[]
 }
 model Vehicle {
+ holdId String? @unique
+ vin String?
+ plateNumber String?
+ assignments VehicleAssignment[]
  id String @id @default(cuid())
  modelDefinitionId String?
  modelDefinition ModelDefinition? @relation(fields:[modelDefinitionId],references:[id])
@@ -361,6 +365,8 @@ model CreditVerification {
  @@unique([applicationId,revision])
 }
 model Order {
+ currentAssignmentId String? @unique
+ assignments VehicleAssignment[]
  revision Int @default(0)
  effectiveTermsVersionId String?
  changes OrderChange[]
@@ -477,6 +483,9 @@ model DepositEntry {
  @@unique([refundId,type])
 }
 model Handover {
+ vehicleId String?
+ assignmentId String?
+ changeId String?
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
@@ -518,6 +527,8 @@ model CustomerConsent {
  @@index([customerId,type])
 }
 model Mileage {
+ segmentId String?
+ assignmentId String?
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
@@ -578,6 +589,7 @@ model UsageAccount {
  settlement ReturnSettlement?
 }
 model UsagePeriod {
+ segments UsageSegment[]
  id String @id @default(cuid())
  accountId String
  account UsageAccount @relation(fields:[accountId],references:[id])
@@ -842,6 +854,7 @@ model FadadaTask {
 }
 
 enum OrderChangeStatus {
+ SWAP_RETURNED
  DRAFT
  REVIEW_PENDING
  REVIEWED
@@ -862,6 +875,10 @@ enum DelayQuoteStatus {
  SUPERSEDED
 }
 model OrderChange {
+ targetVehicleId String?
+ returnHandoverId String?
+ deliveryHandoverId String?
+ actualCompletedAt DateTime?
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
@@ -946,4 +963,112 @@ model OrderTermsVersion {
  effectiveAt DateTime
  createdAt DateTime @default(now())
  @@unique([orderId,version])
+}
+
+enum AssignmentStatus {
+ ACTIVE
+ CLOSED
+}
+enum SegmentStatus {
+ OPEN
+ REVIEW_PENDING
+ READY
+ FROZEN
+}
+enum HoldStatus {
+ HELD
+ RELEASED
+ CONSUMED
+}
+enum SwapCreditSource {
+ FREE
+ PAID
+}
+enum SwapReservationStatus {
+ RESERVED
+ RELEASED
+ CONSUMED
+}
+model VehicleAssignment {
+ id String @id @default(cuid())
+ orderId String
+ order Order @relation(fields:[orderId],references:[id])
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id])
+ customerId String
+ changeId String?
+ deliveryHandoverId String? @unique
+ returnHandoverId String? @unique
+ startAt DateTime
+ endAt DateTime?
+ startReadingKm Int
+ endReadingKm Int?
+ status AssignmentStatus @default(ACTIVE)
+ createdAt DateTime @default(now())
+ segments UsageSegment[]
+ @@index([orderId,startAt])
+}
+model UsageSegment {
+ id String @id @default(cuid())
+ periodId String
+ period UsagePeriod @relation(fields:[periodId],references:[id])
+ assignmentId String
+ assignment VehicleAssignment @relation(fields:[assignmentId],references:[id])
+ vehicleId String
+ startAt DateTime
+ endAt DateTime?
+ startReadingKm Int?
+ endReadingKm Int?
+ readingId String?
+ endHandoverId String?
+ status SegmentStatus @default(OPEN)
+ revision Int @default(0)
+ frozenHash String?
+ createdAt DateTime @default(now())
+ @@unique([periodId,assignmentId])
+}
+model VehicleHold {
+ id String @id @default(cuid())
+ vehicleId String
+ orderId String
+ changeId String
+ quoteId String
+ status HoldStatus @default(HELD)
+ expiresAt DateTime
+ createdAt DateTime @default(now())
+ releasedAt DateTime?
+ @@index([changeId,status])
+}
+model SwapCredit {
+ id String @id @default(cuid())
+ orderId String
+ source SwapCreditSource
+ cycleSequence Int?
+ sourcePaymentId String? @unique
+ consumedChangeId String? @unique
+ createdAt DateTime @default(now())
+ reservations SwapReservation[]
+ @@unique([orderId,cycleSequence])
+}
+model SwapReservation {
+ id String @id @default(cuid())
+ orderId String
+ changeId String
+ creditId String
+ credit SwapCredit @relation(fields:[creditId],references:[id])
+ status SwapReservationStatus @default(RESERVED)
+ createdAt DateTime @default(now())
+ @@index([changeId,status])
+}
+model SwapLedger {
+ id String @id @default(cuid())
+ orderId String
+ changeId String
+ creditId String
+ source SwapCreditSource
+ cycleSequence Int?
+ type String
+ sourceKey String @unique
+ actualAt DateTime?
+ recordedAt DateTime @default(now())
 }

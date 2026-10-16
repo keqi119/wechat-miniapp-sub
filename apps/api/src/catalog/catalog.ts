@@ -5,7 +5,7 @@ import { fen, pagination } from '../common/data';
 export function vehicleView(v: any) {
   const prices = (v.plans || []).filter((p: any) => p.active).map((p: any) => p.monthlyFeeAmount);
   const minFeeAmount = prices.length ? Math.min(...prices) : null;
-  return { ...v, name: v.title, registrationText: `${v.year} 年上牌`, mileageText: `${v.mileageKm.toLocaleString('zh-CN')} km`, rangeText: '', bodyType: v.modelDefinition?.bodyType || '', available: v.status === 'PUBLISHED' && !v.reservedOrderId && !!prices.length, statusText: v.status === 'PUBLISHED' && !v.reservedOrderId ? '可申请' : '暂不可申请', imageUrl: v.coverFileId ? `/api/public/media/${v.coverFileId}` : '', minFeeAmount, minFeeText: fen(minFeeAmount), tagline: v.description };
+  return { ...v, name: v.title, registrationText: `${v.year} 年上牌`, mileageText: `${v.mileageKm.toLocaleString('zh-CN')} km`, rangeText: '', bodyType: v.modelDefinition?.bodyType || '', available: v.status === 'PUBLISHED' && !v.reservedOrderId&&!v.holdId && !!prices.length, statusText: v.status === 'PUBLISHED' && !v.reservedOrderId&&!v.holdId ? '可申请' : '暂不可申请', imageUrl: v.coverFileId ? `/api/public/media/${v.coverFileId}` : '', minFeeAmount, minFeeText: fen(minFeeAmount), tagline: v.description };
 }
 export function planView(p: any, available = true) { return { ...p, title: p.name, termMonths: p.months, monthlyFeeText: fen(p.monthlyFeeAmount), mileageText: `每月 ${p.mileagePerMonthKm} 公里`, energyText: p.energyDescription, depositText: '审核后确认', notes: p.conditions, available: available && p.active }; }
 @Controller('public')

@@ -1,0 +1,14 @@
+import {swapAccountView} from './account';
+import {Inject,Injectable} from '@nestjs/common';
+import {Db} from '../common/db';
+import {ensure} from '../common/errors';
+import {audit,hash} from '../common/data';
+import {financialContext,lockOrder,terminal} from '../order-changes/context';
+import {USAGE_CLOCK} from '../usage/rules';
+@Injectable()
+export class VehicleChangesService {
+ constructor(@Inject(Db)readonly db:Db,@Inject(USAGE_CLOCK)readonly clock:()=>Date){}
+ async account(tx:any,orderId:string,customerId?:string){return swapAccountView(tx,orderId,this.clock(),customerId);}
+ async context(tx:any,id:string){const a=await this.account(tx,id),order=await tx.order.findUniqueOrThrow({where:{id}}),f=await financialContext(tx,order),active=await tx.orderChange.findFirst({where:{orderId:id,status:{notIn:terminal}}});return{orderId:id,orderRevision:order.revision,priorTermsHash:hash(f.terms),startDate:a.startedOn,endDate:a.endDate,months:f.terms.months,depositAmount:f.terms.depositAmount,periods:f.rows.map(({payments,sourceBillIds,...r}:any)=>r),currentAssignment:a.currentAssignment,swapAccount:a,canCreate:a.canRequest&&!f.blockers.length,activeChangeId:active?.id??null,blockers:[...a.blockers,...f.blockers],capabilityNote:'先归还旧车，再交付新车；原期限、里程月和里程包不重置。本次应退、押金调整、交接费用及交付所在期应收核清后交旧车。'};}
+ async create(orderId:string,input:any,actor?:any,customerId?:string){return this.db.serial(async tx=>{const order=await tx.order.findFirst({where:{id:orderId,...(customerId?{customerId}:{})}});ensure(order,404,'NOT_FOUND','订单不存在');await lockOrder(tx,orderId);const old=await tx.orderChange.findUnique({where:{orderId_idempotencyKey:{orderId,idempotencyKey:input.idempotencyKey}}});if(old){ensure(old.kind==='VEHICLE_CHANGE'&&old.requestHash===hash(input)&&old.createdBy===(actor?.id||customerId),409,'IDEMPOTENCY_CONFLICT','请求编号已用于其他内容');return{id:old.id,kind:old.kind,status:old.status,revision:old.revision};}const context=await this.context(tx,orderId);ensure(context.canCreate,409,'CHANGE_BLOCKED',context.blockers.join('；'));if(actor)ensure(order.revision===input.expectedOrderRevision&&context.priorTermsHash===input.priorTermsHash,409,'VERSION_CONFLICT','订单条款已更新');const contract=await tx.contract.findFirst({where:{orderId,kind:'SUBSCRIPTION',status:'SIGNED'}});ensure(contract,409,'SIGNATURE_REQUIRED','主合同尚未签署');const f=await financialContext(tx,order);const c=await tx.orderChange.create({data:{orderId,customerId:order.customerId,kind:'VEHICLE_CHANGE',priorTermsHash:context.priorTermsHash,priorTerms:f.terms,originalContractId:contract.id,reason:input.reason,createdBy:actor?.id||customerId,idempotencyKey:input.idempotencyKey,requestHash:hash(input)}});await audit(tx,actor?.id||customerId,'VEHICLE_CHANGE_REQUEST','order-changes',c.id,{},actor?'ADMIN':'CUSTOMER');return{id:c.id,kind:c.kind,status:c.status,revision:c.revision};});}
+}

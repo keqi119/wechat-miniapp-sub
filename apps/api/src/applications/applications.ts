@@ -24,7 +24,7 @@ export class ApplicationsController {
     const operation = () => this.db.serial(async tx => {
       const existing = await tx.application.findUnique({ where: { customerId_idempotencyKey: { customerId, idempotencyKey: input.idempotencyKey } }, include: applicationInclude });
       if (existing) { ensure(existing.requestHash === requestHash, 409, 'IDEMPOTENCY_CONFLICT', '相同请求编号不可修改内容'); return applicationView(existing); }
-      const vehicle = await tx.vehicle.findUnique({ where: { id: input.vehicleId } }); ensure(vehicle?.status === 'PUBLISHED' && !vehicle.reservedOrderId, 409, 'VEHICLE_UNAVAILABLE', '车辆当前不可申请');
+      const vehicle = await tx.vehicle.findUnique({ where: { id: input.vehicleId } }); ensure(vehicle?.status === 'PUBLISHED' && !vehicle.reservedOrderId&&!vehicle.holdId, 409, 'VEHICLE_UNAVAILABLE', '车辆当前不可申请');
       const plan = await tx.subscriptionPlan.findFirst({ where: { id: input.subscriptionPlanId, vehicleId: input.vehicleId, active: true } }); ensure(plan, 409, 'PLAN_UNAVAILABLE', '套餐不可用');
       await requireCurrentConsents(tx, customerId, ['terms','privacy']);
       await acceptConsents(tx, customerId, input.consents, ['application'], 'APPLICATION');
@@ -86,7 +86,7 @@ export class ApplicationsController {
       ensure(final.creditRevision===app.creditRevision&&final.creditRuleVersion===CREDIT_RULE&&final.creditBand===credit.verification.band&&final.depositAmount===final.monthlyFeeAmount*credit.multiplier,409,'CREDIT_REVIEW_REQUIRED','核验或押金规则已更新，请重新确认最终方案');
       ensure(commercialTermsInput.safeParse(final.commercialTerms).success, 409, 'COMMERCIAL_TERMS_REQUIRED', '最终方案条款不完整，请后台重新出具完整方案');
       usagePolicyAppendix(final.usagePolicy);
-      const claim = await tx.vehicle.updateMany({ where: { id: app.vehicleId, reservedOrderId: null, status: 'PUBLISHED' }, data: { status: 'RESERVED' } }); ensure(claim.count === 1, 409, 'VEHICLE_UNAVAILABLE', '该车已被其他订单占用');
+      const claim = await tx.vehicle.updateMany({ where: { id: app.vehicleId, reservedOrderId: null, holdId:null, status: 'PUBLISHED' }, data: { status: 'RESERVED' } }); ensure(claim.count === 1, 409, 'VEHICLE_UNAVAILABLE', '该车已被其他订单占用');
       const order = await tx.order.create({ data: { applicationId: id, customerId: request.customer.id, vehicleId: app.vehicleId, confirmedMileageKm: app.vehicle.mileageKm, finalPlanSnapshot: JSON.parse(JSON.stringify(final)) } });
       await tx.vehicle.update({ where: { id: app.vehicleId }, data: { reservedOrderId: order.id } });
       await tx.application.update({ where: { id }, data: { status: 'FINAL_PLAN_CONFIRMED' } });

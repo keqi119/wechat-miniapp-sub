@@ -39,7 +39,7 @@ export class H5RecordsService{
   if(!readiness.readyForSigning)blockers.push('请先完成实名和签署资格核验');
   if(!artifact.sourceFile||!artifact.approval||!artifact.approval.approvedAt||!artifact.approval.approverId||artifact.approval.requesterId===artifact.approval.approverId||artifact.approval.expiresAt<=new Date())blockers.push('请等待运营准备文档及企业签章审批');
   if(!this.settings.enabled||!this.settings.signingEnabled||providerHosts().length===0)blockers.push('签约服务暂未开放');
-  const result:any={kind,id,orderId:item.orderId,title:kind==='HANDOVER'?'车辆交接确认单':kind==='AMENDMENT'?'延期交车补充协议':'汽车订阅服务合同',status,createdAt:item.createdAt,canSign:blockers.length===0,canSync:Boolean(item.providerTaskId||artifact.task||status==='PENDING'),...(artifact.sourceFile?{sourceFileId:artifact.sourceFile.id}:{}),...(status==='SIGNED'&&artifact.signedFile?{signedFileId:artifact.signedFile.id}:{})};
+  const result:any={kind,id,orderId:item.orderId,title:kind==='HANDOVER'?'车辆交接确认单':kind==='AMENDMENT'?(change?.kind==='VEHICLE_CHANGE'?'车辆更换补充协议':'延期交车补充协议'):'汽车订阅服务合同',status,createdAt:item.createdAt,canSign:blockers.length===0,canSync:Boolean(item.providerTaskId||artifact.task||status==='PENDING'),...(artifact.sourceFile?{sourceFileId:artifact.sourceFile.id}:{}),...(status==='SIGNED'&&artifact.signedFile?{signedFileId:artifact.signedFile.id}:{})};
   if(detail)Object.assign(result,{documentHash:hash,readiness,blockers,...(change?{revision:change.revision}:{}),...(kind==='HANDOVER'?{actualAt:(item as any).actualAt}:{}),...(artifact.sourceFile&&kind!=='HANDOVER'?{body:(item as any).body}:{})});
   return result;
  }

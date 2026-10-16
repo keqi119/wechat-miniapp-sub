@@ -30,7 +30,7 @@ async function fixture(status: any='AWAITING_HANDOVER') {
   if(status==='ACTIVE')await db.serial(tx=>initializeUsage(tx,order,{actualAt:new Date(),readingKm:100}));
   return {customer,vehicle,plan,application,order,request:{customer}};
 }
-async function handover(f:any,type='DELIVERY',status:any='CUSTOMER_CONFIRMED') {return db.handover.create({data:{orderId:f.order.id,customerId:f.customer.id,type,actualAt:new Date(),readingKm:100,fileIds:[],checklist:[{label:'检查',value:'已核对'}],manifestHash:`manifest-${f.order.id}`,status,signatureStatus:'SIGNED',customerResponse:'CONFIRM'}});}
+async function handover(f:any,type='DELIVERY',status:any='CUSTOMER_CONFIRMED') {return db.handover.create({data:{orderId:f.order.id,customerId:f.customer.id,vehicleId:f.vehicle.id,assignmentId:(await db.order.findUniqueOrThrow({where:{id:f.order.id}})).currentAssignmentId,type,actualAt:new Date(),readingKm:100,fileIds:[],checklist:[{label:'检查',value:'已核对'}],manifestHash:`manifest-${f.order.id}`,status,signatureStatus:'SIGNED',customerResponse:'CONFIRM'}});}
 test('stale signed delivery cannot reactivate completed order, steal reservation or lower odometer',async()=>{
   const f=await fixture('COMPLETED');const h=await handover(f);
   await db.vehicle.update({where:{id:f.vehicle.id},data:{reservedOrderId:`another-${f.order.id}`,status:'IN_USE',mileageKm:500}});

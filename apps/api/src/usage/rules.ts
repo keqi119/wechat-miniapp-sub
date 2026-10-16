@@ -11,7 +11,7 @@ export function periods(start:string,months:number){
   const boundary=(index:number)=>{const last=new Date(Date.UTC(origin.getUTCFullYear(),origin.getUTCMonth()+index+1,0));return new Date(Date.UTC(last.getUTCFullYear(),last.getUTCMonth(),Math.min(origin.getUTCDate(),last.getUTCDate())));};
   return Array.from({length:months},(_,i)=>({sequence:i+1,startDate:boundary(i),endDate:boundary(i+1),effectiveEndDate:boundary(i+1)}));
 }
-export async function lockAccount(tx:any,orderId:string){const account=await tx.usageAccount.findUnique({where:{orderId}});ensure(account,409,'USAGE_NOT_ACTIVE','请先完成符合已签日期的交车，建立月度用量账户');return tx.usageAccount.update({where:{id:account.id},data:{revision:{increment:1}}});}
+export async function lockAccount(tx:any,orderId:string){await tx.order.update({where:{id:orderId},data:{revision:{increment:1}}});const account=await tx.usageAccount.findUnique({where:{orderId}});ensure(account,409,'USAGE_NOT_ACTIVE','请先完成符合已签日期的交车，建立月度用量账户');return tx.usageAccount.update({where:{id:account.id},data:{revision:{increment:1}}});}
 export async function initializeUsage(tx:any,order:any,handover:any){
   const snapshot=await effectiveTerms(tx,order);
   ensure(handover.actualAt&&handover.actualAt<=new Date(Date.now()+300000),409,'HANDOVER_DATE_REQUIRED','交接须包含真实且非未来的交车时间');

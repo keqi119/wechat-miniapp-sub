@@ -1,3 +1,4 @@
+import {vehicleIdentity} from '../vehicle-changes/quotes';
 import {approvedTemplate} from '../contract/contract-template';
 import { hash } from '../common/data';
 import { ensure } from '../common/errors';
@@ -36,7 +37,8 @@ export async function publish(tx:any,change:any){
   ensure(change.status==='REVIEWED',409,'CHANGE_STATE','请先完成独立财务复核');
   const q=await tx.delayQuote.findUniqueOrThrow({where:{id:change.activeQuoteId}});
   ensure(new Date(q.snapshot.expiresAt)>new Date(),409,'QUOTE_EXPIRED','报价已过期，请重新报价及复核');
-  const legal=await tx.legalDocument.findFirst({where:{type:'delivery-delay-amendment',status:'PUBLISHED',confirmedAt:{not:null}},orderBy:{version:'desc'}});
+  const legal=await tx.legalDocument.findFirst({where:{type:change.kind==='VEHICLE_CHANGE'?'vehicle-change-amendment':'delivery-delay-amendment',status:'PUBLISHED',confirmedAt:{not:null}},orderBy:{version:'desc'}});
+  if(change.kind==='VEHICLE_CHANGE'){const target=await tx.vehicle.findUnique({where:{id:change.targetVehicleId}}),hold=target?.holdId?await tx.vehicleHold.findUnique({where:{id:target.holdId}}):null;ensure(hold?.changeId===change.id&&hold.quoteId===q.id&&hold.status==='HELD'&&vehicleIdentity(target)===q.snapshot.targetVehicleIdentification&&(target.vin||target.plateNumber),409,'VEHICLE_HOLD_MISMATCH','目标车辆身份或预留已变化，须重新报价');}
   ensure(legal,409,'LEGAL_UNAVAILABLE','延期补充协议尚未批准发布');approvedTemplate(legal);
   const account=await tx.eSignAccount.findUnique({where:{customerId:change.customerId}});
   ensure(accountReadiness(account).realNameStatus==='VERIFIED',409,'REALNAME_REQUIRED','请先核验客户现有实名资料再发布补充协议');

@@ -1,3 +1,4 @@
+import {closeAssignment} from '../vehicle-changes/handovers';
 import {serviceBillSequences} from '../order-changes/obligations';
 import { Prisma } from '@prisma/client';
 import { ensure } from '../common/errors';
@@ -8,10 +9,12 @@ export async function recordUsageReturn(tx:Prisma.TransactionClient,order:any,ha
   const a=await lockAccount(tx,order.id);ensure(!a.returnedOn&&handover.actualAt&&handover.actualAt<=new Date(Date.now()+300000),409,'RETURN_DATE_REQUIRED','须有真实归还时间且不可重复归还');
   const date=new Date(shanghaiDay(handover.actualAt));ensure(date>=a.startedOn,409,'RETURN_DATE_REQUIRED','归还时间不可早于交车');
   const periods=await tx.usagePeriod.findMany({where:{accountId:a.id},orderBy:{sequence:'asc'}});
-  ensure(periods.every(p=>p.endReadingKm===null||p.endReadingKm<=handover.readingKm),409,'RETURN_READING_CONFLICT','归还读数低于已核验月读数，请先更正未结算证据');
+  ensure(order.currentAssignmentId||periods.every(p=>p.endReadingKm===null||p.endReadingKm<=handover.readingKm),409,'RETURN_READING_CONFLICT','归还读数低于已核验月读数，请先更正未结算证据');
   const last=periods.find(p=>p.startDate<=date&&date<p.endDate)||periods.find(p=>p.endDate.getTime()===date.getTime());ensure(last,409,'RETURN_OUTSIDE_TERM','超出约定订阅期，须先人工确认续期与费用');
   ensure(last.status!=='SETTLED'&&periods.every(p=>p.sequence<=last.sequence||p.status==='OPEN'),409,'RETURN_PERIOD_CONFLICT','归还时间与已提交或结算的月份冲突');
-  await tx.usagePeriod.update({where:{id:last.id},data:{effectiveEndDate:date,status:'AWAITING_READING',readingId:null,endReadingKm:null,reviewNote:'请提交与归还交接相同读数的仪表照片',revision:{increment:1}}});
+  if(order.currentAssignmentId){const assignment=await tx.vehicleAssignment.findUniqueOrThrow({where:{id:order.currentAssignmentId}});ensure(handover.vehicleId===assignment.vehicleId&&handover.assignmentId===assignment.id,409,'VEHICLE_OWNERSHIP','归还交接不是当前车辆分配');await closeAssignment(tx,assignment,handover);}
+  const segmented=await tx.usageSegment.count({where:{periodId:last.id}}),ready=segmented>0&&await tx.usageSegment.count({where:{periodId:last.id,status:{not:'READY'}}})===0;
+  await tx.usagePeriod.update({where:{id:last.id},data:{effectiveEndDate:date,status:ready?'READY':'AWAITING_READING',readingId:null,endReadingKm:ready?handover.readingKm:null,reviewNote:'请提交与归还交接相同读数的仪表照片',revision:{increment:1}}});
   await tx.usagePeriod.updateMany({where:{accountId:a.id,sequence:{gt:last.sequence}},data:{status:'CANCELLED',revision:{increment:1}}});
   await tx.usageAccount.update({where:{id:a.id},data:{returnedOn:date,returnReadingKm:handover.readingKm,packStatus:'FROZEN'}});
   return tx.returnSettlement.create({data:{accountId:a.id,orderId:order.id,customerId:order.customerId,returnedOn:date}});
@@ -20,7 +23,7 @@ export async function returnView(tx:Prisma.TransactionClient,record:any,financia
   const a=await tx.usageAccount.findUniqueOrThrow({where:{id:record.accountId}}),periods=await tx.usagePeriod.findMany({where:{accountId:a.id,status:{notIn:['SETTLED','CANCELLED']}}});
   const bills=await tx.bill.findMany({where:{orderId:record.orderId},include:{payments:{include:{refunds:true}}},orderBy:[{type:'asc'},{sequence:'asc'}]});
   const pending=bills.some(b=>b.payments.some(p=>['CREATING','PENDING'].includes(p.status)||p.refunds.some(r=>['PENDING_APPROVAL','PROCESSING'].includes(r.status))));
-  const depositRefundRequiredAmount=bills.filter(b=>b.type==='DEPOSIT').reduce((n,b)=>n+b.paidAmount-b.payments.flatMap(p=>p.refunds).filter(r=>r.status==='SUCCEEDED').reduce((s,r)=>s+r.amount,0),0);
+  const depositRefundRequiredAmount=bills.filter(b=>['DEPOSIT','DEPOSIT_ADJUSTMENT'].includes(b.type)).reduce((n,b)=>n+b.paidAmount-b.payments.flatMap(p=>p.refunds).filter(r=>r.status==='SUCCEEDED').reduce((s,r)=>s+r.amount,0),0);
   const max=await tx.usagePeriod.aggregate({where:{accountId:a.id,status:{not:'CANCELLED'}},_max:{sequence:true}});
   const sequences=await serviceBillSequences(tx,record.orderId);const future=bills.filter(b=>(sequences.get(b.id)||0)>(max._max.sequence||0));
   const futureUnrefunded=future.some(b=>b.paidAmount>b.payments.flatMap(p=>p.refunds).filter(r=>r.status==='SUCCEEDED').reduce((s,r)=>s+r.amount,0));

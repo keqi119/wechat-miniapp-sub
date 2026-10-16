@@ -25,7 +25,7 @@ export class BillingService {
       if (event.status === 'SUCCEEDED') {
         ensure(event.providerRefundId, 409, 'REFUND_MISMATCH', '渠道退款单号缺失');
         await settlePackRefund(tx,refund);
-        if (refund.payment.bill.type === 'DEPOSIT') await tx.depositEntry.create({ data: { customerId: refund.customerId, orderId: refund.payment.bill.orderId, refundId, type: 'REFUND', amount: refund.amount } });
+        if (['DEPOSIT','DEPOSIT_ADJUSTMENT'].includes(refund.payment.bill.type)) await tx.depositEntry.create({ data: { customerId: refund.customerId, orderId: refund.payment.bill.orderId, refundId, type: 'REFUND', amount: refund.amount } });
       }
       await audit(tx, 'payment-provider', 'REFUND_STATUS', 'refunds', refundId, { status: event.status, amount: event.amount }, 'PROVIDER');
       return updated;
@@ -42,7 +42,7 @@ export class BillingService {
         ensure(payment.bill.status === 'PENDING' && payment.bill.paidAmount === 0 && payment.amount === payment.bill.amount, 409, 'BILL_CONFLICT', '账单已处理，请人工核对支付');
         await tx.bill.update({ where: { id: payment.billId }, data: { paidAmount: payment.amount, status: 'PAID' } });
         await grantPaidPack(tx,payment.bill,payment.id); await allocateDelayPayment(tx,payment);
-        if (payment.bill.type === 'DEPOSIT') await tx.depositEntry.create({ data: { customerId: payment.customerId, orderId: payment.bill.orderId, paymentId: payment.id, type: 'RECEIPT', amount: payment.amount } });
+        if (['DEPOSIT','DEPOSIT_ADJUSTMENT'].includes(payment.bill.type)) await tx.depositEntry.create({ data: { customerId: payment.customerId, orderId: payment.bill.orderId, paymentId: payment.id, type: 'RECEIPT', amount: payment.amount } });
         await notify(tx, payment.customerId, '付款已确认', '渠道已核验付款到账。', 'payments', payment.id);
       }
       const updated = await tx.payment.update({ where: { id: paymentId }, data: { status: event.status, ...(event.transactionId ? { providerTransactionId: event.transactionId } : {}) } });

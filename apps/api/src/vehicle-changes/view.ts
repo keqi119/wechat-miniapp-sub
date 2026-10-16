@@ -1,0 +1,10 @@
+import {assignmentView,currentAssignment} from './assignments';
+import {swapAccountView} from './account';
+export async function swapView(tx:any,change:any,quote:any,finance:any,operations:boolean,now:Date){
+ const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId}}),account=await tx.usageAccount.findUniqueOrThrow({where:{orderId:change.orderId}}),assignment=await currentAssignment(tx,order);
+ const original=quote?.snapshot.originalAssignmentId?await tx.vehicleAssignment.findUnique({where:{id:quote.snapshot.originalAssignmentId},include:{vehicle:true}}):assignment;
+ const target=change.targetVehicleId?await tx.vehicle.findUnique({where:{id:change.targetVehicleId}}):null,hold=target?.holdId?await tx.vehicleHold.findUnique({where:{id:target.holdId}}):null;
+ const handover=async(id:string|null)=>{if(!id)return null;const h=await tx.handover.findUnique({where:{id}});if(!h)return null;return{id:h.id,type:h.type,vehicleId:h.vehicleId,assignmentId:h.assignmentId,status:h.status,signatureStatus:h.signatureStatus,actualAt:h.actualAt,readingKm:h.readingKm,manifestHash:h.manifestHash,canComplete:operations&&h.status==='CUSTOMER_CONFIRMED'&&h.signatureStatus==='SIGNED'&&!finance.blockers.length};};
+ const returned=await handover(change.returnHandoverId),delivered=await handover(change.deliveryHandoverId);
+ return{currentAssignment:assignmentView(assignment),originalAssignment:assignmentView(original),targetVehicle:target?{id:target.id,title:target.title,vin:target.vin,plateNumber:target.plateNumber,mileageKm:target.mileageKm}:null,hold:hold?{id:hold.id,status:hold.status,expiresAt:hold.expiresAt}:null,swapAccount:await swapAccountView(tx,order.id,now),returnHandover:returned,deliveryHandover:delivered,actualCompletedAt:change.actualCompletedAt,recordedAt:change.appliedAt,canApply:false,canCreateReturn:operations&&change.status==='AWAITING_FINANCE'&&!finance.blockers.length&&!returned,canCreateDelivery:operations&&change.status==='SWAP_RETURNED'&&!finance.blockers.length&&!delivered,canComplete:!!delivered?.canComplete&&change.status==='SWAP_RETURNED'};
+}
