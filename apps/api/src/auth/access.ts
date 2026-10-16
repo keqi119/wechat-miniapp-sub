@@ -3,7 +3,8 @@ import { Db } from '../common/db';
 import { ensure, fail } from '../common/errors';
 import { tokenHash } from './auth.service';
 import {h5Access} from '../h5-sign/access';
-import {H5_ENTRY} from '../h5-sign/config';
+import {requireNativeSigning} from '../esign/native-signing';
+import {requireCurrentConsents} from './consents';
 export const resources = ['usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
 export function allowed(role: string, resource: string, write: boolean) {
   if (role === 'ADMIN') return true;
@@ -47,11 +48,12 @@ export class Access implements CanActivate {
       return true;
     }
     if (path.startsWith('/customer/')) {
+      context.switchToHttp().getResponse().setHeader('Cache-Control','no-store');
       const raw = /^Bearer ([^\s]+)$/.exec(request.headers.authorization || '')?.[1];
       ensure(raw, 401, 'UNAUTHENTICATED', '请先登录');
       const session = await this.db.customerSession.findUnique({ where: { id: tokenHash(raw) }, include: { customer: true } });
       ensure(session && session.expiresAt > new Date(), 401, 'SESSION_EXPIRED', '登录已过期');
-      if(request.method==='POST'&&/^\/customer\/(?:esign\/(?:register|verify|refresh)|(?:contracts|handovers|order-changes)\/[^/]+\/sign)$/i.test(path.replace(/\/+$/,'')))fail(409,'H5_SIGNING_REQUIRED',`请通过服务号签约中心完成实名与签署：${H5_ENTRY}`);
+      if(request.method==='POST'&&/^\/customer\/(?:esign\/(?:register|verify|refresh)|(?:contracts|handovers|order-changes)\/[^/]+\/sign)$/i.test(path.replace(/\/+$/,''))){requireNativeSigning();await requireCurrentConsents(this.db,session.customer.id,['terms','privacy']);}
       request.customer = session.customer; request.session = session;
       return true;
     }

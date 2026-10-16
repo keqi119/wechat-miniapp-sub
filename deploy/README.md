@@ -36,7 +36,7 @@ API 只绑定 `127.0.0.1:13101`，数据库不暴露主机端口。公网仅由 
 - 1 分钱渠道验收使用独立的 `WECHAT_PAY_VERIFICATION_ENABLED`（默认 `false`），以及 `WECHAT_PAY_VERIFICATION_NOTIFY_URL=https://mini-api.subauto.keybox.cloud/api/callbacks/wechat-pay-verification`。该入口仅允许 ADMIN 为指定既有客户建立授权记录，金额固定为人民币1分，客户仍须亲自确认微信付款；不会开启普通支付、创建租赁订单或修改正式报价。验收记录使用独立表及回调，成功后不得再次向同客户收取验收款。配置生成器保留本系统已明确设置的开关，忽略供应商输入中的启用值；不得沿用普通支付回调处理验收款。退款不在本轮入口中执行。
 - 法大大：`FADADA_BASE_URL`、`FADADA_ENV`、`FADADA_API_VERSION`、`FADADA_APP_ID`、`FADADA_APP_SECRET`、`FADADA_PLATFORM_CUSTOMER_ID`、`FADADA_PLATFORM_SIGNATURE_ID`；地址与账号支持的协议版本须核验。请求超时、签署链接数量与有效期分别为 `FADADA_REQUEST_TIMEOUT_MS`、`FADADA_SIGN_URL_QUANTITY`、`FADADA_SIGN_URL_VALIDITY_MINUTES`。
 - 法大大实际功能开关为 `FADADA_ENABLED`、`FADADA_ACCOUNT_REGISTER_ENABLED`、`FADADA_REALNAME_VERIFY_ENABLED`、`FADADA_SIGNING_ENABLED`，全部默认关闭。旧导入配置可能含 `FADADA_AUTO_SIGN_ENABLED`，但它不是当前签署开关；不得依赖它判断是否允许签章。
-- 法大大通知使用 `FADADA_SIGN_NOTIFY_URL`、`FADADA_VERIFY_NOTIFY_URL`，分别为新 API 的 `/api/callbacks/fadada-sign`、`/api/callbacks/fadada-identity`。`FADADA_SIGN_RETURN_URL`、`FADADA_VERIFY_RETURN_URL` 在本次发布固定为 `https://app.subauto.keybox.cloud/miniapp-sign/return/`，不沿用旧门户合同页；用户返回该页不等于业务已成功。
+- 法大大通知使用 `FADADA_SIGN_NOTIFY_URL`、`FADADA_VERIFY_NOTIFY_URL`，分别为新 API 的 `/api/callbacks/fadada-sign`、`/api/callbacks/fadada-identity`。`FADADA_SIGN_RETURN_URL`、`FADADA_VERIFY_RETURN_URL` 在原生主流程固定为 `https://mini-api.subauto.keybox.cloud/api/public/esign-return`（独立 H5 备用流程显式使用 `https://app.subauto.keybox.cloud/miniapp-sign/return/`），不沿用旧门户合同页；用户返回该页不等于业务已成功。
 
 ### 生成、路径转换与保留
 
@@ -64,14 +64,24 @@ Compose 将上传目录固定为 `/app/uploads` 并挂载项目 `uploads/`，将
 
 查 `releases/` 和 Docker 已保留的镜像，选定上一个已验证版本；将私有配置的 `API_IMAGE` / `BUILD_VERSION` 恢复为对应值，再运行 `activate-release.sh <旧版本>`。不得使用 `docker compose down -v`，不得删除 `chundian-prod-db`，不得对旧系统容器或目录执行清理。
 
-## 服务号 H5 独立签约路径
+## 服务号 H5 独立签约备用路径（默认关闭）
 
 构建 `pnpm --filter @chundian/signing-h5 build`，把产物放入同一已验证版本的 `releases/<版本>/signing-h5`。仅根页 `/miniapp-sign/`、返回页 `/miniapp-sign/return/`、静态 `assets/` 和专属 `api/` 路径可用；未知页面404，不回退旧 Next。新 API 实际命名空间 `/api/h5-sign/`，数据只在独立数据库。不要改旧服务号 OAuth、菜单或客户 Cookie。
 
 将四份 `nginx-signing-h5*.conf` 上传独立deploy目录；先以独立临时 Nginx 配置运行 `nginx -t`，不能直接覆盖旧host。新API及静态版本激活后，读取既有 app vhost 原始SHA，执行 `python3 deploy/activate-signing-route.py --release <版本> --expected-vhost-sha256 <刚核对的SHA>`。该脚本备份原文件，只增加一条精确include；新增HTTP级日志/限流配置先于host加载。语法、根页/返回页、专属API401、未知路径404和旧登录页200未通过时恢复原host与全局include。后续升级沿用已存在的include，不再次插入；正常版本切换仍须同时提供admin和signing-h5目录。
 
-`H5_SIGNING_ENABLED`只控制新入口可用性，默认false；关闭不会恢复已停用的小程序网页签署副作用接口。`H5_SIGNING_PROVIDER_HOSTS`的两个批准首跳是`textapi.fadada.com,realnameverify.fadada.com`，依据旧H5真实接口结果核对；不要填泛域或外部任意URL。生产生成器保留本系统入口开关/允许列表，忽略旧输入中可能的启用值，固定新H5返回地址。实名、签署分别受原供应商开关与真实业务准备度控制；网页可访问不代表已经完成真实签署。
+`H5_SIGNING_ENABLED`只控制备用入口可用性，默认false；小程序网页实名与签署由独立 `MINIAPP_SIGNING_ENABLED` 控制，两个入口不自动互相回退。`H5_SIGNING_PROVIDER_HOSTS`的两个批准首跳是`textapi.fadada.com,realnameverify.fadada.com`，依据旧H5真实接口结果核对；不要填泛域或外部任意URL。生产生成器保留本系统入口开关/允许列表，忽略旧输入中可能的启用值，原生返回固定 mini-api 公共页，H5 内部显式固定 H5 返回页。实名、签署分别受原供应商开关与真实业务准备度控制；网页可访问不代表已经完成真实签署。
 
 独立cookie为`h5_signing_session`，8小时、HttpOnly/Secure/SameSite=Lax、Path=/miniapp-sign/。代理仅转该cookie并移除Authorization，写请求还校验Origin及CSRF。原系统与新H5同host，Cookie路径不是浏览器同源XSS隔离。新日志只记录URI无query，纳入现有190天logrotate；失效满30天的H5会话纳入maintenance。
 
-迁移015和016应用后，运行 `node scripts/publish-approved-delivery-delay-legal.mjs <已验证的H5版本>` 发布已经批准的补充协议模板，公开读取须与批准SHA一致；模板批准不代表逐单报价已确认或签署。企业用印需实际授权和双人审批，客户在H5自行实名认证及签署，随后回小程序查询同一新库中的可信状态。
+迁移015和016应用后，运行 `node scripts/publish-approved-delivery-delay-legal.mjs <已验证的H5版本>` 发布已经批准的补充协议模板，公开读取须与批准SHA一致；模板批准不代表逐单报价已确认或签署。企业用印需实际授权和双人审批，客户按已启用的原生主入口自行实名认证及签署，状态查询读取同一新库。H5 仅在另行明确启用时作为备用，不要求客户经过旧系统 OAuth。
+
+### 恢复小程序内签约（独立切片）
+
+主入口 `GET /api/public/signing-config` 为 `MINIAPP_WEBVIEW`。`MINIAPP_SIGNING_ENABLED` 默认 false；`MINIAPP_SIGNING_PROVIDER_HOSTS` 默认空，完成业务域名核验后仅配置 `textapi17.fadada.com,realnameverify16.fadada.com`。`FADADA_BASE_URL` 为 `https://textapi17.fadada.com/api2/`；原生请求强制固定返回 `https://mini-api.subauto.keybox.cloud/api/public/esign-return`，通知仍新 API。默认端口 `:443` 也不允许出现在交客户端的 URL 中，验证后保留 URL 原字节。
+
+`H5_SIGNING_ENABLED=false` 作为独立备用入口；它不决定小程序权限，也不会自动接管失败的原生操作。H5 显式调用仍使用其固定 `/miniapp-sign/return/`。供应商注册、实名、签署总开关及原企业审批继续独立守门。实名接口需要本次独立同意当前 privacy 的 id/version；关闭原生入口不关闭可信查询。刷脸小程序 AppID/path 与绑定 flow 尚未核实，因此 `faceBridgeConfigured=false`、允许列表空；不能据两首跳域名已核验宣称完整真机刷脸往返已通过。
+
+默认 `verified_way=1` 保持“三要素补充”认证：手机号三要素通过直接成功，不通过才进入刷脸（法大大 API v2 官方发行文档第18页）。缺少刷脸 AppID/path/flow 不统一封死该默认分支，也不降低认证强度；提交前须明确告知转刷脸时当前无法继续，中间页拒绝未知参数。仅可在主控明确授权下验收真实手机号分支，未做真机刷脸往返时不能称完整实名闭环已验收。
+
+官方5.1.3第4条要求通用返回地址替换为专属域名：仅原生实名结果将精确 `https://realnameverify.fadada.com/` authority 映射到 `https://realnameverify16.fadada.com/`，path/query保持原字节。其它来源不自动迁移；H5备用不套该规则。签署链接由专属API base直接构造，合同查看使用新库归档PDF。

@@ -1,3 +1,4 @@
+import {MINIAPP_RETURN,runNativeSigning} from '../esign/native-signing';
 import { Controller, Get, Inject, Param, Post, Req } from '@nestjs/common';
 import { Db } from '../common/db';
 import { ESignGateway } from '../common/gateways';
@@ -7,7 +8,7 @@ import { SignatureService } from './signature.service';
 @Controller()
 export class SignaturesController {
   constructor(@Inject(Db) private db: Db, @Inject(ESignGateway) private esign: ESignGateway, @Inject(SignatureService) private signatures: SignatureService) {}
-  @Post('customer/contracts/:id/sign') sign(@Param('id') id: string, @Req() request: any) { return this.send(id, request.customer.id); }
+  @Post('customer/contracts/:id/sign') sign(@Param('id') id: string, @Req() request: any) { return runNativeSigning(()=>this.send(id, request.customer.id,MINIAPP_RETURN)); }
   @Post('admin/contracts/:id/send') adminSign(@Param('id') id: string) { return this.send(id); }
   async send(id: string, customerId?: string, returnUrl?:string) {
     const claim = await this.db.serial(async tx => {
