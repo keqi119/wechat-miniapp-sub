@@ -1,4 +1,5 @@
 import type { Entity } from './core';
+import type {Assignment} from './swap';
 
 export type UsageAccount = {
   orderId: string; orderStatus: string; policyVersion: string; startedOn: string | null; returnedOn: string | null;
@@ -8,6 +9,7 @@ export type UsageAccount = {
   products: Array<{ id: string; version: number; km: number; amount: number }>;
   purchaseTerms: { version: number | string; hash: string; content: string; documentId?: string; documentVersion?: number } | null; canPurchase: boolean;
   returnSettlement: { id: string; status: string; revision: number } | null;
+  currentAssignment?: Assignment|null; assignments?: Assignment[];
 };
 const statuses: Record<string, Record<string, string>> = {
   'usage-periods': { OPEN: '本期进行中', AWAITING_READING: '待月界读数', REVIEW_PENDING: '待审核照片与读数', READY: '可核对结算', SETTLED: '已结算', CANCELLED: '已取消' },

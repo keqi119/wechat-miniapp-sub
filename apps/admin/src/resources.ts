@@ -7,12 +7,12 @@ import { usageActionAllowed } from './usage.ts';
 
 export type Field = { key: string; label: string; type?: 'text' | 'number' | 'money' | 'textarea' | 'lines' | 'select' | 'date' | 'files' | 'boolean' | 'password' | 'checklist' | 'commercial' | 'attestation' | 'datetime-local'; required?: boolean; readOnly?: boolean; requireFacts?: boolean; submit?: boolean; creditDerived?: boolean; defaultValue?: string; options?: [string, string][]; source?: string; sourceFilters?: Record<string, string>; sourceWhen?: { field: string; value: string; source: string }; uploadPurpose?: string; hint?: string; min?: number; max?: number };
 export type Action = { label: string; path: string; fields?: Field[]; fixed?: Record<string, unknown>; warning?: string; kind?: 'danger' | 'primary'; writeRoles?: string[] };
-export type Resource = { key: string; title: string; singular: string; subtitle: string; fields?: Field[]; columns: { key: string; label: string; format?: 'money' | 'date' }[]; actions?: Action[]; create?: boolean; edit?: boolean; statuses?: string[]; adminOnly?: boolean; writeRoles?: string[] };
+export type Resource = { key: string; permissionResource?: string; title: string; singular: string; subtitle: string; fields?: Field[]; columns: { key: string; label: string; format?: 'money' | 'date' }[]; actions?: Action[]; create?: boolean; edit?: boolean; statuses?: string[]; adminOnly?: boolean; writeRoles?: string[] };
 export function resourceAccessible(resource: Resource | undefined, permissions: string[], role?: string): boolean {
-  return !!resource && (!resource.adminOnly || role === 'ADMIN') && (permissions.includes('*') || permissions.includes(`${resource.key}.read`));
+  return !!resource && (!resource.adminOnly || role === 'ADMIN') && (permissions.includes('*') || permissions.includes(`${resource.permissionResource ?? resource.key}.read`));
 }
 export function resourceWritable(resource: Resource, permissions: string[], role?: string): boolean {
-  return (!resource.adminOnly || role === 'ADMIN') && (!resource.writeRoles || resource.writeRoles.includes(role ?? '')) && (permissions.includes('*') || permissions.includes(`${resource.key}.write`));
+  return (!resource.adminOnly || role === 'ADMIN') && (!resource.writeRoles || resource.writeRoles.includes(role ?? '')) && (permissions.includes('*') || permissions.includes(`${resource.permissionResource ?? resource.key}.write`));
 }
 export function resourceActionWritable(resource: Resource, action: Action, permissions: string[], role?: string): boolean {
   return resourceWritable(resource, permissions, role) && (!action.writeRoles || action.writeRoles.includes(role ?? ''));
@@ -43,7 +43,7 @@ export const labels: Record<string, string> = {
   application: '申请须知', privacy: '隐私政策', terms: '用户协议', subscription: '订阅合同', handover: '交接协议',
   LOGIN: '登录后台', CREATE: '新建记录', UPDATE: '更新记录', PUBLISH: '发布', UNPUBLISH: '下架', ACTIVATE: '启用', DEACTIVATE: '停用', REVIEW: '审核', FINAL_PLAN: '发布最终方案', SUBMIT: '提交', CONFIRM: '确认', REQUEST: '发起申请', APPROVE: '审批通过', REJECT: '拒绝', ASSIGN: '派单', UPLOAD: '上传文件', STATUS: '更新状态', COMPLETE: '完成',
   vehicles: '车辆', plans: '套餐', users: '后台账号', applications: '申请', orders: '订单', contracts: '合同', bills: '账单', payments: '支付', deposits: '押金', refunds: '退款', handovers: '交接', mileages: '里程', services: '工单', entitlements: '权益', notifications: '通知', 'legal-documents': '协议', 'model-definitions': '车型', 'audit-logs': '审计', files: '附件', customers: '客户',
-  rescue: '道路救援', accident: '事故报案', SUBSCRIPTION: '订阅费用', DEPOSIT: '押金', RECEIPT: '收取', REFUND: '退回', CUSTOMER: '客户', PROVIDER: '服务商',
+  rescue: '道路救援', accident: '事故报案', SUBSCRIPTION: '订阅费用', DEPOSIT: '押金', RECEIPT: '收取', REFUND: '退回', CUSTOMER: '客户', PROVIDER: '服务商', SWAP_ADJUSTMENT: '换车月费补差', DEPOSIT_ADJUSTMENT: '押金调整', SWAP_HANDOVER_FEE: '换车交接费',
   'enterprise-seals': '企业印章', 'seal-authorities': '用印授权', 'signature-policies': '签署策略', 'esign-approvals': '签署计划审批',
   DISABLED: '已停用', REVOKED: '已撤销', USER: '指定人员', ROLE: '后台角色', REQUEST_USE: '申请用印', APPROVE_USE: '复核用印', SEQUENTIAL: '先客户签署，再企业盖章', HANDOVER: '车辆交接单',
   REVIEWED: '复核已通过', SUPERSEDED: '已被修订版替代', EXTRA_FEE: '额外费用', RETURN_SETTLEMENT: '退车结算', CUSTOMER_SIGN: '客户签署', ENTERPRISE_SEAL: '企业盖章', PLATFORM: '服务平台',
@@ -77,14 +77,15 @@ export const resources: Resource[] = [
   { key: 'notifications', title: '站内通知', singular: '通知', subtitle: '向客户发送业务进展通知，追踪已读状态。', create: true, columns: [{ key: 'title', label: '通知标题' }, { key: 'customerId', label: '客户' }, { key: 'readAt', label: '阅读时间', format: 'date' }, created], fields: [ref('customerId', '客户', 'customers'), text('title', '标题'), area('content', '通知正文', true), text('resourceType', '关联资源类型', false), text('resourceId', '关联资源 ID', false)] },
   { key: 'users', title: '后台账号', singular: '账号', subtitle: '按职责分配运营、财务、客服与管理权限。', create: true, edit: true, columns: [{ key: 'name', label: '姓名' }, { key: 'username', label: '用户名' }, { key: 'role', label: '角色' }, { key: 'active', label: '启用' }, created], fields: [text('username', '用户名'), text('name', '姓名'), { key: 'password', label: '密码', type: 'password', hint: '新建必填；编辑留空则保留当前密码' }, select('role', '角色', ['OPERATIONS', 'FINANCE', 'SUPPORT', 'ADMIN']), { key: 'active', label: '允许登录', type: 'boolean' }] },
   { key: 'audit-logs', title: '操作审计', singular: '审计记录', subtitle: '留存操作者、业务对象与状态变化，审计记录不可编辑。', columns: [{ key: 'action', label: '操作' }, { key: 'actorId', label: '操作人' }, { key: 'resourceType', label: '资源类型' }, { key: 'resourceId', label: '业务对象' }, created] },
-  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy', 'delivery-delay-amendment']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
+  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy', 'delivery-delay-amendment', 'vehicle-change-amendment']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
   ...esignResources,
   ...usageResources,
   { key: 'order-changes', title: '交车延期', singular: '延期变更', subtitle: '逐单确认报价、补充协议与资金后生效延期。', columns: [] },
+  { key: 'vehicle-changes', permissionResource: 'order-changes', title: '车辆更换', singular: '换车变更', subtitle: '逐单报价、双侧真实交接与免费次数完成台账。', columns: [] },
 ];
 export const groups = [
   { label: '车源与商品', keys: ['vehicles', 'model-definitions', 'plans'] },
-  { label: '客户与订阅', keys: ['applications', 'customers', 'orders', 'contracts', 'order-changes'] },
+  { label: '客户与订阅', keys: ['applications', 'customers', 'orders', 'contracts', 'order-changes', 'vehicle-changes'] },
   { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds', 'payment-verifications'] },
   { label: '交付与服务', keys: ['handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
   { label: '里程与退订', keys: ['usage-periods', 'return-settlements'] },
@@ -108,7 +109,7 @@ export function actionAllowed(resource: string, action: Action, entity: Entity, 
   }
   if (resource === 'payments') return action.path === 'close' ? status === 'PENDING' || (status === 'CREATING' && Date.now() - new Date(String(entity.createdAt)).getTime() >= 45000) : ['CREATING', 'PENDING'].includes(status);
   if (resource === 'refunds') return action.path === 'sync' ? ['PROCESSING', 'SUCCEEDED'].includes(status) : action.path === 'retry' ? status === 'PROCESSING' && !!entity.approvedBy : status === 'PENDING_APPROVAL';
-  if (resource === 'handovers') return action.path === 'revise' ? status === 'OBJECTION_SUBMITTED' : action.path === 'publish' ? status === 'DRAFT' : status === 'CUSTOMER_CONFIRMED';
+  if (resource === 'handovers') return action.path === 'revise' ? status === 'OBJECTION_SUBMITTED' : action.path === 'publish' ? status === 'DRAFT' : status === 'CUSTOMER_CONFIRMED' && (!String(entity.type).startsWith('SWAP_') || entity.signatureStatus === 'SIGNED' && entity.canComplete === true);
   if (resource === 'orders') return ['AWAITING_SIGNATURE', 'AWAITING_PAYMENT', 'AWAITING_HANDOVER'].includes(status);
   if (resource === 'esign-approvals') {
     if (action.path === 'renew') return status === 'APPROVED' && !!userId && new Date(String(entity.expiresAt)).getTime() <= Date.now() && (entity.renewalEligibility as { eligible?: boolean } | undefined)?.eligible === true;
@@ -124,7 +125,7 @@ export function actionAllowed(resource: string, action: Action, entity: Entity, 
 
 export function detailFor(resource: string, entity: Entity): Record<string, unknown> {
   const pick = (source: Record<string, unknown>, keys: string[]) => Object.fromEntries(keys.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
-  if (resource === 'usage-periods') return pick(entity, ['id', 'orderId', 'sequence', 'startDate', 'endDate', 'effectiveEndDate', 'status', 'revision', 'readingId', 'startReadingKm', 'endReadingKm', ...(entity.status === 'SETTLED' ? ['usedKm', 'baseUsedKm', 'packUsedKm', 'excessKm', 'excessAmount'] : []), 'billId', 'reviewNote']);
+  if (resource === 'usage-periods') return pick(entity, ['id', 'orderId', 'sequence', 'startDate', 'endDate', 'effectiveEndDate', 'status', 'revision', 'readingId', ...(Array.isArray(entity.segments) && entity.segments.length ? [] : ['startReadingKm','endReadingKm']), ...(entity.status === 'SETTLED' ? ['usedKm', 'baseUsedKm', 'packUsedKm', 'excessKm', 'excessAmount'] : []), 'billId', 'reviewNote']);
   if (resource === 'return-settlements') return pick(entity, ['id', 'orderId', 'status', 'revision', 'returnedOn', 'unsettledPeriodIds', 'bills', 'disputeReason', 'resolutionNote', 'depositRefundRequiredAmount']);
   if (resource === 'payment-verifications') return pick(entity, ['id', 'title', 'amount', 'currency', 'status', 'customerId', 'authorizationNote', 'expiresAt', 'createdAt', 'paidAt', 'manualReviewRequired', 'statusMessage']);
   if (resource === 'enterprise-seals') return pick(entity, ['id', 'sealName', 'organizationName', 'providerCustomerId', 'providerSignatureId', 'evidenceFileId', 'status', 'confirmedBy', 'confirmedAt', 'createdAt']);

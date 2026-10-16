@@ -44,7 +44,7 @@ export function Drawer({ title, subtitle, children, onClose }: { title: string; 
   }, [onClose]);
   return <div className="drawer-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section className="drawer" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} ref={panel}><header className="drawer-header"><div><span className="eyebrow">CHUNDIAN / OPERATIONS</span><h2 id={titleId}>{title}</h2>{subtitle ? <p>{subtitle}</p> : null}</div><button className="icon-button" aria-label="关闭面板" onClick={onClose}><X size={20}/></button></header>{children}</section></div>;
 }
-function ReferenceField({ field, value, onChange, disabled }: { field: Field; value: string; onChange: (value: string) => void; disabled: boolean }) {
+export function ReferenceField({ field, value, onChange, disabled }: { field: Field; value: string; onChange: (value: string) => void; disabled: boolean }) {
   const [items, setItems] = useState<Entity[]>([]);
   const [error, setError] = useState<unknown>();
   const [keyword, setKeyword] = useState('');

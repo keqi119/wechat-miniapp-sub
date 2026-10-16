@@ -1,0 +1,785 @@
+{
+  "mode": "isolated-B2-browser-fixtures-no-api-db-or-channel",
+  "checks": [
+    "recovery-only: immutable target/money/periods/responsibility, exact completed return seconds, new arrangements and same-key rejected retry",
+    "cancel recovery explains prior signed version/hold/gap, rejected POST never releases vehicle or clears return facts",
+    "OPERATIONS: server capabilities + role gates, immutable identity/body, no B3 or impersonation",
+    "FINANCE: server capabilities + role gates, immutable identity/body, no B3 or impersonation",
+    "SUPPORT: server capabilities + role gates, immutable identity/body, no B3 or impersonation",
+    "ADMIN cannot financially review own quote",
+    "390px full quote: explicit answers, exact cents/time/all periods, rejected write preserves same key/draft",
+    "gap cannot cancel physical return; new side typed actual time and seven facts use own 100→150km, never old 80000km",
+    "only authoritative signed side completes via existing handover endpoint; rejection cannot fake changed vehicle or consumed credit",
+    "OPERATIONS: separate vehicle readings, missing segment blocks settle, evidence role/revision/key",
+    "FINANCE: separate vehicle readings, missing segment blocks settle, evidence role/revision/key",
+    "unknown channel cannot release reservation, cancel or fake physical complete",
+    "actual completed date and late recorded date stay distinct; server chooses cycle2 and once-only consumption",
+    "empty real list has no fake business facts"
+  ],
+  "errors": [],
+  "writes": [
+    {
+      "path": "/admin/order-changes/qa-swap/quotes",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "b3b92c89-c50a-4c3c-bee6-e16502a537e6",
+        "targetVehicleId": "qa-target",
+        "plannedReturnAt": "2026-10-20T01:00:35.123Z",
+        "plannedDeliveryAt": "2026-10-22T03:00:00.000Z",
+        "expiresAt": "2099-02-01T02:00:00.000Z",
+        "externalCompensationRequired": false,
+        "newMonthlyFeeAmount": 500001,
+        "depositAmount": 1000000,
+        "handoverFeeAmount": 100,
+        "periods": [
+          {
+            "sequence": 1,
+            "amount": 500000,
+            "dueDate": "2026-10-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 2,
+            "amount": 500000,
+            "dueDate": "2026-11-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 3,
+            "amount": 500000,
+            "dueDate": "2026-12-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 4,
+            "amount": 500000,
+            "dueDate": "2027-01-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 5,
+            "amount": 500000,
+            "dueDate": "2027-02-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 6,
+            "amount": 500000,
+            "dueDate": "2027-03-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 7,
+            "amount": 500000,
+            "dueDate": "2027-04-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 8,
+            "amount": 500000,
+            "dueDate": "2027-05-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 9,
+            "amount": 500000,
+            "dueDate": "2027-06-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 10,
+            "amount": 500000,
+            "dueDate": "2027-07-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 11,
+            "amount": 500000,
+            "dueDate": "2027-08-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 12,
+            "amount": 500000,
+            "dueDate": "2027-09-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 13,
+            "amount": 500000,
+            "dueDate": "2027-10-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 14,
+            "amount": 500000,
+            "dueDate": "2027-11-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 15,
+            "amount": 500000,
+            "dueDate": "2027-12-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 16,
+            "amount": 500000,
+            "dueDate": "2028-01-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 17,
+            "amount": 500000,
+            "dueDate": "2028-02-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 18,
+            "amount": 500000,
+            "dueDate": "2028-03-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 19,
+            "amount": 500000,
+            "dueDate": "2028-04-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 20,
+            "amount": 500000,
+            "dueDate": "2028-05-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 21,
+            "amount": 500000,
+            "dueDate": "2028-06-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 22,
+            "amount": 500000,
+            "dueDate": "2028-07-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 23,
+            "amount": 500000,
+            "dueDate": "2028-08-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 24,
+            "amount": 500000,
+            "dueDate": "2028-09-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          }
+        ],
+        "handoverFeeBasis": "QA 本次真实协商费用",
+        "depositBasis": "QA 原押金沿用",
+        "insuranceResponsibility": "QA 目标保险责任",
+        "downtimeArrangement": "QA 已明确空窗安排",
+        "settlementExplanation": "QA 本次核清后还旧车",
+        "handoverArrangement": "QA 重新协商交接",
+        "cancellationTerms": "QA 取消责任",
+        "reason": "QA 客户换车申请"
+      }
+    },
+    {
+      "path": "/admin/order-changes/qa-swap/quotes",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "b3b92c89-c50a-4c3c-bee6-e16502a537e6",
+        "targetVehicleId": "qa-target",
+        "plannedReturnAt": "2026-10-20T01:00:35.123Z",
+        "plannedDeliveryAt": "2026-10-22T03:00:00.000Z",
+        "expiresAt": "2099-02-01T02:00:00.000Z",
+        "externalCompensationRequired": false,
+        "newMonthlyFeeAmount": 500001,
+        "depositAmount": 1000000,
+        "handoverFeeAmount": 100,
+        "periods": [
+          {
+            "sequence": 1,
+            "amount": 500000,
+            "dueDate": "2026-10-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 2,
+            "amount": 500000,
+            "dueDate": "2026-11-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 3,
+            "amount": 500000,
+            "dueDate": "2026-12-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 4,
+            "amount": 500000,
+            "dueDate": "2027-01-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 5,
+            "amount": 500000,
+            "dueDate": "2027-02-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 6,
+            "amount": 500000,
+            "dueDate": "2027-03-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 7,
+            "amount": 500000,
+            "dueDate": "2027-04-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 8,
+            "amount": 500000,
+            "dueDate": "2027-05-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 9,
+            "amount": 500000,
+            "dueDate": "2027-06-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 10,
+            "amount": 500000,
+            "dueDate": "2027-07-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 11,
+            "amount": 500000,
+            "dueDate": "2027-08-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 12,
+            "amount": 500000,
+            "dueDate": "2027-09-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 13,
+            "amount": 500000,
+            "dueDate": "2027-10-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 14,
+            "amount": 500000,
+            "dueDate": "2027-11-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 15,
+            "amount": 500000,
+            "dueDate": "2027-12-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 16,
+            "amount": 500000,
+            "dueDate": "2028-01-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 17,
+            "amount": 500000,
+            "dueDate": "2028-02-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 18,
+            "amount": 500000,
+            "dueDate": "2028-03-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 19,
+            "amount": 500000,
+            "dueDate": "2028-04-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 20,
+            "amount": 500000,
+            "dueDate": "2028-05-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 21,
+            "amount": 500000,
+            "dueDate": "2028-06-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 22,
+            "amount": 500000,
+            "dueDate": "2028-07-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 23,
+            "amount": 500000,
+            "dueDate": "2028-08-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 24,
+            "amount": 500000,
+            "dueDate": "2028-09-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          }
+        ],
+        "handoverFeeBasis": "QA 本次真实协商费用",
+        "depositBasis": "QA 原押金沿用",
+        "insuranceResponsibility": "QA 目标保险责任",
+        "downtimeArrangement": "QA 已明确空窗安排",
+        "settlementExplanation": "QA 本次核清后还旧车",
+        "handoverArrangement": "QA 重新协商交接",
+        "cancellationTerms": "QA 取消责任",
+        "reason": "QA 客户换车申请"
+      }
+    },
+    {
+      "path": "/admin/order-changes/qa-swap/cancel",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "92f7af28-192f-425c-85aa-9cfb8d2b49c8",
+        "reason": "QA 暂不调整，保留原已签方案"
+      }
+    },
+    {
+      "path": "/admin/order-changes/qa-swap/quotes",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "1de8cea1-c3ba-4874-9e21-2e74c7855664",
+        "targetVehicleId": "qa-target",
+        "plannedReturnAt": "2026-10-20T01:00:00.000Z",
+        "plannedDeliveryAt": "2026-10-21T03:00:00.000Z",
+        "expiresAt": "2099-01-01T04:00:00.000Z",
+        "externalCompensationRequired": false,
+        "newMonthlyFeeAmount": 500001,
+        "depositAmount": 1000002,
+        "handoverFeeAmount": 0,
+        "periods": [
+          {
+            "sequence": 1,
+            "amount": 500000,
+            "dueDate": "2026-10-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 2,
+            "amount": 500000,
+            "dueDate": "2026-11-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 3,
+            "amount": 500000,
+            "dueDate": "2026-12-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 4,
+            "amount": 500000,
+            "dueDate": "2027-01-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 5,
+            "amount": 500000,
+            "dueDate": "2027-02-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 6,
+            "amount": 500000,
+            "dueDate": "2027-03-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 7,
+            "amount": 500000,
+            "dueDate": "2027-04-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 8,
+            "amount": 500000,
+            "dueDate": "2027-05-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 9,
+            "amount": 500000,
+            "dueDate": "2027-06-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 10,
+            "amount": 500000,
+            "dueDate": "2027-07-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 11,
+            "amount": 500000,
+            "dueDate": "2027-08-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 12,
+            "amount": 500000,
+            "dueDate": "2027-09-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 13,
+            "amount": 500000,
+            "dueDate": "2027-10-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 14,
+            "amount": 500000,
+            "dueDate": "2027-11-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 15,
+            "amount": 500000,
+            "dueDate": "2027-12-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 16,
+            "amount": 500000,
+            "dueDate": "2028-01-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 17,
+            "amount": 500000,
+            "dueDate": "2028-02-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 18,
+            "amount": 500000,
+            "dueDate": "2028-03-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 19,
+            "amount": 500000,
+            "dueDate": "2028-04-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 20,
+            "amount": 500000,
+            "dueDate": "2028-05-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 21,
+            "amount": 500000,
+            "dueDate": "2028-06-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 22,
+            "amount": 500000,
+            "dueDate": "2028-07-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 23,
+            "amount": 500000,
+            "dueDate": "2028-08-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 24,
+            "amount": 500000,
+            "dueDate": "2028-09-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          }
+        ],
+        "handoverFeeBasis": "QA 本次真实协商费用",
+        "depositBasis": "QA 原押金沿用",
+        "insuranceResponsibility": "QA 目标保险责任",
+        "downtimeArrangement": "QA 无车间隔费用安排",
+        "settlementExplanation": "QA 本次核清后还旧车",
+        "handoverArrangement": "QA 先旧还后新交",
+        "cancellationTerms": "QA 取消责任",
+        "reason": "QA 客户换车申请"
+      }
+    },
+    {
+      "path": "/admin/order-changes/qa-swap/quotes",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "1de8cea1-c3ba-4874-9e21-2e74c7855664",
+        "targetVehicleId": "qa-target",
+        "plannedReturnAt": "2026-10-20T01:00:00.000Z",
+        "plannedDeliveryAt": "2026-10-21T03:00:00.000Z",
+        "expiresAt": "2099-01-01T04:00:00.000Z",
+        "externalCompensationRequired": false,
+        "newMonthlyFeeAmount": 500001,
+        "depositAmount": 1000002,
+        "handoverFeeAmount": 0,
+        "periods": [
+          {
+            "sequence": 1,
+            "amount": 500000,
+            "dueDate": "2026-10-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 2,
+            "amount": 500000,
+            "dueDate": "2026-11-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 3,
+            "amount": 500000,
+            "dueDate": "2026-12-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 4,
+            "amount": 500000,
+            "dueDate": "2027-01-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 5,
+            "amount": 500000,
+            "dueDate": "2027-02-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 6,
+            "amount": 500000,
+            "dueDate": "2027-03-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 7,
+            "amount": 500000,
+            "dueDate": "2027-04-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 8,
+            "amount": 500000,
+            "dueDate": "2027-05-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 9,
+            "amount": 500000,
+            "dueDate": "2027-06-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 10,
+            "amount": 500000,
+            "dueDate": "2027-07-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 11,
+            "amount": 500000,
+            "dueDate": "2027-08-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 12,
+            "amount": 500000,
+            "dueDate": "2027-09-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 13,
+            "amount": 500000,
+            "dueDate": "2027-10-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 14,
+            "amount": 500000,
+            "dueDate": "2027-11-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 15,
+            "amount": 500000,
+            "dueDate": "2027-12-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 16,
+            "amount": 500000,
+            "dueDate": "2028-01-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 17,
+            "amount": 500000,
+            "dueDate": "2028-02-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 18,
+            "amount": 500000,
+            "dueDate": "2028-03-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 19,
+            "amount": 500000,
+            "dueDate": "2028-04-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 20,
+            "amount": 500000,
+            "dueDate": "2028-05-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 21,
+            "amount": 500000,
+            "dueDate": "2028-06-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 22,
+            "amount": 500000,
+            "dueDate": "2028-07-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 23,
+            "amount": 500000,
+            "dueDate": "2028-08-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          },
+          {
+            "sequence": 24,
+            "amount": 500000,
+            "dueDate": "2028-09-16",
+            "calculationBasis": "QA 逐期已协商依据"
+          }
+        ],
+        "handoverFeeBasis": "QA 本次真实协商费用",
+        "depositBasis": "QA 原押金沿用",
+        "insuranceResponsibility": "QA 目标保险责任",
+        "downtimeArrangement": "QA 无车间隔费用安排",
+        "settlementExplanation": "QA 本次核清后还旧车",
+        "handoverArrangement": "QA 先旧还后新交",
+        "cancellationTerms": "QA 取消责任",
+        "reason": "QA 客户换车申请"
+      }
+    },
+    {
+      "path": "/admin/order-changes/qa-swap/handovers",
+      "body": {
+        "revision": 3,
+        "idempotencyKey": "646a59c3-8be4-4776-aabd-4ea054e60fed",
+        "side": "DELIVERY",
+        "actualAt": "2026-10-21T03:00:00.000Z",
+        "readingKm": 150,
+        "fileIds": [],
+        "checklist": [
+          {
+            "label": "actualTimeAndPlace",
+            "value": "QA 本侧事实 1"
+          },
+          {
+            "label": "batteryLevel",
+            "value": "QA 本侧事实 2"
+          },
+          {
+            "label": "accessoriesChecklist",
+            "value": "QA 本侧事实 3"
+          },
+          {
+            "label": "conditionChecklist",
+            "value": "QA 本侧事实 4"
+          },
+          {
+            "label": "openItems",
+            "value": "QA 本侧事实 5"
+          },
+          {
+            "label": "resolutionPlan",
+            "value": "QA 本侧事实 6"
+          },
+          {
+            "label": "staffName",
+            "value": "QA 本侧事实 7"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/admin/handovers/qa-return/complete",
+      "body": {}
+    },
+    {
+      "path": "/admin/usage-segments/qa-new-segment/request-evidence",
+      "body": {
+        "revision": 2,
+        "idempotencyKey": "a56a9664-2215-471b-a9e6-8be846874a70",
+        "reason": "QA 终点照片缺失，请客户补充"
+      }
+    }
+  ],
+  "queries": [
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE",
+    "VEHICLE_CHANGE"
+  ]
+}

@@ -31,7 +31,7 @@ export function serializeForm(fields: Field[], values: Record<string, string>): 
   return body;
 }
 export function fieldsForAction(resource: string, action: Action, entity: Entity): Field[] {
-  if (resource === 'mileages') return (action.fields ?? []).filter(field => field.key !== 'boundaryConfirmed' || !!entity.periodId);
+  if (resource === 'mileages') return (action.fields ?? []).filter(field => field.key !== 'boundaryConfirmed' || !!entity.periodId || !!entity.segmentId);
   if (resource === 'esign-approvals' && action.path === 'renew') return (action.fields ?? []).map(field => field.key === 'policyId' ? { ...field, sourceFilters: { status: 'ACTIVE', kind: String(entity.kind), sealId: String(entity.sealId) }, hint: '选择已启用、文档类型一致且使用原印章的策略；服务端核验原任务企业身份不变' } : field);
   if (resource !== 'services' || action.path !== 'status') return action.fields ?? [];
   const transitions: Record<string, string[]> = { SUBMITTED: ['ACCEPTED', 'CANCELLED'], ACCEPTED: ['CANCELLED'], ASSIGNED: ['IN_PROGRESS', 'CANCELLED'], IN_PROGRESS: ['COMPLETED'] };

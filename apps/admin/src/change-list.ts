@@ -1,0 +1,1 @@
+export function changeListPath(kind:'DELIVERY_DELAY'|'VEHICLE_CHANGE',page:number,keyword:string,status:string){return `/admin/order-changes?${new URLSearchParams({kind,page:String(page),pageSize:'12',keyword,status})}`;}
