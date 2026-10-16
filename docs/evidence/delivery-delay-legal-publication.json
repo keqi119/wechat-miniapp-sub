@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-10-16T11:25:17.123Z",
+  "release": "20261016-native-signing-v1",
+  "type": "delivery-delay-amendment",
+  "version": 1,
+  "id": "cmvavsez80001ou016133wiii",
+  "sha256": "18d387f4dea6ff773bb4d5fcaaae57af4f6f23866d4370d5bde0847030606084",
+  "publishedAt": "2026-10-16T11:25:18.248Z",
+  "customerAgreementImplied": false,
+  "actualSignatureCreated": false
+}

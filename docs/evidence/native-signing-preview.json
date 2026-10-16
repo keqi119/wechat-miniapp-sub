@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-10-16T11:29:23.963Z",
+  "sourceCommit": "0a4f37892796b54dd5e9f39289fcfdb12c2323af",
+  "release": "20261016-native-signing-v1",
+  "tool": "WeChat DevTools authenticated CLI preview",
+  "appid": "wxa7089edf4a34a7f5",
+  "projectRoot": "D:\\wechat-miniapp-sub\\.runtime\\releases\\20261016-native-signing-v1\\miniprogram",
+  "sourceManifestSha256": "06c951f99142e2ecfc387bb9157804b3fda5923bce101ec0540c333422d5d4f0",
+  "projectConfigSha256": "d48aac9f8a48f405ba3f4e35f076a6d2b1cdc33b504cacc4b435d07d8cc8e2e4",
+  "size": {
+    "total": 410799,
+    "packages": [
+      {
+        "name": "TOTAL",
+        "size": 410799
+      },
+      {
+        "name": "main",
+        "size": 409590
+      },
+      {
+        "name": "/pagesFace/",
+        "size": 1209
+      }
+    ]
+  },
+  "success": true,
+  "formalReviewSubmitted": false,
+  "formalReleased": false
+}

@@ -1,6 +1,6 @@
 {
-  "checkedAt": "2026-10-16T11:09:18.497Z",
-  "release": "20261016-usage-v1",
+  "checkedAt": "2026-10-16T11:25:18.241Z",
+  "release": "20261016-native-signing-v1",
   "sealId": "cmvaui9yu0004qq01q3vyjjpe",
   "status": "ACTIVE",
   "confirmedAt": "2026-10-16T11:07:30.594Z",
@@ -30,11 +30,15 @@
       "kind": "HANDOVER",
       "policyCode": "CHUNDIAN_HANDOVER_V1",
       "status": "ACTIVE"
+    },
+    {
+      "id": "cmvavsfx20005ou0144njb3no",
+      "kind": "AMENDMENT",
+      "policyCode": "CHUNDIAN_AMENDMENT_V1",
+      "status": "ACTIVE"
     }
   ],
-  "pendingPolicyKinds": [
-    "AMENDMENT"
-  ],
+  "pendingPolicyKinds": [],
   "perDocumentApprovalStillRequired": true,
   "realSigningPerformed": false
 }

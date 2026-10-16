@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-10-16T11:29:23.959Z",
+  "release": "20261016-native-signing-v1",
+  "sourceCommit": "0a4f37892796b54dd5e9f39289fcfdb12c2323af",
+  "apiImplementationCommit": "71ed5fd",
+  "files": [
+    {
+      "path": ".runtime/static-20261016-native-signing-v1.tar.gz",
+      "bytes": 349065,
+      "sha256": "0097c68d7e9d19ef008454ca7f7c36b4592d5aad8f78d4c7bcb5e40a8e934b02"
+    },
+    {
+      "path": ".runtime/chundian-api-20261016-native-signing-v1.tar.gz",
+      "bytes": 282274913,
+      "sha256": "78e4dd388afda112261535ab885d235f7e1e5e7bec7380a2c95e33bfd2193fa6"
+    },
+    {
+      "path": ".runtime/deploy-20261016-native-signing-v1.tar.gz",
+      "bytes": 19601,
+      "sha256": "18e5d98b58b66712ecd1f6de3648a1b243f75da8971ca12fbc18cca986935e8c"
+    }
+  ],
+  "miniappManifestSha256": "06c951f99142e2ecfc387bb9157804b3fda5923bce101ec0540c333422d5d4f0",
+  "miniappConfigSha256": "d48aac9f8a48f405ba3f4e35f076a6d2b1cdc33b504cacc4b435d07d8cc8e2e4",
+  "health": {
+    "status": "ok",
+    "database": "connected",
+    "version": "20261016-native-signing-v1"
+  },
+  "admin": {
+    "entry": "index-CBCE-9IE.js",
+    "sha256": "fc2f32343fc5b44a1d2e236cb2d953df7ae4d6ffe298161aab58f92fc0b5c8aa",
+    "publicBytesMatch": true
+  },
+  "signingConfig": {
+    "mode": "MINIAPP_WEBVIEW",
+    "enabled": true,
+    "providerHosts": [
+      "textapi17.fadada.com",
+      "realnameverify16.fadada.com"
+    ],
+    "returnUrl": "https://mini-api.subauto.keybox.cloud/api/public/esign-return",
+    "faceBridgeConfigured": false
+  },
+  "enterpriseSigningEnabled": false,
+  "realnameVerificationPerformedByAgent": false,
+  "realDeviceVerification": "User reported VALIDATION 400; new preview version confirmation pending",
+  "backup": {
+    "archive": "20261016T112356Z.tar.enc",
+    "encrypted": true,
+    "restoredToIsolatedDatabase": true,
+    "restoredTables": 49
+  },
+  "appliedMigrationCount": 16,
+  "newMigrationsApplied": 0,
+  "formalWeChatRelease": false,
+  "onboardingDiagnostic": {
+    "checkedAt": "2026-10-16T11:43:14.775Z",
+    "compiledSchemaAndControllerMatchFrozenBuild": true,
+    "observedRequestSequence": "register 201 then verify 400 without the native preflight GET requests",
+    "verificationResponseBytes": 209,
+    "syntheticMissingConsentResponseBytes": 209,
+    "assessment": "Evidence indicates an older miniapp preview; awaiting user confirmation of current consent text",
+    "registeredAccounts": 2,
+    "verificationTasksStarted": 0,
+    "identityCiphertextStored": false,
+    "preciseIdentityValuesRead": false
+  }
+}

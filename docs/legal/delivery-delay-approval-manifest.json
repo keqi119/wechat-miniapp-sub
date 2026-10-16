@@ -6,7 +6,7 @@
   "approvalStatement": "已审阅，批准模板，逐单内容另行确认",
   "approvalQuestionId": "call_309b0ce444924a379846bc756e480df3",
   "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
-  "published": false,
+  "published": true,
   "editorialChanges": "仅将审阅稿状态改为已批准模板状态。完整已批准源文件原样保存；不视为任何客户已同意逐单报价或签署。",
   "documents": [
     {
@@ -17,5 +17,6 @@
       "finalFile": "docs/legal/versions/delivery-delay/delivery-delay-amendment-v1.md",
       "finalSha256": "18d387f4dea6ff773bb4d5fcaaae57af4f6f23866d4370d5bde0847030606084"
     }
-  ]
+  ],
+  "publicationEvidence": "docs/evidence/delivery-delay-legal-publication.json"
 }
