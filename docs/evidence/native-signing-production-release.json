@@ -44,7 +44,7 @@
   },
   "enterpriseSigningEnabled": false,
   "realnameVerificationPerformedByAgent": false,
-  "realDeviceVerification": "User reported VALIDATION 400; new preview version confirmation pending",
+  "realDeviceVerification": "User completed Fadada verification. Trusted refresh at 20:20:09 CST and read-only readiness check confirm VERIFIED, certBound=true and readyForSigning=true; clearer account-page completion display is pending.",
   "backup": {
     "archive": "20261016T112356Z.tar.enc",
     "encrypted": true,
@@ -64,6 +64,38 @@
     "registeredAccounts": 2,
     "verificationTasksStarted": 0,
     "identityCiphertextStored": false,
-    "preciseIdentityValuesRead": false
+    "preciseIdentityValuesRead": false,
+    "retry": {
+      "checkedAt": "2026-10-16T12:17:05.340Z",
+      "userConfirmedCurrentConsentText": true,
+      "requestAt": "2026-10-16T20:16:10+08:00",
+      "observedRequestSequence": "signing-config 200, privacy 200, register 201, verify 201",
+      "verificationResponseBytes": 318,
+      "verificationTasksStarted": 1,
+      "identityStoredCount": 1,
+      "identityValuesSelected": false,
+      "realNameStatus": "PENDING",
+      "certStatus": "UNKNOWN",
+      "verificationComplete": false
+    },
+    "verifiedResult": {
+      "checkedAt": "2026-10-16T12:22:32.700Z",
+      "lastProviderCheckAt": "2026-10-16T12:20:09.479Z",
+      "userReportedCompleted": true,
+      "refreshRequests": 2,
+      "refreshHttpStatus": 201,
+      "readiness": {
+        "readyForSigning": true,
+        "signingEligible": true,
+        "state": "SIGNING_ENABLED",
+        "realNameStatus": "VERIFIED",
+        "certBound": true,
+        "nextAction": "NONE"
+      },
+      "preciseIdentityValuesPrinted": false,
+      "realContractCreated": false,
+      "enterpriseSigningEnabled": false,
+      "accountPageDisplayConfirmationPending": true
+    }
   }
 }
