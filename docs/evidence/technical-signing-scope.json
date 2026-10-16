@@ -19,6 +19,16 @@
     "questionId": "call_11e43ff0ffcb41f4a371e8e2cd288074",
     "statement": "已审阅，批准该技术验收文本；本人签署与本份文件用印另行操作",
     "sourceSha256": "165c40105aa35c7e634b7279fd646c01278e9cd66ac4ecb5e4a35c6620f26c54",
-    "published": false
+    "published": true,
+    "publicationEvidence": "docs/evidence/technical-signing-legal-publication.json"
+  },
+  "customerConfirmation": {
+    "confirmedAt": "2026-10-16T14:53:19.777Z",
+    "recordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+    "status": "CONFIRMED",
+    "revision": 2,
+    "pdfOpeningConfirmedByCustomer": true,
+    "evidence": "docs/evidence/technical-signing-customer-confirmation.json",
+    "actualSignatureImplied": false
   }
 }
