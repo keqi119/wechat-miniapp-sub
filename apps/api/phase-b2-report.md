@@ -49,3 +49,9 @@ git diff --check -- apps/api
 - 独立native审阅提出的午夜边界和最新已签恢复基线已修，相关证据已反馈；最后审阅结论由对应报告另记。
 
 - 独立待办（主控决定不扩大本B2）：VIN/车牌标准化与非空唯一约束。当前库存守门以Vehicle.id为准，录入重复实车身份须另补迁移和数据核验。
+
+## 原生入口合并验证
+
+主控原生 API 提交71ed5fd已合为ec18367。三处冲突保留B2库存/分段/换车业务，同时保留runNativeSigning、固定原生return、当前隐私独立同意和精确域名校验；H5内部服务复用不受原生外层开关影响。
+
+`NODE_ENV=test pnpm --filter @chundian/api exec tsx --test --test-concurrency=1 test/native-signing.test.ts test/native-fadada-adapter.test.ts test/h5-signing.test.ts test/vehicle-change.test.ts test/delivery-delay.test.ts`：58/58通过，0跳过，日志`.runtime/b2-native-integration-final.log`。新增原生换车AMENDMENT真实HTTP回归，证明归属拦截、固定return、正确合同ID及URL不代表签署成功。首次运行只因旧H5关闭错误码期望失败，按原生新契约修正；不隐瞒为首轮全绿。API build通过。
