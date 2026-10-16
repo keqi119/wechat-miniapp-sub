@@ -1,14 +1,16 @@
 {
   "sealQuery": {
-    "checkedAt": "2026-10-16T08:01:24.688Z",
+    "checkedAt": "2026-10-16T08:10:39.164Z",
     "operation": "query_signature.api",
+    "target": "user-specified-seal",
+    "previousConfiguredSealMatchesUserProvided": false,
     "httpStatus": 200,
     "providerCode": "1",
     "configuredSealFound": true,
     "companySeal": true,
     "defaultSeal": false,
-    "imageSha256": "0e4bdc80a7393fdaff3e77068be97006437b8163a6013b74efd740569588557a",
-    "imageBytes": 66287,
+    "imageSha256": "b022a44415bef9bfa1e3e2f9cf2f6e629ee29e92d48037ab1918bbd05dd1be2b",
+    "imageBytes": 41320,
     "signingCalled": false,
     "productionFlagsUnchanged": true
   },
@@ -29,5 +31,20 @@
     "Mini-program provider business domain",
     "Provider authorization relationship returned no owned seal entry",
     "Real customer identity and signing/archive end-to-end validation"
-  ]
+  ],
+  "previousSealQuery": {
+    "checkedAt": "2026-10-16T08:01:24.688Z",
+    "operation": "query_signature.api",
+    "httpStatus": 200,
+    "providerCode": "1",
+    "configuredSealFound": true,
+    "companySeal": true,
+    "defaultSeal": false,
+    "imageSha256": "0e4bdc80a7393fdaff3e77068be97006437b8163a6013b74efd740569588557a",
+    "imageBytes": 66287,
+    "signingCalled": false,
+    "productionFlagsUnchanged": true
+  },
+  "targetSealSource": "user explicitly supplied on 2026-10-16",
+  "userConfirmedMiniProgramDomainNotConfigured": true
 }

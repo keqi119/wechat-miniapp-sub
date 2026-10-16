@@ -1,3 +1,4 @@
+import { usagePolicyAppendix } from '../usage/policy';
 import { ensure } from '../common/errors';
 import { fen } from '../common/data';
 import { amount, billSchedule, dateOnly } from '../billing/rules';
@@ -27,12 +28,13 @@ export function resolveSubscriptionTemplate(template:string,resource:any,identit
   mileageAllowance:`每月${snapshot.mileagePerMonthKm}公里；${terms.mileageCarryRule}`,excessMileageRule:`${fen(snapshot.excessMileagePriceAmount)}/公里；${terms.excessMileageCalculation}`,
   serviceBenefits:`${snapshot.benefits.length?snapshot.benefits.join('；'):'本方案未列其他服务权益'}；${terms.serviceCoverage}；能源：${snapshot.energyDescription}；使用条件：${snapshot.conditions}`,
   platformSignatureSlot:'由企业签章区签署',customerSignatureSlot:'由订阅方签署区签署'
-});}
+})+(snapshot.usagePolicyVersion?usagePolicyAppendix(snapshot.usagePolicy):'');}
 const checklistKeys=['actualTimeAndPlace','batteryLevel','accessoriesChecklist','conditionChecklist','openItems','resolutionPlan','staffName'];
 const labels:Record<string,string>={actualTimeAndPlace:'实际交接时间地点',batteryLevel:'电量',accessoriesChecklist:'随车物品',conditionChecklist:'车辆状况',openItems:'处理事项',resolutionPlan:'负责人及期限',staffName:'交接人员'};
 export function resolveHandoverTemplate(template:string,resource:any,identity:any,contractId:string,files:{id:string;name:string;sha256:string}[]){
   ensure(resource.customerResponse==='CONFIRM'&&Number.isSafeInteger(resource.readingKm)&&resource.readingKm>=0&&['DELIVERY','RETURN'].includes(resource.type),409,'HANDOVER_INCOMPLETE','须先确认当前交接事实与有效里程');
   const checklist=Array.isArray(resource.checklist)?Object.fromEntries(resource.checklist.map((x:any)=>[x.key||x.label,x.value])):resource.checklist;
   const values:Record<string,string>={};for(const key of checklistKeys)values[key]=required(checklist?.[key]??checklist?.[labels[key]],'HANDOVER_INCOMPLETE');
+  if(resource.actualAt){const actual=new Date(resource.actualAt);ensure(Number.isFinite(actual.getTime()),409,'HANDOVER_INCOMPLETE','实际交接时间无效');values.actualTimeAndPlace+=`；系统记录的实际交接时间（北京时间）：${actual.toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false})}`;}
   return interpolate(template,{...values,orderNo:required(resource.orderId),handoverType:resource.type==='DELIVERY'?'交车':'还车',handoverId:required(resource.id),contractNo:required(contractId,'HANDOVER_INCOMPLETE'),customerName:required(identity.name),vehicleIdentification:required(resource.order.finalPlanSnapshot?.commercialTerms?.vehicleIdentification,'HANDOVER_INCOMPLETE'),readingKm:String(resource.readingKm),manifestHash:required(resource.manifestHash,'HANDOVER_INCOMPLETE'),attachmentManifest:files.length?files.map(file=>`${required(file.name)}（${required(file.id)}；SHA-256 ${required(file.sha256)}）`).join('；'):'本记录无关联附件',customerResponse:'事实无异议',objection:resource.responseReason?required(resource.responseReason,'HANDOVER_INCOMPLETE'):'无异议',platformSignatureSlot:'由企业签章区签署',customerSignatureSlot:'由客户签署区签署'});
 }

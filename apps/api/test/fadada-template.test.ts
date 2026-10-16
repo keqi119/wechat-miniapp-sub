@@ -54,3 +54,9 @@ test('writer renders approved combined Chinese text to actual PDF and freezes re
   assert.equal(bytes?.subarray(0,5).toString(),'%PDF-');assert.ok(bytes!.length>10000);
   assert.equal(result.slotCoordinates.length,4);assert.equal(saved.body.includes('{{'),false);assert.ok(saved.body.includes('已确认insuranceDetails规则'));assert.ok(saved.body.includes('7 个工作日内'));assert.equal(saved.sourceFileId,'source-pdf');
 });
+test('usage rules appendix remains exact in rendered contract and rejects changed signed policy',async()=>{
+ const {fixtureUsagePolicy}=await import('./usage-fixtures');
+ const current={...resource,order:{...resource.order,finalPlanSnapshot:{...snapshot,usagePolicyVersion:'USAGE_V1',usagePolicy:fixtureUsagePolicy}}};
+ const text=resolveSubscriptionTemplate(source('commercial-schedule.md'),current,identity,1);assert.ok(text.includes(fixtureUsagePolicy.content));assert.ok(text.includes(fixtureUsagePolicy.hash));
+ assert.throws(()=>resolveSubscriptionTemplate(source('commercial-schedule.md'),{...current,order:{...current.order,finalPlanSnapshot:{...current.order.finalPlanSnapshot,usagePolicy:{...fixtureUsagePolicy,baseAllowanceKm:999}}}},identity,1),code('USAGE_POLICY'));
+});

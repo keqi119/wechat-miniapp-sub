@@ -151,11 +151,12 @@ test('service/mileage submissions transmit file ids and order identity with stab
   await assert.rejects(api.submitMileage({ orderId: 'order-1', reading: '', attachments: [{ id: 'file-1' }] }), { code: 'VALIDATION' });
 });
 test('handover response pins evidence manifest and read private file ids', async () => {
-  const { api, calls } = setup(() => ({ statusCode: 200, data: { id: 'handover-1', status: 'CUSTOMER_CONFIRMED' } }));
+  const { api, calls } = setup(value => ({ statusCode: 200, data: value.method==='GET'?{id:'handover-1',type:'DELIVERY',actualAt:'2026-10-16T00:30:00Z',manifestHash:'manifest-v1'}:{ id: 'handover-1', status: 'CUSTOMER_CONFIRMED' } }));
   await assert.rejects(api.submitHandover({ decision: 'confirm', handoverId: 'handover-1', accepted: true }), { code: 'VALIDATION' });
-  await api.submitHandover({ decision: 'confirm', handoverId: 'handover-1', manifestHash: 'manifest-v1', readFileIds: ['file-1'], evidenceRead: true, accepted: true, idempotencyKey: 'confirm-once' });
-  assert.equal(calls[0].url.endsWith('/handovers/handover-1/confirm'), true);
-  assert.deepEqual(calls[0].data, { manifestHash: 'manifest-v1', readFileIds: ['file-1'], idempotencyKey: 'confirm-once' });
+  await api.submitHandover({ decision: 'confirm', handoverId: 'handover-1', actualAt:'2026-10-16T00:30:00Z',manifestHash: 'manifest-v1', readFileIds: ['file-1'], evidenceRead: true, accepted: true, idempotencyKey: 'confirm-once' });
+  const post=calls.find(call=>call.method==='POST');assert.equal(post.url.endsWith('/handovers/handover-1/confirm'), true);
+  assert.deepEqual(post.data, { manifestHash: 'manifest-v1', readFileIds: ['file-1'], idempotencyKey: 'confirm-once' });
+  await assert.rejects(api.submitHandover({decision:'confirm',handoverId:'handover-1',actualAt:'2026-10-16T01:00:00Z',manifestHash:'manifest-v1',evidenceRead:true,accepted:true}),{code:'HANDOVER_ACTUAL_TIME'});
 });
 test('unsupported record/action combinations cannot become arbitrary API requests', async () => {
   const { api, calls } = setup();
@@ -235,7 +236,8 @@ test('login refuses an unchecked or missing published document snapshot before n
 test('all confirmed commercial clauses and anchored monthly periods are available before accepting; old incomplete plans block confirmation', async () => {
   const terms = Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key => [key, '明确' + key]));
   let commercialTerms = terms;
-  const { api } = setup(() => ({ statusCode: 200, data: { id: 'a', finalPlan: { revision: 1, commercialHash: 'h', title: '确定方案', monthlyFeeAmount: 0, depositAmount: 100, months: 2, mileagePerMonthKm: 0, excessMileagePriceAmount: 80, energyDescription: '自付', benefits: [], conditions: '明确限制', startDate: '2026-01-31', firstDueDate: '2026-01-25', commercialTerms } } }));
+  let usagePolicy={version:'USAGE_V1',documentId:'usage-v1',documentVersion:1,hash:'a'.repeat(64),content:'本地合成已批准月台账全文，不作为生产文案。',baseAllowanceKm:1500,excessPriceAmount:150};
+  const { api } = setup(() => ({ statusCode: 200, data: { id: 'a', finalPlan: { revision: 1, commercialHash: 'h', title: '确定方案', monthlyFeeAmount: 0, depositAmount: 100, months: 2, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '自付', benefits: [], conditions: '明确限制', startDate: '2026-01-31', firstDueDate: '2026-01-25', commercialTerms,usagePolicy } } }));
   const plan = (await api.getApplication('a')).finalPlan;
   assert.equal(plan.complete, true);assert.equal(plan.commercialRows.length, 14);
   assert.equal(plan.commercialRows.find(row => row.key === 'insuranceDetails').value, '明确insuranceDetails');
@@ -243,4 +245,5 @@ test('all confirmed commercial clauses and anchored monthly periods are availabl
   assert.deepEqual(plan.billingRows[1], { sequence: 2, amountText: '¥0.00', dueDateText: '2026.02.25', periodText: '2026.02.28—2026.03.30' });
   commercialTerms = null;assert.equal((await api.getApplication('a')).finalPlan.complete, false);
   commercialTerms = { ...terms, insuranceDetails: '待确认' };assert.equal((await api.getApplication('a')).finalPlan.complete, false);
+  commercialTerms=terms;usagePolicy=null;assert.equal((await api.getApplication('a')).finalPlan.complete,false);
 });

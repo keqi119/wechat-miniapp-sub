@@ -8,17 +8,18 @@
   ><view wx:elif="{{submitted}}" class="card"
     ><view class="tag">待审核</view><view class="section-title">里程复核记录已保存</view
     ><view class="muted">本次录入不代表后台已审核，也不会自动生成费用。</view
-    ><button class="primary" bindtap="openRecord">查看记录</button></view
+    ><button class="primary" bindtap="openRecord">查看记录</button><button class="secondary" bindtap="returnToPeriods">查看月台账与其他月份</button></view
   ><view wx:elif="{{!subscription}}" class="empty"
     ><view class="section-title">暂无可复核里程的订阅</view
     ><button class="secondary" bindtap="openUse">返回用车</button></view
   ><block wx:else
     ><view class="card"
-      ><view class="label">{{subscription.vehicleName}} · 最近确认里程</view
-      ><view class="price">{{subscription.mileageText || '待确认'}}</view></view
+      ><view class="label">{{subscription.vehicleName}} · 订阅月台账</view
+      ><view class="price">每订阅月 {{usage.baseAllowanceKm}} 公里</view><view class="muted">从实际交车日起按订阅月计算，基础优先使用、期末清零；里程包余额 {{usage.packBalanceKm}} 公里 · {{usage.packStatusText}}</view></view
+    ><view class="card"><view class="section-title">选择需要申报或补证的订阅月</view><view wx:if="{{!usage.periods.length}}" class="muted">尚无可读取月份，请联系运营核对实际交车日期。</view><radio-group bindchange="selectUsagePeriod"><label wx:for="{{usage.periods}}" wx:key="id" class="attachment-row"><radio value="{{item.id}}" checked="{{periodId === item.id}}" disabled="{{busy || choosing || !item.canSubmit}}" color="#B44919"/><view><view>第 {{item.sequence}} 月 · {{item.periodText}}</view><view class="muted small">{{item.statusText}} · 月界/归还日 {{item.boundaryDateText}}</view><view wx:if="{{item.reviewNote}}" class="notice">{{item.reviewNote}}</view></view></label></radio-group></view
     ><view class="notice"
-      >填写当前仪表盘的累计公里数。记录需经审核；异常读数不会直接改变已确认里程。</view
-    ><view class="card"
+      >仅申报所选订阅月月界或归还日的实际仪表照片与累计读数。缺报、照片不足须补证，尚未人工审核时不会估算或跨月平均分摊，也不表示费用已结算。</view
+    ><block wx:if="{{selectedPeriod}}"><view class="card"><view class="section-title">第 {{selectedPeriod.sequence}} 月 · {{selectedPeriod.periodText}}</view><view class="muted">期初确认读数 {{selectedPeriod.startReadingKm == null ? "待前月结算核对" : selectedPeriod.startReadingKm + " km"}}；请使用 {{selectedPeriod.boundaryDateText}} 实际拍摄的仪表照片。</view><view class="field"><view class="label">照片实际拍摄日期（北京时间）</view><picker mode="date" start="{{selectedPeriod.effectiveEndDate}}" end="{{selectedPeriod.effectiveEndDate}}" value="{{recordedDate}}" bindchange="captureDate" disabled="{{busy}}"><view class="input">{{recordedDate || '请选择实际拍摄日期'}}</view></picker></view><view class="field"><view class="label">照片实际拍摄时间（北京时间）</view><picker mode="time" value="{{recordedTime}}" bindchange="captureTime" disabled="{{busy}}"><view class="input">{{recordedTime || '请选择实际拍摄时分'}}</view></picker></view></view><view class="card"
       ><view class="field"
         ><view class="label">累计里程（km）</view
         ><input
@@ -30,17 +31,7 @@
           data-field="reading"
           bindinput="input"
           disabled="{{busy}}" /></view
-      ><view class="field"
-        ><view class="label">补充说明（选填）</view
-        ><textarea
-          class="textarea"
-          value="{{comment}}"
-          placeholder="例如仪表更换或其他需说明的情况"
-          maxlength="300"
-          data-field="comment"
-          bindinput="input"
-          disabled="{{busy}}"
-        /></view></view
+      ></view
     ><view class="card"
       ><view class="section-title">仪表盘凭证</view
       ><view class="muted"
@@ -62,8 +53,8 @@
         disabled="{{busy || choosing}}"
         >上传仪表凭证</button
       ></view
-    ><button class="primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || choosing}}"
-      >提交里程复核</button
-    ></block
+    ><button class="primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || choosing || !reading || !recordedDate || !recordedTime || !attachments.length}}"
+      >提交本订阅月仪表证据</button
+    ></block><button class="secondary" bindtap="openUsage">查看月结算、里程包及退订结算</button></block
   ></view
 >

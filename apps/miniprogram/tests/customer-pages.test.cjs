@@ -2,10 +2,11 @@ const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const memory = new Map();
-let calls = [], toasts = [], uploadFails = false, conflict = false, legalVersion = 3, handoverResponse = null, handoverId = 'h1', applicationStatus = 'AWAITING_CONFIRMATION';
+let calls = [], toasts = [], uploadFails = false, conflict = false, legalVersion = 3, handoverResponse = null, handoverId = 'h1', applicationStatus = 'AWAITING_CONFIRMATION', handoverActualAt='2026-10-16T00:30:00Z',handoverType='DELIVERY';
 const session = { token: 'token', expiresAt: '2099-01-01T00:00:00Z', customer: { id: 'c1', profile: { name: '测试客户', mobile: '13800000000', drivingYears: 0 } } };
 const storageKey = require('../src/config').storageKey;
 const commercialTerms = Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key => [key, '本测试确认的' + key]));
+const usagePolicy={version:'USAGE_V1',documentId:'usage-v1',documentVersion:1,hash:'a'.repeat(64),content:'离线合成的已批准月里程规则，不作为生产文案。',baseAllowanceKm:1500,excessPriceAmount:80};
 global.wx = {
   getStorageSync: key => memory.get(key), setStorageSync: (key, value) => memory.set(key, value), removeStorageSync: key => memory.delete(key),
   setNavigationBarTitle() {}, showToast: v => toasts.push(v.title), navigateTo: v => { calls.push({ navigation: v.url }); v.success?.({}); }, switchTab() {},
@@ -21,13 +22,14 @@ global.wx = {
     else if (route === '/customer/payment-verifications') data = { items: [] };
     else if (route === '/customer/applications/a1/credit-review') data = { applicationId:'a1',creditRevision:3,ruleVersion:'ZHIMA_MANUAL_V1',document:{id:'credit-v1',type:'credit-verification',version:1,title:'人工核验说明',content:'本地测试说明'},consent:{id:'cc1',status:'ACCEPTED',documentId:'credit-v1',version:1},verification:{id:'cv1',band:'GE750',consentId:'cc1',verifiedAt:'2026-10-16T08:00:00Z'},status:'VERIFIED',canConsent:true,canDecline:true,consentRequirementsMet:true,canWithdraw:true,canFinalize:false,verificationCurrent:true,canConfirmFinalPlan:true,depositMultiplier:0 };
     else if (route === '/customer/dashboard') data = { subscription: { id: 'o1', orderId: 'o1', vehicleName: '当前车辆' }, handover: { id: handoverId } };
+    else if (route === '/customer/orders/o1/usage-account') data = {orderId:'o1',orderStatus:'ACTIVE',policyVersion:'USAGE_V1',startedOn:'2026-09-16',returnedOn:null,baseAllowanceKm:1500,excessPriceAmount:150,packBalanceKm:0,packStatus:'ACTIVE',periods:[{id:'up1',sequence:1,startDate:'2026-09-16',endDate:'2026-10-16',effectiveEndDate:'2026-10-16',status:'AWAITING_READING',revision:1,startReadingKm:0,endReadingKm:null,usedKm:null,baseUsedKm:null,packUsedKm:null,excessKm:null,excessAmount:null,billId:null,canSubmit:true,reviewNote:''}],packs:[],ledger:[],products:[],purchaseTerms:null,canPurchase:false,returnSettlement:null};
     else if (route.startsWith('/public/vehicles/')) data = { vehicle: { id: 'v1', name: '当前车辆', available: true }, plans: [{ id: 'p1', available: true, monthlyFeeAmount: 0 }] };
     else if (route.startsWith('/public/legal/')) { const type = route.split('/').at(-1); data = { id: type === 'application' ? 'legal-1' : type + '-1', type, version: legalVersion, title: '正式须知', content: '正式文案' }; }
-    else if (route === '/customer/applications/a1') data = { id: 'a1', status: applicationStatus, profile: { name: '原审查资料', drivingYears: 2, fileIds: ['f-old'] }, note: '请补驾驶证', finalPlan: { creditVerificationId:'cv1',creditRuleVersion:'ZHIMA_MANUAL_V1',creditBand:'GE750',creditRevision:3,revision: 4, commercialHash: 'hash-4', title: '最终套餐', monthlyFeeAmount: 12345, depositAmount: 0, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 80, energyDescription: '自费充电', benefits: ['用车服务'], conditions: '提前退出按合同', startDate: '2026-11-01', firstDueDate: '2026-10-25', commercialTerms } };
+    else if (route === '/customer/applications/a1') data = { id: 'a1', status: applicationStatus, profile: { name: '原审查资料', drivingYears: 2, fileIds: ['f-old'] }, note: '请补驾驶证', finalPlan: { creditVerificationId:'cv1',creditRuleVersion:'ZHIMA_MANUAL_V1',creditBand:'GE750',creditRevision:3,revision: 4, commercialHash: 'hash-4', title: '最终套餐', monthlyFeeAmount: 12345, depositAmount: 0, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 80, energyDescription: '自费充电', benefits: ['用车服务'], conditions: '提前退出按合同', startDate: '2026-11-01', firstDueDate: '2026-10-25', commercialTerms,usagePolicy } };
     else if (route === '/customer/applications') data = { id: 'a1' };
-    else if (route.startsWith('/customer/handovers/')) data = { id: handoverId, manifestHash: 'manifest-' + handoverId, fileIds: ['f1'], status: handoverResponse === 'CONFIRM' ? 'CUSTOMER_CONFIRMED' : handoverResponse === 'OBJECT' ? 'OBJECTION_SUBMITTED' : 'PUBLISHED', customerResponse: handoverResponse, signatureStatus: 'PENDING', checklist: [{ label: '钥匙', value: '2把' }], evidence: [{ id: 'f1', name: '现场照片' }] };
+    else if (route.startsWith('/customer/handovers/')) data = { id: handoverId,type:handoverType,actualAt:handoverActualAt,manifestHash: 'manifest-' + handoverId, fileIds: ['f1'], status: handoverResponse === 'CONFIRM' ? 'CUSTOMER_CONFIRMED' : handoverResponse === 'OBJECT' ? 'OBJECTION_SUBMITTED' : 'PUBLISHED', customerResponse: handoverResponse, signatureStatus: 'PENDING', checklist: [{ label: '钥匙', value: '2把' }], evidence: [{ id: 'f1', name: '现场照片' }] };
     else if (route.endsWith('/sign-status')) data = { status: 'SIGNED' };
-    else if (route.endsWith('/services') || route.endsWith('/mileages') || route.endsWith('/confirm')) data = { id: 'result-1' };
+    else if (route.endsWith('/services') || route.endsWith('/mileages') || route.endsWith('/readings') || route.endsWith('/confirm')) data = { id: 'result-1' };
     if (conflict && route.endsWith('/confirm')) v.success({ statusCode: 409, data: { error: { code: 'VERSION_CONFLICT', message: '方案已更新' } } });
     else v.success({ statusCode: 200, data });
   },
@@ -46,7 +48,7 @@ async function settle(result) {
   assert.equal(result.data.loading, false);
   return result;
 }
-beforeEach(() => { memory.clear(); memory.set(storageKey, session); calls = []; toasts = []; uploadFails = false; conflict = false; legalVersion = 3; handoverResponse = null; handoverId = 'h1'; applicationStatus = 'AWAITING_CONFIRMATION'; });
+beforeEach(() => { memory.clear(); memory.set(storageKey, session); calls = []; toasts = []; uploadFails = false; conflict = false; legalVersion = 3; handoverResponse = null; handoverId = 'h1'; applicationStatus = 'AWAITING_CONFIRMATION';handoverActualAt='2026-10-16T00:30:00Z';handoverType='DELIVERY'; });
 test('application page can submit real intent with the agreement version it displayed', async () => {
   const p = await settle(page('application', { vehicleId: 'v1', planId: 'p1' }));
   p.setData({ accepted: true, name: '测试客户', mobile: '13800000000' });
@@ -78,10 +80,10 @@ test('service page uploads bytes before submitting private file ids, and failure
   assert.match(toasts.at(-1), /上传失败/);
 });
 test('mileage page submits dashboard order identity and uploaded evidence', async () => {
-  const p = await settle(page('mileage')); await p.chooseAttachments();
-  p.setData({ reading: '0' }); await p.submit();
-  const submission = calls.find(v => v.method === 'POST' && v.url.endsWith('/mileages'));
-  assert.equal(submission.data.orderId, 'o1');
+  const p = await settle(page('mileage')); p.selectUsagePeriod({detail:{value:'up1'}}); await p.chooseAttachments();
+  p.setData({ reading: '0',recordedDate:'2026-10-16',recordedTime:'08:30' }); await p.submit();
+  const submission = calls.find(v => v.method === 'POST' && v.url.endsWith('/usage-periods/up1/readings'));
+  assert.deepEqual(submission.data.fileIds,['f1']);
   assert.equal(submission.data.readingKm, 0);
 });
 test('handover reads real current manifest and never confirms before private evidence is opened', async () => {
@@ -93,6 +95,11 @@ test('handover reads real current manifest and never confirms before private evi
   const submission = calls.find(v => v.method === 'POST' && v.url.endsWith('/handovers/h1/confirm'));
   assert.equal(submission.data.manifestHash, 'manifest-h1');
   assert.deepEqual(submission.data.readFileIds, ['f1']);
+});
+test('handover displays the server actual time in Beijing and missing time blocks new facts while history remains readable',async()=>{
+  const p=await settle(page('handover'));assert.equal(p.data.handover.actualAtText,'2026-10-16 08:30:00（北京时间）');assert.equal(p.data.handover.actualAtLabel,'实际交车时间');handoverType='RETURN';await p.reload();assert.equal(p.data.handover.actualAtLabel,'实际还车时间');
+  for(const value of [null,'invalid','2099-01-01T00:00:00Z']){handoverActualAt=value;await p.reload();p.setData({evidenceRead:true,accepted:true,readFileIds:['f1']});await p.submit();assert.equal(calls.some(call=>call.method==='POST'),false);assert.equal(p.data.handover.actualAtValid,false);}
+  handoverResponse='CONFIRM';await p.reload();assert.equal(p.data.submitted.id,'h1');assert.equal(p.data.error,'');await p.submit();await p.sign();assert.equal(calls.some(call=>call.method==='POST'),false);
 });
 test('production settings exposes account operations and has no scenario mutation methods', async () => {
   const p = page('settings'); await p.refresh();

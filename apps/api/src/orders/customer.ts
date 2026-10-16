@@ -7,7 +7,7 @@ import { applicationInclude, applicationView } from '../applications/application
 import { vehicleView } from '../catalog/catalog';
 const records: Record<string,string> = { mileages: 'mileage', applications: 'application', orders: 'order', contracts: 'contract', bills: 'bill', payments: 'payment', deposits: 'depositEntry', entitlements: 'entitlement', notifications: 'notification', services: 'serviceRequest' };
 const labels: Record<string,string> = { mileages: '里程申报', orders: '车辆订阅订单', contracts: '汽车订阅服务合同', bills: '订阅账单', payments: '支付记录', deposits: '押金流水', entitlements: '订阅权益', notifications: '站内通知', services: '用车服务' };
-const statuses: Record<string,string> = { DRAFT:'待发布',PENDING:'待处理',PAID:'已支付',SUCCEEDED:'已成功',CREATING:'渠道处理中',FAILED:'未成功',CLOSED:'已关闭',ACTIVE:'用车中',AWAITING_SIGNATURE:'待签约',AWAITING_PAYMENT:'待支付',AWAITING_HANDOVER:'待交付',SIGNED:'已签署',SUBMITTED:'待受理',ASSIGNED:'已派单',ACCEPTED:'已受理',IN_PROGRESS:'处理中',COMPLETED:'已完成',CANCELLED:'已取消',READ:'已读',UNREAD:'未读',RECEIPT:'押金收入',REFUND:'押金退回' };
+const statuses: Record<string,string> = { DRAFT:'待发布',PENDING:'待处理',PAID:'已支付',SUCCEEDED:'已成功',CREATING:'渠道处理中',FAILED:'未成功',CLOSED:'已关闭',ACTIVE:'用车中',SETTLING:'已还车待结算',AWAITING_SIGNATURE:'待签约',AWAITING_PAYMENT:'待支付',AWAITING_HANDOVER:'待交付',SIGNED:'已签署',SUBMITTED:'待受理',ASSIGNED:'已派单',ACCEPTED:'已受理',IN_PROGRESS:'处理中',COMPLETED:'已完成',CANCELLED:'已取消',READ:'已读',UNREAD:'未读',RECEIPT:'押金收入',REFUND:'押金退回' };
 export function recordView(type: string, item: any) {
   if (type === 'applications') return applicationView(item);
   const status = type === 'notifications' ? item.readAt ? 'READ' : 'UNREAD' : item.status || item.type;

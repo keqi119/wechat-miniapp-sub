@@ -1,3 +1,4 @@
+import { seedUsageLegal } from './usage-fixtures';
 import '../src/common/config';
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -27,6 +28,7 @@ before(async () => {
   db = new Db();
   const tables = await db.$queryRaw<Array<{ tablename: string }>>`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename <> '_prisma_migrations'`;
   for (const { tablename } of tables) await db.$executeRawUnsafe(`TRUNCATE TABLE "${tablename.replaceAll('"', '""')}" CASCADE`);
+  await seedUsageLegal(db);
   await db.adminUser.create({ data: { username: 'integration-admin', name: 'Test Admin', role: 'ADMIN', passwordHash: passwordHash('Strong-Test-Password-2026') } });
   app = await createApp({ db, identity: { wechat: async ({ loginCode }: any) => ({ mobile: loginCode === 'second' ? '13900000002' : '13900000001', openId: loginCode }), requestSms: async () => {}, verifySms: async () => ({ mobile: '13900000001' }) } as IdentityGateway });
   await app.listen(0, '127.0.0.1');
@@ -84,7 +86,7 @@ test('final plan optimistic revisions and concurrent confirmation allocate one v
     assert.equal(verified.status,201); return verified.data.verification.id;
   }
   const commercialTerms = Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key => [key, '测试明确条款：' + key]));
-  const p = { creditVerificationId:await authorizeCredit(application.id,'customer'), commercialTerms, revision: 0, monthlyFeeAmount: 300000, depositAmount: 300000, months: 3, mileagePerMonthKm: 1500, excessMileagePriceAmount: 100, energyDescription: '自费', benefits: ['救援'], conditions: '测试', startDate: '2026-12-31', firstDueDate: '2026-12-31' };
+  const p = { creditVerificationId:await authorizeCredit(application.id,'customer'), commercialTerms, revision: 0, monthlyFeeAmount: 300000, depositAmount: 300000, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '自费', benefits: ['救援'], conditions: '测试', startDate: '2026-12-31', firstDueDate: '2026-12-31' };
   assert.equal((await req(`/admin/applications/${application.id}/review`, 'POST', { decision: 'IN_REVIEW', note: '审核' })).status, 201);
   const f = await req(`/admin/applications/${application.id}/final-plan`, 'POST', p); assert.equal(f.status, 201); final = f.data.finalPlan;
   assert.equal((await req(`/admin/applications/${application.id}/final-plan`, 'POST', p)).status, 409);
@@ -94,7 +96,7 @@ test('final plan optimistic revisions and concurrent confirmation allocate one v
   const otherFinal = (await req(`/admin/applications/${otherApplication.id}/final-plan`, 'POST', {...p,creditVerificationId:await authorizeCredit(otherApplication.id,'other')})).data.finalPlan;
   const results = await Promise.all([req(`/customer/applications/${application.id}/confirm`, 'POST', { revision: final.revision, commercialHash: final.commercialHash }, 'customer'), req(`/customer/applications/${otherApplication.id}/confirm`, 'POST', { revision: otherFinal.revision, commercialHash: otherFinal.commercialHash }, 'other')]);
   assert.deepEqual(results.map(r => r.status).sort(), [201, 409]);
-  assert.equal(await db.order.count(), 1); assert.equal(await db.contract.count(), 1); assert.equal(await db.bill.count(), 4);
+  assert.equal(await db.order.count(), 1); assert.equal(await db.contract.count(), 1); assert.equal(await db.bill.count(), 13);
   order = await db.order.findFirstOrThrow();
   assert.deepEqual(order.finalPlanSnapshot.commercialTerms, commercialTerms);
   const winnerToken = order.customerId === customerId ? 'customer' : 'other';
@@ -103,7 +105,7 @@ test('final plan optimistic revisions and concurrent confirmation allocate one v
   assert.equal((await req(`/customer/applications/${winnerApp.id}/confirm`, 'POST', { revision: winnerFinal.revision, commercialHash: winnerFinal.commercialHash }, winnerToken)).data.id, order.id);
   const loser = await db.application.findFirstOrThrow({ where: { id: { not: winnerApp.id } } }); assert.equal(loser.status, 'AWAITING_CONFIRMATION');
   const dates = await db.bill.findMany({ where: { type: 'SUBSCRIPTION' }, orderBy: { sequence: 'asc' } });
-  assert.deepEqual(dates.map(d => d.dueDate.toISOString().slice(0, 10)), ['2026-12-31', '2027-01-31', '2027-02-28']);
+  assert.deepEqual(dates.slice(0,3).map(d => d.dueDate.toISOString().slice(0, 10)), ['2026-12-31', '2027-01-31', '2027-02-28']);
 });
 test('unconfigured payment/signature never succeeds; handover completion requires signature and settled funds', async () => {
   const identity = order.customerId === customerId ? 'customer' : 'other';
@@ -113,7 +115,7 @@ test('unconfigured payment/signature never succeeds; handover completion require
   assert.equal((await req(`/customer/bills/${bill.id}/pay`, 'POST', { idempotencyKey: 'payment-test-0001' }, identity)).status, 503);
   assert.equal((await db.bill.findUniqueOrThrow({ where: { id: bill.id } })).paidAmount, 0);
   await db.order.update({where:{id:order.id},data:{status:'AWAITING_HANDOVER'}});
-  const h = await req('/admin/handovers', 'POST', { orderId: order.id, type: 'DELIVERY', readingKm: 100, fileIds: [], checklist: [{ label: '车况', value: '已检查' }] });
+  const h = await req('/admin/handovers', 'POST', { orderId: order.id, type: 'DELIVERY', actualAt:new Date().toISOString(), readingKm: 100, fileIds: [], checklist: [{ label: '车况', value: '已检查' }] });
   assert.equal(h.status, 201);
   await req(`/admin/handovers/${h.data.id}/publish`, 'POST', {});
   assert.equal((await req(`/customer/handovers/${h.data.id}/confirm`, 'POST', { manifestHash: 'wrong', readFileIds: [], idempotencyKey: 'handover-confirm-0001' }, identity)).status, 409);

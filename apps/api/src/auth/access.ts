@@ -2,15 +2,16 @@ import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/commo
 import { Db } from '../common/db';
 import { ensure, fail } from '../common/errors';
 import { tokenHash } from './auth.service';
-export const resources = ['model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications'];
+export const resources = ['model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements'];
 export function allowed(role: string, resource: string, write: boolean) {
   if (role === 'ADMIN') return true;
   if (['users', 'audit-logs', 'payment-verifications'].includes(resource)) return false;
   if (['enterprise-seals','seal-authorities','signature-policies'].includes(resource)) return !write && role === 'OPERATIONS';
   if (resource === 'esign-approvals') return role === 'OPERATIONS';
   if (!write) return true;
+  if (resource === 'usage-periods') return ['OPERATIONS','FINANCE'].includes(role);
   if (resource === 'files') return ['OPERATIONS','SUPPORT','FINANCE'].includes(role);
-  if (['bills', 'payments', 'deposits', 'refunds'].includes(resource)) return role === 'FINANCE';
+  if (['bills', 'payments', 'deposits', 'refunds', 'usage-periods', 'return-settlements'].includes(resource)) return role === 'FINANCE';
   if (['services', 'notifications', 'files'].includes(resource)) return ['OPERATIONS', 'SUPPORT'].includes(role);
   return role === 'OPERATIONS';
 }

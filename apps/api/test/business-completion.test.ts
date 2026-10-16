@@ -1,3 +1,5 @@
+import { fixtureUsagePolicy, seedUsageLegal } from './usage-fixtures';
+import { initializeUsage, shanghaiDay } from '../src/usage/rules';
 import '../src/common/config';
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,7 +15,7 @@ import { AuthController } from '../src/auth/auth.controller';
 import { CreditReviewController } from '../src/applications/credit-review';
 let db: Db, workflows: WorkflowsController;
 const admin = {admin:{id:'completion-operator',role:'ADMIN'}};
-before(()=>{assert.ok(process.env.TEST_DATABASE_URL?.includes('_test'));db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});workflows=new WorkflowsController(db,unavailableESign,new SignatureService(db));});
+before(async()=>{assert.ok(process.env.TEST_DATABASE_URL?.includes('_test'));db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});await seedUsageLegal(db);workflows=new WorkflowsController(db,unavailableESign,new SignatureService(db));});
 after(async()=>{await db?.$disconnect();});
 async function fixture(status: any='AWAITING_HANDOVER') {
   const key=`${Date.now()}-${Math.random()}`;
@@ -21,13 +23,14 @@ async function fixture(status: any='AWAITING_HANDOVER') {
   const vehicle=await db.vehicle.create({data:{brand:'测试',model:'EV',title:'交接测试',year:2026,city:'上海',mileageKm:100,status:status==='ACTIVE'?'IN_USE':'RESERVED'}});
   const plan=await db.subscriptionPlan.create({data:{vehicleId:vehicle.id,name:'测试套餐',months:2,monthlyFeeAmount:10000,mileagePerMonthKm:1000,excessMileagePriceAmount:100,energyDescription:'测试',benefits:[],conditions:'测试',active:true}});
   const application=await db.application.create({data:{customerId:customer.id,vehicleId:vehicle.id,subscriptionPlanId:plan.id,profile:{name:'原资料'},consents:[],idempotencyKey:key,requestHash:key,status:'FINAL_PLAN_CONFIRMED'}});
-  const order=await db.order.create({data:{applicationId:application.id,customerId:customer.id,vehicleId:vehicle.id,finalPlanSnapshot:{months:2,monthlyFeeAmount:10000,mileagePerMonthKm:1000},confirmedMileageKm:100,status}});
+  const order=await db.order.create({data:{applicationId:application.id,customerId:customer.id,vehicleId:vehicle.id,finalPlanSnapshot:{months:2,monthlyFeeAmount:10000,mileagePerMonthKm:1500,excessMileagePriceAmount:150,startDate:shanghaiDay(new Date()),usagePolicyVersion:'USAGE_V1',usagePolicy:fixtureUsagePolicy},confirmedMileageKm:100,status}});
   await db.vehicle.update({where:{id:vehicle.id},data:{reservedOrderId:order.id}});
   await db.contract.create({data:{orderId:order.id,customerId:customer.id,documentHash:key,status:'SIGNED'}});
   await db.bill.create({data:{orderId:order.id,customerId:customer.id,type:'SUBSCRIPTION',sequence:1,amount:10000,paidAmount:10000,status:'PAID',dueDate:new Date()}});
+  if(status==='ACTIVE')await db.serial(tx=>initializeUsage(tx,order,{actualAt:new Date(),readingKm:100}));
   return {customer,vehicle,plan,application,order,request:{customer}};
 }
-async function handover(f:any,type='DELIVERY',status:any='CUSTOMER_CONFIRMED') {return db.handover.create({data:{orderId:f.order.id,customerId:f.customer.id,type,readingKm:100,fileIds:[],checklist:[{label:'检查',value:'已核对'}],manifestHash:`manifest-${f.order.id}`,status,signatureStatus:'SIGNED',customerResponse:'CONFIRM'}});}
+async function handover(f:any,type='DELIVERY',status:any='CUSTOMER_CONFIRMED') {return db.handover.create({data:{orderId:f.order.id,customerId:f.customer.id,type,actualAt:new Date(),readingKm:100,fileIds:[],checklist:[{label:'检查',value:'已核对'}],manifestHash:`manifest-${f.order.id}`,status,signatureStatus:'SIGNED',customerResponse:'CONFIRM'}});}
 test('stale signed delivery cannot reactivate completed order, steal reservation or lower odometer',async()=>{
   const f=await fixture('COMPLETED');const h=await handover(f);
   await db.vehicle.update({where:{id:f.vehicle.id},data:{reservedOrderId:`another-${f.order.id}`,status:'IN_USE',mileageKm:500}});
@@ -37,14 +40,14 @@ test('stale signed delivery cannot reactivate completed order, steal reservation
 });
 test('completed delivery cannot be created a second time and return requires active owned vehicle',async()=>{
   const f=await fixture('ACTIVE');await handover(f,'DELIVERY','COMPLETED');
-  await assert.rejects(()=>workflows.handover({orderId:f.order.id,type:'DELIVERY',readingKm:100,fileIds:[],checklist:[{label:'检查',value:'已核对'}]},admin));
+  await assert.rejects(()=>workflows.handover({orderId:f.order.id,type:'DELIVERY',actualAt:new Date().toISOString(),readingKm:100,fileIds:[],checklist:[{label:'检查',value:'已核对'}]},admin));
   const returned=await handover(f,'RETURN');await db.vehicle.update({where:{id:f.vehicle.id},data:{reservedOrderId:null,status:'UNPUBLISHED'}});
   await assert.rejects(()=>workflows.complete(returned.id,admin));
 });
 test('objection resolution creates a fresh unsigned handover while preserving immutable previous evidence',async()=>{
   const f=await fixture();const original=await handover(f,'DELIVERY','OBJECTION_SUBMITTED');
   await db.handover.update({where:{id:original.id},data:{signatureStatus:'DRAFT',customerResponse:'OBJECT',responseReason:'原照片不清楚',responseKey:'objection-first-key'}});
-  const next=await workflows.reviseHandover(original.id,{readingKm:101,fileIds:[],checklist:[{label:'车况',value:'重新核对'}],resolutionNote:'补充现场核对记录'},admin);
+  const next=await workflows.reviseHandover(original.id,{actualAt:new Date().toISOString(),readingKm:101,fileIds:[],checklist:[{label:'车况',value:'重新核对'}],resolutionNote:'补充现场核对记录'},admin);
   assert.notEqual(next.id,original.id);assert.equal(next.signatureStatus,'DRAFT');assert.equal(next.customerResponse,null);
   const old=await db.handover.findUniqueOrThrow({where:{id:original.id}});assert.equal(old.status,'SUPERSEDED');assert.equal(old.responseReason,'原照片不清楚');assert.equal(old.manifestHash,original.manifestHash);
   await assert.rejects(()=>workflows.confirmHandover(next.id,{manifestHash:original.manifestHash,readFileIds:[],idempotencyKey:'new-confirm-key'},f.request));
@@ -78,7 +81,7 @@ test('cancellation refuses outstanding money and only releases its own reservati
  await db.contract.updateMany({where:{orderId:f.order.id},data:{status:'DRAFT'}});await db.bill.updateMany({where:{orderId:f.order.id},data:{status:'DRAFT',paidAmount:0}});
  const result=await actions.cancel(f.order.id,{reason:'客户取消'},admin);assert.equal(result.status,'CANCELLED');const v=await db.vehicle.findUniqueOrThrow({where:{id:f.vehicle.id}});assert.equal(v.reservedOrderId,null);assert.equal(v.status,'UNPUBLISHED');
  assert.equal(await db.bill.count({where:{orderId:f.order.id,status:{not:'VOID'}}}),0);
- await assert.rejects(()=>workflows.handover({orderId:f.order.id,type:'DELIVERY',readingKm:100,fileIds:[],checklist:[{label:'状态',value:'正常'}]},admin));
+ await assert.rejects(()=>workflows.handover({orderId:f.order.id,type:'DELIVERY',actualAt:new Date().toISOString(),readingKm:100,fileIds:[],checklist:[{label:'状态',value:'正常'}]},admin));
 });
 test('login persists exact current terms/privacy and application rejects a different published legal type',async()=>{
  const suffix=Math.floor(Date.now()/1000);const docs=[];for(const type of ['terms','privacy','application']) docs.push(await db.legalDocument.create({data:{type,version:suffix,title:type,content:'fixture',status:'PUBLISHED',confirmedBy:'fixture',confirmedAt:new Date()}}));
@@ -135,7 +138,7 @@ test('final commercial terms are mandatory, reject placeholders and change the i
  const c=await credits.consent(f.application.id,{documentId:creditDoc.id,version:creditDoc.version,decision:'ACCEPT',idempotencyKey:'terms-credit-consent'},f.request);
  const verified=await credits.verify(f.application.id,{consentId:c.consent!.id,creditRevision:c.creditRevision,band:'GE750',customerPresented:true,idempotencyKey:'terms-credit-verify'},admin);
  const terms=Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key=>[key,'测试正式约定：'+key]));
- const input={creditVerificationId:verified.verification!.id,revision:0,monthlyFeeAmount:10000,depositAmount:0,months:2,mileagePerMonthKm:1000,excessMileagePriceAmount:100,energyDescription:'自费',benefits:[],conditions:'测试约定',startDate:'2026-11-01',firstDueDate:'2026-11-01'};
+ const input={creditVerificationId:verified.verification!.id,revision:0,monthlyFeeAmount:10000,depositAmount:0,months:12,mileagePerMonthKm:1500,excessMileagePriceAmount:150,energyDescription:'自费',benefits:[],conditions:'测试约定',startDate:'2026-11-01',firstDueDate:'2026-11-01'};
  await assert.rejects(()=>applications.finalPlan(f.application.id,input,admin));await assert.rejects(()=>applications.finalPlan(f.application.id,{...input,commercialTerms:{...terms,depositRefundRule:'待确认'}},admin));
  const first=await applications.finalPlan(f.application.id,{...input,commercialTerms:terms},admin);assert.deepEqual(first.finalPlan.commercialTerms,terms);
  const revised=await applications.finalPlan(f.application.id,{...input,revision:1,commercialTerms:{...terms,depositRefundRule:'双方约定七日内结算'}},admin);assert.notEqual(revised.commercialHash,first.commercialHash);

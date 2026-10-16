@@ -39,7 +39,7 @@ export function creditVerificationPayload(body: Record<string, unknown>, idempot
   return { consentId: body.consentId, creditRevision: body.creditRevision, band: body.band, customerPresented: true, idempotencyKey };
 }
 export function creditPlanInitial(entity: Entity, review?: CreditReview): Record<string, unknown> {
-  return { ...(entity.subscriptionPlan as Record<string, unknown> ?? entity.plan as Record<string, unknown> ?? {}), ...(entity.finalPlan as Record<string, unknown> ?? {}), revision: entity.revision ?? 0, creditVerificationId: review?.verification?.id ?? '', creditBand: review?.verification?.band ?? '', creditRevision: review?.creditRevision, creditRuleVersion: review?.ruleVersion };
+  return { ...(entity.subscriptionPlan as Record<string, unknown> ?? entity.plan as Record<string, unknown> ?? {}), ...(entity.finalPlan as Record<string, unknown> ?? {}), mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, revision: entity.revision ?? 0, creditVerificationId: review?.verification?.id ?? '', creditBand: review?.verification?.band ?? '', creditRevision: review?.creditRevision, creditRuleVersion: review?.ruleVersion };
 }
 export function creditDepositPreview(values: Record<string, string>, initial: Record<string, unknown>): string {
   try { const amount = creditDeposit(moneyToCents(values.monthlyFeeAmount ?? ''), String(initial.creditBand ?? '')); return amount === undefined ? '待有效信用核验' : (amount / 100).toFixed(2); }

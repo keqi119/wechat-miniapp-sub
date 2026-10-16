@@ -67,6 +67,7 @@ enum OrderStatus {
  AWAITING_PAYMENT
  AWAITING_HANDOVER
  ACTIVE
+ SETTLING
  COMPLETED
  CANCELLED
 }
@@ -286,6 +287,8 @@ model FinalPlan {
  creditRevision Int?
  creditBand CreditBand?
  creditRuleVersion String?
+ usagePolicyVersion String?
+  usagePolicy Json?
  monthlyFeeAmount Int
  depositAmount Int
  months Int
@@ -368,6 +371,7 @@ model Order {
  handovers Handover[]
  mileages Mileage[]
  entitlements Entitlement[]
+ usageAccount UsageAccount?
 }
 model Contract {
  id String @id @default(cuid())
@@ -461,6 +465,7 @@ model Handover {
  customerId String
  type String
  readingKm Int
+ actualAt DateTime?
  fileIds String[]
  checklist Json
  manifestHash String
@@ -498,6 +503,8 @@ model Mileage {
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
+ periodId String?
+ period UsagePeriod? @relation(fields:[periodId],references:[id])
  customerId String
  readingKm Int
  recordedAt DateTime
@@ -508,6 +515,134 @@ model Mileage {
  reviewedBy String?
  createdAt DateTime @default(now())
  @@unique([customerId,idempotencyKey])
+}
+enum UsagePeriodStatus {
+ OPEN
+ AWAITING_READING
+ REVIEW_PENDING
+ READY
+ SETTLED
+ CANCELLED
+}
+enum PackAccountStatus {
+ ACTIVE
+ FROZEN
+ EXPIRED
+}
+enum MileagePurchaseStatus {
+  REFUND_PENDING
+  REFUNDED
+ PENDING_PAYMENT
+ ACTIVE
+ EXPIRED
+ VOID
+}
+enum ReturnSettlementStatus {
+ READINGS_REQUIRED
+ PENDING_PAYMENT
+ DISPUTED
+ COMPLETED
+}
+model UsageAccount {
+ id String @id @default(cuid())
+ orderId String @unique
+ order Order @relation(fields:[orderId],references:[id])
+ customerId String
+ policyVersion String
+ startedOn DateTime @db.Date
+ returnedOn DateTime? @db.Date
+ returnReadingKm Int?
+ packStatus PackAccountStatus @default(ACTIVE)
+ revision Int @default(0)
+ periods UsagePeriod[]
+ purchases MileagePurchase[]
+ ledger MileageLedger[]
+ settlement ReturnSettlement?
+}
+model UsagePeriod {
+ id String @id @default(cuid())
+ accountId String
+ account UsageAccount @relation(fields:[accountId],references:[id])
+ orderId String
+ sequence Int
+ startDate DateTime @db.Date
+ endDate DateTime @db.Date
+ effectiveEndDate DateTime @db.Date
+ status UsagePeriodStatus @default(OPEN)
+ revision Int @default(0)
+ startReadingKm Int?
+ endReadingKm Int?
+ readingId String?
+ usedKm Int?
+ baseUsedKm Int?
+ packUsedKm Int?
+ excessKm Int?
+ excessAmount Int?
+ billId String? @unique
+ reviewNote String @default("")
+ settledAt DateTime?
+ settlementKey String?
+ createdAt DateTime @default(now())
+ mileages Mileage[]
+ @@unique([orderId,sequence])
+}
+model MileagePackProduct {
+ id String @id
+ version Int
+ km Int
+ amount Int
+ active Boolean @default(true)
+ purchases MileagePurchase[]
+}
+model MileagePurchase {
+ id String @id @default(cuid())
+ accountId String
+ account UsageAccount @relation(fields:[accountId],references:[id])
+ customerId String
+ orderId String
+ productId String
+ product MileagePackProduct @relation(fields:[productId],references:[id])
+ productVersion Int
+ applicableFromSequence Int
+ km Int
+ amount Int
+ remainingKm Int @default(0)
+ status MileagePurchaseStatus @default(PENDING_PAYMENT)
+ billId String @unique
+ termsSnapshot Json
+ acceptedAt DateTime
+ idempotencyKey String
+ requestHash String
+ paidAt DateTime?
+ createdAt DateTime @default(now())
+ ledger MileageLedger[]
+ @@unique([orderId,idempotencyKey])
+}
+model MileageLedger {
+ id String @id @default(cuid())
+ accountId String
+ account UsageAccount @relation(fields:[accountId],references:[id])
+ packId String
+ pack MileagePurchase @relation(fields:[packId],references:[id])
+ periodId String?
+ type String
+ deltaKm Int
+ sourceKey String @unique
+ createdAt DateTime @default(now())
+}
+model ReturnSettlement {
+ id String @id @default(cuid())
+ accountId String @unique
+ account UsageAccount @relation(fields:[accountId],references:[id])
+ orderId String @unique
+ customerId String
+ returnedOn DateTime @db.Date
+ status ReturnSettlementStatus @default(READINGS_REQUIRED)
+ revision Int @default(0)
+ disputeReason String @default("")
+ resolutionNote String @default("")
+ completedAt DateTime?
+ createdAt DateTime @default(now())
 }
 model Entitlement {
  id String @id @default(cuid())

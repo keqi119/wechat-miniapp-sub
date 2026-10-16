@@ -1,6 +1,8 @@
+import { guardPackRefund, settlePackRefund } from '../usage/refunds';
 import { Body, Controller, Get, HttpException, Inject, Injectable, Param, Post, Req } from '@nestjs/common';
 import { advanceToHandover } from '../orders/readiness';
 import { dateOnly } from './rules';
+import { grantPaidPack, guardPackPayment } from '../usage/ledger';
 import { z } from 'zod';
 import { Db } from '../common/db';
 import { PaymentGateway } from '../common/gateways';
@@ -20,6 +22,7 @@ export class BillingService {
       const updated = await tx.refund.update({ where: { id: refundId }, data: { status: event.status, ...(event.providerRefundId ? { providerRefundId: event.providerRefundId } : {}) } });
       if (event.status === 'SUCCEEDED') {
         ensure(event.providerRefundId, 409, 'REFUND_MISMATCH', '渠道退款单号缺失');
+        await settlePackRefund(tx,refund);
         if (refund.payment.bill.type === 'DEPOSIT') await tx.depositEntry.create({ data: { customerId: refund.customerId, orderId: refund.payment.bill.orderId, refundId, type: 'REFUND', amount: refund.amount } });
       }
       await audit(tx, 'payment-provider', 'REFUND_STATUS', 'refunds', refundId, { status: event.status, amount: event.amount }, 'PROVIDER');
@@ -36,6 +39,7 @@ export class BillingService {
         ensure(event.transactionId, 409, 'PAYMENT_MISMATCH', '渠道交易号缺失');
         ensure(payment.bill.status === 'PENDING' && payment.bill.paidAmount === 0 && payment.amount === payment.bill.amount, 409, 'BILL_CONFLICT', '账单已处理，请人工核对支付');
         await tx.bill.update({ where: { id: payment.billId }, data: { paidAmount: payment.amount, status: 'PAID' } });
+        await grantPaidPack(tx,payment.bill,payment.id);
         if (payment.bill.type === 'DEPOSIT') await tx.depositEntry.create({ data: { customerId: payment.customerId, orderId: payment.bill.orderId, paymentId: payment.id, type: 'RECEIPT', amount: payment.amount } });
         await notify(tx, payment.customerId, '付款已确认', '渠道已核验付款到账。', 'payments', payment.id);
       }
@@ -49,6 +53,9 @@ export class BillingService {
     ensure(customer.openId, 409, 'WECHAT_REQUIRED', '支付前请绑定当前小程序微信身份');
     const claim = await this.db.serial(async tx => {
       const bill = await tx.bill.findFirst({ where: { id: billId, customerId: customer.id } }); ensure(bill, 404, 'NOT_FOUND', '账单不存在'); ensure(bill.status === 'PENDING' && bill.paidAmount === 0, 409, 'BILL_NOT_PAYABLE', '账单当前不可支付');
+      const usage=await tx.usageAccount.findUnique({where:{orderId:bill.orderId}});
+      if(usage){await tx.usageAccount.update({where:{id:usage.id},data:{revision:{increment:1}}});if(usage.returnedOn&&bill.type==='SUBSCRIPTION'){const last=await tx.usagePeriod.aggregate({where:{accountId:usage.id,status:{not:'CANCELLED'}},_max:{sequence:true}});ensure(bill.sequence<=(last._max.sequence||0),409,'RETURN_FUTURE_BILL','车辆已交还，未来未履行月份须先结算，不可继续支付');}}
+      await guardPackPayment(tx,bill);
       const existing = await tx.payment.findUnique({ where: { customerId_idempotencyKey: { customerId: customer.id, idempotencyKey } } });
       if (existing) ensure(existing.billId === billId, 409, 'IDEMPOTENCY_CONFLICT', '请求编号已用于其他账单');
       const payment = existing || await tx.payment.findFirst({ where: { billId, status: { in: ['CREATING','PENDING'] } }, orderBy: { createdAt: 'asc' } });
@@ -122,7 +129,7 @@ export class BillingController {
     return this.db.serial(async tx => {
       const old = await tx.bill.findUnique({ where: { orderId_idempotencyKey: { orderId: input.orderId, idempotencyKey: input.idempotencyKey } } });
       if (old) { ensure(old.type === input.type && old.amount === input.amount && old.description === input.description && old.dueDate.getTime() === dueDate.getTime() && hash(old.evidenceFileIds) === hash(input.fileIds), 409, 'IDEMPOTENCY_CONFLICT', '费用账单编号与内容冲突'); return old; }
-      const order = await tx.order.findUnique({ where: { id: input.orderId } }); ensure(order && ['ACTIVE','COMPLETED'].includes(order.status), 409, 'ORDER_STATE', '仅用车中或已归还订单可产生附加费用');
+      const order = await tx.order.findUnique({ where: { id: input.orderId } }); ensure(order && ['ACTIVE','SETTLING','COMPLETED'].includes(order.status), 409, 'ORDER_STATE', '仅用车中或已归还订单可产生附加费用');
       if (input.type === 'RETURN_SETTLEMENT') ensure(await tx.handover.count({ where: { orderId: order.id, type: 'RETURN', status: 'COMPLETED' } }), 409, 'RETURN_REQUIRED', '归还结算须先完成还车交接');
       ensure(await tx.storedFile.count({ where: { id: { in: input.fileIds }, customerId: null, purpose: 'evidence' } }) === new Set(input.fileIds).size, 403, 'FILE_OWNERSHIP', '请上传后台费用证据');
       const max = await tx.bill.aggregate({ where: { orderId: order.id, type: input.type }, _max: { sequence: true } });
@@ -133,15 +140,16 @@ export class BillingController {
   }
   @Post('admin/bills/:id/review') reviewBill(@Param('id') id: string, @Body() body: any, @Req() request: any) {
     const input = z.object({ decision: z.enum(['APPROVED','REJECTED']), note: text }).parse(body);
-    return this.db.serial(async tx => { const bill = await tx.bill.findUnique({ where: { id } }); ensure(bill?.status === 'DRAFT' && ['EXTRA_FEE','RETURN_SETTLEMENT'].includes(bill.type), 409, 'STATE_CONFLICT', '仅附加费用草稿可复核'); ensure(bill.createdBy && bill.createdBy !== request.admin.id, 403, 'DUAL_APPROVAL', '费用须由另一名财务人员复核'); const updated = await tx.bill.update({ where: { id }, data: { status: input.decision === 'APPROVED' ? 'REVIEWED' : 'VOID', reviewedBy: request.admin.id, reviewedAt: new Date(), reviewNote: input.note } }); await audit(tx, request.admin.id, 'REVIEW_FEE', 'bills', id, input); return updated; });
+    return this.db.serial(async tx => { const bill = await tx.bill.findUnique({ where: { id } }); ensure(bill?.status === 'DRAFT' && ['EXTRA_FEE','RETURN_SETTLEMENT','MILEAGE_EXCESS'].includes(bill.type), 409, 'STATE_CONFLICT', '仅附加费用草稿可复核'); ensure(bill.createdBy && bill.createdBy !== request.admin.id, 403, 'DUAL_APPROVAL', '费用须由另一名财务人员复核'); const updated = await tx.bill.update({ where: { id }, data: { status: input.decision === 'APPROVED' ? 'REVIEWED' : 'VOID', reviewedBy: request.admin.id, reviewedAt: new Date(), reviewNote: input.note } }); await audit(tx, request.admin.id, 'REVIEW_FEE', 'bills', id, input); return updated; });
   }
-  @Post('admin/bills/:id/publish') publish(@Param('id') id: string, @Req() request: any) { return this.db.serial(async tx => { const bill = await tx.bill.findUnique({ where: { id } }); ensure(bill, 404, 'NOT_FOUND', '账单不存在'); ensure(bill.status === (['EXTRA_FEE','RETURN_SETTLEMENT'].includes(bill.type) ? 'REVIEWED' : 'DRAFT'), 409, 'STATE_CONFLICT', '费用账单须完成独立复核后发布'); const order = await tx.order.findUniqueOrThrow({ where: { id: bill.orderId } }); ensure(order.status !== 'CANCELLED', 409, 'ORDER_STATE', '订单已取消'); const result = await tx.bill.update({ where: { id }, data: { status: 'PENDING' } }); await audit(tx, request.admin.id, 'PUBLISH', 'bills', id); await notify(tx, bill.customerId, '新账单待支付', '请核对账单并主动支付。', 'bills', id); return result; }); }
+  @Post('admin/bills/:id/publish') publish(@Param('id') id: string, @Req() request: any) { return this.db.serial(async tx => { const bill = await tx.bill.findUnique({ where: { id } }); ensure(bill, 404, 'NOT_FOUND', '账单不存在'); ensure(bill.status === (['EXTRA_FEE','RETURN_SETTLEMENT','MILEAGE_EXCESS'].includes(bill.type) ? 'REVIEWED' : 'DRAFT'), 409, 'STATE_CONFLICT', '费用账单须完成独立复核后发布'); const order = await tx.order.findUniqueOrThrow({ where: { id: bill.orderId } }); ensure(order.status !== 'CANCELLED', 409, 'ORDER_STATE', '订单已取消'); const result = await tx.bill.update({ where: { id }, data: { status: 'PENDING' } }); await audit(tx, request.admin.id, 'PUBLISH', 'bills', id); await notify(tx, bill.customerId, '新账单待支付', '请核对账单并主动支付。', 'bills', id); return result; }); }
   @Post('admin/refunds') requestRefund(@Body() body: any, @Req() request: any) {
     const input = z.object({ paymentId: text, amount: money.positive(), reason: text, idempotencyKey: key }).parse(body);
     return this.db.serial(async tx => {
       const existing = await tx.refund.findUnique({ where: { requestedBy_idempotencyKey: { requestedBy: request.admin.id, idempotencyKey: input.idempotencyKey } } });
       if (existing) { ensure(existing.paymentId === input.paymentId && existing.amount === input.amount && existing.reason === input.reason, 409, 'IDEMPOTENCY_CONFLICT', '退款请求编号与内容冲突'); return existing; }
       const payment = await tx.payment.findUnique({ where: { id: input.paymentId } }); ensure(payment?.status === 'SUCCEEDED', 409, 'PAYMENT_STATE', '仅成功支付可申请退款');
+      await guardPackRefund(tx,payment,input.amount);
       const sum = await tx.refund.aggregate({ where: { paymentId: input.paymentId, status: { in: ['PENDING_APPROVAL','PROCESSING','SUCCEEDED'] } }, _sum: { amount: true } });
       ensure((sum._sum.amount || 0) + input.amount <= payment.amount, 409, 'REFUND_LIMIT', '退款累计金额不可超过实付');
       const refund = await tx.refund.create({ data: { ...input, customerId: payment.customerId, requestedBy: request.admin.id } }); await audit(tx, request.admin.id, 'REQUEST', 'refunds', refund.id, input); return refund;
@@ -149,7 +157,7 @@ export class BillingController {
   }
   @Post('admin/refunds/:id/reject') reject(@Param('id') id: string, @Body() body: any, @Req() request: any) { const { reason } = z.object({ reason: text }).parse(body); return this.db.serial(async tx => { const refund = await tx.refund.findUnique({ where: { id } }); ensure(refund?.status === 'PENDING_APPROVAL', 409, 'STATE_CONFLICT', '退款请求已处理'); const updated = await tx.refund.update({ where: { id }, data: { status: 'REJECTED', reason } }); await audit(tx, request.admin.id, 'REJECT', 'refunds', id, { reason }); return updated; }); }
   @Post('admin/refunds/:id/approve') async approve(@Param('id') id: string, @Req() request: any) {
-    const refund = await this.db.serial(async tx => { const item = await tx.refund.findUnique({ where: { id }, include: { payment: true } }); ensure(item?.status === 'PENDING_APPROVAL', 409, 'STATE_CONFLICT', '退款请求已处理'); ensure(item.requestedBy !== request.admin.id, 403, 'DUAL_APPROVAL', '退款须由另一名有权限人员复核'); const updated = await tx.refund.update({ where: { id }, data: { status: 'PROCESSING', approvedBy: request.admin.id }, include: { payment: true } }); await audit(tx, request.admin.id, 'APPROVE', 'refunds', id); return updated; });
+    const refund = await this.db.serial(async tx => { const item = await tx.refund.findUnique({ where: { id }, include: { payment: true } }); ensure(item?.status === 'PENDING_APPROVAL', 409, 'STATE_CONFLICT', '退款请求已处理'); ensure(item.requestedBy !== request.admin.id, 403, 'DUAL_APPROVAL', '退款须由另一名有权限人员复核'); await guardPackRefund(tx,item.payment,item.amount,true); const updated = await tx.refund.update({ where: { id }, data: { status: 'PROCESSING', approvedBy: request.admin.id }, include: { payment: true } }); await audit(tx, request.admin.id, 'APPROVE', 'refunds', id); return updated; });
     try {
       const result = await this.gateway.refund({ refundId: id, paymentId: refund.paymentId, amount: refund.amount, totalAmount: refund.payment.amount, reason: refund.reason });
       return this.billing.settleRefund(id, { ...result, paymentId: refund.paymentId, amount: refund.amount, totalAmount: refund.payment.amount });

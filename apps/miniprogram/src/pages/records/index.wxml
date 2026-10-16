@@ -8,13 +8,13 @@
     <button class="secondary" bindtap="reload">重新加载</button>
     <button class="text-button" bindtap="openMine">返回我的</button>
   </view>
-  <view wx:elif="{{!items.length}}" class="empty">
+  <view wx:elif="{{!items.length && !(type === 'entitlements' && usage)}}" class="empty">
     <view class="section-title">暂无{{title}}</view>
     <view class="muted">相关业务发生后，记录会出现在这里。</view>
     <button class="secondary" bindtap="openMine">返回我的</button>
   </view>
   <block wx:else>
-    <view class="muted record-count">共 {{items.length}} 条</view>
+    <view wx:if="{{items.length}}" class="muted record-count">共 {{items.length}} 条</view>
     <button
       wx:for="{{items}}"
       wx:key="id"
@@ -32,5 +32,21 @@
         <text class="record-link">查看详情 →</text>
       </view>
     </button>
+  </block>
+  <block wx:if="{{!loading && !error && type === 'entitlements'}}">
+    <view wx:if="{{usageError}}" class="notice" role="alert">{{usageError}}<button class="text-button" bindtap="reload" disabled="{{busy}}">重新读取月里程与余额</button></view>
+    <block wx:if="{{usage}}">
+      <view class="card"><view class="section-title">订阅月里程与加购余额</view><view class="muted">实际交车起算 {{usage.startedOnText}} · 基础每订阅月 {{usage.baseAllowanceKm}} km</view><view class="price">里程包余额 {{usage.packBalanceKm}} km</view><view>{{usage.packStatusText}}</view><view class="notice">基础额度优先使用，期末清零；包余额仅在本订阅期结转。中途退订当月仍有完整1500公里基础额度；未结算月份需真实月界或归还证据，不跨月估算。</view></view>
+      <view class="card"><view class="section-title">各订阅月结算</view><view wx:for="{{usage.periods}}" wx:key="id" class="field"><view>第 {{item.sequence}} 月 · {{item.periodText}}</view><view>{{item.statusText}}</view><view class="muted small">实际使用 {{item.usedKm == null ? '待审核' : item.usedKm}} km · 基础 {{item.baseUsedKm == null ? '待审核' : item.baseUsedKm}} km · 包 {{item.packUsedKm == null ? '待审核' : item.packUsedKm}} km</view><view class="muted small">超里程 {{item.excessKm == null ? '待审核' : item.excessKm}} km · {{item.excessAmountText}}</view><view wx:if="{{item.reviewNote}}" class="notice">{{item.reviewNote}}</view><button wx:if="{{item.canSubmit}}" class="secondary" data-id="{{item.id}}" bindtap="openUsagePeriod">申报本月界读数或补证</button><button wx:if="{{item.billId}}" class="text-button" data-id="{{item.billId}}" bindtap="openUsageBill">查看本月普通账单 →</button></view></view>
+      <view wx:if="{{usageMessage}}" class="notice" role="status">{{usageMessage}}</view>
+      <view wx:if="{{purchaseError}}" class="notice" role="alert">{{purchaseError}}</view>
+      <view wx:if="{{purchase}}" class="card"><view class="section-title">本次里程包账单</view><view>{{purchase.purchase.km}} km · {{purchase.bill.amountText}}</view><view>{{purchase.purchase.statusText}}</view><view class="notice">创建账单不会发放额度。只有服务端核实支付到账后，刷新余额才能看到已发放里程。</view><button class="primary" bindtap="openPurchaseBill" disabled="{{busy}}">到普通账单详情核对与付款</button></view>
+      <view class="card"><view class="section-title">加购里程包</view><view wx:if="{{!usage.purchaseTerms}}" class="notice">正式里程包购买协议尚未发布或暂不可用，不能创建购买账单。历史余额与月台账仍可查看。</view><block wx:else><button class="text-button" bindtap="openPackTerms">查看完整里程包购买规则 · 版本 {{usage.purchaseTerms.documentVersion}} →</button><view class="notice">仅当前订阅期有效，可叠加并逐月结转；可抵当月尚未结算的超里程，已结算月份不追溯。退订时剩余额度失效，不退未使用费用；异常履约或争议请联系人工。</view><view class="muted small">{{usage.purchaseTerms.content}}</view><radio-group bindchange="selectMileageProduct"><view wx:for="{{usage.products}}" wx:key="id" class="field"><label class="row"><radio value="{{item.id}}" checked="{{selectedProductId === item.id}}" disabled="{{busy || !usage.canPurchase}}" color="#B44919"/><text>{{item.km}} km · {{item.amountText}}</text></label></view></radio-group><block wx:if="{{usage.canPurchase}}"><view wx:if="{{selectedProduct}}" class="price">{{selectedProduct.km}} km · {{selectedProduct.amountText}}</view><checkbox-group bindchange="onPurchaseAccepted"><label class="consent-row"><checkbox value="purchase" checked="{{purchaseAccepted}}" disabled="{{busy}}" color="#B44919"/><text>我已阅读当前完整购买规则，确认所选金额及仅本订阅期有效、退订失效且不退未使用费用；同意创建本次普通账单。</text></label></checkbox-group><button class="primary" bindtap="buyMileagePack" disabled="{{busy || !selectedProduct || !purchaseAccepted}}" loading="{{busy}}">创建所选里程包账单</button></block><view wx:else class="notice">当前订阅状态不能加购；冻结余额只用于归还前尚未结算月份，不能继续使用。</view></block></view>
+      <view wx:if="{{usage.packs.length}}" class="card"><view class="section-title">已创建的里程包</view><view wx:for="{{usage.packs}}" wx:key="id" class="field"><view>{{item.km}} km · {{item.amountText}} · {{item.statusText}}</view><view class="muted small">账面剩余额度 {{item.remainingKm}} km</view><view wx:if="{{item.availabilityText}}" class="notice">{{item.availabilityText}}</view><button wx:if="{{item.billId}}" class="text-button" data-id="{{item.billId}}" bindtap="openUsageBill">查看对应普通账单 →</button></view></view>
+      <view wx:if="{{usage.ledger.length}}" class="card"><view class="section-title">服务端额度流水</view><view wx:for="{{usage.ledger}}" wx:key="id" class="field"><view>{{item.typeText}} · {{item.deltaKm}} km</view><view class="muted small">{{item.createdAt}}</view></view></view>
+      <view wx:if="{{settlementError}}" class="notice">{{settlementError}}<button class="text-button" bindtap="reload" disabled="{{busy}}">刷新结算</button></view>
+      <view wx:if="{{settlement}}" class="card"><view class="section-title">归还与退订结算</view><view>{{settlement.statusText}}</view><view class="muted">实际归还日 {{settlement.returnedOnText}}</view><view wx:if="{{settlement.unsettledPeriodIds.length}}" class="notice">仍有 {{settlement.unsettledPeriodIds.length}} 个订阅月未完成结算，需补充证据或等待人工审核；不能认定已结清。</view><view wx:if="{{settlement.depositRefundRequiredAmount > 0}}" class="notice">押金仍待退还 {{settlement.depositRefundRequiredText}}，由财务独立复核处理；本页不自动退款或扣押金。</view><view wx:for="{{settlement.bills}}" wx:key="id" class="field"><view>{{item.typeText}} · {{item.amountText}} · {{item.statusText}}</view><view class="muted small">{{item.description}}</view><button class="text-button" data-id="{{item.id}}" bindtap="openUsageBill">查看结算普通账单 →</button></view><view wx:if="{{settlement.disputeReason}}" class="notice">异议：{{settlement.disputeReason}}</view><view wx:if="{{settlement.resolutionNote}}" class="muted">人工处理说明：{{settlement.resolutionNote}}</view><block wx:if="{{settlement.canDispute}}"><view class="field"><view class="label">需要人工核对的结算异议</view><textarea class="textarea" value="{{disputeReason}}" bindinput="inputDispute" maxlength="500" disabled="{{busy}}"/></view><button class="secondary" bindtap="disputeSettlement" disabled="{{busy}}">提交异议，转人工处理</button></block><view class="notice">结算依据已确认的还车交接与真实里程证据。本页不会直接结束订阅、自动扣押金或替你确认结清。</view></view>
+    </block>
+    <button class="secondary" bindtap="contactUsageService" disabled="{{busy}}">联系人工核对权益与结算</button><button class="text-button" bindtap="reload" disabled="{{busy}}">刷新可信到账、月台账与结算</button>
   </block>
 </view>

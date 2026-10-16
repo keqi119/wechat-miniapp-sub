@@ -13,7 +13,7 @@ const schemas: Record<string, z.ZodObject<any>> = {
   'model-definitions': z.object({ brand: text, name: text, bodyType: z.string().max(100).default(''), description: z.string().max(5000).default('') }),
   vehicles: vehicleDto, plans: planDto,
   users: z.object({ username: z.string().min(3).max(100), password: z.string().min(16).max(256), name: text, role: z.enum(['ADMIN','OPERATIONS','FINANCE','SUPPORT']), active: z.boolean().default(true) }),
-  'legal-documents': z.object({ type: z.enum(['application','privacy','terms','subscription','handover','credit-verification']), version: z.number().int().positive(), title: text, content: z.string().min(1).max(100000), confirmedBy: z.string().min(1).optional(), confirmedAt: z.string().datetime().optional() }),
+  'legal-documents': z.object({ type: z.enum(['application','privacy','terms','subscription','handover','credit-verification','mileage-pack','usage-policy','vehicle-change']), version: z.number().int().positive(), title: text, content: z.string().min(1).max(100000), confirmedBy: z.string().min(1).optional(), confirmedAt: z.string().datetime().optional() }),
   entitlements: z.object({ orderId: text, title: text, description: text, status: z.enum(['PENDING','ACTIVE','EXPIRED']).default('PENDING') }),
   notifications: z.object({ customerId: text, title: text, content: z.string().min(1).max(5000), resourceType: text.optional(), resourceId: text.optional() }),
 };

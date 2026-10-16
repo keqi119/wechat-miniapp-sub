@@ -56,4 +56,5 @@ Page({
   openList() {
     go('/pages/records/index?type=' + (TYPES.includes(this.data.type) ? this.data.type : 'orders'));
   },
+  openOrderUsage() { if (this.data.type === 'orders' && this.data.record) go('/pages/records/index?type=entitlements&orderId=' + encodeURIComponent(this.data.record.id)); },
 });

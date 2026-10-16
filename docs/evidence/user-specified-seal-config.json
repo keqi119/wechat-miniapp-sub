@@ -1,0 +1,9 @@
+{
+  "CheckedAt": "2026-10-16T08:12:45.2625484Z",
+  "UserSpecifiedSealConfigured": true,
+  "SigningEnabled": false,
+  "FadadaEnabled": false,
+  "ContainerHealth": "healthy",
+  "ApiHealth": "ok",
+  "Release": "20261016-credit-v1"
+}

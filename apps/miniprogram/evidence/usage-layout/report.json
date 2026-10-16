@@ -1,0 +1,150 @@
+{
+  "generatedAt": "2026-10-16T08:23:29.287Z",
+  "scope": "Offline actual-wcc templates using synthetic display data. Browser layout only; no API, SDK, real upload/purchase/payment, preview or publishing.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "pack-policy-unpublished",
+      "route": "records",
+      "text": "正式里程包购买协议尚未发布",
+      "checkboxes": 0,
+      "overflow": false,
+      "screenshot": "pack-policy-unpublished.png",
+      "passed": true
+    },
+    {
+      "name": "pack-unchecked",
+      "route": "records",
+      "select": true,
+      "text": "退订时剩余额度失效",
+      "checkboxes": 1,
+      "buyEnabled": false,
+      "overflow": false,
+      "screenshot": "pack-unchecked.png",
+      "passed": true
+    },
+    {
+      "name": "pack-explicit-consent",
+      "route": "records",
+      "select": true,
+      "accepted": true,
+      "text": "1000 km · ¥800.00",
+      "checkboxes": 1,
+      "buyEnabled": true,
+      "overflow": false,
+      "screenshot": "pack-explicit-consent.png",
+      "passed": true
+    },
+    {
+      "name": "pack-bill-not-credited",
+      "route": "records",
+      "text": "创建账单不会发放额度",
+      "checkboxes": 1,
+      "overflow": false,
+      "screenshot": "pack-bill-not-credited.png",
+      "passed": true
+    },
+    {
+      "name": "pack-server-credited",
+      "route": "records",
+      "text": "支付到账发放",
+      "checkboxes": 1,
+      "overflow": false,
+      "screenshot": "pack-server-credited.png",
+      "passed": true
+    },
+    {
+      "name": "pack-refund-pending",
+      "route": "records",
+      "text": "退款核对中（已冻结，不可消费）",
+      "checkboxes": 1,
+      "overflow": false,
+      "screenshot": "pack-refund-pending.png",
+      "passed": true
+    },
+    {
+      "name": "pack-refunded",
+      "route": "records",
+      "text": "退款收回",
+      "checkboxes": 1,
+      "overflow": false,
+      "screenshot": "pack-refunded.png",
+      "passed": true
+    },
+    {
+      "name": "return-evidence-and-refund-pending",
+      "route": "records",
+      "text": "押金仍待退还 ¥5,199.00",
+      "checkboxes": 0,
+      "overflow": false,
+      "screenshot": "return-evidence-and-refund-pending.png",
+      "passed": true
+    },
+    {
+      "name": "month-selection-required",
+      "route": "mileage",
+      "text": "选择需要申报或补证的订阅月",
+      "checkboxes": 0,
+      "submit": false,
+      "overflow": false,
+      "screenshot": "month-selection-required.png",
+      "passed": true
+    },
+    {
+      "name": "month-boundary-photo-form",
+      "route": "mileage",
+      "periodSelected": true,
+      "text": "照片实际拍摄时间（北京时间）",
+      "checkboxes": 0,
+      "submit": true,
+      "overflow": false,
+      "screenshot": "month-boundary-photo-form.png",
+      "passed": true
+    },
+    {
+      "name": "month-start-awaiting-prior",
+      "route": "mileage",
+      "periodSelected": true,
+      "text": "待前月结算核对",
+      "checkboxes": 0,
+      "submit": true,
+      "overflow": false,
+      "screenshot": "month-start-awaiting-prior.png",
+      "passed": true
+    },
+    {
+      "name": "month-review-pending",
+      "route": "mileage",
+      "text": "仪表证据待人工审核",
+      "checkboxes": 0,
+      "submit": false,
+      "overflow": false,
+      "screenshot": "month-review-pending.png",
+      "passed": true
+    },
+    {
+      "name": "final-plan-frozen-usage-policy",
+      "route": "application-detail",
+      "text": "本方案固定的月里程与加购、退订规则",
+      "checkboxes": 1,
+      "overflow": false,
+      "screenshot": "final-plan-frozen-usage-policy.png",
+      "passed": true
+    },
+    {
+      "name": "handover-server-actual-time",
+      "route": "handover",
+      "text": "实际交车时间（北京时间）",
+      "checkboxes": 1,
+      "overflow": false,
+      "screenshot": "handover-server-actual-time.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

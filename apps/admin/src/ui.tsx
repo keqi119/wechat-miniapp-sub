@@ -5,6 +5,7 @@ import { serializeForm } from './form';
 import { commercialTermLabels, handoverFactLabels, normaliseHandoverChecklist } from './business-terms';
 import { display, type Field, statusLabel, verificationReviewNotice } from './resources';
 import { creditDepositPreview, creditBandLabels } from './credit';
+import { shanghaiDateTime, usageStatusLabel } from './usage';
 
 export function PaymentVerificationReviewNotice({ entity }: { entity: Entity }) {
   const notice = verificationReviewNotice(entity);
@@ -16,10 +17,10 @@ export function ErrorNotice({ error, retry }: { error: unknown; retry?: () => vo
   return <div className="error-notice" role="alert"><AlertCircle size={18}/><div><strong>{message}</strong>{error instanceof ApiError && error.status === 409 ? <p>记录已经发生变化，请关闭表单并刷新详情后重新核对。</p> : null}{error instanceof ApiError && error.requestId ? <small>请求编号：{error.requestId}</small> : null}</div>{retry ? <button className="text-button" onClick={retry}>重新连接 <ArrowUpRight size={14}/></button> : null}</div>;
 }
 export function Loading({ label = '正在读取真实数据' }: { label?: string }) { return <div className="loading" role="status"><LoaderCircle size={20} className="spin"/>{label}</div>; }
-export function Status({ value }: { value: unknown }) {
+export function Status({ value, resource }: { value: unknown; resource?: string }) {
   const text = String(value ?? '');
   const tone = /PAID|SIGNED|APPROVED|COMPLETED|ACTIVE|AVAILABLE|PUBLISHED|SUCCEEDED|RESOLVED/.test(text) ? 'green' : /FAIL|REJECT|OVERDUE|CANCEL/.test(text) ? 'red' : /PENDING|AWAITING|REVIEW|SUBMITTED|OPEN|PROCESS|NEEDS|ACCEPTED/.test(text) ? 'orange' : 'neutral';
-  return <span className={`status ${tone}`}><i/>{statusLabel(text) || '未设置'}</span>;
+  return <span className={`status ${tone}`}><i/>{usageStatusLabel(resource, text) ?? (statusLabel(text) || '未设置')}</span>;
 }
 export function Drawer({ title, subtitle, children, onClose }: { title: string; subtitle?: string; children: ReactNode; onClose: () => void }) {
   const panel = useRef<HTMLElement>(null);
@@ -91,6 +92,7 @@ function FileField({ field, value, onChange, disabled }: { field: Field; value: 
 }
 function initialValue(field: Field, initial: Record<string, unknown>) {
   const value = initial[field.key];
+  if (field.type === 'datetime-local') return shanghaiDateTime(value);
   if (field.type === 'commercial') return JSON.stringify(value ?? {});
   if (field.type === 'checklist' && field.requireFacts) return JSON.stringify(normaliseHandoverChecklist(value));
   if (field.type === 'money') return typeof value === 'number' ? (value / 100).toFixed(2) : '';
@@ -125,9 +127,13 @@ Object.assign(relations, { priorApprovalId: 'esign-approvals' });
 Object.assign(detailLabels, { currency: '币种', authorizationNote: '验收授权说明' });
 Object.assign(detailLabels, { manualReviewRequired: '需人工核对', statusMessage: '可信渠道状态说明' });
 Object.assign(detailLabels, { creditVerificationId: '绑定信用核验编号', creditRevision: '信用核验版本', creditRuleVersion: '押金规则版本', creditBand: '信用档位' });
+Object.assign(detailLabels, { periodId: '所属订阅月', actualAt: '实际交接时间', startReadingKm: '本期起始仪表读数 / km', endReadingKm: '本期结束仪表读数 / km', startDate: '起算日期', endDate: '约定截止日期', effectiveEndDate: '实际截止日期', usedKm: '本期实际使用 / km', baseUsedKm: '扣减基础额度 / km', packUsedKm: '扣减已到账包 / km', excessKm: '核算超里程 / km', excessAmount: '核算超里程费', returnedOn: '实际归还日', unsettledPeriodIds: '待结月份', bills: '关联账单', disputeReason: '客户原争议', resolutionNote: '人工处理结论' });
+Object.assign(relations, { periodId: 'usage-periods' });
+Object.assign(detailLabels, { readingId: '月界仪表证据与审核', depositRefundRequiredAmount: '服务端核算应退押金', usagePolicy: '绑定的订阅使用规则', baseAllowanceKm: '每期基础公里数', excessPriceAmount: '超里程单价', documentVersion: '批准文案版本', hash: '文案哈希', rules: '使用规则快照', policyVersion: '规则版本' });
+Object.assign(relations, { readingId: 'mileages' });
 Object.assign(detailLabels, { evidenceFileIds: '费用证据附件', createdBy: '创建人员', reviewNote: '复核意见', reviewedAt: '复核时间', terminationFileId: '正式终止协议', cancellationReason: '取消原因', cancelledAt: '取消时间', previousHandoverId: '上一版交接单', resolutionNote: '异议处理说明', resolvedBy: '异议处理人员' });
 Object.assign(relations, { previousHandoverId: 'handovers' });
 Object.assign(detailLabels, commercialTermLabels, { commercialTerms: '逐单商业条款' });
-export function DetailValues({ entity }: { entity: Record<string, unknown> }) {
-return <dl className="detail-values">{Object.entries(entity).filter(([key, value]) => value != null && !isPrivateField(key)).map(([key, value]) => <div key={key} className={typeof value === 'object' || String(value).length > 75 ? 'full' : ''}><dt>{detailLabels[key] ?? key}</dt><dd>{relations[key] && typeof value === 'string' ? <a href={`#${relations[key]}?record=${encodeURIComponent(value)}`}>{value}<ArrowUpRight size={12}/></a> : key === 'creditBand' ? creditBandLabels[String(value)] ?? '未知信用档位' : key === 'manualReviewRequired' ? value === true ? '需人工核对' : '无需人工核对' : key === 'kind' ? value === 'SUBSCRIPTION' ? '订阅合同' : value === 'HANDOVER' ? '车辆交接单' : display(value) : key === 'status' ? <Status value={value}/> : /Amount$|^amount$/.test(key) ? money(value) : /At$|Date$/.test(key) ? date(value, /Date$/.test(key)) : /FileId$/.test(key) && typeof value === 'string' ? <a target="_blank" rel="noreferrer" href={api.fileUrl(value)}>查看附件 <ArrowUpRight size={13}/></a> : Array.isArray(value) ? <div className="detail-array">{value.map((item, index) => /fileIds$/i.test(key) && typeof item === 'string' ? <a key={index} target="_blank" rel="noreferrer" href={api.fileUrl(item)}>附件 {index + 1} <ArrowUpRight size={12}/></a> : typeof item === 'object' && item !== null ? <DetailValues key={index} entity={item as Record<string, unknown>}/> : <span key={index}>{display(item)}</span>)}</div> : typeof value === 'object' ? <DetailValues entity={value as Record<string, unknown>}/> : display(value)}</dd></div>)}</dl>;
+export function DetailValues({ entity, resource }: { entity: Record<string, unknown>; resource?: string }) {
+return <dl className="detail-values">{Object.entries(entity).filter(([key, value]) => value != null && !isPrivateField(key)).map(([key, value]) => <div key={key} className={typeof value === 'object' || String(value).length > 75 ? 'full' : ''}><dt>{detailLabels[key] ?? key}</dt><dd>{relations[key] && typeof value === 'string' ? <a href={`#${relations[key]}?record=${encodeURIComponent(value)}`}>{value}<ArrowUpRight size={12}/></a> : key === 'creditBand' ? creditBandLabels[String(value)] ?? '未知信用档位' : key === 'manualReviewRequired' ? value === true ? '需人工核对' : '无需人工核对' : key === 'kind' ? value === 'SUBSCRIPTION' ? '订阅合同' : value === 'HANDOVER' ? '车辆交接单' : display(value) : key === 'status' ? <Status value={value} resource={resource}/> : /Amount$|^amount$/.test(key) ? money(value) : /At$|Date$/.test(key) ? date(value, /Date$/.test(key)) : /FileId$/.test(key) && typeof value === 'string' ? <a target="_blank" rel="noreferrer" href={api.fileUrl(value)}>查看附件 <ArrowUpRight size={13}/></a> : Array.isArray(value) ? <div className="detail-array">{value.map((item, index) => /fileIds$/i.test(key) && typeof item === 'string' ? <a key={index} target="_blank" rel="noreferrer" href={api.fileUrl(item)}>附件 {index + 1} <ArrowUpRight size={12}/></a> : typeof item === 'object' && item !== null ? <DetailValues key={index} entity={item as Record<string, unknown>} resource={resource}/> : <span key={index}>{display(item)}</span>)}</div> : typeof value === 'object' ? <DetailValues entity={value as Record<string, unknown>} resource={resource}/> : display(value)}</dd></div>)}</dl>;
 }

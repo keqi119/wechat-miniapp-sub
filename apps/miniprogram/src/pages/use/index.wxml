@@ -73,7 +73,7 @@
         ></view
       ><view class="card"
         ><button class="menu-row" data-url="/pages/records/index?type=entitlements" bindtap="open"
-          ><text>权益明细</text><text>→</text></button
+          ><text>权益、里程包与月结算</text><text>→</text></button
         ><button class="menu-row" data-url="/pages/records/index?type=services" bindtap="open"
           ><text>服务记录</text><text>→</text></button
         ></view

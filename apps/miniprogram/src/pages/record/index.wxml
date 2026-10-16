@@ -49,6 +49,6 @@
         bindtap="act"
         >{{item.label}}</button
       ></view
-    ><button class="text-button back-link" bindtap="openList">查看全部记录 →</button></block
+    ><button wx:if="{{type === 'orders'}}" class="secondary" bindtap="openOrderUsage">查看本订阅月里程、里程包及退订结算</button><button class="text-button back-link" bindtap="openList">查看全部记录 →</button></block
   ></view
 >

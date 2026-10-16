@@ -1,3 +1,4 @@
+import { seedUsageLegal } from './usage-fixtures';
 import '../src/common/config';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,7 +35,7 @@ async function plan(f:any,extra:any={}) {
 }
 before(async()=>{
   assert.ok(process.env.TEST_DATABASE_URL?.includes('_test')); process.env.NODE_ENV='test';process.env.ADMIN_ORIGIN=origin;
-  db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});
+  db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});await seedUsageLegal(db);
   for(const type of ['terms','privacy']){const max=await db.legalDocument.aggregate({where:{type},_max:{version:true}});await db.legalDocument.create({data:{type,version:(max._max.version||0)+1,title:type,content:'合成测试协议',status:'PUBLISHED',confirmedBy:'fixture',confirmedAt:new Date()}});}
   for(const role of ['ADMIN','OPERATIONS','FINANCE','SUPPORT'] as const){const id=randomUUID();const a=await db.adminUser.create({data:{username:id,name:role,role,passwordHash:'fixture'}});await db.adminSession.create({data:{id:tokenHash(id),adminId:a.id,csrfToken:csrf,expiresAt:new Date(Date.now()+3600000)}});cookies[role]='admin_session='+id;}
   const max=await db.legalDocument.aggregate({where:{type:'credit-verification'},_max:{version:true}});

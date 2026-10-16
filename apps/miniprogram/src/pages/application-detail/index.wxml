@@ -106,6 +106,7 @@
       ><view class="summary-row row between"><text class="muted">首期付款及押金支付日</text><text>{{application.finalPlan.firstDueDateText}}</text></view
       ><view class="final-benefits"><view class="section-title">逐期账单与服务期间</view><view wx:for="{{application.finalPlan.billingRows}}" wx:key="sequence" class="plan-notes"><view>第 {{item.sequence}} 期 · {{item.amountText}} · 到期 {{item.dueDateText}}</view><view>{{item.periodText}}</view></view></view
       ><view class="final-benefits"><view class="section-title">逐单商业约定</view><view wx:for="{{application.finalPlan.commercialRows}}" wx:key="key" class="plan-notes"><view class="muted">{{item.label}}</view><view>{{item.value || '未填写，请联系运营重出完整方案'}}</view></view></view
+      ><view wx:if="{{application.finalPlan.usagePolicy}}" class="final-benefits"><view class="section-title">本方案固定的月里程与加购、退订规则</view><view class="muted small">正式文案版本 {{application.finalPlan.usagePolicy.documentVersion}} · {{application.finalPlan.usagePolicy.version}}</view><view class="plan-notes">{{application.finalPlan.usagePolicy.content}}</view></view><view wx:if="{{!application.finalPlan.usagePolicyComplete}}" class="notice">本方案尚未固定完整、已批准的月里程用量规则，不能确认；请联系运营重新出具方案。</view
       ><view wx:if="{{!application.finalPlan.complete}}" class="notice">此方案资料尚不完整，请联系运营重新发布；补齐后再阅读确认。</view
       ><view class="plan-notes">{{application.finalPlan.notes}}</view
       ><checkbox-group
@@ -113,7 +114,7 @@
         bindchange="onPlanRead"
         ><label class="plan-read"
           ><checkbox value="read" color="#B44919" checked="{{planRead}}" disabled="{{busy}}" /><text
-            >我已阅读当前版本全部商业约定、保险与免责、用车限制、各期费用、押金和提前解约规则。</text
+            >我已阅读当前版本全部商业约定、保险与免责、用车限制、各期费用、押金、月里程用量及加购、退订规则。</text
           ></label
         ></checkbox-group
       ></view

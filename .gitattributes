@@ -1,7 +1,7 @@
 # Preserve byte-for-byte provenance and already-applied migration checksums.
 docs/legal/** -text
 reference/miniprogram-mock/** -text
-apps/api/prisma/migrations/** -text
+apps/api/prisma/migrations/** -text whitespace=cr-at-eol
 apps/api/test/fadada-digest.spec.ts -text
 apps/api/test/fadada-api-client.spec.ts -text
 apps/api/test/enterprise-seal-policy.spec.ts -text

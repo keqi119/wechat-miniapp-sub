@@ -1,4 +1,5 @@
 const { money, date } = require('../utils/format');
+const { createUsageApi } = require('./usage');
 const TYPES = ['applications', 'orders', 'contracts', 'bills', 'payments', 'deposits', 'entitlements', 'notifications', 'services', 'mileages'];
 const VERIFICATION_STATUS = { AUTHORIZED: '已授权，尚未付款', CREATING: '支付准备结果待确认', PENDING: '支付结果待确认', SUCCEEDED: '支付成功', CLOSED: '验收已关闭', FAILED: '支付失败，不能继续付款', EXPIRED: '验收授权已过期' };
 const CREDIT_BANDS = { GE750: '750分及以上', B700_749: '700—749分', B650_699: '650—699分', LT650: '低于650分', UNVERIFIABLE: '无法核验' };
@@ -31,7 +32,8 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const paymentKeys = new Map();
   const verificationPayments = new Set();
   const creditKeys = new Map();
-  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); }
+  const usageApi = createUsageApi({ call, identifier, error, idempotencyKey, getContext });
+  function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); }
   function session() {
     const value = platform.getStorageSync(storageKey);
     if (!value) return null;
@@ -179,7 +181,12 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (!row) return row;
     const final = row.finalPlan;
     const mapped = final ? { ...final, planTitle: final.planTitle || final.title || row.planName || row.planTitle || '', notes: final.notes || final.conditions || '', termMonths: final.termMonths ?? final.months, monthlyFeeText: money(final.monthlyFeeAmount), depositText: money(final.depositAmount), mileageText: final.mileageText || (Number.isFinite(final.mileagePerMonthKm) ? '每月 ' + final.mileagePerMonthKm + ' 公里' : '待确认'), energyText: final.energyText || final.energyDescription || '', excessMileagePriceText: money(final.excessMileagePriceAmount), startDateText: date(final.startDate), firstDueDateText: date(final.firstDueDate) } : null;
-    if (mapped) { Object.assign(mapped, commercialDetails(final)); mapped.complete = mapped.termsComplete && Number.isSafeInteger(final.monthlyFeeAmount) && final.monthlyFeeAmount >= 0 && Number.isSafeInteger(final.depositAmount) && final.depositAmount >= 0 && Number.isSafeInteger(final.excessMileagePriceAmount) && final.excessMileagePriceAmount >= 0 && Number.isInteger(mapped.termMonths) && mapped.termMonths > 0 && Number.isSafeInteger(final.mileagePerMonthKm) && final.mileagePerMonthKm >= 0 && mapped.startDateText !== '待确认' && mapped.firstDueDateText !== '待确认' && Boolean(mapped.notes && mapped.energyText && final.commercialHash) && Array.isArray(final.benefits); }
+    if (mapped) {
+      Object.assign(mapped, commercialDetails(final));
+      const policy = final.usagePolicy;
+      mapped.usagePolicyComplete = Boolean(policy?.version === 'USAGE_V1' && typeof policy.documentId === 'string' && policy.documentId && Number.isInteger(policy.documentVersion) && policy.documentVersion > 0 && typeof policy.hash === 'string' && /^[a-f0-9]{64}$/i.test(policy.hash) && typeof policy.content === 'string' && policy.content.trim() && policy.baseAllowanceKm === 1500 && final.mileagePerMonthKm === policy.baseAllowanceKm && Number.isSafeInteger(policy.excessPriceAmount) && policy.excessPriceAmount >= 0 && final.excessMileagePriceAmount === policy.excessPriceAmount);
+      mapped.complete = mapped.termsComplete && mapped.usagePolicyComplete && Number.isSafeInteger(final.monthlyFeeAmount) && final.monthlyFeeAmount >= 0 && Number.isSafeInteger(final.depositAmount) && final.depositAmount >= 0 && Number.isSafeInteger(final.excessMileagePriceAmount) && final.excessMileagePriceAmount >= 0 && Number.isInteger(mapped.termMonths) && mapped.termMonths > 0 && Number.isSafeInteger(final.mileagePerMonthKm) && final.mileagePerMonthKm >= 0 && mapped.startDateText !== '待确认' && mapped.firstDueDateText !== '待确认' && Boolean(mapped.notes && mapped.energyText && final.commercialHash) && Array.isArray(final.benefits);
+    }
     return { ...row, planTitle: row.planTitle || row.planName || row.plan?.name || '', monthlyFeeText: row.monthlyFeeText || money(row.plan?.monthlyFeeAmount), finalPlan: mapped };
   }
   async function getHome() {
@@ -258,8 +265,20 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     const objection = ['object', 'objection', 'dispute'].includes(payload.decision);
     if (!objection && payload.decision !== 'confirm') throw error('请选择交接意见。', 'VALIDATION');
     if (objection && !String(payload.reason || payload.note || '').trim()) throw error('请填写异议说明。', 'VALIDATION');
+    if (!objection) {
+      const current = await getHandover(payload.handoverId);
+      if (!current.actualAtValid || current.manifestHash !== payload.manifestHash || current.actualAt !== payload.actualAt) throw error('实际交接时间缺失、无效或已变更，请重新核对当前交接证据。', 'HANDOVER_ACTUAL_TIME');
+    }
     const body = { manifestHash: payload.manifestHash, ...(objection ? { reason: payload.reason || payload.note, fileIds: fileIds(payload) } : { readFileIds: payload.readFileIds || [] }), idempotencyKey: payload.idempotencyKey || idempotencyKey('handover') };
     return call('POST', '/customer/handovers/' + identifier(payload.handoverId) + (objection ? '/object' : '/confirm'), body);
+  }
+  async function getHandover(id) {
+    const value = await call('GET', '/customer/handovers/' + identifier(id));
+    if (!value || value.id !== id) throw error('交接记录不匹配，请刷新。', 'RESPONSE');
+    const time = typeof value.actualAt === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value.actualAt) ? Date.parse(value.actualAt) : NaN;
+    const actualAtValid = Number.isFinite(time) && time <= Date.now() + 300000 && ['DELIVERY','RETURN'].includes(value.type);
+    const actualAtDisplay = actualAtValid ? new Date(time + 8 * 3600000).toISOString().slice(0,19).replace('T',' ') : '缺少有效实际时间';
+    return { ...value, actualAtValid, actualAtDisplay, actualAtLabel: value.type === 'DELIVERY' ? '实际交车时间' : value.type === 'RETURN' ? '实际还车时间' : '实际交接时间（类型待核对）', actualAtText: actualAtValid ? actualAtDisplay + '（北京时间）' : '缺少有效实际时间，待后台核对' };
   }
   function validateSignUrl(url) {
     const match = String(url || '').match(/^https:\/\/([a-zA-Z0-9.-]+)(?::443)?\/[\s\S]*$/);
@@ -368,7 +387,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (/^image\//i.test(contentType)) await native('previewImage', { current: downloaded.tempFilePath, urls: [downloaded.tempFilePath] });
     else await native('openDocument', { filePath: downloaded.tempFilePath, showMenu: false });
   }
-  return { getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
+  return { ...usageApi, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
     getModelDefinitions: async () => list(await call('GET', '/public/model-definitions', undefined, false)).items,
     getDashboard: async () => { const result = await call('GET', '/customer/dashboard'); return { ...result, ...(result.application ? { application: application(result.application) } : {}), ...(result.subscription ? { subscription: { ...result.subscription, imageUrl: media(result.subscription.imageUrl) } } : {}) }; },
     getApplication: async id => application(await call('GET', '/customer/applications/' + identifier(id))),
@@ -381,7 +400,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     startESignVerification: async input => { await call('POST', '/customer/esign/register', {}); const result = await call('POST', '/customer/esign/verify', input); validateSignUrl(result.url); const id = session().customer.id; platform.setStorageSync(pendingKey, { kind: 'identity', id, task: { taskId: 'identity', url: result.url, status: 'PENDING' } }); await native('navigateTo', { url: '/pages/sign/index?kind=identity&id=' + identifier(id) }); return result; },
     getLegal: type => call('GET', '/public/legal/' + identifier(type), undefined, false),
     getRecords, getRecord, performAction, saveProfile, submitApplication, uploadFile, submitService, submitMileage, submitHandover,getPaymentVerifications,payPaymentVerification,queryPaymentVerification,getCreditReview,submitCreditConsent,withdrawCreditConsent,
-    getHandover: id => call('GET', '/customer/handovers/' + identifier(id)), getSignStatus, getSigningTask, validateSignUrl, resumePayment, idempotencyKey, openPrivateFile,
+    getHandover, getSignStatus, getSigningTask, validateSignUrl, resumePayment, idempotencyKey, openPrivateFile,
     clearSigningCache: () => platform.removeStorageSync(pendingKey),
     openSigningMiniProgram: task => native('navigateToMiniProgram', task.miniProgram),
     readFile: id => call('GET', '/customer/files/' + identifier(id)),
