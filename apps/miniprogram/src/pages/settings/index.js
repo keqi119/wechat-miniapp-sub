@@ -2,7 +2,7 @@ const services = require('../../services/index');
 const config = require('../../config');
 const { toastError, confirm, go } = require('../../utils/page');
 Page({
-  data: { authenticated: false, profile: null, busy: false, error: '', message: '', mobile: '', code: '', cooldown: 0, accepted: false, legalDocuments: [], consentCurrent: false, customerServiceTelephone: config.customerServiceTelephone, readiness: null, identityName: '', idCardNo: '', paymentVerifications: [], verificationError: '', verificationMessage: '' },
+  data: { authenticated: false, profile: null, busy: false, error: '', message: '', mobile: '', code: '', cooldown: 0, accepted: false, legalDocuments: [], consentCurrent: false, customerServiceTelephone: config.customerServiceTelephone, readiness: null, paymentVerifications: [], verificationError: '', verificationMessage: '' },
   onShow() { this.refresh(); },
   async refresh() {
     const context = services.getContext();
@@ -14,7 +14,7 @@ Page({
       this.setData({ legalDocuments: documents, accepted: changed ? false : this.data.accepted });
       if (!context.authenticated) return;
       const updated = await services.refreshContext();
-      this.setData({ authenticated: updated.authenticated, profile: updated.profile, identityName: this.data.identityName || updated.profile?.name || '', consentCurrent: documents.every(doc => updated.consents.some(consent => consent.documentId === doc.id && consent.version === doc.version)) });
+      this.setData({ authenticated: updated.authenticated, profile: updated.profile, consentCurrent: documents.every(doc => updated.consents.some(consent => consent.documentId === doc.id && consent.version === doc.version)) });
       await this.refreshPaymentVerifications();
       const readiness = await services.getESignReadiness(); this.setData({ readiness });
     } catch (error) { this.setData({ error: error.message, authenticated: services.getContext().authenticated }); }
@@ -62,10 +62,10 @@ Page({
   callService() { wx.makePhoneCall({ phoneNumber: this.data.customerServiceTelephone, fail: error => { if (!/cancel/i.test(error.errMsg || '')) toastError(new Error('电话暂时无法拨打，请手动拨号。')); } }); },
   async verifyIdentity() {
     if (this.data.busy) return;
-    await this.run(async () => { await services.startESignVerification({ name: this.data.identityName.trim(), idCardNo: this.data.idCardNo.trim() }); this.setData({ idCardNo: '' }); });
+    await this.run(async () => { await services.startESignVerification(); });
   },
   async refreshIdentity() { await this.run(async () => { const readiness = await services.refreshESignReadiness(); this.setData({ readiness, message: readiness.readyForSigning ? '供应商已确认实名与证书就绪。' : '实名或证书仍未就绪，请查看准备状态。' }); }); },
-  input(e) { const field = e.currentTarget.dataset.field; if (['mobile', 'code', 'identityName', 'idCardNo'].includes(field)) this.setData({ [field]: e.detail.value }); },
+  input(e) { const field = e.currentTarget.dataset.field; if (['mobile', 'code'].includes(field)) this.setData({ [field]: e.detail.value }); },
   consent(e) { this.setData({ accepted: e.detail.value.includes('accepted') }); },
   async phoneLogin(e) {
     if (this.data.busy) return;
@@ -96,7 +96,7 @@ Page({
     try { await work(); } catch (error) { this.setData({ error: error.message }); toastError(error); }
     finally { this.setData({ busy: false }); }
   },
-  clearCache() { services.clearSigningCache(); this.setData({ message: '已清理签署入口缓存，业务记录由服务端保存。' }); },
+  clearCache() { services.clearSigningCache(); this.setData({ message: '已清理签约指引恢复缓存，业务记录由服务端保存。' }); },
   openLegal(e) { go('/pages/legal/index?type=' + e.currentTarget.dataset.type); },
   openProfile() { go('/pages/profile/index'); },
   openHome() { go('/pages/home/index'); },

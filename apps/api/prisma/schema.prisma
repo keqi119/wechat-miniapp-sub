@@ -162,6 +162,7 @@ model Customer {
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
  sessions CustomerSession[]
+  h5SigningSessions H5SigningSession[]
  applications Application[]
  orders Order[]
  files StoredFile[]
@@ -174,6 +175,15 @@ model CustomerSession {
  customer Customer @relation(fields:[customerId],references:[id])
  expiresAt DateTime
  createdAt DateTime @default(now())
+}
+model H5SigningSession {
+ id String @id
+ customerId String
+ customer Customer @relation(fields:[customerId],references:[id],onDelete:Cascade)
+ csrfToken String
+ expiresAt DateTime
+ createdAt DateTime @default(now())
+ @@index([customerId,expiresAt])
 }
 model ModelDefinition {
  id String @id @default(cuid())

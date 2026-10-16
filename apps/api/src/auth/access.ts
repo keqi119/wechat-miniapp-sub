@@ -2,6 +2,8 @@ import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/commo
 import { Db } from '../common/db';
 import { ensure, fail } from '../common/errors';
 import { tokenHash } from './auth.service';
+import {h5Access} from '../h5-sign/access';
+import {H5_ENTRY} from '../h5-sign/config';
 export const resources = ['model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
 export function allowed(role: string, resource: string, write: boolean) {
   if (role === 'ADMIN') return true;
@@ -26,6 +28,7 @@ export class Access implements CanActivate {
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
     const path = request.path.replace(/^\/api/, '');
+    if(path.startsWith('/h5-sign/'))return h5Access(this.db,request,context.switchToHttp().getResponse(),path);
     if (request.method === 'POST' && ['/callbacks/wechat-pay', '/callbacks/wechat-refund', '/callbacks/fadada-sign', '/callbacks/fadada-identity', '/callbacks/wechat-pay-verification'].includes(path)) return true;
     if (path.startsWith('/public/') || path === '/health') return true;
     if (path === '/admin/auth/login') { adminOrigin(request); return true; }
@@ -47,6 +50,7 @@ export class Access implements CanActivate {
       ensure(raw, 401, 'UNAUTHENTICATED', '请先登录');
       const session = await this.db.customerSession.findUnique({ where: { id: tokenHash(raw) }, include: { customer: true } });
       ensure(session && session.expiresAt > new Date(), 401, 'SESSION_EXPIRED', '登录已过期');
+      if(request.method==='POST'&&/^\/customer\/(?:esign\/(?:register|verify|refresh)|(?:contracts|handovers|order-changes)\/[^/]+\/sign)$/i.test(path.replace(/\/+$/,'')))fail(409,'H5_SIGNING_REQUIRED',`请通过服务号签约中心完成实名与签署：${H5_ENTRY}`);
       request.customer = session.customer; request.session = session;
       return true;
     }

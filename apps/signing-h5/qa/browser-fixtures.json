@@ -1,0 +1,126 @@
+{
+  "mode": "isolated-browser-fixtures-no-api-db-sms-provider",
+  "checks": [
+    "explicit SMS login and current legal versions, no browser storage",
+    "verify independently accepts current privacy version; no sensitive persistence or auto-provider call",
+    "privacy changed after checkbox: no provider request; requires new independent consent",
+    "empty return never trusts URL success",
+    "not-ready blocks signature and explains explicit account action",
+    "slow sign locks resource navigation until outcome, no cross-record response overwrite",
+    "late old-session sync after expiry and fresh login cannot reopen stale resource or claim success",
+    "SUBSCRIPTION: correct owner resource route, CSRF, revision, unknown-write visible, explicit sync",
+    "AMENDMENT: correct owner resource route, CSRF, revision, unknown-write visible, explicit sync",
+    "HANDOVER: correct owner resource route, CSRF, revision, unknown-write visible, explicit sync",
+    "session expiry clears sensitive detail and returns login",
+    "offline is error, never empty or mock data",
+    "disabled config blocks login and provider actions"
+  ],
+  "errors": [],
+  "writes": [
+    {
+      "path": "/auth/sms/request",
+      "body": {
+        "mobile": "[QA synthetic omitted]"
+      },
+      "csrf": false
+    },
+    {
+      "path": "/auth/login",
+      "body": {
+        "mobile": "[QA synthetic omitted]",
+        "code": "[QA synthetic omitted]",
+        "consents": [
+          {
+            "documentId": "qa-terms",
+            "version": 1
+          },
+          {
+            "documentId": "qa-privacy",
+            "version": 1
+          }
+        ]
+      },
+      "csrf": false
+    },
+    {
+      "path": "/account/verify",
+      "body": {
+        "name": "[QA synthetic omitted]",
+        "idCardNo": "[QA synthetic omitted]",
+        "consent": {
+          "accepted": true,
+          "documentId": "qa-privacy",
+          "version": 1
+        }
+      },
+      "csrf": true
+    },
+    {
+      "path": "/records/SUBSCRIPTION/qa-subscription/sign",
+      "body": {},
+      "csrf": true
+    },
+    {
+      "path": "/records/SUBSCRIPTION/qa-subscription/sync",
+      "body": {},
+      "csrf": true
+    },
+    {
+      "path": "/auth/login",
+      "body": {
+        "mobile": "[QA synthetic omitted]",
+        "code": "[QA synthetic omitted]",
+        "consents": [
+          {
+            "documentId": "qa-terms",
+            "version": 1
+          },
+          {
+            "documentId": "qa-privacy",
+            "version": 1
+          }
+        ]
+      },
+      "csrf": false
+    },
+    {
+      "path": "/records/SUBSCRIPTION/qa-subscription/sign",
+      "body": {},
+      "csrf": true
+    },
+    {
+      "path": "/records/SUBSCRIPTION/qa-subscription/sync",
+      "body": {},
+      "csrf": true
+    },
+    {
+      "path": "/records/AMENDMENT/qa-amendment/sign",
+      "body": {
+        "revision": 5
+      },
+      "csrf": true
+    },
+    {
+      "path": "/records/AMENDMENT/qa-amendment/sync",
+      "body": {
+        "revision": 5
+      },
+      "csrf": true
+    },
+    {
+      "path": "/records/HANDOVER/qa-handover/sign",
+      "body": {},
+      "csrf": true
+    },
+    {
+      "path": "/records/HANDOVER/qa-handover/sync",
+      "body": {},
+      "csrf": true
+    },
+    {
+      "path": "/records/SUBSCRIPTION/qa-subscription/sign",
+      "body": {},
+      "csrf": true
+    }
+  ]
+}

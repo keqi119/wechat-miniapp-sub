@@ -33,7 +33,7 @@
       <button class="secondary" data-id="{{item.id}}" bindtap="queryVerification" disabled="{{busy}}">查询本次验收状态</button>
     </view>
   </view>
-  <view wx:if="{{authenticated}}" class="card"><view class="section-title">电子签署实名准备</view><view class="muted">{{readiness.readyForSigning ? '实名与证书已就绪' : '请完成供应商实名核验与证书绑定'}}</view><block wx:if="{{!readiness.readyForSigning && readiness.realNameStatus !== 'VERIFIED'}}"><view class="field"><view class="label">实名姓名</view><input class="input" value="{{identityName}}" data-field="identityName" bindinput="input" maxlength="50" disabled="{{busy}}"/></view><view class="field"><view class="label">证件号码</view><input class="input" value="{{idCardNo}}" data-field="idCardNo" bindinput="input" maxlength="18" password="{{true}}" disabled="{{busy}}"/></view><button class="primary" bindtap="verifyIdentity" disabled="{{busy}}">前往供应商实名核验</button></block><button class="secondary" bindtap="refreshIdentity" disabled="{{busy}}">查询实名与证书状态</button></view>
+  <view wx:if="{{authenticated}}" class="card"><view class="section-title">电子签署实名准备</view><view class="muted">{{readiness.readyForSigning ? '实名与证书已就绪' : '实名或证书尚待核实'}}</view><view class="notice">实名资料在微信签约网页中填写。请使用与小程序相同手机号登录，完成后手动返回查询。</view><button class="primary" bindtap="verifyIdentity" disabled="{{busy}}">查看实名与签约指引</button><button class="secondary" bindtap="refreshIdentity" disabled="{{busy}}">读取实名与证书状态</button></view>
 <view class="card"><view class="label">客户服务电话</view><view>+86 {{customerServiceTelephone}}</view><button class="secondary" bindtap="callService">拨打客服电话</button></view>
-  <button class="secondary" bindtap="clearCache" disabled="{{busy}}">清理签署入口缓存</button><button class="primary return-home" bindtap="openHome">返回首页</button>
+  <button class="secondary" bindtap="clearCache" disabled="{{busy}}">清理签约指引缓存</button><button class="primary return-home" bindtap="openHome">返回首页</button>
 </view>

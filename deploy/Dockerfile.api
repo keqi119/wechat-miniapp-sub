@@ -7,6 +7,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/admin/package.json apps/admin/package.json
 COPY apps/miniprogram/package.json apps/miniprogram/package.json
+COPY apps/signing-h5/package.json apps/signing-h5/package.json
 RUN pnpm install --frozen-lockfile --filter @chundian/api...
 FROM deps AS build
 COPY apps/api/prisma apps/api/prisma

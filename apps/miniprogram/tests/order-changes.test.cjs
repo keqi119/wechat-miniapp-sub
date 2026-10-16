@@ -13,6 +13,7 @@ function setup(extra = {}) {
     if (failure === 'NETWORK') return v.fail({ errMsg: 'synthetic network failure' });
     if (failure && v.method === 'POST') return v.success({ statusCode: failure, data: { error: { message: '合成失败状态', code: 'CONFLICT' } } });
     let data;
+    if (route === '/public/signing-config') return v.success({ statusCode: 200, data: { mode: 'SERVICE_ACCOUNT_H5', entryUrl: 'https://app.subauto.keybox.cloud/miniapp-sign/', enabled: true } });
     if (route === '/customer/order-changes') { const { id, orderId, kind, status, revision, reason, createdAt, quote } = current; data = { items: [{ id, orderId, kind, status, revision, reason, createdAt, quoteSummary: quote ? { id: quote.id, revision: quote.revision, newStartDate: quote.newStartDate, newEndDate: quote.newEndDate, months: quote.months, commercialHash: quote.commercialHash, expiresAt: quote.expiresAt } : null }], total: 1, page: 1, pageSize: 50 }; }
     else if (route === '/customer/order-changes/dc1' && v.method === 'GET') data = current;
     else if (route.endsWith('/confirm')) { current = { ...current, status: 'AWAITING_SIGNATURE', revision: 4, canConfirm: false, canSign: true }; data = current; }
@@ -63,12 +64,11 @@ test('reject requires reason and current server capability and never signs or pa
   const result = await env.api.rejectOrderChange('dc1', { revision: 3, reason: '新交车日不合适' }); assert.equal(result.status, 'REJECTED');
   assert.equal(env.calls.filter(v => v.method === 'POST').length, 1); assert.equal(env.calls.at(-1).data.reason, '新交车日不合适');
 });
-test('change sign preserves existing entry host validation and stores only authorized task context', async () => {
+test('change sign only opens H5 guide after current capability check and does not POST a signing task', async () => {
   const env = setup({ change: change({ status: 'AWAITING_SIGNATURE', canConfirm: false, canSign: true }) });
   await env.api.signOrderChange('dc1', { revision: 3 }); assert.equal(env.navigations.at(-1), '/pages/sign/index?kind=order-change&id=dc1');
   assert.equal(env.storage.get(config.storageKey + ':pending').kind, 'order-change');
-  const bad = setup({ change: change({ status: 'AWAITING_SIGNATURE', canConfirm: false, canSign: true }), sign: { taskId: 'x', url: 'https://untrusted.invalid/entry', status: 'PENDING' } });
-  await assert.rejects(bad.api.signOrderChange('dc1', { revision: 3 }), { code: 'SIGN_URL' }); assert.equal(bad.navigations.length, 0);
+  assert.equal(env.calls.some(value => value.method === 'POST'), false); assert.deepEqual(env.storage.get(config.storageKey + ':pending'), { kind: 'order-change', id: 'dc1' });
 });
 test('sign status fresh-reads change revision then POST sync; only archived server SIGNED is success', async () => {
   const env = setup({ change: change({ revision: 8, status: 'AWAITING_SIGNATURE', canSync: true, canConfirm: false }) });

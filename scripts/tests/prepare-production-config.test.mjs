@@ -153,3 +153,23 @@ test('preserves explicitly enabled verification without enabling ordinary paymen
   assert.equal(env.WECHAT_PAY_VERIFICATION_ENABLED, 'true');
   assert.equal(env.WECHAT_PAY_ENABLED, 'false');
 });
+
+test('H5 stays disabled by default and never imports the old portal return URL', t => {
+  const env = assertSucceeded(fixture(t).run({
+    H5_SIGNING_ENABLED: 'true',
+    FADADA_SIGN_RETURN_URL: 'https://old.example/portal/contracts',
+    FADADA_VERIFY_RETURN_URL: 'https://old.example/portal/contracts',
+  }));
+  assert.equal(env.H5_SIGNING_ENABLED, 'false');
+  assert.equal(env.FADADA_SIGN_RETURN_URL, 'https://app.subauto.keybox.cloud/miniapp-sign/return/');
+  assert.equal(env.FADADA_VERIFY_RETURN_URL, env.FADADA_SIGN_RETURN_URL);
+});
+
+test('keeps the independently activated H5 switch and checked provider hosts', t => {
+  const env = assertSucceeded(fixture(t).run({ H5_SIGNING_PROVIDER_HOSTS: 'unapproved.example' }, {
+    H5_SIGNING_ENABLED: 'true', H5_SIGNING_PROVIDER_HOSTS: 'textapi.fadada.com,realnameverify.fadada.com',
+  }));
+  assert.equal(env.H5_SIGNING_ENABLED, 'true');
+  assert.equal(env.H5_SIGNING_PROVIDER_HOSTS, 'textapi.fadada.com,realnameverify.fadada.com');
+  assert.equal(env.FADADA_SIGNING_ENABLED, 'false');
+});

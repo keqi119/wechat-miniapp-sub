@@ -1,3 +1,4 @@
+import {approvedReturnUrl} from '../../h5-sign/config';
 import { createHash, randomUUID } from 'node:crypto';
 import { Db } from '../../common/db';
 import { ESignGateway } from '../../common/gateways';
@@ -19,7 +20,8 @@ export class FadadaESignGateway extends ESignGateway {
   }
   async create(input:Parameters<ESignGateway['create']>[0]){
     this.enabled();
-    ensure(this.config.signNotifyUrl?.startsWith('https://mini-api.subauto.keybox.cloud/')&&this.config.signReturnUrl?.startsWith('https://mini-api.subauto.keybox.cloud/'),503,'FADADA_CALLBACK_CONFIG','独立平台签署回调与返回地址未配置');
+    ensure(this.config.signNotifyUrl?.startsWith('https://mini-api.subauto.keybox.cloud/'),503,'FADADA_CALLBACK_CONFIG','独立平台签署回调与返回地址未配置');
+    const returnUrl=approvedReturnUrl(input.returnUrl||this.config.signReturnUrl);
     const existing=await this.db.fadadaTask.findUnique({where:{kind_resourceId_documentHash:{kind:input.kind,resourceId:input.contractId,documentHash:input.documentHash}}});
     const context=await this.policies.approved(input.kind,input.contractId,input.documentHash,existing?.approvalId);
     ensure(context.resource.customerId===input.customerId&&context.resource.id===input.contractId,404,'NOT_FOUND','签署记录不存在');
@@ -42,7 +44,7 @@ export class FadadaESignGateway extends ESignGateway {
       try{const pdf=await this.writer.readVerified(task.sourceFileId,task.sourcePdfHash);const uploaded=await this.api.uploadDocs({contractId:task.providerEnvelopeId,docTitle:input.kind!=='HANDOVER'?'汽车订阅合同与订阅方案':'车辆交接单',fileName:task.providerEnvelopeId+'.pdf',pdf});const raw=uploaded.raw as any;ensure(['1','1000','success'].includes(String(raw?.code||raw?.result_code||'')),502,'FADADA_UPLOAD_UNCONFIRMED','供应商未确认签署PDF上传');const stored=await this.db.fadadaTask.updateMany({where:{id:task.id,uploadedAt:null,processingUntil:uploadLeaseUntil},data:{uploadedAt:new Date(),status:'PENDING',processingUntil:null}});ensure(stored.count===1,409,'SIGNATURE_LEASE_LOST','签署准备处理权已变化，请重新查询');task=await this.db.fadadaTask.findUniqueOrThrow({where:{id:task.id}});}
       catch(error){await this.db.fadadaTask.updateMany({where:{id:task.id,processingUntil:uploadLeaseUntil},data:{processingUntil:null}});throw error;}
     }
-    const entry=await this.api.createExternalSignUrl({contractId:task.providerEnvelopeId,customerId:task.customerProviderId,transactionId:task.customerTransactionId,docTitle:input.kind!=='HANDOVER'?'汽车订阅合同与订阅方案':'车辆交接单',notifyUrl:this.config.signNotifyUrl!,returnUrl:this.config.signReturnUrl!,signaturePositions:this.positions(context.approval,'CUSTOMER'),signerName:identity.name,signerMobile:input.mobile,validityMinutes:this.config.signUrlValidityMinutes});
+    const entry=await this.api.createExternalSignUrl({contractId:task.providerEnvelopeId,customerId:task.customerProviderId,transactionId:task.customerTransactionId,docTitle:input.kind!=='HANDOVER'?'汽车订阅合同与订阅方案':'车辆交接单',notifyUrl:this.config.signNotifyUrl!,returnUrl,signaturePositions:this.positions(context.approval,'CUSTOMER'),signerName:identity.name,signerMobile:input.mobile,validityMinutes:this.config.signUrlValidityMinutes});
     return {taskId:task.id,url:entry.signUrl,status:'PENDING'};
   }
   private async providerStatus(task:any,platform:boolean){

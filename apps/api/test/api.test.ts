@@ -107,10 +107,11 @@ test('final plan optimistic revisions and concurrent confirmation allocate one v
   const dates = await db.bill.findMany({ where: { type: 'SUBSCRIPTION' }, orderBy: { sequence: 'asc' } });
   assert.deepEqual(dates.slice(0,3).map(d => d.dueDate.toISOString().slice(0, 10)), ['2026-12-31', '2027-01-31', '2027-02-28']);
 });
-test('unconfigured payment/signature never succeeds; handover completion requires signature and settled funds', async () => {
+test('legacy signing is closed and unconfigured payment never succeeds; handover requires signature and funds', async () => {
   const identity = order.customerId === customerId ? 'customer' : 'other';
   const contract = await db.contract.findFirstOrThrow();
-  assert.equal((await req(`/customer/contracts/${contract.id}/sign`, 'POST', {}, identity)).status, 503);
+  const legacySigning=await req(`/customer/contracts/${contract.id}/sign`, 'POST', {}, identity);
+  assert.equal(legacySigning.status,409);assert.equal(legacySigning.data.error.code,'H5_SIGNING_REQUIRED');
   const bill = await db.bill.findFirstOrThrow(); await req(`/admin/bills/${bill.id}/publish`, 'POST', {});
   assert.equal((await req(`/customer/bills/${bill.id}/pay`, 'POST', { idempotencyKey: 'payment-test-0001' }, identity)).status, 503);
   assert.equal((await db.bill.findUniqueOrThrow({ where: { id: bill.id } })).paidAmount, 0);

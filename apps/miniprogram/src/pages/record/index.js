@@ -41,7 +41,7 @@ Page({
     try {
       const accepted = await confirm(
         action.label,
-        action.id === 'pay' ? '即将发起微信支付，金额以当前账单为准。' : action.id === 'sign' ? '即将进入电子签署，请核对正式文档。' : '将提交当前操作，请确认。',
+        action.id === 'pay' ? '即将发起微信支付，金额以当前账单为准。' : action.id === 'sign' ? '将查看签约指引。请主动复制签约入口，在微信中用相同手机号登录并核对文档；返回后查询真实结果。' : '将提交当前操作，请确认。',
       );
       if (!accepted) return;
       const result = await services.performAction(this.data.type, this.data.id, action.id, {});
@@ -74,11 +74,11 @@ Page({
     if (action === 'reject' && !this.data.changeRejectReason.trim()) { this.setData({ changeError: '请填写拒绝当前延期方案的原因。' }); return; }
     this.setData({ busy: true, changeError: '', message: '' });
     try {
-      if (action !== 'sync' && !(await confirm(action === 'confirm' ? '确认本版本延期方案？' : action === 'reject' ? '拒绝本版本延期方案？' : '进入补充协议签署？', action === 'confirm' ? '请核对新起止日期、原款沿用、补收及退款安排。确认后仍需正式签署与资金核对，不代表已经交车或方案已生效。' : action === 'reject' ? '此意见将提交运营处理，不会自动退订或退款。' : '请核对正式文档，返回后查询服务端签署结果。'))) return;
+      if (action !== 'sync' && !(await confirm(action === 'confirm' ? '确认本版本延期方案？' : action === 'reject' ? '拒绝本版本延期方案？' : '查看补充协议签约指引？', action === 'confirm' ? '请核对新起止日期、原款沿用、补收及退款安排。确认后仍需正式签署与资金核对，不代表已经交车或方案已生效。' : action === 'reject' ? '此意见将提交运营处理，不会自动退订或退款。' : '请主动复制签约入口，用相同手机号登录后核对正式文档。签署后手动返回小程序查询。'))) return;
       const method = { confirm: 'confirmOrderChange', reject: 'rejectOrderChange', sign: 'signOrderChange', sync: 'syncOrderChange' }[action];
       await services[method](current.id, { revision: current.revision, commercialHash: current.quote?.commercialHash, read: this.data.changeRead, reason: this.data.changeRejectReason.trim() });
       await this.reload();
-      this.setData({ changeRejectReason: '', message: action === 'confirm' ? '当前版本确认意见已提交，后续签署、资金及生效状态请查看服务端进度。' : action === 'reject' ? '拒绝意见已提交人工处理。' : action === 'sign' ? '签署入口已发起，请返回查询真实结果。' : '已读取服务端最新进度；仅显示当前真实签署、资金和生效状态。' });
+      this.setData({ changeRejectReason: '', message: action === 'confirm' ? '当前版本确认意见已提交，后续签署、资金及生效状态请查看服务端进度。' : action === 'reject' ? '拒绝意见已提交人工处理。' : action === 'sign' ? '签约指引已打开，请按指引操作后返回查询。' : '已读取服务端最新进度；仅显示当前真实签署、资金和生效状态。' });
     } catch (error) { await this.reload(); this.setData({ changeError: error.message, changeRead: false, message: '' }); toastError(error); }
     finally { this.setData({ busy: false }); }
   },

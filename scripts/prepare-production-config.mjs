@@ -47,8 +47,12 @@ const env = {
   FADADA_SIGNING_ENABLED: prior.FADADA_SIGNING_ENABLED || 'false',
   FADADA_ACCOUNT_REGISTER_ENABLED: prior.FADADA_ACCOUNT_REGISTER_ENABLED || 'false',
   FADADA_REALNAME_VERIFY_ENABLED: prior.FADADA_REALNAME_VERIFY_ENABLED || 'false',
+  H5_SIGNING_ENABLED: prior.H5_SIGNING_ENABLED || 'false',
+  H5_SIGNING_PROVIDER_HOSTS: prior.H5_SIGNING_PROVIDER_HOSTS || 'textapi.fadada.com,realnameverify.fadada.com',
   FADADA_SIGN_NOTIFY_URL: 'https://mini-api.subauto.keybox.cloud/api/callbacks/fadada-sign',
   FADADA_VERIFY_NOTIFY_URL: 'https://mini-api.subauto.keybox.cloud/api/callbacks/fadada-identity',
+  FADADA_SIGN_RETURN_URL: 'https://app.subauto.keybox.cloud/miniapp-sign/return/',
+  FADADA_VERIFY_RETURN_URL: 'https://app.subauto.keybox.cloud/miniapp-sign/return/',
 };
 mkdirSync('.runtime/production/secrets', { recursive: true });
 for (const key of ['WECHAT_PAY_MERCHANT_PRIVATE_KEY_PATH', 'WECHAT_PAY_PLATFORM_CERT_PATH', 'WECHAT_PAY_PUBLIC_KEY_PATH']) {

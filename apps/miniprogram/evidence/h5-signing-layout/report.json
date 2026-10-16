@@ -1,0 +1,153 @@
+{
+  "generatedAt": "2026-10-16T09:56:20.636Z",
+  "scope": "Offline actual-wcc synthetic layout only. No API, SDK, clipboard, browser external navigation, QR, SMS, payment, signing, preview or upload.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "entry-identity",
+      "kind": "identity",
+      "enabled": true,
+      "text": "使用与小程序相同手机号",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "entry-identity.png",
+      "passed": true
+    },
+    {
+      "name": "entry-contract",
+      "kind": "contract",
+      "enabled": true,
+      "text": "使用与小程序相同手机号",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "entry-contract.png",
+      "passed": true
+    },
+    {
+      "name": "entry-handover",
+      "kind": "handover",
+      "enabled": true,
+      "text": "使用与小程序相同手机号",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "entry-handover.png",
+      "passed": true
+    },
+    {
+      "name": "entry-order-change",
+      "kind": "order-change",
+      "enabled": true,
+      "text": "使用与小程序相同手机号",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "entry-order-change.png",
+      "passed": true
+    },
+    {
+      "name": "entry-disabled",
+      "kind": "contract",
+      "enabled": false,
+      "text": "签约入口尚未启用",
+      "copy": false,
+      "overflow": false,
+      "screenshot": "entry-disabled.png",
+      "passed": true
+    },
+    {
+      "name": "entry-config-error",
+      "kind": "contract",
+      "error": "合成配置错误：签约中心尚未核验",
+      "text": "签约中心尚未核验",
+      "copy": false,
+      "overflow": false,
+      "screenshot": "entry-config-error.png",
+      "passed": true
+    },
+    {
+      "name": "returned-pending",
+      "kind": "contract",
+      "enabled": true,
+      "status": "PENDING",
+      "message": "服务端尚未确认完成，复制或返回小程序均不代表签署成功。",
+      "text": "结果待核实",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "returned-pending.png",
+      "passed": true
+    },
+    {
+      "name": "returned-signed",
+      "kind": "contract",
+      "enabled": true,
+      "status": "SIGNED",
+      "message": "服务端已确认双方签署并归档，交付与资金状态另行核对。",
+      "text": "双方签署已归档",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "returned-signed.png",
+      "passed": true
+    },
+    {
+      "name": "identity-verified",
+      "kind": "identity",
+      "enabled": true,
+      "status": "VERIFIED",
+      "text": "实名与证书已就绪",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "identity-verified.png",
+      "passed": true
+    },
+    {
+      "name": "query-error-contract",
+      "kind": "contract",
+      "enabled": true,
+      "status": "UNKNOWN",
+      "statusError": "合成403/409或网络错误：查询未完成，结果尚未核实。",
+      "text": "查询未完成，结果尚未核实",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "query-error-contract.png",
+      "passed": true
+    },
+    {
+      "name": "query-error-handover",
+      "kind": "handover",
+      "enabled": true,
+      "status": "UNKNOWN",
+      "statusError": "合成403/409或网络错误：查询未完成，结果尚未核实。",
+      "text": "查询未完成，结果尚未核实",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "query-error-handover.png",
+      "passed": true
+    },
+    {
+      "name": "query-error-order-change",
+      "kind": "order-change",
+      "enabled": true,
+      "status": "UNKNOWN",
+      "statusError": "合成403/409或网络错误：查询未完成，结果尚未核实。",
+      "text": "查询未完成，结果尚未核实",
+      "copy": true,
+      "overflow": false,
+      "screenshot": "query-error-order-change.png",
+      "passed": true
+    },
+    {
+      "name": "settings-no-identity-input",
+      "route": "settings",
+      "text": "实名资料在微信签约网页中填写",
+      "copy": false,
+      "overflow": false,
+      "screenshot": "settings-no-identity-input.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

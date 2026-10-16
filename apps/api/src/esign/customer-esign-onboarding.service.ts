@@ -1,3 +1,4 @@
+import {approvedReturnUrl} from '../h5-sign/config';
 import { createHash, randomUUID } from 'node:crypto';
 import { Db } from '../common/db';
 import { ensure } from '../common/errors';
@@ -22,7 +23,7 @@ export class CustomerESignOnboardingService {
     } catch (error) { await this.db.eSignAccount.updateMany({ where: { id: account.id }, data: { registrationLeaseUntil: null } }); throw error; }
     return this.readiness(customerId);
   }
-  async verify(customerId: string, input: { name: string; idCardNo: string }) {
+  async verify(customerId: string, input: { name: string; idCardNo: string }, returnUrl?:string) {
     ensure(this.config.enabled && this.config.realNameVerifyEnabled, 503, 'FADADA_VERIFICATION_DISABLED', '法大大实名核验尚未启用');
     ensure(input.name?.trim().length >= 2 && input.name.length <= 50 && /^\d{17}[\dXx]$/.test(input.idCardNo || ''),400,'IDENTITY_INPUT','请提供有效实名信息');
     const account = await this.db.eSignAccount.findUnique({ where: { customerId } });
@@ -31,14 +32,15 @@ export class CustomerESignOnboardingService {
     const customer = await this.db.customer.findUniqueOrThrow({ where: { id: customerId } });
     const ciphertext = encryptIdentity({ name: input.name.trim(), idCardNo: input.idCardNo.toUpperCase() }, customerId, this.config.identityEncryptionKey);
     ensure(this.config.verifyNotifyUrl?.startsWith('https://mini-api.subauto.keybox.cloud/') && this.config.verifyReturnUrl?.startsWith('https://'),503,'FADADA_CALLBACK_CONFIG','实名回调与返回地址未配置');
+    const verifiedReturnUrl=approvedReturnUrl(returnUrl||this.config.verifyReturnUrl);
     const token=randomUUID(),version=account.identityVersion+1,leaseUntil=new Date(Date.now()+60000);
     const claimed=await this.db.eSignAccount.updateMany({where:{id:account.id,providerCustomerId:account.providerCustomerId,identityVersion:account.identityVersion,realNameStatus:{not:'VERIFIED'},OR:[{verificationLeaseUntil:null},{verificationLeaseUntil:{lt:new Date()}}]},data:{identityVersion:version,verificationLeaseToken:token,verificationLeaseUntil:leaseUntil,identityCiphertext:ciphertext,realNameStatus:'STARTING',verificationSource:'UNKNOWN',verificationTransactionNo:null,verifiedSerialNo:null,verifiedIdentityHash:null,certStatus:'UNKNOWN',certSerialNo:null,verifiedAt:null,checkedAt:null}});
     ensure(claimed.count===1,409,'IDENTITY_PROCESSING','实名任务准备中或身份状态已变化，请稍后查询');
     const ownership={id:account.id,identityVersion:version,verificationLeaseToken:token,identityCiphertext:ciphertext};
     try{
-      const result = await this.api.getPersonVerifyUrl({ customerId: account.providerCustomerId, name: input.name.trim(), idCardNo: input.idCardNo.toUpperCase(), mobile: customer.mobile, notifyUrl: this.config.verifyNotifyUrl!, returnUrl: this.config.verifyReturnUrl!, certFlag: true });
+      const result = await this.api.getPersonVerifyUrl({ customerId: account.providerCustomerId, name: input.name.trim(), idCardNo: input.idCardNo.toUpperCase(), mobile: customer.mobile, notifyUrl: this.config.verifyNotifyUrl!, returnUrl: verifiedReturnUrl, certFlag: true });
       ensure(['1','1000','success'].includes(result.resultCode || '') && result.transactionNo && result.verifyUrl.startsWith('https://'),502,'FADADA_VERIFICATION_RESPONSE','供应商未确认实名任务');
-      await this.db.serial(async tx=>{const changed=await tx.eSignAccount.updateMany({where:{...ownership,verificationLeaseUntil:{gt:new Date()}},data:{realNameStatus:'PENDING',verificationTransactionNo:result.transactionNo,verifiedSerialNo:result.transactionNo,verificationLeaseToken:null,verificationLeaseUntil:null}});ensure(changed.count===1,409,'IDENTITY_ATTEMPT_CHANGED','实名任务已变更，请查询最新任务');await audit(tx,customerId,'FADADA_VERIFICATION_STARTED','customers',customerId,{identityVersion:version},'CUSTOMER');});
+      await this.db.serial(async tx=>{const changed=await tx.eSignAccount.updateMany({where:{...ownership,verificationLeaseUntil:{gt:new Date()}},data:{realNameStatus:'PENDING',verificationTransactionNo:result.transactionNo,verifiedSerialNo:result.transactionNo,verificationLeaseToken:null,verificationLeaseUntil:null}});ensure(changed.count===1,409,'IDENTITY_ATTEMPT_CHANGED','实名任务已变更，请查询最新任务');await audit(tx,customerId,'FADADA_VERIFICATION_STARTED','customers',customerId,{identityVersion:version,returnUrl:verifiedReturnUrl},'CUSTOMER');});
       return { url: result.verifyUrl, status: 'PENDING' };
     }catch(error){await this.db.eSignAccount.updateMany({where:ownership,data:{verificationLeaseToken:null,verificationLeaseUntil:null,realNameStatus:'FAILED'}});throw error;}
   }

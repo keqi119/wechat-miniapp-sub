@@ -7,5 +7,10 @@ BEGIN;
 DELETE FROM "SmsChallenge" WHERE "expiresAt" < now() - interval '30 days';
 DELETE FROM "CustomerSession" WHERE "expiresAt" < now() - interval '30 days';
 DELETE FROM "AdminSession" WHERE "expiresAt" < now() - interval '30 days';
+DO $$ BEGIN
+  IF to_regclass('"H5SigningSession"') IS NOT NULL THEN
+    DELETE FROM "H5SigningSession" WHERE "expiresAt" < now() - interval '30 days';
+  END IF;
+END $$;
 COMMIT;
 SQL

@@ -63,7 +63,7 @@ export class WorkflowsController {
     const item=claim.item;
     try {
       if(claim.task?.uploadedAt && ['SIGNED','REJECTED','EXPIRED'].includes(claim.task.status)){ const state=await this.signStatus(id,request);return{taskId:claim.task.id,...state}; }
-      const result = await this.esign.create({ contractId:id,customerId:item.customerId,documentHash:item.manifestHash,kind:'HANDOVER',customerName:request.customer.name,mobile:request.customer.mobile });
+      const result = await this.esign.create({ contractId:id,customerId:item.customerId,documentHash:item.manifestHash,kind:'HANDOVER',returnUrl:request.signingReturnUrl,customerName:request.customer.name,mobile:request.customer.mobile });
       await finishSigning(this.db,'HANDOVER',item,claim.leaseUntil,result.taskId);return result;
     } catch(error) { await failSigning(this.db,'HANDOVER',item,claim.leaseUntil);throw error; }
   }

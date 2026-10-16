@@ -17,5 +17,6 @@ project.private.config.json
 config.local.js
 playwright-report/
 test-results/
+__pycache__/
 docs/evidence/wechat-domain-confirmation.jpg
 .DS_Store

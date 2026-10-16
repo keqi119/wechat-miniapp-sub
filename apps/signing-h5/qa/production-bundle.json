@@ -1,0 +1,10 @@
+{
+  "mode": "local-built-bundle-with-strict-csp-and-isolated-api-fixtures",
+  "paths": [
+    "/miniapp-sign/",
+    "/miniapp-sign/return/"
+  ],
+  "inlineStyles": 0,
+  "externalRequests": 0,
+  "pageOrCspErrors": []
+}

@@ -17,3 +17,5 @@ A契约视觉核对补丁：交接确认前独立显著展示服务端actualAt�
 2026-10-16 B1延期交车：新增15项行为回归先红后绿，全包109/109通过；build87文件/16WXML/17WXSS，Mock109文件×2副本0差异。9个actual-wcc离线合成状态、9PNG、390px零溢出/JS异常/外部请求，见evidence/delivery-delay-layout/report.json与delivery-delay-report.md。版本/hash fresh守门、默认未勾选、正式补充全文缺失关闭、拒绝原因、稳定幂等key、终态及409/429/500/网络失败、服务端SIGNED+归档守门。仅复用原签页kind路由；未变更Fadada桥接/域名、冻结A副本或生产，未调用业务API/SDK/预览/上传/真实付款签署。
 
 B1只读安全审查后授权兼容：list summary和详情分离、详情坚持resolved正文，新增3行为回归先红后绿，最终112/112（B1共18）、build87文件/16WXML17WXSS、Mock109×2零差异；11种actual-wcc离线版面11PNG零溢出/异常/外部请求。首次确认期限按服务端quote.expiresAt北京时间展示，过期或无有效时区时间禁confirm；已确认不误阻后续sign/sync。只读API发现与修复进度见evidence/delivery-delay-api-review.md，未运行共享DB/业务HTTP/供应商操作。
+
+2026-10-16 H5签约指引切片：新增12行为回归（首9红→绿），全包124/124，build88文件/16WXML17WXSS、Mock109×2零差异；13actual-wcc离线状态13PNG零溢出/异常/外部请求。实名/三kind仅本地指引+用户复制受公开配置enabled控制的固定链接，无身份信息URL传递、外部webview或任务创建。onShow按kind可信回查，身份GETreadiness不申请证书。evidence/h5-signing-report.md，未用SDK/业务API/真实剪贴板/短信签约/预览上传。

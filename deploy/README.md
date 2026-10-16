@@ -1,6 +1,6 @@
 # 独立纯电主义生产部署
 
-仅操作 `139.196.227.195:/opt/wechat-miniapp-sub`、`chundian-prod` Compose 项目和 `chundian_prod` 数据库。旧系统保持不动。
+仅操作 `139.196.227.195:/opt/wechat-miniapp-sub`、`chundian-prod` Compose 项目和 `chundian_prod` 数据库。旧业务数据库与原门户路由保持不动；服务号 H5 签约按下文只在既有 app 主机追加独立路径。
 
 1. 按下方配置说明准备 `.env.providers.local`，本地执行 `node scripts/prepare-production-config.mjs --release=<唯一版本>` 生成或复用独立凭据，输出位于 `.runtime/production`。私有配置及该目录均不提交；仅提交不含真实凭据的 `*.example` 模板。不要删除并重建已投入使用的数据库密码或实名资料加密密钥。
 2. `docker build --build-arg DEBIAN_MIRROR=http://mirrors.tuna.tsinghua.edu.cn -f deploy/Dockerfile.api -t chundian-api:<唯一版本> .`。官方 Debian 软件仓库在本次网络中返回 502，使用已核验的 TUNA 镜像，APT 仍验证 Debian 签名。运行镜像包含 OpenSSL 3 和 Noto CJK 字体。
@@ -13,7 +13,7 @@
 
 API 只绑定 `127.0.0.1:13101`，数据库不暴露主机端口。公网仅由 Nginx 的 HTTPS 入口提供服务。
 
-微信业务域名的本方回跳页位于 `mini-api.subauto.keybox.cloud`。管理员下载的 `G1wS8MuuaR.txt` 原样放入独立的 `wechat-domain-verification/` 目录，Nginx 仅公开该精确文件路径；文件内容不提交仓库。上线前核对 HTTPS 返回字节与原文件一致。提供校验文件不等于微信平台已完成业务域名登记；法大大自己的页面域名还需由法大大部署同一校验文件并给出可登记域名。
+微信业务域名的本方回跳页位于 `mini-api.subauto.keybox.cloud`。管理员下载的 `G1wS8MuuaR.txt` 原样放入独立的 `wechat-domain-verification/` 目录，Nginx 仅公开该精确文件路径；文件内容不提交仓库。上线前核对 HTTPS 返回字节与原文件一致。提供校验文件不等于微信平台已完成业务域名登记；该内嵌方案现已被用户选择的服务号 H5 方案替代，不再以供应商补域名为施工前置。
 
 ## 配置文件与实际读取关系
 
@@ -24,7 +24,7 @@ API 只绑定 `127.0.0.1:13101`，数据库不暴露主机端口。公网仅由 
 | `.runtime/production/.env.production` | 生成器输出；部署时复制到独立项目根 `.env.production`。Compose 的 `--env-file` 用于镜像等插值，API 的 `env_file` 将配置注入容器。 |
 | `apps/admin/.env.example` | 仅公开的 `VITE_API_BASE_URL`；生产构建指定新 API 的 HTTPS 根地址。修改后需要重新构建静态产物。 |
 | 根 `.env.miniapp.example` → `.env.miniapp.local` | `scripts/miniapp-ci.mjs` 读取 `WECHAT_UPLOAD_PRIVATE_KEY_PATH`；AppID 来自构建包的 `project.config.json`。上传密钥不进入小程序包。 |
-| `apps/miniprogram/src/config.js` | 小程序公开 API 地址与经核验的 `signingHosts`；不是服务端环境变量，不放任何密钥。 |
+| `apps/miniprogram/src/config.js` | 小程序公开 API 地址；签约入口通过新 API 的公开配置读取；不是服务端环境变量，不放任何密钥。 |
 
 现有 `.gitignore` 的 `!.env.example` 与 `!.env.*.example` 允许提交模板，实际 `.env`、`.env.*.local`、`.runtime/`、PEM/KEY 文件仍被忽略。供应商示例使用每行 `KEY="JSON字符串"`，保持与证书维护脚本的解析方式兼容；填写私有文件时不要加入注释、空行、未加引号的值，路径使用正斜杠。空值是待配置占位，不表示供应商已经接通。
 
@@ -36,7 +36,7 @@ API 只绑定 `127.0.0.1:13101`，数据库不暴露主机端口。公网仅由 
 - 1 分钱渠道验收使用独立的 `WECHAT_PAY_VERIFICATION_ENABLED`（默认 `false`），以及 `WECHAT_PAY_VERIFICATION_NOTIFY_URL=https://mini-api.subauto.keybox.cloud/api/callbacks/wechat-pay-verification`。该入口仅允许 ADMIN 为指定既有客户建立授权记录，金额固定为人民币1分，客户仍须亲自确认微信付款；不会开启普通支付、创建租赁订单或修改正式报价。验收记录使用独立表及回调，成功后不得再次向同客户收取验收款。配置生成器保留本系统已明确设置的开关，忽略供应商输入中的启用值；不得沿用普通支付回调处理验收款。退款不在本轮入口中执行。
 - 法大大：`FADADA_BASE_URL`、`FADADA_ENV`、`FADADA_API_VERSION`、`FADADA_APP_ID`、`FADADA_APP_SECRET`、`FADADA_PLATFORM_CUSTOMER_ID`、`FADADA_PLATFORM_SIGNATURE_ID`；地址与账号支持的协议版本须核验。请求超时、签署链接数量与有效期分别为 `FADADA_REQUEST_TIMEOUT_MS`、`FADADA_SIGN_URL_QUANTITY`、`FADADA_SIGN_URL_VALIDITY_MINUTES`。
 - 法大大实际功能开关为 `FADADA_ENABLED`、`FADADA_ACCOUNT_REGISTER_ENABLED`、`FADADA_REALNAME_VERIFY_ENABLED`、`FADADA_SIGNING_ENABLED`，全部默认关闭。旧导入配置可能含 `FADADA_AUTO_SIGN_ENABLED`，但它不是当前签署开关；不得依赖它判断是否允许签章。
-- 法大大通知使用 `FADADA_SIGN_NOTIFY_URL`、`FADADA_VERIFY_NOTIFY_URL`，分别为新 API 的 `/api/callbacks/fadada-sign`、`/api/callbacks/fadada-identity`。`FADADA_SIGN_RETURN_URL`、`FADADA_VERIFY_RETURN_URL` 可留空以采用新 API `/api/public/esign-return` 默认页；用户返回该页不等于业务已成功。
+- 法大大通知使用 `FADADA_SIGN_NOTIFY_URL`、`FADADA_VERIFY_NOTIFY_URL`，分别为新 API 的 `/api/callbacks/fadada-sign`、`/api/callbacks/fadada-identity`。`FADADA_SIGN_RETURN_URL`、`FADADA_VERIFY_RETURN_URL` 在本次发布固定为 `https://app.subauto.keybox.cloud/miniapp-sign/return/`，不沿用旧门户合同页；用户返回该页不等于业务已成功。
 
 ### 生成、路径转换与保留
 
@@ -63,3 +63,15 @@ Compose 将上传目录固定为 `/app/uploads` 并挂载项目 `uploads/`，将
 ## 回滚
 
 查 `releases/` 和 Docker 已保留的镜像，选定上一个已验证版本；将私有配置的 `API_IMAGE` / `BUILD_VERSION` 恢复为对应值，再运行 `activate-release.sh <旧版本>`。不得使用 `docker compose down -v`，不得删除 `chundian-prod-db`，不得对旧系统容器或目录执行清理。
+
+## 服务号 H5 独立签约路径
+
+构建 `pnpm --filter @chundian/signing-h5 build`，把产物放入同一已验证版本的 `releases/<版本>/signing-h5`。仅根页 `/miniapp-sign/`、返回页 `/miniapp-sign/return/`、静态 `assets/` 和专属 `api/` 路径可用；未知页面404，不回退旧 Next。新 API 实际命名空间 `/api/h5-sign/`，数据只在独立数据库。不要改旧服务号 OAuth、菜单或客户 Cookie。
+
+将四份 `nginx-signing-h5*.conf` 上传独立deploy目录；先以独立临时 Nginx 配置运行 `nginx -t`，不能直接覆盖旧host。新API及静态版本激活后，读取既有 app vhost 原始SHA，执行 `python3 deploy/activate-signing-route.py --release <版本> --expected-vhost-sha256 <刚核对的SHA>`。该脚本备份原文件，只增加一条精确include；新增HTTP级日志/限流配置先于host加载。语法、根页/返回页、专属API401、未知路径404和旧登录页200未通过时恢复原host与全局include。后续升级沿用已存在的include，不再次插入；正常版本切换仍须同时提供admin和signing-h5目录。
+
+`H5_SIGNING_ENABLED`只控制新入口可用性，默认false；关闭不会恢复已停用的小程序网页签署副作用接口。`H5_SIGNING_PROVIDER_HOSTS`的两个批准首跳是`textapi.fadada.com,realnameverify.fadada.com`，依据旧H5真实接口结果核对；不要填泛域或外部任意URL。生产生成器保留本系统入口开关/允许列表，忽略旧输入中可能的启用值，固定新H5返回地址。实名、签署分别受原供应商开关与真实业务准备度控制；网页可访问不代表已经完成真实签署。
+
+独立cookie为`h5_signing_session`，8小时、HttpOnly/Secure/SameSite=Lax、Path=/miniapp-sign/。代理仅转该cookie并移除Authorization，写请求还校验Origin及CSRF。原系统与新H5同host，Cookie路径不是浏览器同源XSS隔离。新日志只记录URI无query，纳入现有190天logrotate；失效满30天的H5会话纳入maintenance。
+
+迁移015和016应用后，运行 `node scripts/publish-approved-delivery-delay-legal.mjs <已验证的H5版本>` 发布已经批准的补充协议模板，公开读取须与批准SHA一致；模板批准不代表逐单报价已确认或签署。企业用印需实际授权和双人审批，客户在H5自行实名认证及签署，随后回小程序查询同一新库中的可信状态。

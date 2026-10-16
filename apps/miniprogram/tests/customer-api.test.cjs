@@ -19,7 +19,7 @@ function setup(handler = () => ({ statusCode: 200, data: {} }), native = {}) {
   };
   const api = createApi({ apiBase: 'https://mini-api.subauto.keybox.cloud', storageKey: 'customer-session', signingHosts: ['sign.fadada.com'] }, value => {
     calls.push(value);
-    const result = handler(value);
+    const result = value.url.endsWith('/public/signing-config') ? { statusCode: 200, data: { mode: 'SERVICE_ACCOUNT_H5', entryUrl: 'https://app.subauto.keybox.cloud/miniapp-sign/', enabled: true } } : handler(value);
     if (result.network) value.fail({ errMsg: 'request:fail' });
     else value.success(result);
   }, platform);
@@ -117,16 +117,15 @@ test('payment native success queries server and never declares settlement from n
   assert.equal(result.status, 'PENDING');
   assert.match(result.message, /确认|处理中/);
 });
-test('signing launches carrier and explicit refresh obtains server status', async () => {
-  const { api, calls } = setup(v => ({ statusCode: 200, data: v.url.endsWith('/sign') ? { taskId: 't-1', url: 'https://sign.fadada.com/task/1', status: 'PENDING' } : { status: 'SIGNED' } }));
+test('signing opens only H5 guidance and explicit refresh obtains archived server status', async () => {
+  const { api, calls } = setup(v => ({ statusCode: 200, data: { status: 'SIGNED', signedFileId: 'archive1' } }));
   const result = await api.performAction('contracts', 'c-1', 'sign');
-  assert.equal(result.status, 'PENDING');
   assert.match(calls.find(c => c.navigation).navigation, /^\/pages\/sign\/index\?/);
+  assert.equal(result.status, 'H5_GUIDANCE');
   assert.equal((await api.getSignStatus('c-1')).status, 'SIGNED');
+  assert.equal(calls.some(value => value.method === 'POST'), false);
 });
-test('untrusted signing hosts and malformed payment payloads are never sent to native APIs', async () => {
-  const sign = setup(() => ({ statusCode: 200, data: { taskId: 't-1', url: 'https://evil.example/sign' } }));
-  await assert.rejects(sign.api.performAction('contracts', 'c-1', 'sign'), { code: 'SIGN_URL' });
+test('malformed payment payloads are never sent to native payment APIs', async () => {
   const pay = setup(() => ({ statusCode: 200, data: { paymentId: 'p-1', paySign: 's' } }));
   await assert.rejects(pay.api.performAction('bills', 'b-1', 'pay'), { code: 'RESPONSE' });
 });
