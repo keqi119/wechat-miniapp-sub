@@ -1,11 +1,13 @@
 # 发布验收记录
 
-更新：2026-10-16，数据截至 20:22（Asia/Shanghai）。生产仍为 `20261016-native-signing-v1`，16 次迁移、加密备份已在隔离库恢复 49 表。原生实名入口已启用，企业签署及正式订阅支付尚未开启。微信开发版最近上传仍为 `1.0.3`，原生实名版本目前只有预览码；尚未提交代码审核或正式发布。
+更新：2026-10-16，数据截至 20:47（Asia/Shanghai）。生产 API 为 `20261016-vehicle-change-v1`，源码 `aa440793e9657a88d9b70462a50ecb39a4cfb03f`，18 次迁移；后台静态发布为 `20261016-vehicle-change-v1-admin1`。迁移前加密备份 `20261016T123644Z.tar.enc` 已在隔离库恢复 49 表，此表数属于迁移前快照。原生实名入口已启用，企业签署、正式订阅支付及换车次数购买开关尚未开启。微信开发版最近上传仍为 `1.0.3`，本次新版已生成 463226 字节预览包；尚未提交代码审核或正式发布。
 
 - 用户已确认三项业务域名添加成功，并由第二位实际管理员启用企业印章；逐单用印仍需独立批准。证据见 `native-signing-production-release.json`、`enterprise-seal-activation.json`。
-- 用户此前报告实名“请求参数无效”，当时服务端未建立实名任务或保存证件资料。用户确认新版同意文字后，20:16:10 的请求包含两项预检并返回 verify 201。用户随后完成法大大步骤，20:20 的两次主动核验返回成功；20:22 只读使用实际 accountReadiness 函数确认 realNameStatus=VERIFIED、certBound=true、readyForSigning=true。本人实名及证书已通过；账户页完成文案和重复填写表单正在改进，不等于已创建或签署真实合同。
-- 延期交车补充协议 v1 已批准并发布；换车补充协议模板已批准但尚未发布。具体车辆、日期、金额与商业附件仍须逐单确认。
-- 工作区已整合延期交车、换车及原生签约，并完成付费换车 API 205 项完整测试及最后 18 项专项验证。两前端正在独立本地库做真实 HTTP 接线；这些业务改动尚未冻结或发布，合成支付结果不能替代真实渠道验收。
+- 用户此前报告实名“请求参数无效”，当时服务端未建立实名任务或保存证件资料。用户确认新版同意文字后，20:16:10 的请求包含两项预检并返回 verify 201。用户随后完成法大大步骤，20:20 的两次主动核验返回成功；20:47 再次只读使用实际 accountReadiness 函数确认 realNameStatus=VERIFIED、certBound=true、readyForSigning=true，最后可信供应商检查为 20:20:09。本人实名及证书已通过。新版账户页明确显示“已完成实名核验”，单列证书状态并隐藏重复填写入口；包含旧请求不能覆盖新状态的保护，8 项专项、184 项小程序完整测试通过。新版预览已生成，用户对完成文案的真机回读待反馈；尚未创建或签署真实合同。
+- 延期交车补充协议 v1 和换车补充协议模板均已批准并发布，线上正文与批准文件哈希一致。具体车辆、日期、金额与商业附件仍须逐单确认。
+- 延期交车、换车及付费换车次数实现已整合并部署。API 曾通过 205 项完整测试，最后改动后相关 34 项通过；固定来源 51 项、后台 83 项、小程序 184 项通过。两前端完成独立本地库真实 HTTP 接线；该验证使用合成供应商结果，不能替代真实支付或签署验收。
+- 首次静态打包误选旧的 `apps/admin/dist`，随后以独立冻结的 `apps/admin/qa/b3-build/dist` 修正并原子切换至 `20261016-vehicle-change-v1-admin1`。20:46 独立复核及 20:47 主控复核确认公网首页、JS、CSS 三文件 SHA-256 全部匹配；首页引用 `index-BZ71Zy3J.js` 和 `index-Bjs3Pehh.css`。API 与小程序字节不受此静态修正影响；初始包哈希与原因保留在发布证据中。
+- 20:47 主机核对确认环境仅改 BUILD_VERSION/API_IMAGE，原供应商及业务开关配置保留，旧应用虚拟主机未变。仅清理本项目两份已导入且本机保留、哈希一致的镜像传输包，已安装和回滚镜像均保留；剩余磁盘约 1.60 GB。独立本地 HTTP 夹具已停止。
 
 以下表格保留 **16:41 的 usage-v1 阶段历史记录**，其中生产版本、迁移数、域名和签约准备状态应以上述最新记录为准；正式车辆/套餐尚未启售。
 
@@ -43,6 +45,8 @@
 - `credit-deployment.md`、`production-credit-deployment.json`、`credit-legal-publication.json`、`wechat-development-upload-1.0.2.json`：信用核验部署、获批文案发布及微信开发版上传。
 - `usage-deployment.md`、`production-usage-deployment.json`、`usage-production-http.json`、`usage-release-artifacts.json`、`usage-legal-publication.json`、`wechat-development-upload-1.0.3.json`：月里程与退订部署、线上权限/文件校验、43表恢复及对应开发版上传。
 - `catalog-policy-draft.md`：真实车辆草稿和已确认商业规则，尚不代表正式启售。
+- `vehicle-change-production-release.json`、`vehicle-change-preview.json`：本次 API、18 次迁移、修正后的后台静态文件及新版预览证据。
+- `vehicle-change-legal-publication.json`：已批准换车补充协议的线上正文哈希核对。
 - `apps/miniprogram/evidence/devtools/after-domain-config-rendered/report.json`：域名生效后的请求与页面。
 - `apps/miniprogram/evidence/devtools/settings-legal-links/report.json`：协议链接点击与同意状态检查。
 - `apps/admin/qa/production-critical-result.json`：生产后台关键检查。

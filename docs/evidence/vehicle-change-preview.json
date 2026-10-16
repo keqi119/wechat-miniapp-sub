@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-10-16T12:47:13.910Z",
+  "release": "20261016-vehicle-change-v1",
+  "sourceCommit": "aa440793e9657a88d9b70462a50ecb39a4cfb03f",
+  "tool": "WeChat DevTools authenticated CLI preview",
+  "appid": "wxa7089edf4a34a7f5",
+  "projectRoot": "D:\\wechat-miniapp-sub\\.runtime\\releases\\20261016-vehicle-change-v1\\miniprogram",
+  "miniappManifestSha256": "99730b1a9af237e2e217bbed6948f41987dee6bf2a6e5e58755f0744e7f3cf49",
+  "miniappConfigSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c",
+  "size": {
+    "total": 463226,
+    "packages": [
+      {
+        "name": "TOTAL",
+        "size": 463226
+      },
+      {
+        "name": "main",
+        "size": 462017
+      },
+      {
+        "name": "/pagesFace/",
+        "size": 1209
+      }
+    ]
+  },
+  "success": true,
+  "formalReviewSubmitted": false,
+  "formalReleased": false
+}

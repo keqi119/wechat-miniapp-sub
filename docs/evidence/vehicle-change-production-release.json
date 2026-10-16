@@ -1,0 +1,115 @@
+{
+  "checkedAt": "2026-10-16T12:47:13.909Z",
+  "release": "20261016-vehicle-change-v1",
+  "staticRelease": "20261016-vehicle-change-v1-admin1",
+  "sourceCommit": "aa440793e9657a88d9b70462a50ecb39a4cfb03f",
+  "files": [
+    {
+      "path": ".runtime/static-20261016-vehicle-change-v1-admin1.tar.gz",
+      "bytes": 379862,
+      "sha256": "30d0d019660df516d0675614e7ce1e930911365ef86fb4035766dabc3d2133e4"
+    },
+    {
+      "path": ".runtime/chundian-api-20261016-vehicle-change-v1.tar.gz",
+      "bytes": 282378035,
+      "sha256": "ed2135d0f1b2632ba4bc828f55dc0b0eb8d6bbcd186541545c48af172935274c"
+    },
+    {
+      "path": ".runtime/deploy-20261016-vehicle-change-v1.tar.gz",
+      "bytes": 21527,
+      "sha256": "1c6c3d1a396c17647d86f66e412def011bca24d38b2e00d082b09062a5b568fa"
+    }
+  ],
+  "miniappManifestSha256": "99730b1a9af237e2e217bbed6948f41987dee6bf2a6e5e58755f0744e7f3cf49",
+  "miniappConfigSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c",
+  "health": {
+    "status": "ok",
+    "database": "connected",
+    "version": "20261016-vehicle-change-v1"
+  },
+  "admin": {
+    "entry": "index-BZ71Zy3J.js",
+    "artifactPath": "apps/admin/qa/b3-build/dist",
+    "sourceCommit": "581b4ff930f1127dd66d21c1cd57b6e8eb1cf8d8",
+    "files": {
+      "index.html": {
+        "sha256": "16ab799052c4c862752161173519e4da7a58bba6d0f7a458147609cc31ace9dd",
+        "publicBytesMatch": true
+      },
+      "assets/index-BZ71Zy3J.js": {
+        "sha256": "6de94f5171609ae1fe586c913c787e04c2e50abbd25a00d5f6bf195a5a581560",
+        "publicBytesMatch": true
+      },
+      "assets/index-Bjs3Pehh.css": {
+        "sha256": "8cd0ae7bc86378e89a12bd0ee826fe953a5dee5fca98164fcfde7a1aa25b9738",
+        "publicBytesMatch": true
+      }
+    },
+    "publicBytesMatch": true
+  },
+  "initialPackagingCorrection": {
+    "reason": "Initial package selected stale apps/admin/dist instead of the independently frozen qa/b3-build/dist",
+    "initialStaticArchive": {
+      "path": ".runtime/static-20261016-vehicle-change-v1.tar.gz",
+      "bytes": 363851,
+      "sha256": "0907be2decc29ac73d8571bbec7a9aceb325aff9a3eda54df08a976a7b870e4c"
+    }
+  },
+  "appliedMigrationCount": 18,
+  "hostVerification": {
+    "checkedAt": "2026-10-16T12:47:16.322516+00:00",
+    "apiImage": "chundian-api:20261016-vehicle-change-v1",
+    "currentReleaseVerified": true,
+    "providerSettingsPreserved": true,
+    "freeBytes": 1595527168
+  },
+  "realNameReadiness": {
+    "checkedAt": "2026-10-16T12:47:17.193Z",
+    "lastProviderCheckAt": "2026-10-16T12:20:09.479Z",
+    "realNameStatus": "VERIFIED",
+    "certBound": true,
+    "readyForSigning": true,
+    "actualContractCreated": false
+  },
+  "newMigrations": [
+    "202610160017_vehicle_change",
+    "202610160018_paid_swap_credits"
+  ],
+  "backup": {
+    "archive": "20261016T123644Z.tar.enc",
+    "timing": "before migration",
+    "encrypted": true,
+    "restoredToIsolatedDatabase": true,
+    "restoredTables": 49
+  },
+  "configuration": {
+    "changedKeys": [
+      "BUILD_VERSION",
+      "API_IMAGE"
+    ],
+    "nativeSigningEntryPreserved": true,
+    "enterpriseSigningEnabled": false,
+    "ordinaryWeChatPayEnabled": false,
+    "swapPurchaseEnabled": false
+  },
+  "providerBusinessDomains": [
+    "textapi17.fadada.com",
+    "realnameverify16.fadada.com"
+  ],
+  "unchangedOtherApplicationVhost": true,
+  "localValidation": {
+    "apiFullSnapshot": 205,
+    "finalRelatedApiTests": 34,
+    "fixedSourceTests": 51,
+    "adminTests": 83,
+    "miniappTests": 184,
+    "independentLocalHttp": true,
+    "realProviderTransactionsInLocalTests": false
+  },
+  "transportCleanup": {
+    "localArchivesRetainedAndShaVerified": true,
+    "installedAndRollbackImagesPreserved": true,
+    "freedServerBytes": 564652948
+  },
+  "formalWeChatRelease": false
+}

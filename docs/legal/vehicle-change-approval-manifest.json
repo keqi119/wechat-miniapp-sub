@@ -6,7 +6,7 @@
   "approvalStatement": "已审阅，批准模板，逐单内容另行确认",
   "approvalQuestionId": "call_fe713b18207e4c36ac9f78810cac95c2",
   "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
-  "published": false,
+  "published": true,
   "editorialChanges": "仅将审阅稿状态改为已批准模板状态。完整已批准源文件原样保存；不视为任何客户已同意逐单报价或签署。",
   "documents": [
     {
@@ -17,5 +17,6 @@
       "finalFile": "docs/legal/versions/vehicle-change/vehicle-change-amendment-v1.md",
       "finalSha256": "5ccc38b10556e3f73d2d7dd9a014e1bd535ab6cf6436475b198318516aed0c30"
     }
-  ]
+  ],
+  "publicationEvidence": "docs/evidence/vehicle-change-legal-publication.json"
 }
