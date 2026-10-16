@@ -102,4 +102,4 @@
 
 主控持有根配置、安装锁文件、共享契约、供应商集成及部署；小程序、后台、API 三块可在固定接口下并行，文件归属互不重叠。API 初始模型与 Gateway 约定完成后，再并行适配真实供应商。每块均有实现报告、范围内审查及实际测试证据。
 
-进度账本使用 `.superpowers/sdd/independent-platform/progress.md`。用户已明确授权计划后直接开工，常规实施不重复请求批准。
+进度账本使用 `.superpowers/sdd/2026-10-16-independent-platform/progress.md`。用户已明确授权计划后直接开工，常规实施不重复请求批准。
