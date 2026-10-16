@@ -1,0 +1,18 @@
+{
+  "recordedOn": "2026-10-16",
+  "source": "User response in current project thread",
+  "readinessFeedback": {
+    "questionId": "call_828d1965d31e4e43b950970411f56352",
+    "displayedText": "实名与证书已就绪",
+    "newWordingDeviceVerificationImplied": false
+  },
+  "scopeChoice": {
+    "questionId": "call_a415c67e65594dbb8d2eb4da337088f8",
+    "answer": "先签技术验收文件：明确不产生租赁、订阅费或押金，由我起草后你审阅确认",
+    "leaseCreationAuthorized": false,
+    "documentDraftingAuthorized": true,
+    "draftApproved": false,
+    "signatureStarted": false,
+    "enterpriseSealUseApprovedForThisDocument": false
+  }
+}
