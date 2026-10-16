@@ -11,8 +11,14 @@
     "answer": "先签技术验收文件：明确不产生租赁、订阅费或押金，由我起草后你审阅确认",
     "leaseCreationAuthorized": false,
     "documentDraftingAuthorized": true,
-    "draftApproved": false,
+    "draftApproved": true,
     "signatureStarted": false,
     "enterpriseSealUseApprovedForThisDocument": false
+  },
+  "textApproval": {
+    "questionId": "call_11e43ff0ffcb41f4a371e8e2cd288074",
+    "statement": "已审阅，批准该技术验收文本；本人签署与本份文件用印另行操作",
+    "sourceSha256": "165c40105aa35c7e634b7279fd646c01278e9cd66ac4ecb5e4a35c6620f26c54",
+    "published": false
   }
 }
