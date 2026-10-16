@@ -8,5 +8,10 @@
   "servicePhone": "+86 18616570212",
   "serviceEmail": "keqi119@gmail.com",
   "privacyEmail": "keqi119@gmail.com",
-  "legalTextsApproved": false
+  "legalTextsApproved": true,
+  "approvalManifests": [
+    "docs/legal/approval-manifest.json",
+    "docs/legal/credit-approval-manifest.json",
+    "docs/legal/usage-approval-manifest.json"
+  ]
 }
