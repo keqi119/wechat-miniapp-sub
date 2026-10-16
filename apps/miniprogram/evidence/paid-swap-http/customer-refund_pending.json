@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-10-16T12:21:28.876Z",
+  "scope": "Customer safe readback against local synthetic HTTP fixture after independent admin action; no channel query or SDK.",
+  "status": "REFUND_PENDING",
+  "purchaseId": "cmvaxmxs50032url0du4fwwn0",
+  "creditId": "cmvaxmy1j0036url0pi00olp8",
+  "billPaidAmount": 80000,
+  "refundStatuses": [
+    "PENDING_APPROVAL"
+  ],
+  "canPay": false,
+  "canClose": false,
+  "statusText": "退款待核实，次数冻结",
+  "statusMessage": "退款权益已冻结；失败或未知结果仍须查询原退款，不恢复可用次数",
+  "counters": {
+    "available": 0,
+    "reserved": 0,
+    "consumed": 0,
+    "frozen": 1,
+    "expired": 0
+  },
+  "ledgerTypes": [
+    "GRANT",
+    "FREEZE"
+  ],
+  "calls": [
+    {
+      "method": "POST",
+      "route": "/customer/auth/sms/login",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    }
+  ]
+}

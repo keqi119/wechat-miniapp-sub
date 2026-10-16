@@ -1,0 +1,121 @@
+{
+  "generatedAt": "2026-10-16T12:17:03.042Z",
+  "scope": "Real local HTTP against independent synthetic UI acceptance database and DI gateway. No real channel/PII, native payment SDK, production, preview or upload.",
+  "checks": {
+    "fixed80000": true,
+    "independentTerms": true,
+    "pendingDoesNotGrant": true,
+    "unpaidQueryStaysPending": true,
+    "originalUnpaidCloseVoid": true,
+    "ordinaryBillPayContract": true,
+    "nativePaymentInvocations": 0,
+    "trustedQueryActive": true,
+    "accountDelta": 1,
+    "multipleSeparatePurchases": true,
+    "verificationPaths": 0
+  },
+  "syntheticOnly": true,
+  "apiBase": "http://127.0.0.1:3191/api",
+  "orderId": "cmvaxhi5x000furl0s5rd0d9a",
+  "closedPurchaseId": "cmvaxmx2j002xurl0ca5a6zqe",
+  "activePurchaseId": "cmvaxmxs50032url0du4fwwn0",
+  "activePaymentId": "cmvaxmxvr0035url0n66n9epa",
+  "pendingPurchaseId": "cmvaxmyoa003durl0kllwj4uy",
+  "calls": [
+    {
+      "method": "POST",
+      "route": "/customer/auth/sms/login",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-credits",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/swap-credit-purchases/cmvaxmx2j002xurl0ca5a6zqe",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/swap-credit-purchases/cmvaxmx2j002xurl0ca5a6zqe",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/swap-credit-purchases/cmvaxmx2j002xurl0ca5a6zqe",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/swap-credit-purchases/cmvaxmx2j002xurl0ca5a6zqe/close",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-credits",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/customer/bills/cmvaxmxrc0031url0t6tw63r7/pay",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/payments/cmvaxmxvr0035url0n66n9epa",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-credits",
+      "status": 201
+    }
+  ]
+}

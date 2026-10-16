@@ -37,7 +37,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const verificationPayments = new Set();
   const creditKeys = new Map();
   const usageApi = createUsageApi({ call, identifier, error, idempotencyKey, getContext });
-  const swapApi = createSwapApi({ call, identifier, error, idempotencyKey, getContext });
+  const swapApi = createSwapApi({ call, identifier, error, idempotencyKey, getContext, sessionKey: () => session()?.token });
   const changesApi = createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, enterSigning: (kind, id, body) => nativeSigning.startSigning(kind, id, body) });
   const nativeSigning = createNativeSigningApi({ call, native, error, identifier, getContext, sessionKey: () => session()?.token, getSignStatus, platform, pendingKey });
   function clearSession() { platform.removeStorageSync(storageKey); platform.removeStorageSync(pendingKey); platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.clear(); creditKeys.clear(); usageApi.clearUsageKeys(); swapApi.clearSwapKeys(); changesApi.clearChangeKeys(); nativeSigning.clearSigningState(); }

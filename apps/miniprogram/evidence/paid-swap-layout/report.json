@@ -1,0 +1,158 @@
+{
+  "generatedAt": "2026-10-16T12:21:11.534Z",
+  "scope": "Offline actual-wcc synthetic display only. No API/DB/SDK, SMS, clipboard, payment, refund, signing, QR, preview or upload.",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "name": "paid-swap-unchecked",
+      "text": "创建800元一次普通账单",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-unchecked.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-explicit-choice",
+      "checked": true,
+      "text": "固定800元",
+      "create": true,
+      "overflow": false,
+      "screenshot": "paid-swap-explicit-choice.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-disabled",
+      "text": "购买开关尚未启用",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-disabled.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-unpublished",
+      "text": "正式换车购买说明尚未发布",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-unpublished.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-no-car-gap",
+      "text": "当前暂无车辆，换车待交付",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-no-car-gap.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-state-pending_payment",
+      "text": "待支付，尚未发放",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-state-pending_payment.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-state-active",
+      "text": "已到账，可按服务端余额使用",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-state-active.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-state-consumed",
+      "text": "已实际消费",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-state-consumed.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-state-expired",
+      "text": "已失效，不可使用",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-state-expired.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-state-payment_review",
+      "text": "到账待人工核账，不可使用",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-state-payment_review.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-state-refund_pending",
+      "text": "退款待核实，次数冻结",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-state-refund_pending.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-state-refunded",
+      "text": "已退款，不可使用",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-state-refunded.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-state-void",
+      "text": "已撤销",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-state-void.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-refund-failed-frozen",
+      "text": "该次退款失败",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-refund-failed-frozen.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-restored-original",
+      "text": "已核查恢复原次数",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-restored-original.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-multiple-sources",
+      "text": "购买 sp2",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-multiple-sources.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-reserved-source",
+      "text": "已到账并预占，不可另用",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-reserved-source.png",
+      "passed": true
+    },
+    {
+      "name": "paid-swap-close-unknown",
+      "text": "原渠道关单结果尚未核实",
+      "create": false,
+      "overflow": false,
+      "screenshot": "paid-swap-close-unknown.png",
+      "passed": true
+    }
+  ],
+  "browser": "Microsoft Edge headless via Playwright",
+  "runtimeErrors": [],
+  "externalRequests": []
+}

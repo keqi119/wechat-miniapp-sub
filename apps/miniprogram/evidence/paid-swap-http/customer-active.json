@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-10-16T12:23:43.762Z",
+  "scope": "Customer safe readback against local synthetic HTTP fixture after independent admin action; no channel query or SDK.",
+  "status": "ACTIVE",
+  "purchaseId": "cmvaxmxs50032url0du4fwwn0",
+  "creditId": "cmvaxmy1j0036url0pi00olp8",
+  "billPaidAmount": 80000,
+  "refundStatuses": [
+    "REJECTED"
+  ],
+  "canPay": false,
+  "canClose": false,
+  "statusText": "已到账，可按服务端余额使用",
+  "statusMessage": "本订阅内可用一次；实际换车仍优先免费次数",
+  "counters": {
+    "available": 1,
+    "reserved": 0,
+    "consumed": 0,
+    "frozen": 0,
+    "expired": 0
+  },
+  "ledgerTypes": [
+    "GRANT",
+    "FREEZE",
+    "RESTORE"
+  ],
+  "calls": [
+    {
+      "method": "POST",
+      "route": "/customer/auth/sms/login",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/customer/swap-credit-purchases/cmvaxmxs50032url0du4fwwn0",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/customer/orders/cmvaxhi5x000furl0s5rd0d9a/swap-account",
+      "status": 200
+    }
+  ]
+}
