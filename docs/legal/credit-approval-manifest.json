@@ -6,7 +6,7 @@
   "approvalStatement": "已审阅，批准这三份文本",
   "approvalQuestionId": "call_5960e1cf27bf43459f5224b88c60d33e",
   "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
-  "published": false,
+  "published": true,
   "editorialChanges": "更换草稿状态标记；新增说明仅提取客户告知及单独同意内容，移除内部发布步骤，不改变业务规则。保留完整获批源文件。",
   "documents": [
     {
@@ -33,5 +33,6 @@
       "finalFile": "docs/legal/versions/credit-update/application-notice-v2.md",
       "finalSha256": "8c40111252bd17591dabb79e1b3fe7130f2fd1f6c8052cd233e0bf543cecaab3"
     }
-  ]
+  ],
+  "publicationEvidence": "docs/evidence/credit-legal-publication.json"
 }

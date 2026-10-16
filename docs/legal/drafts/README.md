@@ -1,6 +1,6 @@
 # 人工核验信用档位文案更新审阅包
 
-2026-10-16，用户已回复“已审阅，批准这三份文本”。本目录保留当时完整审阅源文，不修改源文件中的草稿标记；正式版本及其哈希见 `../versions/credit-update/` 和 `../credit-approval-manifest.json`。对应功能仍在施工，文案尚未实际发布。原六份v1正式文本及approval-manifest保持不变。
+2026-10-16，用户已回复“已审阅，批准这三份文本”。本目录保留当时完整审阅源文，不修改源文件中的草稿标记；正式版本及其哈希见 `../versions/credit-update/` 和 `../credit-approval-manifest.json`。对应人工核验功能及三份文案已于15:43部署发布，记录见 `../../evidence/credit-legal-publication.json`。原六份v1正式文本及approval-manifest保持不变。
 
 请审阅三份完整文本：
 

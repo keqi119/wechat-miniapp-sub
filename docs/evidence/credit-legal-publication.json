@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-10-16T07:43:57.572Z",
+  "documents": [
+    {
+      "type": "credit-verification",
+      "version": 1,
+      "id": "cmvanvrxc0001o601phjw7tgb",
+      "sha256": "551c3fc531f20d7fbb8fde068f10cb383c8d99fdc5434fcf3f065e9d91eea068",
+      "publishedAt": "2026-10-16T07:43:58.056Z"
+    },
+    {
+      "type": "privacy",
+      "version": 2,
+      "id": "cmvanvs510004o601gtppwe07",
+      "sha256": "ccb1bbac7635b9044e9fd347df5921074393862795e9adb995e1b670332f3292",
+      "publishedAt": "2026-10-16T07:43:58.328Z"
+    },
+    {
+      "type": "application",
+      "version": 2,
+      "id": "cmvanvscc0007o601a7fz4ilh",
+      "sha256": "8c40111252bd17591dabb79e1b3fe7130f2fd1f6c8052cd233e0bf543cecaab3",
+      "publishedAt": "2026-10-16T07:43:58.587Z"
+    }
+  ],
+  "wechatPrivacyGuideUpdated": true,
+  "customerConsentImplied": false,
+  "wechatPrivacyGuideEvidence": {
+    "source": "user-confirmation",
+    "statement": "隐私保护指引V2版本已完成微信平台提交",
+    "recordedAt": "2026-10-16T07:59:27.886Z",
+    "independentUiVerification": false
+  }
+}

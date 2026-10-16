@@ -1,0 +1,60 @@
+{
+  "checkedAt": "2026-10-16T07:45:13.947Z",
+  "release": "20261016-credit-v1",
+  "sourceCommit": "900a9ff",
+  "migrationCount": 11,
+  "latestMigration": "202610160011_credit_review",
+  "customerCount": 3,
+  "applications": 0,
+  "creditConsents": 0,
+  "creditVerifications": 0,
+  "orders": 0,
+  "bills": 0,
+  "contracts": 0,
+  "verification": [
+    {
+      "status": "SUCCEEDED",
+      "amount": 1,
+      "currency": "CNY",
+      "paidAt": "2026-10-16T07:18:28.114Z"
+    }
+  ],
+  "legal": [
+    {
+      "type": "application",
+      "version": 1,
+      "status": "RETIRED",
+      "publishedAt": "2026-10-16T05:07:27.708Z"
+    },
+    {
+      "type": "application",
+      "version": 2,
+      "status": "PUBLISHED",
+      "publishedAt": "2026-10-16T07:43:58.587Z"
+    },
+    {
+      "type": "credit-verification",
+      "version": 1,
+      "status": "PUBLISHED",
+      "publishedAt": "2026-10-16T07:43:58.056Z"
+    },
+    {
+      "type": "privacy",
+      "version": 1,
+      "status": "RETIRED",
+      "publishedAt": "2026-10-16T05:07:27.403Z"
+    },
+    {
+      "type": "privacy",
+      "version": 2,
+      "status": "PUBLISHED",
+      "publishedAt": "2026-10-16T07:43:58.328Z"
+    }
+  ],
+  "flags": {
+    "sms": true,
+    "ordinaryPay": false,
+    "verificationPay": true,
+    "fadada": false
+  }
+}

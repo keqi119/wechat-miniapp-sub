@@ -1,4 +1,5 @@
 # Preserve byte-for-byte provenance and already-applied migration checksums.
+docs/legal/** -text
 reference/miniprogram-mock/** -text
 apps/api/prisma/migrations/** -text
 apps/api/test/fadada-digest.spec.ts -text

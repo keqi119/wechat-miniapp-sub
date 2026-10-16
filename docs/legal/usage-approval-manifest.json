@@ -1,0 +1,37 @@
+{
+  "status": "APPROVED",
+  "approvedOn": "2026-10-16",
+  "recordedAt": "2026-10-16T07:55:00.071Z",
+  "approvedBy": "用户代表上海晓浪网络科技有限公司",
+  "approvalStatement": "已审阅，批准三份条款",
+  "approvalQuestionId": "call_0feea3f7132e47b79886c73b115b8d3b",
+  "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
+  "published": false,
+  "editorialChanges": "仅将审阅稿状态改为正式文本；保留当时完整审阅源文件及哈希。客户逐单及购买授权仍须实际取得。",
+  "documents": [
+    {
+      "type": "usage-policy",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/usage-policy-v1.md",
+      "approvedSourceSha256": "82956b22079ea05684589b9f598b04b2653d3cd750b916ab636a94abeb3738dd",
+      "finalFile": "docs/legal/versions/usage-update/usage-policy-v1.md",
+      "finalSha256": "3299366929cdaff10d811f94b9c9e3835da95ae7468b0dc34d84fe96b85d5b3f"
+    },
+    {
+      "type": "mileage-pack",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/mileage-pack-v1.md",
+      "approvedSourceSha256": "949279317e964bac5b978cc5fcd37b39e3b7249d9e7acadbf161f7c8ea9e1eaa",
+      "finalFile": "docs/legal/versions/usage-update/mileage-pack-v1.md",
+      "finalSha256": "2fd8c35a07b6c21e292840adead7c200f31905d50e5ae8dc26bdbefa3bb07c9d"
+    },
+    {
+      "type": "vehicle-change",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/vehicle-change-v1.md",
+      "approvedSourceSha256": "39cb0559b935da7f23e8811a15069956d3188b273dea62dd61d5200342febf1a",
+      "finalFile": "docs/legal/versions/usage-update/vehicle-change-v1.md",
+      "finalSha256": "fe5d171f4a93e6dcc1ac67bf7358f34c343e8107d0fd1ed6d5a1cee9baaad11a"
+    }
+  ]
+}

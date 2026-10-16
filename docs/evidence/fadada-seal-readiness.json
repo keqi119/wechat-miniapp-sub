@@ -1,0 +1,33 @@
+{
+  "sealQuery": {
+    "checkedAt": "2026-10-16T08:01:24.688Z",
+    "operation": "query_signature.api",
+    "httpStatus": 200,
+    "providerCode": "1",
+    "configuredSealFound": true,
+    "companySeal": true,
+    "defaultSeal": false,
+    "imageSha256": "0e4bdc80a7393fdaff3e77068be97006437b8163a6013b74efd740569588557a",
+    "imageBytes": 66287,
+    "signingCalled": false,
+    "productionFlagsUnchanged": true
+  },
+  "visualCompanyNameMatches": true,
+  "ownershipQuery": {
+    "checkedAt": "2026-10-16T08:03:06.805Z",
+    "operation": "find_signature_auth_list.api",
+    "type": "3",
+    "httpStatus": 200,
+    "providerCode": "1",
+    "configuredSealOwned": false,
+    "companyNameMatches": false,
+    "signingCalled": false,
+    "productionFlagsUnchanged": true
+  },
+  "scope": "Read-only provider queries; no real-name registration, signing, seal authorization changes or production flag changes.",
+  "unresolved": [
+    "Mini-program provider business domain",
+    "Provider authorization relationship returned no owned seal entry",
+    "Real customer identity and signing/archive end-to-end validation"
+  ]
+}
