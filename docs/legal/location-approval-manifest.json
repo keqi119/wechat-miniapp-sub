@@ -6,7 +6,7 @@
   "approvalStatement": "已审阅，批准这三份文案",
   "approvalQuestionId": "call_f46514debf6d42c7852f8101a2408b28",
   "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
-  "published": false,
+  "published": true,
   "editorialChanges": "仅替换草稿状态标记，完整保留获批正文；原始草稿留存供摘要核对。",
   "documents": [
     {
@@ -33,5 +33,7 @@
       "finalFile": "docs/legal/versions/location-update/handover-location-notice-v1.md",
       "finalSha256": "be20281dc9dc9f5594a51c919dc11ea022a9076b8886092cf1aa78a2a688548e"
     }
-  ]
+  ],
+  "publicationEvidence": "docs/evidence/location-legal-publication.json",
+  "publicationVerifiedAt": "2026-10-17T04:36:01.552Z"
 }

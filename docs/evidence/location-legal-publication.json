@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-17T04:28:48.597Z",
+  "documents": [
+    {
+      "type": "privacy",
+      "version": 3,
+      "id": "cmvbwcn1u0001mf01haarkay6",
+      "sha256": "257fb0698edc27e4d52a32b1ab9f4cbbc041f6c3ce9e840de3a4ebf9c7fc4f76",
+      "publishedAt": "2026-10-17T04:28:48.029Z"
+    },
+    {
+      "type": "application",
+      "version": 3,
+      "id": "cmvbwcnca0004mf01i1x7db2i",
+      "sha256": "ac1538cb48ce77f869c3cd2d8d11a66a21b80c460aa51dc8471affb5e1e9a776",
+      "publishedAt": "2026-10-17T04:28:48.383Z"
+    },
+    {
+      "type": "handover-location",
+      "version": 1,
+      "id": "cmvbwcnlm0007mf01hrzsctk2",
+      "sha256": "be20281dc9dc9f5594a51c919dc11ea022a9076b8886092cf1aa78a2a688548e",
+      "publishedAt": "2026-10-17T04:28:48.707Z"
+    }
+  ],
+  "wechatPrivacyGuideUpdated": false,
+  "customerConsentImplied": false
+}

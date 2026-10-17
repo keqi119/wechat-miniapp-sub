@@ -1,0 +1,77 @@
+{
+  "checkedAt": "2026-10-17T04:36:01.552Z",
+  "release": "20261017-location-v1",
+  "sourceCommit": "d5af71c271a2539159fce6982b61887fe1e1d39a",
+  "healthy": true,
+  "migrationCount": 20,
+  "newMigration": "202610170020_acceptance_pricing",
+  "commercialCountsUnchanged": {
+    "application": 0,
+    "order": 0,
+    "contract": 0,
+    "bill": 0,
+    "payment": 0
+  },
+  "mapEnabled": false,
+  "locationPolicyConfigured": false,
+  "commercialPaymentEnabled": false,
+  "commercialSigningEnabled": false,
+  "staticRelease": "20261017-location-v1",
+  "nginxUnchanged": true,
+  "backup": "20261017T042222Z.tar.enc",
+  "backupRestoreTables": 58,
+  "freeBytes": 878292992,
+  "publicVerification": {
+    "apiVersion": "20261017-location-v1",
+    "locationEntryEnabled": false,
+    "mapEnabled": false,
+    "legalVersions": [
+      {
+        "type": "privacy",
+        "version": 3,
+        "sha256": "257fb0698edc27e4d52a32b1ab9f4cbbc041f6c3ce9e840de3a4ebf9c7fc4f76"
+      },
+      {
+        "type": "application",
+        "version": 3,
+        "sha256": "ac1538cb48ce77f869c3cd2d8d11a66a21b80c460aa51dc8471affb5e1e9a776"
+      },
+      {
+        "type": "handover-location",
+        "version": 1,
+        "sha256": "be20281dc9dc9f5594a51c919dc11ea022a9076b8886092cf1aa78a2a688548e"
+      }
+    ],
+    "adminFilesMatched": [
+      {
+        "path": "admin/assets/index-BeD7nMjZ.js",
+        "sha256": "4c7fb44d3bfe06f795fba3324702b2d84905987dabd3627e7f22ffd51e4c99b5"
+      },
+      {
+        "path": "admin/assets/index-BR69LfsS.css",
+        "sha256": "dccaa858baec95d6bf47f0500ddb94335281b95727ccf4692812c12e37db1d66"
+      },
+      {
+        "path": "admin/index.html",
+        "sha256": "229bac4c195a134f7a02aead562d29f5e95c8e05087a88e7e1370d9ca1adafcf"
+      }
+    ]
+  },
+  "wechat": {
+    "chooseLocation": "UNDER_REVIEW_USER_CONFIRMED",
+    "privacyGuideV3Submitted": false,
+    "deviceLocationVerified": false,
+    "codeUploadedThisRelease": false,
+    "permissionStatusEvidence": {
+      "source": "user",
+      "questionId": "call_8934aed15ba0465e835799e2ed7e0405",
+      "answer": "审核中／申请中",
+      "recordedAt": "2026-10-17T04:38:00.014Z",
+      "authorizationQuestionId": "call_cf905816c24b45d7855e1c99bf0cb087",
+      "uploadedScreenshot": ".runtime/location-layout/manual-and-map.jpg",
+      "automatedReadAfterSubmit": "TIMED_OUT"
+    }
+  },
+  "realOrderCreated": false,
+  "customerConsentImplied": false
+}

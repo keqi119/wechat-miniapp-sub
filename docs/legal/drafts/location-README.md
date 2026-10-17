@@ -1,6 +1,6 @@
 # 交接地点选择文案审阅
 
-2026-10-17，用户已批准三份文案；正式副本及摘要见[批准记录](../location-approval-manifest.json)，尚未发布。沿用已批准的隐私政策及申请须知v2，补充客户主动定位或地图选点的处理说明；既有正式文件不修改。
+2026-10-17，用户已批准三份文案，并已通过新系统后台协议流程发布为隐私政策v3、申请须知v3、交接地点选择说明v1。正式副本及摘要见[批准记录](../location-approval-manifest.json)，线上内容核对见[发布记录](../../evidence/location-legal-publication.json)。历史版本和历史客户同意保持留存；本次发布不代表客户已经同意新版。
 
 - [隐私政策v3完整草稿](privacy-policy-v3-location.md)
 - [申请须知v3完整草稿](application-notice-v3-location.md)
