@@ -1,0 +1,46 @@
+{
+  "checkedAt": "2026-10-17T08:57:43.388Z",
+  "reason": "User directed direct operations first; republished previously approved exact body without rewriting past records.",
+  "documents": [
+    {
+      "type": "terms",
+      "documentId": "cmvc5ygy40001q901emupzodd",
+      "version": 3,
+      "contentHash": "c6e03eb6d66adb35b0c23a9de262dff29ec714c007dd7c74fe3a02b421a9f383",
+      "source": "docs/legal/user-agreement.md",
+      "sourceApproval": "call_270844bd13a54617b65461608fccb4c5",
+      "publishedAt": "2026-10-17T08:57:43.070Z"
+    },
+    {
+      "type": "privacy",
+      "documentId": "cmvc5yh7a0004q901k6k9q5al",
+      "version": 5,
+      "contentHash": "257fb0698edc27e4d52a32b1ab9f4cbbc041f6c3ce9e840de3a4ebf9c7fc4f76",
+      "source": "docs/legal/versions/location-update/privacy-policy-v3-location.md",
+      "sourceApproval": "call_f46514debf6d42c7852f8101a2408b28",
+      "publishedAt": "2026-10-17T08:57:43.408Z"
+    }
+  ],
+  "locationPolicy": {
+    "privacy": {
+      "documentId": "cmvc5yh7a0004q901k6k9q5al",
+      "version": 5,
+      "contentHash": "257fb0698edc27e4d52a32b1ab9f4cbbc041f6c3ce9e840de3a4ebf9c7fc4f76"
+    },
+    "application": {
+      "documentId": "cmvbwcnca0004mf01i1x7db2i",
+      "version": 3,
+      "contentHash": "ac1538cb48ce77f869c3cd2d8d11a66a21b80c460aa51dc8471affb5e1e9a776"
+    },
+    "handover-location": {
+      "documentId": "cmvbwcnlm0007mf01hrzsctk2",
+      "version": 1,
+      "contentHash": "be20281dc9dc9f5594a51c919dc11ea022a9076b8886092cf1aa78a2a688548e"
+    }
+  },
+  "wechatChooseLocationApprovedByUser": true,
+  "wechatPrivacyLocationSubmitted": false,
+  "mapEnabled": false,
+  "customerConsentsReused": false,
+  "ownerPermissionVisible": true
+}
