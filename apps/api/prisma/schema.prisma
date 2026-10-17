@@ -846,6 +846,8 @@ model VehicleOwner {
  esignAccount OwnerESignAccount?
  seals OwnerSeal[]
  vehicles OwnerVehicle[]
+ authorities OwnerAutoAuthority[]
+ signingTasks OwnerSigningTask[]
 }
 model OwnerMember {
  id String @id @default(cuid())
@@ -927,6 +929,82 @@ model OwnerVehicle {
  reviewedAt DateTime?
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
+}
+model OwnerAutoAuthority {
+ id String @id @default(cuid())
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ sealId String
+ providerCustomerId String
+ providerSignatureId String
+ certificateSerialNo String
+ providerContractId String @unique
+ providerTransactionId String @unique
+ requestedBy String
+ idempotencyKey String
+ requestHash String
+ scope Json
+ scopeHash String
+ consentSnapshot Json
+ status String @default("PENDING")
+ enabled Boolean @default(false)
+ revision Int @default(0)
+ checkedAt DateTime?
+ enabledAt DateTime?
+ disabledAt DateTime?
+ revokedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([ownerId,idempotencyKey])
+ @@index([ownerId,status])
+}
+model OwnerSigningTask {
+ id String @id @default(cuid())
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ customerId String
+ kind String
+ resourceId String
+ documentHash String
+ sourceFileId String
+ sourceSha256 String
+ providerContractId String @unique
+ snapshot Json
+ ownerSealId String
+ authorityId String?
+ ownerMode String @default("UNSELECTED")
+ manualBy String?
+ ownerDispatchAt DateTime?
+ status String @default("PREPARED")
+ reviewedBy String?
+ reviewedAt DateTime?
+ uploadedAt DateTime?
+ archivedAt DateTime?
+ signedFileId String?
+ processingToken String?
+ processingUntil DateTime?
+ revision Int @default(0)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ parties OwnerSigningParty[]
+ @@unique([kind,resourceId,documentHash])
+ @@index([ownerId,status])
+}
+model OwnerSigningParty {
+ id String @id @default(cuid())
+ taskId String
+ task OwnerSigningTask @relation(fields:[taskId],references:[id])
+ role String
+ providerCustomerId String
+ providerSignatureId String?
+ transactionId String @unique
+ status String @default("PENDING")
+ attemptedAt DateTime?
+ verifiedAt DateTime?
+ queryEvidenceHash String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([taskId,role])
 }
 model EnterpriseSeal {
  id String @id @default(cuid())

@@ -42,6 +42,7 @@ export type FadadaEndpoint =
   | "find_companyCertInfo.api"
   | "query_signature.api"
   | "before_authsign.api"
+  | "cancel_extsign_auto_page.api"
   | "get_auth_status.api"
   | "get_person_verify_url.api"
   | "find_personCertInfo.api"

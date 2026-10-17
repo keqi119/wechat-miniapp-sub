@@ -73,6 +73,10 @@ export class FadadaOwnerClient {
     const url=new URL(request.url);for(const [key,value]of Object.entries(request.params))url.searchParams.set(key,value);return{url:url.href};
   }
   createAuthorizationUrl(input:OwnerGrantIdentity&{signatureId:string}){return this.page('before_authsign.api',input,{auth_type:'1',notify_url:AUTH_NOTIFY});}
+  createRevocationUrl(customerId:string){
+    this.enabled();providerId(customerId);const request=buildFadadaRequest({config:this.config,endpoint:'cancel_extsign_auto_page.api',method:'GET',businessParams:{customer_id:customerId,notify_url:AUTH_NOTIFY,return_url:MINIAPP_RETURN}});
+    const url=new URL(request.url);for(const [key,value]of Object.entries(request.params))url.searchParams.set(key,value);return{url:url.href};
+  }
   createManualSignUrl(input:OwnerGrantIdentity&{signatureId:string;title:string;positions:Array<{pagenum:number;x:number;y:number}>}){
     requireEvidence(Array.isArray(input.positions)&&input.positions.length>0&&input.positions.length<=30,'OWNER_SIGN_COORDINATES');
     const positions=input.positions.map(p=>{requireEvidence(Number.isInteger(p.pagenum)&&p.pagenum>=0&&p.pagenum<=1000&&Number.isFinite(p.x)&&p.x>=0&&p.x<=800&&Number.isFinite(p.y)&&p.y>=0&&p.y<=1131,'OWNER_SIGN_COORDINATES');return{pagenum:p.pagenum,x:p.x,y:p.y};});

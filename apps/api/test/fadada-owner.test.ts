@@ -10,6 +10,10 @@ const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCA
 const company={customerId:'OwnerAccountA',serialNo:'VerifyOwnerA',name:'测试甲公司',creditCode:'TEST00000000000001'};
 const verified=()=>({code:1,data:{transactionNo:company.serialNo,type:'2',company:{companyName:company.name,organization:company.creditCode,organizationType:'0',status:'4'},manager:{type:'1',status:'2',personName:'测试人',mobile:'13900000000',idCard:'syntheticId'}},msg:'success'});
 const grant={customerId:company.customerId,contractId:'GrantA',transactionId:'GrantTxA'};
+test('revocation requires the owner to open the provider page and does not claim that authorization is already cancelled',()=>{
+ const {client,requests}=harness({});const result=client.createRevocationUrl(company.customerId),url=new URL(result.url);assert.equal(url.pathname,'/api2/cancel_extsign_auto_page.api');assert.equal(url.searchParams.get('customer_id'),company.customerId);assert.equal(url.searchParams.get('return_url'),MINIAPP_RETURN);assert.equal(requests.length,0);assert.equal('revoked' in result,false);
+ const params=Object.fromEntries(url.searchParams);assert.equal(params.msg_digest,digest(config.appId,config.appSecret,params.timestamp,params));
+});
 test('enterprise certificate requires a current real-name certificate and rejects wrong account evidence',async()=>{
  const data={customerId:company.customerId,sequenceNo:'CertA',dn:'CN=synthetic',certType:'0',startTime:'20200101000000',endTime:'20990101000000'};
  assert.equal((await harness({code:1,data}).client.queryCertificate(company.customerId)).bound,true);
