@@ -38,6 +38,11 @@ export interface FadadaRequest {
 
 export type FadadaEndpoint =
   | "account_register.api"
+  | "get_company_verify_url.api"
+  | "find_companyCertInfo.api"
+  | "query_signature.api"
+  | "before_authsign.api"
+  | "get_auth_status.api"
   | "get_person_verify_url.api"
   | "find_personCertInfo.api"
   | "apply_cert.api"
