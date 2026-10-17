@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-17T01:57:55.210Z",
+  "release": "20261017-signature-layout-v1",
+  "recordId": "92d1cafa-99fd-4d91-91af-8c168893f0cb",
+  "originalRecordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+  "originalSignedRecordUnchanged": true,
+  "status": "AWAITING_CONFIRMATION",
+  "signatureStatus": "DRAFT",
+  "sourceFileId": "cmvbqylpa0005o301slececcj",
+  "sourcePdfHash": "ed8fca86ff59a9f368ce9ea9e1502ecb034d6ee2d2add2e7fe5edc1933d55fe3",
+  "pdfBytes": 159011,
+  "templateHash": "0d9fedff4148fbdb40e04b5d901168bdca14e8f22e2c7745c03d432bc6e1a7fb",
+  "documentHash": "9f54a13e668ee521e5b4e57799a391ba65fc9940e665c9b7f03156d31ca506d1",
+  "bodyHash": "8dcecbe1355bcc1053e9058215679003f8c244c23cd90b2bc5e808cf3036848b",
+  "customerConfirmed": false,
+  "perDocumentApprovalRequested": false,
+  "signatureInitiated": false
+}

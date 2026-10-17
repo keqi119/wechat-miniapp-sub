@@ -1,0 +1,56 @@
+{
+  "checkedAt": "2026-10-17T01:58:30.708Z",
+  "release": "20261017-signature-layout-v1",
+  "recordId": "92d1cafa-99fd-4d91-91af-8c168893f0cb",
+  "slotCoordinates": [
+    {
+      "x": 228.4639161403038,
+      "y": 433.6836688878595,
+      "width": 241.9029700309098,
+      "height": 107.4724726508214,
+      "slotId": "TECHNICAL_CUSTOMER",
+      "pageNumber": 2,
+      "pdfPageWidth": 595.28,
+      "pdfPageHeight": 841.89,
+      "coordinateSource": "PDFKIT_RENDERER",
+      "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+    },
+    {
+      "x": 228.4639161403038,
+      "y": 653.303666749813,
+      "width": 241.9029700309098,
+      "height": 201.51088622029,
+      "slotId": "TECHNICAL_PLATFORM",
+      "pageNumber": 2,
+      "pdfPageWidth": 595.28,
+      "pdfPageHeight": 841.89,
+      "coordinateSource": "PDFKIT_RENDERER",
+      "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+    }
+  ],
+  "sourcePdfHash": "ed8fca86ff59a9f368ce9ea9e1502ecb034d6ee2d2add2e7fe5edc1933d55fe3",
+  "pdfRendererSha256": "36b498b5c6e04856e972912df66ec4a3132357a056bedf95f7f3f132f615ad2a",
+  "fontSha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+  "originalSignedRecordPreserved": true,
+  "customerConfirmed": false,
+  "counts": {
+    "tasks": 0,
+    "approvals": 0
+  },
+  "commercialSigningEnabled": false,
+  "commercialPaymentEnabled": false,
+  "sourceCommit": "c36fac513a7443e1676341efcff9dd7077e2b14f",
+  "backup": "20261017T014808Z.tar.enc",
+  "backupIsolatedRestoreTables": 58,
+  "staticRelease": "20261016-technical-signing-v2",
+  "apiOnly": true,
+  "productionPdfReview": {
+    "pages": 3,
+    "sourceHashVerified": true,
+    "coordinateMatchesActualPdfRectangles": true,
+    "minimumAppearancePaddingPoints": 13,
+    "allPagesVisuallyReviewed": true,
+    "noSignatureAnnotations": true,
+    "realCorrectedSignatureVerified": false
+  }
+}
