@@ -42,3 +42,10 @@ test('authorization callback requires the exact persisted provider grant and onl
  provider.verifyCallback=()=>({transactionId:stored.providerTransactionId,providerContractId:stored.providerContractId,record:{customer_id:stored.providerCustomerId}});
  assert.equal((await service.callback({synthetic:true})).accepted,true);const current=await db.ownerAutoAuthority.findUniqueOrThrow({where:{id:grant.id}});assert.equal(current.enabled,false);assert.equal(current.status,'REVOKING');
 });
+test('revoking an old grant atomically closes newer enabled grants for the enterprise account',async()=>{
+ process.env.OWNER_AUTO_SIGNING_ENABLED='true';authorized=true;
+ let newer=await service.request(f.customer.id,f.owner.id,{...f.request,idempotencyKey:'newer-'+Date.now()});newer=await service.refresh(f.customer.id,f.owner.id,newer.id);newer=await service.setEnabled(f.customer.id,f.owner.id,newer.id,{enabled:true,revision:newer.revision,scopeHash:newer.scopeHash});
+ assert.equal(newer.enabled,true);await service.revoke(f.customer.id,f.owner.id,grant.id);
+ const current=await db.ownerAutoAuthority.findUniqueOrThrow({where:{id:newer.id}});assert.equal(current.enabled,false);assert.equal(current.status,'REVOKING');
+ await assert.rejects(service.setEnabled(f.customer.id,f.owner.id,newer.id,{enabled:true,revision:current.revision,scopeHash:current.scopeHash}),error('OWNER_AUTH_NOT_READY'));
+});

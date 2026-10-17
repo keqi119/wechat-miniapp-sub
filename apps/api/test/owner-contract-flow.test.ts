@@ -41,10 +41,22 @@ test('preparation binds actual enterprise and tenant, preserves source bytes and
  await assert.rejects(gateway.customerSign(tenant.id,contract.id),code('OWNER_REVIEW_REQUIRED'));assert.equal(uploads,0);
  await prepare.review(admin.id,task.id,{sourceSha256:task.sourceSha256,documentHash:task.documentHash,accepted:true});
 });
+test('an unissued preparation can bind a renewed seal and certificate with fresh review and task identifiers',async()=>{
+ const old=await db.ownerSigningTask.findUniqueOrThrow({where:{id:task.id},include:{parties:true}}),account=await db.ownerESignAccount.findUniqueOrThrow({where:{ownerId:f.owner.id}}),seal=await db.ownerSeal.findUniqueOrThrow({where:{id:f.seal.id}});
+ await db.ownerSeal.update({where:{id:seal.id},data:{providerSignatureId:seal.providerSignatureId+'new'}});await db.ownerESignAccount.update({where:{id:account.id},data:{certSerialNo:account.certSerialNo+'new'}});
+ const renewed=await prepare.prepare(admin.id,contract.id);assert.notEqual(renewed.id,old.id);assert.equal(renewed.reviewedAt,null);assert.equal(uploads,0);
+ const saved=await db.ownerSigningTask.findUniqueOrThrow({where:{id:renewed.id},include:{parties:true}});assert.notEqual(saved.providerContractId,old.providerContractId);assert.ok(saved.parties.every(p=>!p.attemptedAt&&!old.parties.some(q=>q.transactionId===p.transactionId)));assert.equal((saved.snapshot as any).lessor.certificateSerialNo,account.certSerialNo+'new');
+ await assert.rejects(prepare.review(admin.id,old.id,{accepted:true,sourceSha256:old.sourceSha256,documentHash:old.documentHash}),code('OWNER_REVIEW_DOCUMENT'));
+ // Restore the fixture identity by a second safe preparation so later flow tests use their original seal.
+ await db.ownerSeal.update({where:{id:seal.id},data:{providerSignatureId:seal.providerSignatureId}});await db.ownerESignAccount.update({where:{id:account.id},data:{certSerialNo:account.certSerialNo}});task=await prepare.prepare(admin.id,contract.id);await prepare.review(admin.id,task.id,{accepted:true,sourceSha256:task.sourceSha256,documentHash:task.documentHash});
+});
 test('tenant entry uploads one immutable file and queries cannot use another signer receipt',async()=>{
  const result=await gateway.customerSign(tenant.id,contract.id);assert.ok(result.url);assert.equal(uploads,1);await gateway.customerSign(tenant.id,contract.id);assert.equal(uploads,1);
  const parties=await db.ownerSigningParty.findMany({where:{taskId:task.id}});remote.set(parties.find(p=>p.role==='CUSTOMER')!.transactionId,true);badProof=true;await assert.rejects(gateway.query(task.id),code('PROVIDER_IDENTITY_MISMATCH'));badProof=false;
  assert.equal((await gateway.query(task.id)).status,'PENDING');assert.equal(seals,0);
+ const account=await db.ownerESignAccount.findUniqueOrThrow({where:{ownerId:f.owner.id}});
+ await db.ownerESignAccount.update({where:{id:account.id},data:{certSerialNo:account.certSerialNo+'changed-after-attempt'}});
+ try{await assert.rejects(prepare.prepare(admin.id,contract.id),code('OWNER_REPREPARE_ISSUED'));assert.equal((await db.contract.findUniqueOrThrow({where:{id:contract.id}})).providerTaskId,task.id);}finally{await db.ownerESignAccount.update({where:{id:account.id},data:{certSerialNo:account.certSerialNo}});}
 });
 test('owner manually signs its own transaction; neither tenant-only nor source-only PDF completes contract',async()=>{
  const result=await gateway.ownerSign(f.customer.id,f.owner.id,task.id);assert.ok(result.url);assert.equal(new URL(result.url!).searchParams.get('customer_id'),f.seal.providerCustomerId);assert.equal(new URL(result.url!).searchParams.get('signature_id'),f.seal.providerSignatureId);

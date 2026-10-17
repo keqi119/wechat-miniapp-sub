@@ -63,5 +63,14 @@ export class OwnerAuthorizationService {
  }
  private async disable(ownerId:string,id:string,actorId:string,actorType:string){await this.db.serial(async tx=>{await tx.vehicleOwner.update({where:{id:ownerId},data:{revision:{increment:1}}});await tx.ownerAutoAuthority.update({where:{id},data:{enabled:false,disabledAt:new Date(),revision:{increment:1}}});await audit(tx,actorId,'OWNER_AUTO_DISABLED','vehicle-owners',ownerId,{authorityId:id},actorType);});return this.view(await this.db.ownerAutoAuthority.findUniqueOrThrow({where:{id}}));}
  async pause(actorId:string,ownerId:string,id:string){const actor=await this.db.adminUser.findUnique({where:{id:actorId}});ensure(actor?.active&&['ADMIN','OPERATIONS'].includes(actor.role),403,'FORBIDDEN','仅运营或管理员可暂停');ensure(await this.db.ownerAutoAuthority.count({where:{id,ownerId}}),404,'NOT_FOUND','授权记录不存在');return this.disable(ownerId,id,actorId,'ADMIN');}
- async revoke(customerId:string,ownerId:string,id:string){const a=await this.grant(customerId,ownerId,id);await this.disable(ownerId,id,customerId,'CUSTOMER');await this.db.ownerAutoAuthority.update({where:{id},data:{status:'REVOKING',revision:{increment:1}}});return{...this.view(await this.db.ownerAutoAuthority.findUniqueOrThrow({where:{id}})),...this.api.createRevocationUrl(a.providerCustomerId)};}
+ async revoke(customerId:string,ownerId:string,id:string){
+  const a=await this.grant(customerId,ownerId,id);
+  // Fadada revocation is account-wide, including when entered through an old grant.
+  await this.db.serial(async tx=>{
+   await tx.vehicleOwner.update({where:{id:ownerId},data:{revision:{increment:1}}});
+   const affected=await tx.ownerAutoAuthority.updateMany({where:{ownerId,OR:[{providerCustomerId:a.providerCustomerId},{enabled:true}]},data:{enabled:false,status:'REVOKING',disabledAt:new Date(),revision:{increment:1}}});
+   await audit(tx,customerId,'OWNER_ACCOUNT_REVOCATION_REQUESTED','vehicle-owners',ownerId,{authorityId:id,disabledGrants:affected.count},'CUSTOMER');
+  });
+  return{...this.view(await this.db.ownerAutoAuthority.findUniqueOrThrow({where:{id}})),...this.api.createRevocationUrl(a.providerCustomerId)};
+ }
 }

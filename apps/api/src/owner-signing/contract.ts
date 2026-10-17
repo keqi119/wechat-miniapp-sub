@@ -21,7 +21,7 @@ export class OwnerContractPreparation {
   const resource=await this.db.contract.findUnique({where:{id:contractId},include:{order:{include:{customer:true}},delayQuote:{include:{change:true}}}});ensure(resource&&['SUBSCRIPTION','AMENDMENT'].includes(resource.kind),409,'OWNER_CONTRACT_KIND','签署业务类型不匹配');
   const snapshot=resource.order.finalPlanSnapshot as any,lessor=snapshot.lessorSnapshot,consent=snapshot.ownerDataConsent;
   ensure(lessor&&consent?.ownerId===lessor.ownerId&&consent.customerId===resource.customerId&&consent.lessorHash===lessorIdentityHash(lessor)&&consent.notice?.contentHash===lessor.sharingNotice?.contentHash,409,'OWNER_SHARING_CONSENT','本单客户尚未确认向实际出租方提供合同资料');
-  const existing=await this.db.ownerSigningTask.findUnique({where:{kind_resourceId_documentHash:{kind:resource.kind,resourceId:contractId,documentHash:resource.documentHash}}});if(existing){await this.writer.readVerified(existing.sourceFileId,existing.sourceSha256);return this.view(existing);}
+  const existing=await this.db.ownerSigningTask.findUnique({where:{kind_resourceId_documentHash:{kind:resource.kind,resourceId:contractId,documentHash:resource.documentHash}}});if(existing){await this.writer.readVerified(existing.sourceFileId,existing.sourceSha256);return this.rebindUnissued(actorId,existing,resource);}
   ensure(resource.status==='DRAFT'&&!resource.providerTaskId&&['SUBSCRIPTION','AMENDMENT'].includes(resource.kind),409,'SIGNATURE_STATE','当前订单不能重新准备合同');
   requireOwnerContractCurrent(resource);
   const account=await this.db.eSignAccount.findUnique({where:{customerId:resource.customerId}});ensure(accountReadiness(account).readyForSigning&&account?.identityCiphertext&&account.providerCustomerId,409,'REALNAME_REQUIRED','订阅客户实名与证书尚未就绪');
@@ -43,6 +43,25 @@ export class OwnerContractPreparation {
     await tx.contract.update({where:{id:contractId},data:{body,sourceFileId:file.id,providerTaskId:t.id,documentId:legal.id,templateVersion:legal.version,signingLeaseUntil:null}});await audit(tx,actorId,'OWNER_CONTRACT_PREPARED','contracts',contractId,{taskId:t.id,sourceHash:file.sha256,ownerId:owner.id});return t;
    });return this.view(task);
   }finally{await this.db.contract.updateMany({where:{id:contractId,signingLeaseUntil:lease},data:{signingLeaseUntil:null}});}
+ }
+ private async rebindUnissued(actorId:string,existing:any,resource:any){
+  return this.db.serial(async tx=>{
+   await lockOrder(tx,resource.orderId);
+   const t=await tx.ownerSigningTask.findUniqueOrThrow({where:{id:existing.id},include:{parties:true,owner:{include:{esignAccount:true,seals:{where:{status:'ACTIVE'}}}}}}),o=t.owner,a=o.esignAccount,seal=o.seals[0],s=t.snapshot as any;
+   const changed=!!a&&(a.certSerialNo!==s.lessor.certificateSerialNo||a.providerCustomerId!==s.lessor.providerCustomerId||o.seals.length!==1||seal?.id!==t.ownerSealId||seal?.providerSignatureId!==s.lessor.providerSignatureId||seal?.imageHash!==s.lessor.sealImageHash);
+   if(!changed)return this.view(t);
+   const c=await tx.contract.findUniqueOrThrow({where:{id:t.resourceId},include:{order:true,delayQuote:{include:{change:true}}}});requireOwnerContractCurrent(c);
+   ensure(c.status==='DRAFT'&&c.providerTaskId===t.id&&c.documentHash===t.documentHash&&t.status==='PREPARED'&&!t.uploadedAt&&!t.ownerDispatchAt&&!t.processingToken&&!t.processingUntil&&!t.parties.some(p=>p.attemptedAt||p.verifiedAt||p.status!=='PENDING'),409,'OWNER_REPREPARE_ISSUED','原文件已进入渠道处理，请核验原交易，不能替换签署身份');
+   ensure(o.status==='VERIFIED'&&o.name===s.lessor.name&&o.creditCode===s.lessor.creditCode&&a?.realNameStatus==='VERIFIED'&&a.certStatus==='BOUND'&&a.certSerialNo&&a.providerCustomerId&&a.checkedAt&&Date.now()-a.checkedAt.getTime()<86400000&&o.seals.length===1&&seal.providerCustomerId===a.providerCustomerId&&Date.now()-seal.checkedAt.getTime()<86400000,409,'OWNER_NOT_READY','请先完成当前企业证书及印章核验');
+   await tx.vehicleOwner.update({where:{id:o.id},data:{revision:{increment:1}}});
+   const oldId=t.id,newId=randomUUID(),lessor={...s.lessor,providerCustomerId:a.providerCustomerId,providerSignatureId:seal.providerSignatureId,certificateSerialNo:a.certSerialNo,sealImageHash:seal.imageHash};
+   // No channel request exists. Rotate the local preparation id so stale reviews cannot approve the replacement.
+   await tx.ownerSigningParty.deleteMany({where:{taskId:oldId}});
+   const fresh=await tx.ownerSigningTask.update({where:{id:oldId},data:{id:newId,ownerSealId:seal.id,providerContractId:randomUUID().replaceAll('-',''),snapshot:{...s,lessor},reviewedBy:null,reviewedAt:null,ownerMode:'UNSELECTED',manualBy:null,authorityId:null,revision:{increment:1},parties:{create:t.parties.map(p=>({role:p.role,providerCustomerId:p.role==='OWNER'?a.providerCustomerId!:p.providerCustomerId,providerSignatureId:p.role==='OWNER'?seal.providerSignatureId:null,transactionId:randomUUID().replaceAll('-','')}))}}});
+   await tx.contract.update({where:{id:c.id},data:{providerTaskId:newId}});
+   await audit(tx,actorId,'OWNER_UNISSUED_PREPARATION_REPLACED','contracts',c.id,{oldTaskId:oldId,newTaskId:newId,sourceHash:t.sourceSha256,oldSealId:t.ownerSealId,newSealId:seal.id,oldProviderContractId:t.providerContractId,oldParties:t.parties.map(p=>({role:p.role,transactionId:p.transactionId})),oldIdentity:s.lessor,newIdentity:lessor});
+   return this.view(fresh);
+  });
  }
  view(t:any){return{id:t.id,ownerId:t.ownerId,resourceId:t.resourceId,documentHash:t.documentHash,sourceFileId:t.sourceFileId,sourceSha256:t.sourceSha256,status:t.status,ownerMode:t.ownerMode,reviewedAt:t.reviewedAt,signedFileId:t.signedFileId};}
  async review(actorId:string,id:string,input:{sourceSha256:string;documentHash:string;accepted:boolean}){const actor=await this.db.adminUser.findUnique({where:{id:actorId}});ensure(actor?.active&&['ADMIN','OPERATIONS'].includes(actor.role),403,'FORBIDDEN','仅运营可复核合同');const task=await this.db.ownerSigningTask.findUnique({where:{id}});ensure(task&&input.accepted===true&&input.sourceSha256===task.sourceSha256&&input.documentHash===task.documentHash,409,'OWNER_REVIEW_DOCUMENT','请核对当前完整PDF及文件摘要');await this.writer.readVerified(task.sourceFileId,task.sourceSha256);return this.db.serial(async tx=>{const changed=await tx.ownerSigningTask.updateMany({where:{id,sourceSha256:input.sourceSha256,documentHash:input.documentHash,status:'PREPARED',uploadedAt:null,ownerDispatchAt:null},data:{reviewedBy:actorId,reviewedAt:new Date(),revision:{increment:1}}});ensure(changed.count===1,409,'OWNER_REVIEW_STATE','本文件已进入签署或版本已变化');await audit(tx,actorId,'OWNER_CONTRACT_REVIEWED','contracts',task.resourceId,{taskId:id,sourceSha256:input.sourceSha256});return this.view(await tx.ownerSigningTask.findUniqueOrThrow({where:{id}}));});}

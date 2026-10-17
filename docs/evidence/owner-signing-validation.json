@@ -1,0 +1,45 @@
+{
+  "checkedAt": "2026-10-17T06:44:01.992281+00:00",
+  "scope": "Local isolated test database, synthetic provider calls; production/human execution recorded separately",
+  "tests": {
+    "api": {
+      "passed": 310,
+      "failed": 0
+    },
+    "miniapp": {
+      "passed": 239,
+      "failed": 0
+    },
+    "admin": {
+      "passed": 98,
+      "failed": 0
+    }
+  },
+  "providerSdkSpecsPassed": 70,
+  "nativeCompiler": {
+    "wxml": 19,
+    "wxss": 20
+  },
+  "builds": [
+    "api",
+    "admin",
+    "miniapp"
+  ],
+  "review": {
+    "base": "a75ea3343fb55b6369409ab6de89c472561c187b",
+    "reviewedHead": "42e9326",
+    "importantFindings": 4,
+    "fixedWithRedGreen": 4,
+    "deferred": [
+      "Customer contract list still aggregates party progress; owner detail exposes both parties."
+    ]
+  },
+  "backupRestore": {
+    "backup": "20261017T062556Z.tar.enc",
+    "tables": 58
+  },
+  "realEnterpriseVerified": false,
+  "actualOwnerContractSigned": false,
+  "automaticAuthorityGranted": false,
+  "wechatPublished": false
+}
