@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-10-17T09:01:51.702Z",
+  "release": "20261017-direct-v2",
+  "sourceCommit": "731a9cd29eb68587fb871aa13bf820e54bcf3d93",
+  "scope": "Xiaolang direct operation first; third-party owner onboarding and marketplace services deferred to V2.",
+  "deployment": {
+    "release": "20261017-direct-v2",
+    "sourceCommit": "731a9cd29eb68587fb871aa13bf820e54bcf3d93",
+    "healthy": true,
+    "identityRecordUnchanged": true,
+    "commercialCounts": {
+      "application": 0,
+      "order": 0,
+      "contract": 0,
+      "bill": 0,
+      "payment": 0,
+      "ownerSigningTask": 0,
+      "ownerESignAccount": 1
+    },
+    "ownerWorkspaceEnabled": false,
+    "manualHandoverLocationEnabled": true,
+    "mapEnabled": false,
+    "staticReleaseUnchanged": true,
+    "databaseMigration": false,
+    "freeBytes": 843984896
+  },
+  "admin": {
+    "ownerPermissionVisible": false,
+    "orderPermissionAvailable": true
+  },
+  "miniapp": {
+    "ownerSettingsEntryRemoved": true,
+    "ownerRouteUnregistered": true,
+    "nativeUiChecked": true
+  },
+  "location": {
+    "manualEnabled": true,
+    "mapEnabled": false,
+    "wechatChooseLocationApprovedByUser": true,
+    "wechatPrivacyLocationSubmitted": false
+  },
+  "verification": {
+    "miniappTests": 251,
+    "ownerIsolationAndPricingTests": 15,
+    "directLifecycleAndLocationTests": 22,
+    "externalPaymentAndSigningSimulatedForLifecycle": true,
+    "realOrderCreated": false
+  },
+  "preview": {
+    "files": 108,
+    "manifestSha256": "f298190ed0d2ca49e186ca0ef3d3cd39e667d5f801797ac6a86d64bbe713d9d9",
+    "configSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c",
+    "artifactUnchangedAfterPreview": true,
+    "qrLocalPath": ".runtime/miniapp-ci/direct-v2-preview.jpg",
+    "formalRelease": false
+  },
+  "priorDeploymentAttempt": {
+    "release": "20261017-direct-v1",
+    "rolledBack": true,
+    "reason": "Consent configuration required hash(JSON.stringify(content)), corrected before successful activation."
+  },
+  "remaining": [
+    "ET5T owner rental authorization",
+    "Insurance suitability evidence",
+    "Per-order complete terms, actual signing/payment/handover/return",
+    "WeChat location privacy guide submission",
+    "Formal miniapp review and publication"
+  ]
+}
