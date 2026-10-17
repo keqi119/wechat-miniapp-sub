@@ -261,6 +261,12 @@ describe("ContractPdfRendererService", () => {
         return this;
       }
 
+      // These text-content tests use fixed 14pt text advances. Geometry is
+      // exercised against real PDFKit and production fonts in pdf-layout.test.ts.
+      heightOfString() { return 14; }
+      currentLineHeight() { return 12; }
+      rect() { return this; }
+
       lineTo() {
         return this;
       }
@@ -568,6 +574,11 @@ async function renderWithFakePdfKit(model: ContractPdfRenderModel) {
     fontSize() {
       return this;
     }
+
+    // Match this recorder's text/moveDown advances, not production font metrics.
+    heightOfString() { return 14; }
+    currentLineHeight() { return 12; }
+    rect() { return this; }
 
     lineTo() {
       return this;
