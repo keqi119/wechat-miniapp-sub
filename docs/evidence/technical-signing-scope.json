@@ -12,7 +12,7 @@
     "leaseCreationAuthorized": false,
     "documentDraftingAuthorized": true,
     "draftApproved": true,
-    "signatureStarted": false,
+    "signatureStarted": true,
     "enterpriseSealUseApprovedForThisDocument": true
   },
   "textApproval": {
@@ -43,5 +43,13 @@
     "frozenDocumentAndPdfVerified": true,
     "evidence": "docs/evidence/technical-signing-seal-approval.json",
     "signatureStartedAtThisReadback": false
+  },
+  "signedArchiveVerification": {
+    "recordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+    "completedAt": "2026-10-16T21:30:13.073Z",
+    "status": "SIGNED",
+    "evidence": "docs/evidence/technical-signing-final-verification.json",
+    "visualLayoutAccepted": false,
+    "layoutCorrectionRequired": true
   }
 }

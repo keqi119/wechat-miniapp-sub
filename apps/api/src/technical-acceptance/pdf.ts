@@ -11,9 +11,24 @@ export async function renderTechnicalPdf(body:string,font?:string){
  for(let i=0;i<lines.length;i++){if(i===first)continue;const line=lines[i];if(!line.trim()){doc.moveDown(0.35);continue;}const heading=/^#{1,6}\s+/.test(line),bold=/\*\*[^*]+\*\*/.test(line),plain=line.replace(/^#{1,6}\s+/,'').replace(/(?<!\*)\*\*([^*]+)\*\*(?!\*)/g,'$1');
  if(heading&&doc.y>doc.page.height-140)doc.addPage();doc.fontSize(heading?12:bold?10.5:10);doc.lineWidth(0.15);doc.text(plain,{lineGap:4,stroke:heading||bold,fill:true});doc.lineWidth(1);
  }
- if(doc.y>doc.page.height-290)doc.addPage();else doc.moveDown(2);
- doc.fontSize(12).text('本文件双方签署区').moveDown();
- for(const[role,label]of[['CUSTOMER','乙方本人签署'],['PLATFORM','上海晓浪网络科技有限公司企业签章']]){doc.fontSize(10).text(label);const y=doc.y+10;slotCoordinates.push({slotId:'TECHNICAL_'+role,pageNumber:page,x:80/doc.page.width*800,y:y/doc.page.height*1131,coordinateSource:'PDFKIT_RENDERER',coordinateSystem:'FADADA_800_1131_TOP_LEFT'});doc.rect(80,y,180,65).stroke();doc.y=y+85;}
+ const title='本文件双方签署区',slots=[{role:'CUSTOMER',label:'乙方本人签署',height:80},{role:'PLATFORM',label:'上海晓浪网络科技有限公司企业签章',height:150}];
+ const textOptions={width:doc.page.width-doc.page.margins.left-doc.page.margins.right,lineGap:0};
+ const topGap=doc.currentLineHeight(true)*2;
+ // Measure with the selected font: Noto CJK and SimHei have different line
+ // heights. A fixed allowance can push the second box into the page footer.
+ doc.fontSize(12);let blockHeight=doc.heightOfString(title,textOptions)+doc.currentLineHeight(true);
+ doc.fontSize(10);for(const slot of slots)blockHeight+=doc.heightOfString(slot.label,textOptions)+10+slot.height+24;
+ if(doc.y+topGap+blockHeight>doc.page.height-doc.page.margins.bottom)doc.addPage();else doc.y+=topGap;
+ doc.x=doc.page.margins.left;
+ doc.fontSize(12).text(title,textOptions).moveDown();
+ for(const{role,label,height}of slots){
+  doc.fontSize(10).text(label,textOptions);
+  const left=80,top=doc.y+10,width=180;
+  // Fadada SearchLocation is the image CENTRE in an 800x1131 top-left grid.
+  // Width/height describe the reserved PDF area, not unsupported provider scaling.
+  slotCoordinates.push({slotId:'TECHNICAL_'+role,pageNumber:page,x:(left+width/2)/doc.page.width*800,y:(top+height/2)/doc.page.height*1131,width:width/doc.page.width*800,height:height/doc.page.height*1131,pdfPageWidth:doc.page.width,pdfPageHeight:doc.page.height,coordinateSource:'PDFKIT_RENDERER',coordinateSystem:'FADADA_800_1131_TOP_LEFT'});
+  doc.rect(left,top,width,height).stroke();doc.y=top+height+24;
+ }
  const range=doc.bufferedPageRange();for(let i=0;i<range.count;i++){doc.switchToPage(range.start+i);const bottom=doc.page.margins.bottom;doc.page.margins.bottom=0;doc.fontSize(8).text(`第 ${i+1} / ${range.count} 页`,45,doc.page.height-28,{width:doc.page.width-90,align:'center',lineBreak:false});doc.page.margins.bottom=bottom;}
  doc.end();return{buffer:await done,slotCoordinates};
 }

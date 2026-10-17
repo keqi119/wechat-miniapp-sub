@@ -1,0 +1,66 @@
+{
+  "checkedAt": "2026-10-17T01:40:42.286Z",
+  "recordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+  "status": "SIGNED",
+  "taskCount": 1,
+  "approvalId": "cmvb3n2j9000cld01mjimv8vm",
+  "approvedAt": "2026-10-16T15:06:15.465Z",
+  "approvalValidAtSeal": true,
+  "sealRequestedAt": "2026-10-16T21:30:11.496Z",
+  "completedAt": "2026-10-16T21:30:13.073Z",
+  "retentionDueAt": "2027-04-14T21:30:13.073Z",
+  "sourceFileId": "cmvb2rev0000cpc01wdm9h6o6",
+  "sourcePdfHash": "9fdd1d26284b027327269bcd35855e65360ed4a922c2b92b8b956f51156d0d94",
+  "signedFile": {
+    "id": "cmvbhec9s0003tb01hbre5zwk",
+    "size": 251010,
+    "sha256": "74e569f7a49bb11c0d72da470ae438e5c4abcec4d36a3f62477be3a30f3f9650",
+    "mimeType": "application/pdf",
+    "purpose": "technical-acceptance"
+  },
+  "audits": [
+    {
+      "action": "ENTERPRISE_SEAL_EXECUTION",
+      "createdAt": "2026-10-16T21:30:11.504Z"
+    },
+    {
+      "action": "SIGNED_PDF_ARCHIVED",
+      "createdAt": "2026-10-16T21:30:13.035Z"
+    }
+  ],
+  "commercialSigningEnabled": false,
+  "commercialPaymentEnabled": false,
+  "businessWrites": false,
+  "channelQueries": [
+    {
+      "signer": "CUSTOMER",
+      "status": "SIGNED",
+      "resultCode": "3000",
+      "absent": false,
+      "queryIdentityBindingVerified": true
+    },
+    {
+      "signer": "PLATFORM",
+      "status": "SIGNED",
+      "resultCode": "3000",
+      "absent": false,
+      "queryIdentityBindingVerified": true
+    }
+  ],
+  "userFeedback": "双方签署已归档；随后反馈签署外观越出签署区",
+  "enterpriseSealExecutionAuditCount": 1,
+  "archiveAuditCount": 1,
+  "visualLayoutAccepted": false,
+  "layoutCorrectionRequired": true,
+  "archivedPdfModified": false,
+  "signedAppearancePoints": {
+    "customer": [
+      99.61,
+      44.6
+    ],
+    "enterprise": [
+      123.39,
+      123.39
+    ]
+  }
+}
