@@ -53,5 +53,6 @@
     "Employee changes initial password",
     "Actual phone camera and assigned real-order handover acceptance"
   ],
-  "officialAccountMenuEvidence": "field-handover-official-menu.json"
+  "officialAccountMenuEvidence": "field-handover-official-menu.json",
+  "userLoginEvidence": "field-handover-user-login.json"
 }
