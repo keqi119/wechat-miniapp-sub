@@ -140,3 +140,14 @@ API 实现人员负责把以上入口细化为 DTO、Prisma 实体与共享类�
 - 延期及同一车主的换车补充协议仅支持逐份手动签署。目标车归属审核固定在报价中，变化要求重新确认；更换出租方不可套用同一合同。交接单列明实际出租方，由晓浪作为交接作业方与客户确认事实。
 - 查询绑定原合同、原交易和原签署账号。双方签署证据与签后PDF校验齐备后才归档并推进原订单/变更。供应商失败状态保留原任务并停止后续用印；回跳事件不作为签署证据。
 - 企业客户、印章、授权和任务表位于本项目独立库；不访问旧系统业务库。平台清分/车主结算不在本版实现范围。
+
+## 现场交接（FIELD）
+
+- `FIELD` 账号仅可使用本人 `/admin/auth/me|password|logout` 及 `/admin/field-tasks`，不能读取普通后台资源或通用文件。仍使用 HttpOnly cookie、Origin 和 CSRF 校验。
+- ADMIN/OPERATIONS：`GET/POST /admin/handover-tasks`，`GET /:id`，`GET /assignees`；`POST /:id/reassign|cancel|restart`。创建 `{orderId,type:DELIVERY|RETURN,assigneeId,note}`；变更须当前 `version`；重新启用还需 `reset:true` 与人员、原因，只允许未发布且已取消/车辆批次变化的任务。
+- FIELD：`GET /admin/field-tasks` 及 `/:id` 仅本人未取消任务。返回最小客户称呼、任务车辆、已确认交还安排、草稿、附件及交接阶段，不返回完整客户/订单/财务资料。
+- `POST /:id/draft`：`{version,draft:{actualAt,readingKm,batteryPercent,place,accessories,condition,openItems,resolutionPlan,resolutionNote,fileIds}}`。草稿允许空字段；发布须完整。人员姓名由服务端确定。
+- `POST /:id/files`：multipart `file` + `version`，单份10MiB/每草稿20份，JPEG/PNG/PDF，返回 `{id,name,mimeType,size,task}`；上传后版本递增并加入草稿。`GET /:id/files/:fileId` 每次校验本人任务及当前材料批次；改派、重启或取消使旧权限失效。
+- `POST /:id/publish`：`{version,idempotencyKey,checked:true}`。事务核对员工、车辆/assignment 快照、附件批次、订单状态、时间和里程。同编号同版本重试不重复发布。创建现有 Handover 并通知客户；异议新建修订版，已确认不可修改。
+- 客户继续 `/customer/handovers/:id` 及 `confirm|object|sign|sign-status`。中文清单 `label` 是显示投影，`factKey` 保留原键，数据库事实和 `manifestHash` 不变。最终完成仍使用原后台交接动作及原付款、签署、归档就绪条件。
+- 任务绑定车辆与交付批次；变化后草稿锁定，未发布任务经后台明确重启并清空采集，历史草稿/材料保留审计，旧文件不能注入新的材料批次。后台接管已发布交接修订后，现场工作台停止编辑该历史版本。

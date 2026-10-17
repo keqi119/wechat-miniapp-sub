@@ -48,6 +48,7 @@ model PaymentVerificationEvent {
 }
 
 enum Role {
+ FIELD
  ADMIN
  OPERATIONS
  FINANCE
@@ -133,6 +134,7 @@ enum ServiceStatus {
  CANCELLED
 }
 model AdminUser {
+ fieldTasks FieldHandoverTask[]
  id String @id @default(cuid())
  username String @unique
  passwordHash String
@@ -308,6 +310,9 @@ model LegalDocument {
  @@unique([type,version])
 }
 model StoredFile {
+ fieldTaskGeneration Int?
+ fieldTaskId String?
+ fieldTask FieldHandoverTask? @relation(fields:[fieldTaskId],references:[id])
  id String @id @default(cuid())
  customerId String?
  customer Customer? @relation(fields:[customerId],references:[id])
@@ -423,6 +428,7 @@ model CreditVerification {
  @@unique([applicationId,revision])
 }
 model Order {
+ fieldTasks FieldHandoverTask[]
  swapPurchases SwapCreditPurchase[]
  currentAssignmentId String? @unique
  assignments VehicleAssignment[]
@@ -544,6 +550,8 @@ model DepositEntry {
  @@unique([refundId,type])
 }
 model Handover {
+ fieldTaskId String?
+ fieldTask FieldHandoverTask? @relation(fields:[fieldTaskId],references:[id])
  vehicleId String?
  assignmentId String?
  changeId String?
@@ -1359,4 +1367,30 @@ model SwapCreditPurchase {
  updatedAt DateTime @updatedAt
  @@unique([orderId,idempotencyKey])
  @@index([customerId,status])
+}
+model FieldHandoverTask {
+ vehicleId String
+ vehicleAssignmentId String?
+ materialGeneration Int @default(0)
+ id String @id @default(cuid())
+ orderId String
+ order Order @relation(fields:[orderId],references:[id])
+ type String
+ assigneeId String
+ assignee AdminUser @relation(fields:[assigneeId],references:[id])
+ status String @default("ASSIGNED")
+ version Int @default(0)
+ note String @default("")
+ draft Json @default("{}")
+ currentHandoverId String?
+ lastPublishKey String?
+ lastPublishVersion Int?
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ files StoredFile[]
+ handovers Handover[]
+ @@unique([orderId,type])
+ @@index([assigneeId,status])
 }

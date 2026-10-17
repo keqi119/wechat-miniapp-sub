@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-17",
+  "scope": "Independent platform FIELD handover workbench",
+  "testDatabase": "Local chundian_test only; synthetic fixtures",
+  "verification": [
+    {"command": "pnpm --filter @chundian/api exec tsx --test --test-concurrency=1 test/field-access.test.ts test/field-handover.test.ts test/business-completion.test.ts test/api.test.ts", "passed": 39, "failed": 0},
+    {"command": "pnpm --filter @chundian/admin test", "passed": 101, "failed": 0},
+    {"command": "pnpm --filter @chundian/api build", "exitCode": 0},
+    {"command": "pnpm --filter @chundian/admin build", "exitCode": 0},
+    {"command": "node .runtime/field-ui-check.cjs", "passed": true, "browser": "Headless installed Edge", "widths": [390,360], "consoleErrors": 0, "checks": ["login", "assigned task and confirmed arrangement", "save and reload", "image upload", "explicit publish", "published readonly", "no horizontal overflow"]}
+  ],
+  "review": {
+    "reviewer": "review_field_handover",
+    "critical": 0,
+    "important": 4,
+    "resolved": [
+      "Snapshot vehicle and assignment; lock old draft after change; explicit restart clears draft and advances material generation",
+      "Authorized admin may add normal evidence during objection revision; FIELD remains restricted to task evidence",
+      "Unpublished cancelled tasks can explicitly restart with audit and cleared materials",
+      "Mobile detail renders confirmed handover arrangement"
+    ],
+    "regressions": "Backend and UI failures reproduced before fixes and passed after fixes",
+    "declinedToJudge": [
+      {"item":"Deployment and public account menu", "ruling":"Tracked separately; local tests do not prove production or menu completion"},
+      {"item":"Actual test command results", "ruling":"Verified by implementing agent; counts recorded above"},
+      {"item":"Expanded history and objection attachment UI", "ruling":"Deferred beyond minimal assigned-task workbench; existing customer handover page retained"},
+      {"item":"Revoking already downloaded bytes", "ruling":"Future access revoked on reassignment; downloaded copies cannot be withdrawn"},
+      {"item":"General login throttling and file scanning", "ruling":"Existing mechanisms retained; broader security audit outside this change"}
+    ]
+  },
+  "boundaries": {"realPayment":false,"realSigning":false,"realDelivery":false,"oldSystemMutation":false,"privacyMapEnabled":false},
+  "pending": ["Independent production deployment", "Provision user-authorized FIELD account", "Public account menu selection", "Physical WeChat camera and customer field acceptance"]
+}

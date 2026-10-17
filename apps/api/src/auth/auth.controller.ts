@@ -4,7 +4,7 @@ import { Db } from '../common/db';
 import { IdentityGateway } from '../common/gateways';
 import { ensure } from '../common/errors';
 import { mobile, audit } from '../common/data';
-import { passwordMatches, token, tokenHash } from './auth.service';
+import { passwordHash, passwordMatches, token, tokenHash } from './auth.service';
 import { acceptConsents, consentInput } from './consents';
 import { permissions } from './access';
 @Controller()
@@ -26,6 +26,17 @@ export class AuthController {
     return { user: this.user(user), csrfToken };
   }
   @Get('admin/auth/me') adminMe(@Req() request: any) { return { user: this.user(request.admin), csrfToken: request.session.csrfToken }; }
+  @Post('admin/auth/password') async changePassword(@Body()body:any,@Req()request:any,@Res({passthrough:true})response:any) {
+    const input=z.object({currentPassword:z.string().min(1).max(256),newPassword:z.string().min(16).max(256)}).strict().parse(body);
+    ensure(input.currentPassword!==input.newPassword,400,'PASSWORD_UNCHANGED','新密码不能与原密码相同');
+    await this.db.serial(async tx=>{
+      const user=await tx.adminUser.findUnique({where:{id:request.admin.id}});
+      ensure(user?.active&&passwordMatches(input.currentPassword,user.passwordHash),403,'PASSWORD_INVALID','当前密码无效');
+      await tx.adminUser.update({where:{id:user.id},data:{passwordHash:passwordHash(input.newPassword)}});
+      await tx.adminSession.deleteMany({where:{adminId:user.id}});await audit(tx,user.id,'PASSWORD_CHANGED','users',user.id);
+    });
+    response.clearCookie('admin_session',{path:'/api/admin'});return{success:true,loginRequired:true};
+  }
   @Post('admin/auth/logout') async adminLogout(@Req() request: any, @Res({ passthrough: true }) response: any) { await this.db.adminSession.delete({ where: { id: request.session.id } }); response.clearCookie('admin_session', { path: '/api/admin' }); return { success: true }; }
   private async login(identity: { mobile: string; openId?: string }, consents: {documentId:string;version:number}[]) {
     mobile.parse(identity.mobile);

@@ -42,7 +42,7 @@ export const labels: Record<string, string> = {
   PENDING_SIGNATURE: '待签署', SIGNING: '签署中', SIGNED: '已签署', PENDING_PAYMENT: '待支付', PAID: '已支付', ACTIVE: '进行中', COMPLETED: '已完成', CLOSED: '已关闭',
   PENDING: '待处理', APPROVED: '已通过', PROCESSING: '处理中', FAILED: '失败', SUCCEEDED: '已成功', OPEN: '待受理', ASSIGNED: '已派单', RESOLVED: '已解决',
   OVERDUE: '已逾期', HELD: '持有中', REFUNDED: '已退款', UNREAD: '未读', READ: '已读', RETURN: '退车', DELIVERY: '交付',
-  ADMIN: '管理员', OPERATIONS: '运营审核', FINANCE: '财务', SUPPORT: '客服', PRIVACY: '隐私政策', USER_AGREEMENT: '用户协议', SUBSCRIPTION_CONTRACT: '订阅合同',
+  FIELD: '现场交接', ADMIN: '管理员', OPERATIONS: '运营审核', FINANCE: '财务', SUPPORT: '客服', PRIVACY: '隐私政策', USER_AGREEMENT: '用户协议', SUBSCRIPTION_CONTRACT: '订阅合同',
   AWAITING_CONFIRMATION: '待客户确认', FINAL_PLAN_CONFIRMED: '方案已确认', AWAITING_SIGNATURE: '待签署', AWAITING_PAYMENT: '待收款', AWAITING_HANDOVER: '待交付',
   PENDING_APPROVAL: '待审核', CUSTOMER_CONFIRMED: '客户已确认', OBJECTION_SUBMITTED: '客户提出异议', IN_PROGRESS: '处理中', ACCEPTED: '已受理', EXPIRED: '已到期', VOID: '已作废', CREATING: '创建中',
   application: '申请须知', privacy: '隐私政策', terms: '用户协议', subscription: '订阅合同', handover: '交接协议',
@@ -61,6 +61,7 @@ Object.assign(labels,{'owner-identity':'企业认证及签署说明','owner-auto
 Object.assign(labels, commercialTermLabels, handoverFactLabels);
 Object.assign(labels,{'handover-location':'交接地点选择说明',handoverProposal:'客户建议交还地点',TECHNICAL_ACCEPTANCE:'独立技术验收文件','technical-signing-verification':'技术签署验证确认书','technical-acceptances':'签署技术验收',STOPPED:'已记录停止',PURGED:'独立资料已清理',RETAINED:'期限内保留',REVIEW_DUE:'到期等待人工复核',HELD:'必要留存中'});
 export const resources: Resource[] = [
+  {key:'handover-tasks',title:'现场交接任务',singular:'现场任务',subtitle:'后台派单，现场人员在公众号工作台采集并发布，客户在小程序核对。',readRoles:['ADMIN','OPERATIONS'],writeRoles:['ADMIN','OPERATIONS'],create:true,statuses:['ASSIGNED','CANCELLED'],columns:[{key:'vehicleTitle',label:'车辆'},{key:'type',label:'交接类型'},{key:'assignee.name',label:'现场人员'},{key:'handover.status',label:'交接进度'},statusColumn],fields:[ref('orderId','关联订单','orders'),select('type','交接类型',['DELIVERY','RETURN']),ref('assigneeId','现场交接人员','handover-tasks/assignees'),area('note','预约及现场说明')],actions:[{label:'重新启用或重新采集',path:'restart',fields:[{key:'version',label:'当前任务版本',type:'number',readOnly:true,required:true},ref('assigneeId','现场人员','handover-tasks/assignees'),area('note','重新办理原因',true),{key:'reset',label:'我已核对订单车辆，确认清空当前草稿并重新采集',type:'attestation',required:true}],warning:'仅适用于已取消或车辆批次变化的未发布任务。原材料保留审计，但不能用于新的采集。',kind:'primary'},{label:'改派现场人员',path:'reassign',fields:[{key:'version',label:'当前任务版本',type:'number',readOnly:true,required:true},ref('assigneeId','新的现场人员','handover-tasks/assignees'),area('note','改派说明',true)],warning:'改派后原人员立即失去本任务及附件访问权限，现场材料会保留。'},{label:'取消未发布任务',path:'cancel',fields:[{key:'version',label:'当前任务版本',type:'number',readOnly:true,required:true},area('note','取消原因',true)],warning:'仅未发布的任务可取消，已发布交接须在原交接流程处理。',kind:'danger'}]},
   {key:'vehicle-owners',title:'企业车主签约',singular:'企业车主',subtitle:'实际企业车主认证及订阅合同',readRoles:['ADMIN','OPERATIONS'],writeRoles:['ADMIN','OPERATIONS'],columns:[]},
   technicalResource,
   swapCreditResource,
@@ -85,7 +86,7 @@ export const resources: Resource[] = [
   { key: 'services', title: '服务工单', singular: '工单', subtitle: '人工受理、联系客户、派单与进度回填。', statuses: ['SUBMITTED', 'ACCEPTED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'], columns: [{ key: 'id', label: '工单编号' }, { key: 'type', label: '服务类型' }, { key: 'mobile', label: '联系电话' }, { key: 'providerName', label: '服务方' }, statusColumn, created], actions: [{ label: '人工派单', path: 'assign', fields: [text('providerName', '服务方名称'), text('contact', '服务方联系方式'), text('assigneeId', '后台处理人 ID', false), note], kind: 'primary' }, { label: '更新处理进度', path: 'status', fields: [select('status', '工单状态', ['ACCEPTED', 'IN_PROGRESS', 'COMPLETED']), note] }] },
   { key: 'entitlements', title: '订阅权益', singular: '权益', subtitle: '维护订单权益与使用状态。', create: true, edit: true, columns: [{ key: 'title', label: '权益名称' }, { key: 'orderId', label: '订单' }, statusColumn, created], fields: [ref('orderId', '关联订单', 'orders'), text('title', '权益名称'), area('description', '权益说明', true), select('status', '状态', ['PENDING', 'ACTIVE', 'EXPIRED'])] },
   { key: 'notifications', title: '站内通知', singular: '通知', subtitle: '向客户发送业务进展通知，追踪已读状态。', create: true, columns: [{ key: 'title', label: '通知标题' }, { key: 'customerId', label: '客户' }, { key: 'readAt', label: '阅读时间', format: 'date' }, created], fields: [ref('customerId', '客户', 'customers'), text('title', '标题'), area('content', '通知正文', true), text('resourceType', '关联资源类型', false), text('resourceId', '关联资源 ID', false)] },
-  { key: 'users', title: '后台账号', singular: '账号', subtitle: '按职责分配运营、财务、客服与管理权限。', create: true, edit: true, columns: [{ key: 'name', label: '姓名' }, { key: 'username', label: '用户名' }, { key: 'role', label: '角色' }, { key: 'active', label: '启用' }, created], fields: [text('username', '用户名'), text('name', '姓名'), { key: 'password', label: '密码', type: 'password', hint: '新建必填；编辑留空则保留当前密码' }, select('role', '角色', ['OPERATIONS', 'FINANCE', 'SUPPORT', 'ADMIN']), { key: 'active', label: '允许登录', type: 'boolean' }] },
+  { key: 'users', title: '后台账号', singular: '账号', subtitle: '按职责分配运营、财务、客服与管理权限。', create: true, edit: true, columns: [{ key: 'name', label: '姓名' }, { key: 'username', label: '用户名' }, { key: 'role', label: '角色' }, { key: 'active', label: '启用' }, created], fields: [text('username', '用户名'), text('name', '姓名'), { key: 'password', label: '密码', type: 'password', hint: '新建必填；编辑留空则保留当前密码' }, select('role', '角色', ['FIELD', 'OPERATIONS', 'FINANCE', 'SUPPORT', 'ADMIN']), { key: 'active', label: '允许登录', type: 'boolean' }] },
   { key: 'audit-logs', title: '操作审计', singular: '审计记录', subtitle: '留存操作者、业务对象与状态变化，审计记录不可编辑。', columns: [{ key: 'action', label: '操作' }, { key: 'actorId', label: '操作人' }, { key: 'resourceType', label: '资源类型' }, { key: 'resourceId', label: '业务对象' }, created] },
   { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy', 'delivery-delay-amendment', 'vehicle-change-amendment', 'technical-signing-verification', 'handover-location','owner-identity','owner-auto-sign','owner-data-sharing','owner-rental-contract','owner-delivery-delay','owner-vehicle-change','owner-handover']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
   ...esignResources,
@@ -97,7 +98,7 @@ export const groups = [
   { label: '车源与商品', keys: ['vehicles', 'model-definitions', 'plans'] },
   { label: '客户与订阅', keys: ['applications', 'customers', 'orders', 'contracts', 'order-changes', 'vehicle-changes'] },
   { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds', 'swap-credit-purchases', 'payment-verifications'] },
-  { label: '交付与服务', keys: ['handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
+  { label: '交付与服务', keys: ['handover-tasks', 'handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
   { label: '里程与退订', keys: ['usage-periods', 'return-settlements'] },
   { label: '签章运营', keys: ['vehicle-owners','technical-acceptances', 'enterprise-seals', 'seal-authorities', 'signature-policies', 'esign-approvals'] },
   { label: '系统管理', keys: ['users', 'audit-logs', 'legal-documents'] },
@@ -106,6 +107,7 @@ export function valueAt(entity: Entity, key: string): unknown { return key.split
 export function display(value: unknown): string { if (value == null || value === '') return '—'; if (typeof value === 'boolean') return value ? '已启用' : '已停用'; if (typeof value === 'object') return JSON.stringify(value); return statusLabel(String(value)); }
 
 export function actionAllowed(resource: string, action: Action, entity: Entity, userId?: string): boolean {
+  if(resource==='handover-tasks')return action.path==='restart'?!entity.handover&&(entity.status==='CANCELLED'||entity.contextChanged===true):entity.status==='ASSIGNED'&&(action.path!=='cancel'||!entity.handover);
   if(resource==='technical-acceptances')return technicalAllowed(action.path,entity);
   if(resource==='swap-credit-purchases')return swapPurchaseActionAllowed(action.path,entity);
   const status = String(entity.status ?? '');

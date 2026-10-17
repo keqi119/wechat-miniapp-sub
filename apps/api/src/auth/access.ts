@@ -5,8 +5,11 @@ import { tokenHash } from './auth.service';
 import {h5Access} from '../h5-sign/access';
 import {requireNativeSigning} from '../esign/native-signing';
 import {requireCurrentConsents} from './consents';
-export const resources = ['vehicle-owners','technical-acceptances','swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
+export const resources = ['handover-tasks','field-tasks','vehicle-owners','technical-acceptances','swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
 export function allowed(role: string, resource: string, write: boolean) {
+  if (role === 'FIELD') return resource === 'field-tasks';
+  if (resource === 'field-tasks') return false;
+  if (resource === 'handover-tasks') return ['ADMIN','OPERATIONS'].includes(role);
   if (resource === 'vehicle-owners' && process.env.OWNER_WORKSPACE_ENABLED !== 'true') return false;
   if (role === 'ADMIN') return true;
   if (resource === 'vehicle-owners') return role === 'OPERATIONS';
@@ -43,6 +46,7 @@ export class Access implements CanActivate {
     if (path === '/admin/auth/login') { adminOrigin(request); return true; }
     if (['/customer/auth/wechat','/customer/auth/sms/request','/customer/auth/sms/login'].includes(path)) return true;
     if (path.startsWith('/admin/')) {
+      context.switchToHttp().getResponse().setHeader('Cache-Control','private, no-store');
       const raw = request.cookies?.admin_session;
       if (!raw) fail(401, 'UNAUTHENTICATED', '请登录后台');
       const session = await this.db.adminSession.findUnique({ where: { id: tokenHash(raw) }, include: { admin: true } });
@@ -50,6 +54,7 @@ export class Access implements CanActivate {
       const write = !['GET','HEAD','OPTIONS'].includes(request.method);
       if (write) { adminOrigin(request); ensure(request.headers['x-csrf-token'] === session.csrfToken, 403, 'CSRF_DENIED', '请求校验失败'); }
       const resource = path.split('/')[2];
+      if(session.admin.role==='FIELD'&&resource==='auth')ensure(['/admin/auth/me','/admin/auth/logout','/admin/auth/password'].includes(path),403,'FORBIDDEN','现场账号无此权限');
       ensure(resource === 'auth' || allowed(session.admin.role, resource, write), 403, 'FORBIDDEN', '当前角色无权执行此操作');
       request.admin = session.admin; request.session = session;
       return true;
