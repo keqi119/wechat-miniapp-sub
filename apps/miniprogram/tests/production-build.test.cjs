@@ -7,9 +7,10 @@ test('production package includes real registered native pages and rejects dorma
   const output = path.resolve(__dirname, '../.artifacts/production-test');
   const result = build({ destination: output });
   const app = JSON.parse(fs.readFileSync(path.join(output, 'src/app.json')));
-  assert.equal(app.pages.length, 18);
+  assert.equal(app.pages.length, 17);
   assert.ok(app.pages.includes('pages/technical-acceptance/index'));
-  assert.ok(app.pages.includes('pages/owner/index'));
+  assert.ok(!app.pages.includes('pages/owner/index'));
+  assert.ok(!fs.readFileSync(path.join(output, 'src/pages/settings/index.wxml'), 'utf8').includes('openOwner'));
   assert.equal(app.tabBar.list.length, 4);
   assert.equal(fs.existsSync(path.join(output, 'src/services/mock.js')), false);
   assert.equal(fs.existsSync(path.join(output, 'tests')), false);

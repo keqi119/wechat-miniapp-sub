@@ -14,7 +14,6 @@
     "pages/mileage/index",
     "pages/handover/index",
     "pages/settings/index",
-    "pages/owner/index",
     "pages/legal/index",
     "pages/sign/index",
     "pages/technical-acceptance/index"

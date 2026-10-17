@@ -9,6 +9,7 @@ import {listenForHttpTests} from './http-listener';
 import {ContractPdfArtifactWriterService} from '../src/contract/contract-pdf-artifact-writer.service';
 let db:Db,app:any,base:string;const admins:any={},customers:any[]=[];let ownerId:string;
 before(async()=>{
+ process.env.OWNER_WORKSPACE_ENABLED='true';
  assert.ok(new URL(process.env.TEST_DATABASE_URL!).pathname.endsWith('_test'));process.env.NODE_ENV='test';db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});
  for(const role of ['ADMIN','OPERATIONS','FINANCE','SUPPORT']){const token=randomUUID(),user=await db.adminUser.create({data:{username:token,name:'Synthetic',passwordHash:'unused',role:role as any}});await db.adminSession.create({data:{id:tokenHash(token),adminId:user.id,csrfToken:'synthetic-csrf',expiresAt:new Date(Date.now()+3600000)}});admins[role]={user,token};}
  for(let i=0;i<2;i++){const token=randomUUID(),customer=await db.customer.create({data:{mobile:'13'+String(i+5)+String(Date.now()).slice(-8)}});await db.customerSession.create({data:{id:tokenHash(token),customerId:customer.id,expiresAt:new Date(Date.now()+3600000)}});customers.push({token,customer});}
@@ -58,4 +59,19 @@ test('approved owner legal types can be created and published through the protec
   const draft=await req('/admin/legal-documents',input,'ADMIN');assert.equal(draft.status,201,JSON.stringify(draft.body));
   const published=await req('/admin/legal-documents/'+draft.body.id+'/publish',{},'ADMIN');assert.equal(published.status,201);assert.equal((await req('/public/legal/'+type)).body.content,input.content);
  }
+});
+
+test('direct first release disables owner workspace permissions and old endpoints without changing records',async()=>{
+ const {permissions}=await import('../src/auth/access');
+ const before={owners:await db.vehicleOwner.count(),members:await db.ownerMember.count(),accounts:await db.ownerESignAccount.count()};
+ try{
+  process.env.OWNER_WORKSPACE_ENABLED='false';
+  for(const role of ['ADMIN','OPERATIONS'])assert.ok(!permissions(role).some(p=>p.startsWith('vehicle-owners.')));
+  for(const path of ['/admin/vehicle-owners','/admin/vehicle-owners/'+ownerId+'/invitations','/customer/owners','/customer/owners/'+ownerId+'/verification']){
+   const result=await req(path,path.endsWith('/invitations')?{mobile:customers[0].customer.mobile}:path.endsWith('/verification')?{accepted:true}:undefined,'ADMIN',0);
+   assert.equal(result.status,503);assert.equal(result.body.error.code,'OWNER_WORKSPACE_DISABLED');
+  }
+  assert.deepEqual({owners:await db.vehicleOwner.count(),members:await db.ownerMember.count(),accounts:await db.ownerESignAccount.count()},before);
+  assert.equal((await req('/admin/auth/me',undefined,'ADMIN')).status,200);
+ }finally{process.env.OWNER_WORKSPACE_ENABLED='true';}
 });

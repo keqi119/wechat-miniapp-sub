@@ -7,6 +7,7 @@ import {requireNativeSigning} from '../esign/native-signing';
 import {requireCurrentConsents} from './consents';
 export const resources = ['vehicle-owners','technical-acceptances','swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
 export function allowed(role: string, resource: string, write: boolean) {
+  if (resource === 'vehicle-owners' && process.env.OWNER_WORKSPACE_ENABLED !== 'true') return false;
   if (role === 'ADMIN') return true;
   if (resource === 'vehicle-owners') return role === 'OPERATIONS';
   if(resource==='technical-acceptances')return role==='OPERATIONS';
@@ -33,6 +34,9 @@ export class Access implements CanActivate {
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
     const path = request.path.replace(/^\/api/, '');
+    if (/^\/(?:admin\/vehicle-owners|customer\/owners)(?:\/|$)/i.test(path)) {
+      ensure(process.env.OWNER_WORKSPACE_ENABLED === 'true', 503, 'OWNER_WORKSPACE_DISABLED', '首版采用晓浪直营，第三方车主功能暂未开放。');
+    }
     if(path.startsWith('/h5-sign/'))return h5Access(this.db,request,context.switchToHttp().getResponse(),path);
     if (request.method === 'POST' && ['/callbacks/wechat-pay', '/callbacks/wechat-refund', '/callbacks/fadada-sign', '/callbacks/fadada-identity', '/callbacks/fadada-owner-identity', '/callbacks/fadada-owner-sign', '/callbacks/fadada-owner-authorization', '/callbacks/wechat-pay-verification'].includes(path)) return true;
     if (path.startsWith('/public/') || path === '/health') return true;

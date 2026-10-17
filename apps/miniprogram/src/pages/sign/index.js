@@ -49,7 +49,7 @@ Page({
   onWebMessage() { return this.refreshStatus(undefined, true); },
   async retry() {
     if (this.data.busy || !this.data.enabled) return;
-    if(this.kind.startsWith('owner-'))return go('/pages/owner/index?id='+encodeURIComponent(this.id.split(':')[0]));
+    if(this.kind.startsWith('owner-'))return go('/pages/settings/index');
     if (this.kind === 'identity') return go('/pages/settings/index');
     if (this.kind === 'technical-acceptance') return go('/pages/technical-acceptance/index?id=' + encodeURIComponent(this.id));
     this.setData({ busy: true, error: '' });
