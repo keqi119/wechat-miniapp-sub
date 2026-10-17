@@ -1,0 +1,61 @@
+{
+  "published": false,
+  "approvalStatement": "批准六份文本及模板，具体企业授权和逐单内容另行确认",
+  "editorialChanges": "仅替换草稿状态标记；原始获批正文保留",
+  "status": "APPROVED",
+  "approvedBy": "用户代表上海晓浪网络科技有限公司",
+  "approvalQuestionId": "call_cf80629d420e4520a9c8f80eaee77fbc",
+  "documents": [
+    {
+      "version": 1,
+      "finalFile": "docs/legal/versions/owner-signing/owner-identity-v1.md",
+      "approvedSourceSha256": "9143276fddda8383f836bca59ce74d5441b4e4fa45bef4ab83f97d702183b7d3",
+      "approvedSource": "docs/legal/drafts/owner-identity-v1.md",
+      "type": "owner-identity",
+      "finalSha256": "f72d5ce7e70d795b5aa7f79cee3f40a0cdae799cbc1e91849f6f3f6b45588f0c"
+    },
+    {
+      "version": 1,
+      "finalFile": "docs/legal/versions/owner-signing/owner-auto-sign-v1.md",
+      "approvedSourceSha256": "d7e75d4a7e6c953c8730bb34f3a125bcfb9f50c14620d7fcf56235bc6e851391",
+      "approvedSource": "docs/legal/drafts/owner-auto-sign-v1.md",
+      "type": "owner-auto-sign",
+      "finalSha256": "34f3bc54e4f0e60e1e0931703dec52ee17b79a06259d523ef61089957b55fb9d"
+    },
+    {
+      "version": 1,
+      "finalFile": "docs/legal/versions/owner-signing/owner-data-sharing-v1.md",
+      "approvedSourceSha256": "bbdf9a3d375b1cef079a3e46537209f5c414ff995a17f30fcacbf2ba43c75b61",
+      "approvedSource": "docs/legal/drafts/owner-data-sharing-v1.md",
+      "type": "owner-data-sharing",
+      "finalSha256": "788244edcebed90bbfef8dd2c42b5110daad6b5e94dc7aad2b266f3bc0a07326"
+    },
+    {
+      "version": 2,
+      "finalFile": "docs/legal/versions/owner-signing/owner-rental-contract-v2.md",
+      "approvedSourceSha256": "63846f56e61adf571ab5f6c2a3858cab5bd581743d1bc133a440f3136a9d533d",
+      "approvedSource": "docs/legal/drafts/owner-rental-contract-v2.md",
+      "type": "owner-rental-contract",
+      "finalSha256": "e085bb396d127095e1fea470ba6e71aac87623a6e614d68c55bc9a6af6855ef9"
+    },
+    {
+      "version": 2,
+      "finalFile": "docs/legal/versions/owner-signing/user-agreement-v2-owner.md",
+      "approvedSourceSha256": "3747008ce07077d18a7338e45effc19c8076c98fb206feb52efb8864d9b06d1c",
+      "approvedSource": "docs/legal/drafts/user-agreement-v2-owner.md",
+      "type": "terms",
+      "finalSha256": "b3d15b9e4a8c60f93edd32ec9314c1041b12b700d974aa83e6c94f1be0135daa"
+    },
+    {
+      "version": 4,
+      "finalFile": "docs/legal/versions/owner-signing/privacy-policy-v4-owner.md",
+      "approvedSourceSha256": "1bef4101f342dad852725671a60235409060e94ae0da9178a9f665269253e5e4",
+      "approvedSource": "docs/legal/drafts/privacy-policy-v4-owner.md",
+      "type": "privacy",
+      "finalSha256": "ed5b839ecdfe9970b30c416166c37320471d612a42423261fe15c909d67948bb"
+    }
+  ],
+  "recordedAt": "2026-10-17T05:19:50.4350777Z",
+  "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
+  "approvedOn": "2026-10-17"
+}

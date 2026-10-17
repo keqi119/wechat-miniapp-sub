@@ -1,6 +1,6 @@
 # Preserve byte-for-byte provenance and already-applied migration checksums.
 deploy/*.sh text eol=lf
-docs/legal/** -text
+docs/legal/** -text whitespace=cr-at-eol
 reference/miniprogram-mock/** -text
 apps/api/prisma/migrations/** -text whitespace=cr-at-eol
 apps/api/test/fadada-digest.spec.ts -text

@@ -151,6 +151,7 @@ model AdminSession {
  createdAt DateTime @default(now())
 }
 model Customer {
+ ownerMemberships OwnerMember[]
  swapPurchases SwapCreditPurchase[]
  technicalAcceptances TechnicalAcceptance[]
  id String @id @default(cuid())
@@ -249,6 +250,7 @@ model ModelDefinition {
  vehicles Vehicle[]
 }
 model Vehicle {
+ ownerBinding OwnerVehicle?
  holdId String? @unique
  vin String?
  plateNumber String?
@@ -824,6 +826,105 @@ model ESignAccount {
  verifiedAt DateTime?
  checkedAt DateTime?
  registrationLeaseUntil DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+}
+
+model VehicleOwner {
+ id String @id @default(cuid())
+ name String
+ creditCode String @unique
+ address String
+ contactPhone String @default("")
+ status String @default("DRAFT")
+ revision Int @default(0)
+ createdBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ members OwnerMember[]
+ invitations OwnerInvitation[]
+ esignAccount OwnerESignAccount?
+ seals OwnerSeal[]
+ vehicles OwnerVehicle[]
+}
+model OwnerMember {
+ id String @id @default(cuid())
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ customerId String
+ customer Customer @relation(fields:[customerId],references:[id])
+ status String @default("CLAIMED")
+ verifiedAt DateTime?
+ verifiedSerialNo String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([ownerId,customerId])
+ @@index([customerId,status])
+}
+model OwnerInvitation {
+ id String @id @default(cuid())
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ mobileHash String
+ tokenHash String @unique
+ expiresAt DateTime
+ claimedBy String?
+ claimedAt DateTime?
+ revokedAt DateTime?
+ createdBy String
+ createdAt DateTime @default(now())
+ @@index([ownerId,expiresAt])
+}
+model OwnerESignAccount {
+ id String @id @default(cuid())
+ ownerId String @unique
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ providerCustomerId String? @unique
+ verificationTransactionNo String? @unique
+ verificationUrlCiphertext String?
+ managerCiphertext String?
+ managerCustomerId String?
+ consentSnapshot Json?
+ consentedAt DateTime?
+ realNameStatus String @default("NOT_STARTED")
+ certStatus String @default("UNKNOWN")
+ certSerialNo String?
+ evidenceHash String?
+ verifiedAt DateTime?
+ checkedAt DateTime?
+ leaseToken String?
+ leaseUntil DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+}
+model OwnerSeal {
+ id String @id @default(cuid())
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ providerCustomerId String
+ providerSignatureId String
+ status String @default("DISCOVERED")
+ imageHash String
+ imageCiphertext String
+ checkedAt DateTime
+ selectedBy String?
+ selectedAt DateTime?
+ createdAt DateTime @default(now())
+ @@unique([providerCustomerId,providerSignatureId])
+ @@index([ownerId,status])
+}
+model OwnerVehicle {
+ id String @id @default(cuid())
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ vehicleId String @unique
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id])
+ status String @default("DRAFT")
+ evidenceFileId String
+ revision Int @default(0)
+ createdBy String
+ reviewedBy String?
+ reviewedAt DateTime?
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
 }

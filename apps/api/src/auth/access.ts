@@ -5,9 +5,10 @@ import { tokenHash } from './auth.service';
 import {h5Access} from '../h5-sign/access';
 import {requireNativeSigning} from '../esign/native-signing';
 import {requireCurrentConsents} from './consents';
-export const resources = ['technical-acceptances','swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
+export const resources = ['vehicle-owners','technical-acceptances','swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
 export function allowed(role: string, resource: string, write: boolean) {
   if (role === 'ADMIN') return true;
+  if (resource === 'vehicle-owners') return role === 'OPERATIONS';
   if(resource==='technical-acceptances')return role==='OPERATIONS';
   if (['users', 'audit-logs', 'payment-verifications'].includes(resource)) return false;
   if (['enterprise-seals','seal-authorities','signature-policies'].includes(resource)) return !write && role === 'OPERATIONS';
@@ -33,7 +34,7 @@ export class Access implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const path = request.path.replace(/^\/api/, '');
     if(path.startsWith('/h5-sign/'))return h5Access(this.db,request,context.switchToHttp().getResponse(),path);
-    if (request.method === 'POST' && ['/callbacks/wechat-pay', '/callbacks/wechat-refund', '/callbacks/fadada-sign', '/callbacks/fadada-identity', '/callbacks/wechat-pay-verification'].includes(path)) return true;
+    if (request.method === 'POST' && ['/callbacks/wechat-pay', '/callbacks/wechat-refund', '/callbacks/fadada-sign', '/callbacks/fadada-identity', '/callbacks/fadada-owner-identity', '/callbacks/wechat-pay-verification'].includes(path)) return true;
     if (path.startsWith('/public/') || path === '/health') return true;
     if (path === '/admin/auth/login') { adminOrigin(request); return true; }
     if (['/customer/auth/wechat','/customer/auth/sms/request','/customer/auth/sms/login'].includes(path)) return true;
