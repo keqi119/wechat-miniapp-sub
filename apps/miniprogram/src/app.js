@@ -4,7 +4,8 @@ App({
     this.globalData = { frontendVersion: '0.1.0' };
     services.purgeLegacySigningCache();
   },
-  async onShow() {
+  async onShow(options = {}) {
+    services.observeSigningAppShow(options);
     if (!services.getContext().authenticated) return;
     try { await services.resumePayment(); }
     catch (error) { this.globalData.paymentRecoveryError = error.code || 'PAYMENT_QUERY_FAILED'; }

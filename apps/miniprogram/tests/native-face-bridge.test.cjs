@@ -6,16 +6,17 @@ const callback='https://realnameverify.fadada.com/fddAuthenticationService/app/i
 const normalized=callback.replace('realnameverify.fadada.com','realnameverify16.fadada.com');
 const appId='wx0123456789abcdef',path='pages/face/index';
 const options=()=>Object.fromEntries(Object.entries({bizToken:'synthetic-token',miniProgramAppId:appId,miniProgramPath:path,miniProgramCallBackUrl:callback}).map(([k,v])=>[k,encodeURIComponent(v)]));
-function setup(){let customerId='person',token='session',cfg={...config},rejectJump=false;const calls=[],navigations=[],storage=new Map();
- const api=createNativeSigningApi({call:async(method,p)=>{calls.push({method,p});return p==='/public/signing-config'?cfg:{url:initial,status:'PENDING'};},native:async(method,args)=>{navigations.push({method,args});if(method==='navigateToMiniProgram'&&rejectJump)throw Error('synthetic cancellation');},identifier:encodeURIComponent,error:(message,code)=>Object.assign(new Error(message),{code}),getContext:()=>({authenticated:!!token,customer:{id:customerId}}),sessionKey:()=>token,getSignStatus:async()=>({status:'PENDING'}),platform:{setStorageSync:(k,v)=>storage.set(k,v),getStorageSync:k=>storage.get(k),removeStorageSync:k=>storage.delete(k)},pendingKey:'pending'});
+function setup(){let customerId='person',token='session',cfg={...config},rejectJump=false,waitJump=null;const calls=[],navigations=[],storage=new Map();
+ const api=createNativeSigningApi({call:async(method,p)=>{calls.push({method,p});return p==='/public/signing-config'?cfg:{url:initial,status:'PENDING'};},native:async(method,args)=>{navigations.push({method,args});if(method==='navigateToMiniProgram'){if(waitJump)await waitJump;if(rejectJump)throw Error('synthetic cancellation');}},identifier:encodeURIComponent,error:(message,code)=>Object.assign(new Error(message),{code}),getContext:()=>({authenticated:!!token,customer:{id:customerId}}),sessionKey:()=>token,getSignStatus:async()=>({status:'PENDING'}),platform:{setStorageSync:(k,v)=>storage.set(k,v),getStorageSync:k=>storage.get(k),removeStorageSync:k=>storage.delete(k)},pendingKey:'pending'});
  const parent={kind:'owner-identity',id:'enterprise:new',url:initial};
- return{api,parent,calls,navigations,storage,config:v=>cfg=v,rotate:()=>token='rotated',reject:v=>rejectJump=v,start:()=>api.startOwnerSigning('owner-identity','enterprise',null,{accepted:true})};
+ return{api,parent,calls,navigations,storage,config:v=>cfg=v,rotate:()=>token='rotated',reject:v=>rejectJump=v,wait:v=>waitJump=v,start:()=>api.startOwnerSigning('owner-identity','enterprise',null,{accepted:true})};
 }
 test('face bridge requires a loaded current provider page, and returns to that flow without declaring verified',async()=>{
  const e=setup();assert.throws(()=>e.api.prepareFaceBridge(options(),e.parent));await e.start();assert.throws(()=>e.api.prepareFaceBridge(options(),e.parent));
  e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const handle=e.api.prepareFaceBridge(options(),e.parent);
  assert.deepEqual(Object.keys(handle),['bridgeId']);assert.equal(e.navigations.filter(x=>x.method==='navigateToMiniProgram').length,0);
  await e.api.startFaceBridge(handle.bridgeId,e.parent);assert.deepEqual(e.navigations.at(-1),{method:'navigateToMiniProgram',args:{appId,path:path+'?bizToken=synthetic-token',envVersion:'release'}});
+ e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId,extraData:{faceResult:'SIGNED'}}});
  const result=e.api.completeFaceBridge(handle.bridgeId,{scene:1038,referrerInfo:{appId,extraData:{faceResult:'SIGNED'}}},e.parent);
  assert.equal(result.reloadUrl,normalized);assert.equal(result.status,undefined);assert.equal(e.api.reloadSigningPage(e.parent.kind,e.parent.id,result.reloadUrl),normalized);
  assert.equal(e.api.getSigningTask(e.parent.kind,e.parent.id).status,'PENDING');assert.throws(()=>e.api.completeFaceBridge(handle.bridgeId,{scene:1038,referrerInfo:{appId}},e.parent));
@@ -43,7 +44,8 @@ test('return checks initiation, referrer and scene; user cancellation permits ex
  assert.throws(()=>e.api.completeFaceBridge(h.bridgeId,{scene:1038,referrerInfo:{appId}},e.parent));
  e.reject(true);await assert.rejects(e.api.startFaceBridge(h.bridgeId,e.parent));assert.throws(()=>e.api.completeFaceBridge(h.bridgeId,{scene:1038,referrerInfo:{appId}},e.parent));
  e.reject(false);await e.api.startFaceBridge(h.bridgeId,e.parent);
- for(const entry of [{scene:1001,referrerInfo:{appId}},{scene:1038,referrerInfo:{appId:'wx1111111111111111'}}])assert.throws(()=>e.api.completeFaceBridge(h.bridgeId,entry,e.parent));
+ for(const entry of [{scene:1001,referrerInfo:{appId}},{scene:1038,referrerInfo:{appId:'wx1111111111111111'}}]){e.api.observeSigningAppShow(entry);assert.throws(()=>e.api.completeFaceBridge(h.bridgeId,entry,e.parent));}
+ e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId,extraData:{faceResult:false}}});
  assert.equal(e.api.completeFaceBridge(h.bridgeId,{scene:1038,referrerInfo:{appId,extraData:{faceResult:false}}},e.parent).reloadUrl,normalized);
 });
 function middlePage(e){
@@ -57,7 +59,7 @@ function middlePage(e){
 test('middle page waits for a user click and genuine return, then reloads only its original parent',async()=>{
  const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const p=middlePage(e);
  p.setEntry({scene:1038,referrerInfo:{appId,extraData:{faceResult:'success'}}});p.page.onLoad(options());p.page.onShow();assert.equal(p.page.data.ready,true);assert.equal(p.actions.length,0);assert.equal(e.navigations.length,1);
- await p.page.startFace();p.page.onShow();assert.equal(p.actions.length,0);p.page.onHide();p.page.onShow();assert.equal(p.parent.data.url,normalized);assert.deepEqual(p.actions,['back']);
+ await p.page.startFace();p.page.onShow();assert.equal(p.actions.length,0);p.page.onHide();e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId}});p.page.onShow();assert.equal(p.parent.data.url,normalized);assert.deepEqual(p.actions,['back']);
  assert.ok(!JSON.stringify(p.page.data).includes('synthetic-token'));assert.equal(p.page.data.ready,false);
 });
 test('middle page rejects direct entry, mismatched parent, and a failed native jump without status changes',async()=>{
@@ -66,4 +68,37 @@ test('middle page rejects direct entry, mismatched parent, and a failed native j
  const p=middlePage(e);p.page.onLoad(options());e.reject(true);await p.page.startFace();assert.equal(p.page.data.busy,false);assert.ok(p.page.data.error);p.page.onHide();p.page.onShow();assert.equal(p.actions.length,0);
  e.reject(false);await p.page.startFace();p.page.onHide();p.setEntry({scene:1038,referrerInfo:{appId}});p.stack[0]={...p.parent};p.page.onShow();assert.equal(p.actions.length,0);assert.equal(p.page.data.ready,false);
  assert.equal(e.api.getSigningTask(e.parent.kind,e.parent.id).status,'PENDING');
+});
+test('stale app entry and delayed native cancellation cannot consume a face return',async()=>{
+ const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const p=middlePage(e);
+ p.setEntry({scene:1038,referrerInfo:{appId}});p.page.onLoad(options());
+ let cancel;e.wait(new Promise((_,reject)=>cancel=reject));const attempt=p.page.startFace();p.page.onHide();p.page.onShow();
+ assert.equal(p.actions.length,0);assert.equal(p.parent.data.url,initial);cancel(Error('cancelled'));await attempt;
+ assert.equal(p.actions.length,0);assert.equal(p.page.data.ready,true);
+});
+function signPage(e){const fs=require('node:fs'),vm=require('node:vm');let definition;const renders=[],updates=[];
+ vm.runInNewContext(fs.readFileSync(require.resolve('../src/pages/sign/index.js'),'utf8'),{Page:v=>definition=v,require:p=>p.includes('services')?e.api:{load:()=>{},go:()=>{}},wx:{}});
+ const page={...definition,kind:e.parent.kind,id:e.parent.id,_pageGeneration:1,_disposed:false,data:{...definition.data,url:e.parent.url},setData(v,cb){updates.push({...v});Object.assign(this.data,v);if(cb)renders.push(cb);}};
+ return{page,renders,updates};}
+test('same callback remounts web-view, and deferred remount rejects changed session or unloaded page',async()=>{
+ const e=setup();await e.start();const p=signPage(e);
+ for(let i=0;i<2;i++){
+  e.parent.url=p.page.data.url;e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const h=e.api.prepareFaceBridge(options(),e.parent);await e.api.startFaceBridge(h.bridgeId,e.parent);
+  e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId}});const result=e.api.completeFaceBridge(h.bridgeId,{scene:1038,referrerInfo:{appId}},e.parent);
+  assert.equal(p.page.reloadPage(result.reloadUrl),true);assert.equal(p.page.data.url,'');assert.equal(p.renders.length,1);p.renders.shift()();assert.equal(p.page.data.url,normalized);
+ }
+ assert.equal(p.page.reloadPage(normalized),true);e.rotate();p.renders.shift()();assert.equal(p.page.data.url,'');
+ const f=setup();await f.start();const q=signPage(f);q.page.reloadPage(initial);q.page.onUnload();q.renders.shift()();assert.equal(q.page.data.url,'');
+});
+
+
+test('fresh return arriving before native success is queued, then consumed once after success',async()=>{
+ const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const p=middlePage(e);p.page.onLoad(options());
+ let resolve;e.wait(new Promise(done=>resolve=done));const attempt=p.page.startFace();p.page.onHide();e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId}});p.page.onShow();assert.equal(p.actions.length,0);
+ resolve();await attempt;assert.deepEqual(p.actions,['back']);assert.equal(p.parent.data.url,normalized);p.page.onShow();assert.deepEqual(p.actions,['back']);
+});
+test('App.onShow passes the fresh event before asynchronous status recovery',async()=>{
+ const fs=require('node:fs'),vm=require('node:vm');let app;const calls=[];
+ vm.runInNewContext(fs.readFileSync(require.resolve('../src/app.js'),'utf8'),{App:v=>app=v,require:()=>({observeSigningAppShow:e=>calls.push(e),getContext:()=>({authenticated:false})})});
+ const entry={scene:1038,referrerInfo:{appId}};await app.onShow(entry);assert.equal(calls[0],entry);
 });

@@ -29,7 +29,21 @@ Page({
     catch (error) { if (this._disposed || generation !== this._pageGeneration) return; this._statusRevision++; this.setData({ status: 'UNKNOWN', url: '', statusError: error.message, message: '结果尚未核实，请稍后重新查询；不会按页面消息认定成功。' }); }
     finally { this._querying = false; }
   },
-  reloadPage(url) { try { this.setData({ url: services.reloadSigningPage(this.kind, this.id, url), statusError: '' }); return true; } catch (error) { this.setData({ url: '', statusError: error.message }); return false; } },
+  reloadPage(url) {
+    if (this._disposed || this._terminal) return false;
+    const generation = this._pageGeneration, revision = this._webRevision = (this._webRevision || 0) + 1;
+    try {
+      const target = services.reloadSigningPage(this.kind, this.id, url);
+      services.clearSigningWebLoaded(this.kind, this.id);
+      // Removing the web-view first guarantees reload even for an identical opaque URL.
+      this.setData({ url: '', statusError: '' }, () => {
+        if (this._disposed || this._terminal || generation !== this._pageGeneration || revision !== this._webRevision) return;
+        try { this.setData({ url: services.reloadSigningPage(this.kind, this.id, target) }); }
+        catch (error) { this.setData({ url: '', statusError: error.message }); }
+      });
+      return true;
+    } catch (error) { this.setData({ url: '', statusError: error.message }); return false; }
+  },
   onWebLoad() { try { services.markSigningWebLoaded(this.kind, this.id, this.data.url); this.setData({ message: '请在实名或签署页面自行核对并操作，返回后查询真实结果。' }); } catch { this.setData({ url: '', error: '当前认证页面已变化，请返回原记录重新进入。' }); } },
   onWebError() { this.setData({ url: '', error: '实名或签署页面暂时无法打开，请联系运营核对业务域名，或返回原记录查询。' }); },
   onWebMessage() { return this.refreshStatus(undefined, true); },

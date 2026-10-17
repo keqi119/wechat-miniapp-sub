@@ -20,6 +20,17 @@ function createFaceBridgeApi({ currentTask, native, error }) {
     const task = currentTask(kind, id);
     if (task && task.url === url) task.loadedUrl = url;
   }
+  function clearSigningWebLoaded(kind, id) {
+    const task = currentTask(kind, id);
+    if (task) task.loadedUrl = '';
+  }
+  function observeSigningAppShow(entry = {}) {
+    // Only a new App.onShow event after this attempt starts can be a return.
+    // Do not retain arbitrary referrer data or read a cached enter-options object.
+    if (pending && ['STARTING', 'STARTED'].includes(pending.stage)) {
+      pending.returnEntry = { scene: entry.scene, referrerInfo: { appId: entry.referrerInfo?.appId } };
+    }
+  }
   function prepareFaceBridge(options, parent) {
     const task = parentTask(parent);
     if (pending?.stage === 'STARTING' || pending?.stage === 'STARTED') throw error('已有刷脸流程正在进行，请先返回原流程。', 'FACE_BUSY');
@@ -31,18 +42,19 @@ function createFaceBridgeApi({ currentTask, native, error }) {
   async function startFaceBridge(bridgeId, parent) {
     const p = bound(bridgeId, parent);
     if (p.stage !== 'PREPARED') throw error('刷脸跳转正在进行，请勿重复点击。', 'FACE_BUSY');
-    p.stage = 'STARTING';
+    p.stage = 'STARTING'; p.returnEntry = null;
     try {
       await native('navigateToMiniProgram', { appId: p.args.appId, path: p.args.path, envVersion: 'release' });
       if (pending === p) { bound(bridgeId, parent); p.stage = 'STARTED'; }
     } catch {
-      if (pending === p) p.stage = 'PREPARED';
+      if (pending === p) { p.stage = 'PREPARED'; p.returnEntry = null; }
       throw error('尚未进入刷脸小程序，可重新点击；若仍失败，请返回认证页面。', 'FACE_NAVIGATION');
     }
   }
-  function completeFaceBridge(bridgeId, entry, parent) {
+  function completeFaceBridge(bridgeId, _entry, parent) {
     const p = bound(bridgeId, parent);
-    const result = policy.faceReturn(entry, p.specification, ['STARTING', 'STARTED'].includes(p.stage), p.task.config);
+    if (p.stage === 'STARTING' || p.stage === 'STARTED' && !p.returnEntry) return null;
+    const result = policy.faceReturn(p.returnEntry, p.specification, p.stage === 'STARTED', p.task.config);
     // Only this one bound return may replace the URL. Its result never writes an
     // authentication/signature status; Fadada and our backend still verify it.
     p.task.url = result.reloadUrl;
@@ -53,6 +65,6 @@ function createFaceBridgeApi({ currentTask, native, error }) {
   }
   function cancelFaceBridge(bridgeId) { if (pending?.id === bridgeId) pending = null; }
   function clearFaceBridgeContext(kind, id) { if (pending?.kind === kind && pending.recordId === id) pending = null; }
-  return { markSigningWebLoaded, prepareFaceBridge, startFaceBridge, completeFaceBridge, cancelFaceBridge, clearFaceBridgeContext, clearFaceBridge: () => { pending = null; } };
+  return { markSigningWebLoaded, clearSigningWebLoaded, observeSigningAppShow, prepareFaceBridge, startFaceBridge, completeFaceBridge, cancelFaceBridge, clearFaceBridgeContext, clearFaceBridge: () => { pending = null; } };
 }
 module.exports = { createFaceBridgeApi };
