@@ -1,8 +1,12 @@
 const services = require('../../services/index');
 const { load, go } = require('../../utils/page');
+function routeId(value) {
+  if (typeof value !== 'string') return '';
+  try { return decodeURIComponent(value); } catch { return ''; }
+}
 Page({
   data: { loading: true, error: '', url: '', kind: '', title: '实名与签署', status: 'UNKNOWN', statusError: '', message: '', busy: false, enabled: false, faceBridgeConfigured: false },
-  onLoad(options = {}) { this.id = options.id || ''; this.kind = options.kind || ''; this._disposed = false; this._pageGeneration = (this._pageGeneration || 0) + 1; this._terminal = false; this._statusRevision = 0; this.setData({ kind: this.kind }); this.reload(); },
+  onLoad(options = {}) { this.id = routeId(options.id); this.kind = options.kind || ''; this._disposed = false; this._pageGeneration = (this._pageGeneration || 0) + 1; this._terminal = false; this._statusRevision = 0; this.setData({ kind: this.kind }); this.reload(); },
   onUnload() { this._disposed = true; this._pageGeneration++; this._loadRevision = (this._loadRevision || 0) + 1; this.setData({ url: '' }); },
   reload() {
     if (this._disposed) return;

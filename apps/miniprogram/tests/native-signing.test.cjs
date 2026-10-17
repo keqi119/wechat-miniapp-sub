@@ -32,6 +32,39 @@ function page(env, name = 'sign', options = { kind: 'contract', id: 'ct1' }) {
   require('../src/' + (name === 'middle' ? 'pagesFace/pages/middle/middle' : 'pages/' + name + '/index'));
   const p = { ...definition, data: structuredClone(definition.data), setData(v) { Object.assign(this.data, v); } }; p.onLoad?.(options); return p;
 }
+test('encoded owner navigation opens the same cached task and reads its authoritative status', async () => {
+  for (const kind of ['owner-identity', 'owner-authority', 'owner-revoke', 'owner-contract']) {
+    const providerHost = kind === 'owner-identity' ? 'realnameverify16.fadada.com' : 'textapi17.fadada.com';
+    const env = setup({ route: (route, request) => {
+      if (request.method === 'POST') return { id: 'grant', url: 'https://' + providerHost + '/synthetic' };
+      if (route === '/customer/owners/enterprise') return { readyForSigning: false };
+      if (route.endsWith('/authorities')) return [{ id: 'grant', status: 'PENDING' }];
+      if (route.endsWith('/contracts/document')) return { status: 'READY' };
+      throw Error('Unexpected owner route ' + route);
+    } });
+    const recordId = kind === 'owner-contract' ? 'document' : kind === 'owner-revoke' ? 'grant' : null;
+    await env.api.startOwnerSigning(kind, 'enterprise', recordId, {});
+    // WeChat passes the encoded query value to onLoad, as observed in DevTools.
+    const options = Object.fromEntries(env.navigations[0].split('?')[1].split('&').map(pair => pair.split('=')));
+    const p = page(env, 'sign', options); await p.reload(); await p.onShow();
+    assert.equal(p.data.status, 'PENDING', kind + ': ' + p.data.statusError);
+    assert.equal(p.id, 'enterprise:' + (recordId || (kind === 'owner-authority' ? 'grant' : 'new')));
+    assert.match(p.data.url, new RegExp('^https://' + providerHost.replaceAll('.', '\\.')));
+    assert.equal(env.calls.filter(v => v.method === 'POST').length, 1);
+    assert.equal(p.data.statusError, '');
+  }
+});
+test('raw owner context remains supported and malformed encoded context fails closed', async () => {
+  const env = setup({ route: () => ({ readyForSigning: false }) });
+  const raw = page(env, 'sign', { kind: 'owner-identity', id: 'enterprise:new' }); await raw.reload(); await raw.onShow();
+  assert.equal(raw.id, 'enterprise:new'); assert.equal(raw.data.status, 'PENDING');
+  const count = env.calls.length;
+  for (const id of ['enterprise%ZZnew', { invalid: true }]) {
+    const p = page(env, 'sign', { kind: 'owner-identity', id }); await p.reload(); await p.onShow();
+    assert.equal(p.id, ''); assert.equal(p.data.url, ''); assert.ok(p.data.error);
+  }
+  assert.equal(env.calls.length, count);
+});
 test('explicit native contract and handover starts POST the correct routes then keep supplier URL only in memory', async () => {
   for (const [type, kind, id] of [['contracts', 'contract', 'ct1'], ['handovers', 'handover', 'h1']]) { const env = setup(); const result = await env.api.performAction(type, id, 'sign'); assert.equal(result.status, 'PENDING'); const post = env.calls.find(v => v.method === 'POST'); assert.ok(post.url.endsWith('/customer/' + type + '/' + id + '/sign')); assert.ok(env.navigations[0].startsWith('/pages/sign/index?kind=' + kind)); assert.match(env.api.getSigningTask(kind, id).url, /^https:\/\/textapi17/); const saved = JSON.stringify([...env.storage.values()]); assert.equal(saved.includes('opaque='), false); assert.equal(saved.includes('task1'), false); }
 });

@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-17T07:52:40.740Z",
+  "scope": "Miniapp owner invitation layout and encoded signing-page navigation",
+  "cause": "WeChat onLoad retains encoded query parameters; owner composite IDs contained %3A, preventing cached URL lookup and owner status parsing.",
+  "reproduction": "Observed in actual WeChat DevTools and reproduced by failing native integration tests before the fix.",
+  "miniappTests": { "passed": 241, "failed": 0 },
+  "templateCompilation": { "wxml": 19, "wxss": 20 },
+  "nativePackageFiles": 107,
+  "devtools": {
+    "encodedOptionsId": "synthetic-owner%3Anew",
+    "decodedPageId": "synthetic-owner:new",
+    "invitationHeightPx": 72,
+    "invitationLineHeightPx": 21,
+    "full43CharacterTokenRetained": true,
+    "twoLinesFit": true,
+    "screenshotVisuallyChecked": true,
+    "syntheticUiOnly": true
+  },
+  "productionReadOnly": {
+    "invitationClaimed": true,
+    "providerAccountRegistered": true,
+    "existingVerificationTransactionAndUrlPresent": true,
+    "realNameStatus": "PENDING",
+    "certStatus": "UNKNOWN"
+  },
+  "apiOrDatabaseChanges": false,
+  "newProviderAuthOrSigningRequestedByAgent": false,
+  "physicalDeviceAuthResult": "Pending human continuation of existing verification"
+}
