@@ -50,8 +50,8 @@
     "eligibleForAssignment": true
   },
   "pending": [
-    "Public account menu name and placement",
     "Employee changes initial password",
     "Actual phone camera and assigned real-order handover acceptance"
-  ]
+  ],
+  "officialAccountMenuEvidence": "field-handover-official-menu.json"
 }

@@ -1,0 +1,20 @@
+{
+  "verifiedAt": "2026-10-17T13:38:44.150Z",
+  "accountName": "晓浪科技",
+  "appId": "wxfd6cbbc288110c3d",
+  "menuPath": [
+    "其他",
+    "车辆交接"
+  ],
+  "type": "view",
+  "url": "https://mini-admin.subauto.keybox.cloud/field.html",
+  "menuOpen": true,
+  "currentConfigurationMatched": true,
+  "apiMenuMatched": true,
+  "mutationPerformed": false,
+  "reason": "Requested menu entry already present with exact target URL",
+  "snapshotSha256": "35b16f1f8f9a18ecdfb9862c32717c849415e16c8ce640094cd75e10a4183ad2",
+  "landingHttpStatus": 200,
+  "assetsVerified": 3,
+  "physicalWeChatAcceptance": "pending"
+}
