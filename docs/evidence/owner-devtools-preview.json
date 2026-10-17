@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-10-17T06:55:56.924Z",
+  "release": "20261017-owner-signing-v2",
+  "sourceCommit": "9acef8b2f1f74a76db333748d2ced4bc9fac3c2b",
+  "method": "Official logged-in WeChat DevTools CLI preview",
+  "success": true,
+  "appid": "wxa7089edf4a34a7f5",
+  "files": 107,
+  "sourceManifestSha256": "db4cd150e518a60db198e6a6b433838c38c1678837cd224424dec3fd0715a299",
+  "projectConfigSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c",
+  "identicalNativeArtifactOriginallyCompiledAt": "20261017-owner-signing-v1",
+  "ciFallbackReason": "Current outbound IP not in CI whitelist",
+  "qrLocalPath": ".runtime/miniapp-ci/owner-preview.png",
+  "formalUploadOrPublication": false
+}

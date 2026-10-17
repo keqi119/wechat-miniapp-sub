@@ -1,5 +1,5 @@
 {
-  "published": false,
+  "published": true,
   "approvalStatement": "批准六份文本及模板，具体企业授权和逐单内容另行确认",
   "editorialChanges": "仅替换草稿状态标记；原始获批正文保留",
   "status": "APPROVED",
@@ -57,5 +57,6 @@
   ],
   "recordedAt": "2026-10-17T05:19:50.4350777Z",
   "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
-  "approvedOn": "2026-10-17"
+  "approvedOn": "2026-10-17",
+  "publicationEvidence": "docs/evidence/owner-legal-publication.json"
 }

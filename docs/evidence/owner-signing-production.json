@@ -1,0 +1,68 @@
+{
+  "checkedAt": "2026-10-17T06:57:46.910742+00:00",
+  "rollout": {
+    "release": "20261017-owner-signing-v2",
+    "sourceCommit": "9acef8b2f1f74a76db333748d2ced4bc9fac3c2b",
+    "healthy": true,
+    "migrationCount": 23,
+    "newMigration": "202610170023_lessor_contract",
+    "commercialCountsUnchanged": {
+      "application": 0,
+      "order": 0,
+      "contract": 0,
+      "bill": 0,
+      "payment": 0
+    },
+    "mapEnabled": false,
+    "locationPolicyConfigured": false,
+    "commercialPaymentEnabled": false,
+    "commercialSigningEnabled": false,
+    "staticRelease": "20261017-owner-signing-v2",
+    "nginxUnchanged": true,
+    "backup": "20261017T062556Z.tar.enc",
+    "backupRestoreTables": 58,
+    "freeBytes": 850313216
+  },
+  "postdeploy": {
+    "release": "20261017-owner-signing-v2",
+    "healthy": true,
+    "ownerOnboardingEnabled": true,
+    "ownerContractsEnabled": false,
+    "autoSigningEnabled": false,
+    "commercialPaymentEnabled": false,
+    "ownerId": "cmvc1me48000tqx013qieoe5s",
+    "ownerStatus": "DRAFT",
+    "invitationCount": 1,
+    "providerIdentityStarted": false,
+    "counts": {
+      "application": 0,
+      "order": 0,
+      "contract": 0,
+      "bill": 0,
+      "payment": 0,
+      "ownerSigningTask": 0
+    },
+    "originalTechnicalArchiveUnchanged": true
+  },
+  "runtimeImage": {
+    "release": "20261017-owner-signing-v2",
+    "sourceCommit": "9acef8b2f1f74a76db333748d2ced4bc9fac3c2b",
+    "baseRelease": "20261017-owner-signing-v1",
+    "runtimeFile": {
+      "path": "runtime-api/admin.js",
+      "bytes": 17579,
+      "sha256": "c17cf3281556b80150c715cc940cf2e59cbd173a04cab94dc5f929d46d67e5a9"
+    },
+    "freeBytes": 850997248
+  },
+  "imageRetention": {
+    "freeBytes": 849346560,
+    "localImageAndArchivesRetained": true
+  },
+  "approvedLegalDocumentsPublished": 9,
+  "humanEnterpriseVerification": "PENDING",
+  "ownerManualSigning": "PENDING",
+  "ownerAutomaticAuthority": "PENDING",
+  "wechatFormalPublication": false,
+  "remainingUiIssue": "Customer list uses aggregate signing progress; owner detail shows both parties."
+}

@@ -1,0 +1,63 @@
+{
+  "checkedAt": "2026-10-17T06:56:11.729Z",
+  "release": "20261017-owner-signing-v2",
+  "documents": [
+    {
+      "type": "owner-identity",
+      "version": 1,
+      "id": "cmvc1m5vx0001qx01lvldzas2",
+      "sha256": "f72d5ce7e70d795b5aa7f79cee3f40a0cdae799cbc1e91849f6f3f6b45588f0c"
+    },
+    {
+      "type": "owner-auto-sign",
+      "version": 1,
+      "id": "cmvc1m61l0004qx01dshh8kfr",
+      "sha256": "34f3bc54e4f0e60e1e0931703dec52ee17b79a06259d523ef61089957b55fb9d"
+    },
+    {
+      "type": "owner-data-sharing",
+      "version": 1,
+      "id": "cmvc1m66n0007qx015x3q9rk6",
+      "sha256": "788244edcebed90bbfef8dd2c42b5110daad6b5e94dc7aad2b266f3bc0a07326"
+    },
+    {
+      "type": "owner-rental-contract",
+      "version": 2,
+      "id": "cmvc1m6bm000aqx01fku6yikn",
+      "sha256": "e085bb396d127095e1fea470ba6e71aac87623a6e614d68c55bc9a6af6855ef9"
+    },
+    {
+      "type": "terms",
+      "version": 2,
+      "id": "cmvc1m6h9000dqx01ad5bb1fr",
+      "sha256": "b3d15b9e4a8c60f93edd32ec9314c1041b12b700d974aa83e6c94f1be0135daa"
+    },
+    {
+      "type": "privacy",
+      "version": 4,
+      "id": "cmvc1m6mp000gqx01pwx2mn4q",
+      "sha256": "ed5b839ecdfe9970b30c416166c37320471d612a42423261fe15c909d67948bb"
+    },
+    {
+      "type": "owner-delivery-delay",
+      "version": 1,
+      "id": "cmvc1m6sj000jqx01p6qwcpfv",
+      "sha256": "00cc4051e9a06501b1a2201bc97ecaa88cba8396653d6c83ddaad485407135a5"
+    },
+    {
+      "type": "owner-vehicle-change",
+      "version": 1,
+      "id": "cmvc1m6xz000mqx01lcsj6v7t",
+      "sha256": "856785bbbebd355756c04de51e814abcadbd5dab51f7e870c9112e2f2f5b4235"
+    },
+    {
+      "type": "owner-handover",
+      "version": 1,
+      "id": "cmvc1m72y000pqx01jliy4b3z",
+      "sha256": "3ebc9e885c92ecd389c11317d09b961543e849274ff622d3384839a0275e9bfc"
+    }
+  ],
+  "actualIdentityStarted": false,
+  "actualAuthorizationCreated": false,
+  "actualSignatureCreated": false
+}

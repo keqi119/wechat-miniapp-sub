@@ -30,5 +30,6 @@
   "approvedOn": "2026-10-17",
   "approvalQuestionId": "call_5dc19ddd40224708b153e37b1eb52615",
   "approvalStatement": "批准三份模板，逐单内容另行确认",
-  "published": false
+  "published": true,
+  "publicationEvidence": "docs/evidence/owner-legal-publication.json"
 }
