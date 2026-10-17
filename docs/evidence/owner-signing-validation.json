@@ -41,5 +41,13 @@
   "realEnterpriseVerified": false,
   "actualOwnerContractSigned": false,
   "automaticAuthorityGranted": false,
-  "wechatPublished": false
+  "wechatPublished": false,
+  "publicationFollowup": {
+    "reason": "New owner legal types were absent from admin create DTO and editor choices",
+    "httpPassed": 6,
+    "newTest": "All seven owner types create, publish and publicly read; finance denied",
+    "adminRegressionPassed": 98,
+    "apiAndAdminBuilds": "passed",
+    "baselineFullApiPassed": 310
+  }
 }

@@ -10,7 +10,7 @@ import {ContractPdfArtifactWriterService} from '../src/contract/contract-pdf-art
 let db:Db,app:any,base:string;const admins:any={},customers:any[]=[];let ownerId:string;
 before(async()=>{
  assert.ok(new URL(process.env.TEST_DATABASE_URL!).pathname.endsWith('_test'));process.env.NODE_ENV='test';db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});
- for(const role of ['OPERATIONS','FINANCE','SUPPORT']){const token=randomUUID(),user=await db.adminUser.create({data:{username:token,name:'Synthetic',passwordHash:'unused',role:role as any}});await db.adminSession.create({data:{id:tokenHash(token),adminId:user.id,csrfToken:'synthetic-csrf',expiresAt:new Date(Date.now()+3600000)}});admins[role]={user,token};}
+ for(const role of ['ADMIN','OPERATIONS','FINANCE','SUPPORT']){const token=randomUUID(),user=await db.adminUser.create({data:{username:token,name:'Synthetic',passwordHash:'unused',role:role as any}});await db.adminSession.create({data:{id:tokenHash(token),adminId:user.id,csrfToken:'synthetic-csrf',expiresAt:new Date(Date.now()+3600000)}});admins[role]={user,token};}
  for(let i=0;i<2;i++){const token=randomUUID(),customer=await db.customer.create({data:{mobile:'13'+String(i+5)+String(Date.now()).slice(-8)}});await db.customerSession.create({data:{id:tokenHash(token),customerId:customer.id,expiresAt:new Date(Date.now()+3600000)}});customers.push({token,customer});}
  app=await createApp({db});base=await listenForHttpTests(app);
 });
@@ -50,4 +50,12 @@ test('finance and support cannot download a private owner contract by guessing i
  const file=await new ContractPdfArtifactWriterService(db).persistPdf(Buffer.from('%PDF-1.7\n'+ 'synthetic privacy fixture '.repeat(5)),{customerId:customers[0].customer.id,name:'synthetic.pdf',purpose:'contract'});
  await db.ownerSigningTask.create({data:{ownerId,customerId:customers[0].customer.id,kind:'SUBSCRIPTION',resourceId:randomUUID(),documentHash:'a'.repeat(64),sourceFileId:file.id,sourceSha256:file.sha256,providerContractId:randomUUID(),snapshot:{synthetic:true},ownerSealId:'synthetic'}});
  for(const role of ['FINANCE','SUPPORT']){const r=await fetch(base+'/api/admin/files/'+file.id,{headers:{Cookie:'admin_session='+admins[role].token}});assert.equal(r.status,403);}
+});
+test('approved owner legal types can be created and published through the protected admin API',async()=>{
+ for(const type of ['owner-identity','owner-auto-sign','owner-data-sharing','owner-rental-contract','owner-delivery-delay','owner-vehicle-change','owner-handover']){
+  const input={type,version:Math.floor(Date.now()/1000),title:'Synthetic '+type,content:'Synthetic approved enterprise text '+type,confirmedBy:'Synthetic approver',confirmedAt:new Date().toISOString()};
+  assert.equal((await req('/admin/legal-documents',input,'FINANCE')).status,403);
+  const draft=await req('/admin/legal-documents',input,'ADMIN');assert.equal(draft.status,201,JSON.stringify(draft.body));
+  const published=await req('/admin/legal-documents/'+draft.body.id+'/publish',{},'ADMIN');assert.equal(published.status,201);assert.equal((await req('/public/legal/'+type)).body.content,input.content);
+ }
 });
