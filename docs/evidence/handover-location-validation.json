@@ -1,0 +1,102 @@
+{
+  "checkedAt": "2026-10-17T04:20:49.628Z",
+  "base": "70c7196",
+  "scope": "Customer-proposed handover location, not final contract facts or actual delivery",
+  "legalApproval": "docs/legal/location-approval-manifest.json",
+  "tests": {
+    "api": {
+      "passed": 248,
+      "failed": 0,
+      "build": true
+    },
+    "admin": {
+      "passed": 98,
+      "failed": 0,
+      "build": true
+    },
+    "miniprogram": {
+      "passed": 235,
+      "failed": 0,
+      "sourceCheck": true,
+      "wxml": 18,
+      "wxss": 19,
+      "productionBundleFiles": 102
+    }
+  },
+  "redGreen": [
+    "Missing API helper -> six tests green",
+    "Missing native helper/page handlers -> helper + page tests green",
+    "Privacy consent amendment accepted201 -> expected409 after fix",
+    "Missing admin helper -> draft preservation tests green",
+    "Review reproduction: picker opened after preflight page hide1 -> expected0 after phase/generation guard"
+  ],
+  "visual": {
+    "method": "Actual wcc template rendered offline; CUA screenshot at390x844",
+    "syntheticData": true,
+    "initialCheckboxes": [
+      false,
+      false
+    ],
+    "horizontalOverflow": false,
+    "deviceVerified": false
+  },
+  "review": {
+    "reviewer": "review_handover_location",
+    "critical": 0,
+    "important": 1,
+    "importantFixed": 1,
+    "minor": 0,
+    "reproduction": "Leaving during capability preflight does not invoke wx.chooseLocation; legitimate native picker hide/return still keeps explicit result",
+    "rerun": "Native full235/235 after fix; API/admin unchanged"
+  },
+  "rulings": [
+    {
+      "decision": "沿用现有独立功能分支和直接开工授权",
+      "reason": "本次属于同一已授权项目",
+      "costIfWrong": "分支包含多个已分别验证的功能，依靠明确文件暂存区分"
+    },
+    {
+      "decision": "使用PowerShell维护步骤台账",
+      "reason": "当前为Windows环境",
+      "costIfWrong": "需确保台账及测试输出与技能流程等价"
+    },
+    {
+      "decision": "两处WXML保留小型重复卡片，共用已测试JS",
+      "reason": "避免为选址重构模板检查器",
+      "costIfWrong": "后续视觉改动须同步两处卡片"
+    },
+    {
+      "decision": "后台沿用详情投影与标签展示建议",
+      "reason": "无需改动通用App组件",
+      "costIfWrong": "后续如需特殊展示再调整布局"
+    },
+    {
+      "decision": "微信权限、隐私同步、真机行为保持待验收",
+      "reason": "源码测试不能证明外部平台或设备行为",
+      "costIfWrong": "未完成外部验证前地图保持关闭"
+    },
+    {
+      "decision": "真实发布、订单、付款、签署不由本次本地验证证明",
+      "reason": "需要独立生产记录和实际业务材料",
+      "costIfWrong": "不能将本地通过当作全业务完成"
+    },
+    {
+      "decision": "不重复审查此前报价功能",
+      "reason": "70c7196已通过独立审查",
+      "costIfWrong": "当前特性审查不覆盖其旧代码"
+    },
+    {
+      "decision": "沿用用户已批准法律文本，仅核对实现与摘要",
+      "reason": "此次未改正文或重新法律审定",
+      "costIfWrong": "经营适用性仍依实际资料及专业审阅"
+    }
+  ],
+  "deferredMinors": [],
+  "external": {
+    "productionDeployed": false,
+    "legalPublished": false,
+    "wechatMapPermission": "NOT_ENABLED_APPLICATION_PREPARED",
+    "wechatPrivacyGuideV3Submitted": false,
+    "realOrderCreated": false
+  }
+}

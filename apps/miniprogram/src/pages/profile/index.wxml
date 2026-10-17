@@ -4,6 +4,23 @@
 <view class="field"><view class="label">姓名</view><input class="input" value="{{name}}" maxlength="30" data-field="name" bindinput="input" disabled="{{busy}}"/></view>
 <view class="field"><view class="label">认证手机号</view><input class="input" value="{{mobile}}" disabled="{{true}}"/></view>
 <view class="field"><view class="label">驾龄（年）</view><input class="input" type="number" value="{{drivingYears}}" maxlength="2" data-field="drivingYears" bindinput="input" disabled="{{busy}}"/></view></view>
+
+<view wx:if="{{locationEnabled || locationSaved}}" class="card">
+  <view class="section-title">建议交还地点</view>
+  <view class="muted">默认交车和还车使用同一地点。运营核对后，双方在最终方案中确认。</view>
+  <view wx:if="{{locationSaved}}" class="notice">以下为已提交建议；修改后须重新提交补充资料。</view>
+  <view class="field"><view class="label">地点名称（选填）</view><input class="input" value="{{locationName}}" maxlength="100" data-field="name" bindinput="onLocationInput" disabled="{{busy || locationChoosing || !locationEnabled}}" placeholder="例如：停车场入口"/></view>
+  <view class="field"><view class="label">详细地址</view><textarea class="textarea" value="{{locationAddress}}" maxlength="500" data-field="address" bindinput="onLocationInput" disabled="{{busy || locationChoosing || !locationEnabled}}" placeholder="请填写城市、道路、门牌及交接入口"/></view>
+  <button class="text-button" bindtap="clearLocation" disabled="{{busy || locationChoosing}}">清除本次地点</button>
+  <button wx:if="{{locationNotice}}" class="text-button" bindtap="toggleLocationNotice" disabled="{{busy || locationChoosing}}">{{locationNoticeOpen ? '收起' : '阅读'}}《交接地点选择说明》</button>
+  <view wx:if="{{locationNoticeOpen}}" class="notice">{{locationNotice.title}} · 版本 {{locationNotice.version}}<view style="white-space: pre-wrap">{{locationNotice.content}}</view></view>
+  <block wx:if="{{locationMapEnabled}}">
+    <checkbox-group bindchange="onLocationAccepted"><label class="acceptance"><checkbox value="location" checked="{{locationAccepted}}" disabled="{{busy || locationChoosing || !locationNoticeOpen}}" color="#B44919"/><text>我已阅读《交接地点选择说明》，同意本次通过微信地图选择交接地点，并在我提交申请或资料补充时保存确认的地点名称和地址。</text></label></checkbox-group>
+    <button class="secondary" bindtap="chooseLocation" disabled="{{busy || locationChoosing || !locationAccepted}}" loading="{{locationChoosing}}">在地图中选择地点</button>
+  </block>
+  <view wx:else class="muted">当前可手动填写地址，地图选点暂未启用。</view>
+  <view wx:if="{{locationMessage}}" class="notice">{{locationMessage}}</view>
+</view>
 <view class="card"><view class="section-title">私密资料附件</view><view class="muted">最多4张，每张不超过10MB，仅当前账户和授权审核人员可查看。</view><view wx:for="{{attachments}}" wx:key="id" class="row between"><button class="text-button" data-id="{{item.id}}" bindtap="openAttachment">{{item.name}}</button><button class="text-button" data-index="{{index}}" bindtap="removeAttachment" disabled="{{busy}}">移除</button></view><button class="secondary" bindtap="chooseAttachments" disabled="{{busy || choosing || attachments.length >= 4}}" loading="{{choosing}}">上传资料图片</button></view>
 <view wx:if="{{applicationId}}" class="card"><view class="label">补充说明</view><textarea class="textarea" value="{{note}}" maxlength="500" data-field="note" bindinput="input" disabled="{{busy}}"/></view>
-<view wx:if="{{message}}" class="notice">{{message}}</view><button class="primary" bindtap="submit" disabled="{{busy || choosing}}" loading="{{busy}}">{{applicationId ? '提交补充资料' : '保存资料'}}</button></block></view>
+<view wx:if="{{message}}" class="notice">{{message}}</view><button class="primary" bindtap="submit" disabled="{{busy || choosing || locationChoosing}}" loading="{{busy}}">{{applicationId ? '提交补充资料' : '保存资料'}}</button></block></view>

@@ -1,3 +1,4 @@
+import { handoverProposal } from './handover-location.ts';
 import type { Entity } from './core';
 import { esignResources, prepareFields } from './esign-resources.ts';
 import { commercialTermLabels, handoverFactLabels } from './business-terms.ts';
@@ -57,7 +58,7 @@ export const labels: Record<string, string> = {
 };
 export function statusLabel(value: string) { return labels[value] ?? value; }
 Object.assign(labels, commercialTermLabels, handoverFactLabels);
-Object.assign(labels,{TECHNICAL_ACCEPTANCE:'独立技术验收文件','technical-signing-verification':'技术签署验证确认书','technical-acceptances':'签署技术验收',STOPPED:'已记录停止',PURGED:'独立资料已清理',RETAINED:'期限内保留',REVIEW_DUE:'到期等待人工复核',HELD:'必要留存中'});
+Object.assign(labels,{'handover-location':'交接地点选择说明',handoverProposal:'客户建议交还地点',TECHNICAL_ACCEPTANCE:'独立技术验收文件','technical-signing-verification':'技术签署验证确认书','technical-acceptances':'签署技术验收',STOPPED:'已记录停止',PURGED:'独立资料已清理',RETAINED:'期限内保留',REVIEW_DUE:'到期等待人工复核',HELD:'必要留存中'});
 export const resources: Resource[] = [
   technicalResource,
   swapCreditResource,
@@ -84,7 +85,7 @@ export const resources: Resource[] = [
   { key: 'notifications', title: '站内通知', singular: '通知', subtitle: '向客户发送业务进展通知，追踪已读状态。', create: true, columns: [{ key: 'title', label: '通知标题' }, { key: 'customerId', label: '客户' }, { key: 'readAt', label: '阅读时间', format: 'date' }, created], fields: [ref('customerId', '客户', 'customers'), text('title', '标题'), area('content', '通知正文', true), text('resourceType', '关联资源类型', false), text('resourceId', '关联资源 ID', false)] },
   { key: 'users', title: '后台账号', singular: '账号', subtitle: '按职责分配运营、财务、客服与管理权限。', create: true, edit: true, columns: [{ key: 'name', label: '姓名' }, { key: 'username', label: '用户名' }, { key: 'role', label: '角色' }, { key: 'active', label: '启用' }, created], fields: [text('username', '用户名'), text('name', '姓名'), { key: 'password', label: '密码', type: 'password', hint: '新建必填；编辑留空则保留当前密码' }, select('role', '角色', ['OPERATIONS', 'FINANCE', 'SUPPORT', 'ADMIN']), { key: 'active', label: '允许登录', type: 'boolean' }] },
   { key: 'audit-logs', title: '操作审计', singular: '审计记录', subtitle: '留存操作者、业务对象与状态变化，审计记录不可编辑。', columns: [{ key: 'action', label: '操作' }, { key: 'actorId', label: '操作人' }, { key: 'resourceType', label: '资源类型' }, { key: 'resourceId', label: '业务对象' }, created] },
-  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy', 'delivery-delay-amendment', 'vehicle-change-amendment', 'technical-signing-verification']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
+  { key: 'legal-documents', title: '协议草稿', singular: '协议草稿', subtitle: '正式文案需经用户审定。这里保存草稿与版本记录。', create: true, edit: true, columns: [{ key: 'title', label: '协议标题' }, { key: 'type', label: '协议类型' }, { key: 'version', label: '版本' }, statusColumn, created], fields: [select('type', '协议类型', ['application', 'privacy', 'terms', 'subscription', 'handover', 'credit-verification', 'mileage-pack', 'usage-policy', 'delivery-delay-amendment', 'vehicle-change-amendment', 'technical-signing-verification', 'handover-location']), num('version', '版本号', 1), text('title', '标题'), area('content', '文案正文', true)] },
   ...esignResources,
   ...usageResources,
   { key: 'order-changes', title: '交车延期', singular: '延期变更', subtitle: '逐单确认报价、补充协议与资金后生效延期。', columns: [] },
@@ -143,6 +144,7 @@ export function detailFor(resource: string, entity: Entity): Record<string, unkn
   if (resource === 'applications') return {
     ...pick(entity, ['id', 'status', 'customerId', 'vehicleId', 'subscriptionPlanId', 'revision']),
     finalPlan: entity.finalPlan && typeof entity.finalPlan === 'object' ? pick(entity.finalPlan as Record<string, unknown>, ['revision', 'commercialHash', 'monthlyFeeAmount', 'depositAmount', 'months', 'mileagePerMonthKm', 'excessMileagePriceAmount', 'energyDescription', 'benefits', 'conditions', 'startDate', 'firstDueDate', 'commercialTerms', 'creditVerificationId', 'creditRuleVersion', 'creditBand', 'creditRevision', 'usagePolicy']) : undefined,
+    handoverProposal: handoverProposal(entity) || '客户尚未提供建议地点',
     profile: entity.profile,
     ...(entity.vehicle && typeof entity.vehicle === 'object' ? { vehicle: pick(entity.vehicle as Record<string, unknown>, ['title', 'brand', 'model', 'year', 'city', 'mileageKm', 'batteryHealthPercent', 'conditionDisclosure', 'coverFileId', 'mediaFileIds']) } : {}),
     ...pick(entity, ['consents', 'note', 'createdAt', 'updatedAt']),

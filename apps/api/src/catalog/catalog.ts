@@ -1,3 +1,4 @@
+import { locationCapabilities } from '../applications/handover-location';
 import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
 import { Db } from '../common/db';
 import { ensure } from '../common/errors';
@@ -11,6 +12,7 @@ export function planView(p: any, available = true) { return { ...p, title: p.nam
 @Controller('public')
 export class CatalogController {
   constructor(@Inject(Db) private db: Db) {}
+  @Get('handover-location') handoverLocation() { return locationCapabilities(this.db); }
   @Get('vehicles') async vehicles(@Query() query: any) {
     const p = pagination(query); const where: any = { status: 'PUBLISHED' };
     if (query.brand && query.brand !== '全部') where.brand = query.brand;

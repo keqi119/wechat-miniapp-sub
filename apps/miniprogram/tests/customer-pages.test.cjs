@@ -23,6 +23,7 @@ global.wx = {
     else if (route === '/customer/applications/a1/credit-review') data = { applicationId:'a1',creditRevision:3,ruleVersion:'ZHIMA_MANUAL_V1',document:{id:'credit-v1',type:'credit-verification',version:1,title:'人工核验说明',content:'本地测试说明'},consent:{id:'cc1',status:'ACCEPTED',documentId:'credit-v1',version:1},verification:{id:'cv1',band:'GE750',consentId:'cc1',verifiedAt:'2026-10-16T08:00:00Z'},status:'VERIFIED',canConsent:true,canDecline:true,consentRequirementsMet:true,canWithdraw:true,canFinalize:false,verificationCurrent:true,canConfirmFinalPlan:true,depositMultiplier:0 };
     else if (route === '/customer/dashboard') data = { subscription: { id: 'o1', orderId: 'o1', vehicleName: '当前车辆' }, handover: { id: handoverId } };
     else if (route === '/customer/orders/o1/usage-account') data = {orderId:'o1',orderStatus:'ACTIVE',policyVersion:'USAGE_V1',startedOn:'2026-09-16',returnedOn:null,baseAllowanceKm:1500,excessPriceAmount:150,packBalanceKm:0,packStatus:'ACTIVE',periods:[{id:'up1',sequence:1,startDate:'2026-09-16',endDate:'2026-10-16',effectiveEndDate:'2026-10-16',status:'AWAITING_READING',revision:1,startReadingKm:0,endReadingKm:null,usedKm:null,baseUsedKm:null,packUsedKm:null,excessKm:null,excessAmount:null,billId:null,canSubmit:true,reviewNote:''}],packs:[],ledger:[],products:[],purchaseTerms:null,canPurchase:false,returnSettlement:null};
+    else if (route === '/public/handover-location') data = {enabled:true,mapEnabled:false,policyHash:'a'.repeat(64),notice:{id:'location1',version:1,title:'交接地点选择说明',content:'合成测试说明'}};
     else if (route.startsWith('/public/vehicles/')) data = { vehicle: { id: 'v1', name: '当前车辆', available: true }, plans: [{ id: 'p1', available: true, monthlyFeeAmount: 0 }] };
     else if (route.startsWith('/public/legal/')) { const type = route.split('/').at(-1); data = { id: type === 'application' ? 'legal-1' : type + '-1', type, version: legalVersion, title: '正式须知', content: '正式文案' }; }
     else if (route === '/customer/applications/a1') data = { id: 'a1', status: applicationStatus, profile: { name: '原审查资料', drivingYears: 2, fileIds: ['f-old'] }, note: '请补驾驶证', finalPlan: { creditVerificationId:'cv1',creditRuleVersion:'ZHIMA_MANUAL_V1',creditBand:'GE750',creditRevision:3,revision: 4, commercialHash: 'hash-4', title: '最终套餐', monthlyFeeAmount: 12345, depositAmount: 0, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 80, energyDescription: '自费充电', benefits: ['用车服务'], conditions: '提前退出按合同', startDate: '2026-11-01', firstDueDate: '2026-10-25', commercialTerms,usagePolicy } };
@@ -148,4 +149,15 @@ test('mileage result opens its own record type and verified public customer serv
   const mileage=await settle(page('mileage'));mileage.setData({submitted:{id:'m1'}});mileage.openRecord();
   assert.equal(calls.find(v=>v.navigation).navigation,'/pages/record/index?type=mileages&id=m1');
   const settings=page('settings');settings.callService();assert.equal(calls.find(v=>v.phone).phone,'18616570212');
+});
+
+test('application and amendment pages submit manual handover proposals without map permission',async()=>{
+  const p=await settle(page('application',{vehicleId:'v1',planId:'p1'}));
+  p.onLocationInput({currentTarget:{dataset:{field:'address'}},detail:{value:'测试交接路100号'}});
+  p.setData({accepted:true,name:'测试客户',mobile:'13800000000'});await p.submit();
+  assert.equal(calls.find(v=>v.method==='POST'&&v.url.endsWith('/applications')).data.profile.handoverLocation.address,'测试交接路100号');
+  applicationStatus='NEEDS_INFO';const a=await settle(page('profile',{applicationId:'a1'}));
+  a.onLocationInput({currentTarget:{dataset:{field:'address'}},detail:{value:'测试交接路200号'}});await a.submit();
+  assert.equal(calls.find(v=>v.method==='POST'&&v.url.endsWith('/amend')).data.profile.handoverLocation.address,'测试交接路200号');
+  a.onHide();assert.equal(a.data.locationAddress,'');
 });

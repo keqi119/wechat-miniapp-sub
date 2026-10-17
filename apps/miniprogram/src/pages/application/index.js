@@ -1,8 +1,10 @@
 const service = require('../../services/index');
 const { load, go, toastError } = require('../../utils/page');
 
+const { createLocationEditor, initialLocationData } = require('../../utils/handover-location');
+const { storageKey } = require('../../config');
 Page({
-  data: {
+  data: { ...initialLocationData(),
     loading: true,
     error: '',
     busy: false,
@@ -15,6 +17,7 @@ Page({
     context: {},
   },
   onLoad(options) {
+    this.locationEditor=createLocationEditor(this,service,wx,storageKey);
     this.vehicleId = options.vehicleId;
     this.planId = options.planId;
     const context = service.getContext();
@@ -28,6 +31,7 @@ Page({
       const result = await service.getVehicle(this.vehicleId);
       const plan = (result.plans || []).find((item) => item.id === this.planId) || null;
       const legal = await service.getLegal('application');
+      await this.locationEditor.load();
       const context = service.getContext();
       const changed = this.data.legal && (this.data.legal.id !== legal.id || this.data.legal.version !== legal.version);
       return { vehicle: result.vehicle, plan, legal, context, accepted: changed ? false : this.data.accepted, mobile: context.profile?.mobile || '', name: this.data.name || context.profile?.name || '' };
@@ -42,7 +46,14 @@ Page({
   onAccepted(event) {
     this.setData({ accepted: event.detail.value.includes('accepted'), formError: '' });
   },
-  onShow() { if (this.vehicleId) this.refresh(); },
+  onShow() { this.locationEditor?.sync(); if (this.vehicleId) this.refresh(); },
+  onLocationInput(e) { this.locationEditor.input(e.currentTarget.dataset.field,e.detail.value); },
+  onLocationAccepted(e) { this.locationEditor.accept(e.detail.value.includes('location')); },
+  toggleLocationNotice() { this.locationEditor.toggleNotice(); },
+  chooseLocation() { return this.locationEditor.choose(); },
+  clearLocation() { this.locationEditor.clear(); },
+  onHide() { this.locationEditor.hide(); },
+  onUnload() { this._loadRevision=(this._loadRevision||0)+1;this.locationEditor.dispose(); },
   openLogin() { go('/pages/settings/index'); },
   openTerms() {
     go('/pages/legal/index?type=application');
@@ -55,7 +66,8 @@ Page({
     else this.openCatalog();
   },
   async submit() {
-    if (this.data.busy || this._submitted) return;
+    if (this.data.busy || this.data.locationChoosing || this._submitted) return;
+    if (!this.locationEditor.sync()) return toastError(new Error('登录账户已变化，请重新核对申请。'));
     const { vehicle, plan, accepted } = this.data;
     const name = this.data.name.trim();
     const mobile = this.data.mobile.trim();
@@ -76,8 +88,7 @@ Page({
       const application = await service.submitApplication({
         vehicleId: vehicle.id,
         planId: plan.id,
-        name,
-        mobile,
+        profile: {name,mobile,...(this.locationEditor.payload() !== undefined ? {handoverLocation:this.locationEditor.payload()} : {})},
         accepted,
         consents: this.data.legal ? [{ documentId: this.data.legal.id, version: this.data.legal.version }] : [],
         idempotencyKey: this._submitKey || (this._submitKey = service.idempotencyKey('application')),

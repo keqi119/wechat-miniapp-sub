@@ -23,6 +23,7 @@
     <view wx:if="{{actionMessage}}" class="notice action-message" role="status"
       >{{actionMessage}}</view
     >
+<view wx:if="{{application.profile.handoverLocation}}" class="card"><view class="section-title">建议交还地点</view><view>{{application.profile.handoverLocation.name}}</view><view>{{application.profile.handoverLocation.address}}</view><view class="muted">客户提交的建议地点；以双方确认的最终方案及实际交接记录为准。</view></view>
     <view class="summary-card"
       ><view class="section-title">申请意向</view
       ><view class="summary-row row between"

@@ -1,0 +1,37 @@
+{
+  "status": "APPROVED",
+  "approvedOn": "2026-10-17",
+  "recordedAt": "2026-10-17T04:02:44.967Z",
+  "approvedBy": "用户代表上海晓浪网络科技有限公司",
+  "approvalStatement": "已审阅，批准这三份文案",
+  "approvalQuestionId": "call_f46514debf6d42c7852f8101a2408b28",
+  "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
+  "published": false,
+  "editorialChanges": "仅替换草稿状态标记，完整保留获批正文；原始草稿留存供摘要核对。",
+  "documents": [
+    {
+      "type": "privacy",
+      "version": 3,
+      "approvedSource": "docs/legal/drafts/privacy-policy-v3-location.md",
+      "approvedSourceSha256": "3fc30eff1c8fa84a0b642b7c53ad30d5c072db1c0f304c5edc6d55f8488d3fa2",
+      "finalFile": "docs/legal/versions/location-update/privacy-policy-v3-location.md",
+      "finalSha256": "257fb0698edc27e4d52a32b1ab9f4cbbc041f6c3ce9e840de3a4ebf9c7fc4f76"
+    },
+    {
+      "type": "application",
+      "version": 3,
+      "approvedSource": "docs/legal/drafts/application-notice-v3-location.md",
+      "approvedSourceSha256": "8cbf113fcaa9d53b5d66cfdbbe47a8dfedc1bc64102371954ad1d4d58a61b1c9",
+      "finalFile": "docs/legal/versions/location-update/application-notice-v3-location.md",
+      "finalSha256": "ac1538cb48ce77f869c3cd2d8d11a66a21b80c460aa51dc8471affb5e1e9a776"
+    },
+    {
+      "type": "handover-location",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/handover-location-notice-v1.md",
+      "approvedSourceSha256": "2df33f327b38ae2f30d3e523b0470970ee8745cf12faabc1505963ed54fa14be",
+      "finalFile": "docs/legal/versions/location-update/handover-location-notice-v1.md",
+      "finalSha256": "be20281dc9dc9f5594a51c919dc11ea022a9076b8886092cf1aa78a2a688548e"
+    }
+  ]
+}

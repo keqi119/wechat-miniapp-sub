@@ -1,3 +1,4 @@
+import { prefillHandoverTerms } from './handover-location.ts';
 import { moneyToCents, type Entity } from './core.ts';
 
 export const creditBandLabels: Record<string, string> = { GE750: '750及以上 · 免押金', B700_749: '700–749 · 月费1倍押金', B650_699: '650–699 · 月费2倍押金', LT650: '低于650 · 转人工处理', UNVERIFIABLE: '无法核验 · 转人工处理' };
@@ -45,7 +46,7 @@ export function scopedAcceptanceOffer(review: CreditReview | undefined, applicat
   return review?.applicationId === applicationId && offer?.mode === 'V1_ONE_FEN' && offer.monthlyFeeAmount === 1 && offer.depositAmount === 1 && offer.months === 12 && !!offer.startDate && !!offer.firstDueDate && !!offer.reference ? offer : undefined;
 }
 export function creditPlanInitial(entity: Entity, review?: CreditReview): Record<string, unknown> {
-  return { ...(entity.subscriptionPlan as Record<string, unknown> ?? entity.plan as Record<string, unknown> ?? {}), ...(entity.finalPlan as Record<string, unknown> ?? {}), mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, revision: entity.revision ?? 0, creditVerificationId: review?.verification?.id ?? '', creditBand: review?.verification?.band ?? '', creditRevision: review?.creditRevision, creditRuleVersion: review?.ruleVersion, pricingMode: (entity.finalPlan as Record<string, unknown> | undefined)?.acceptancePricing ? 'V1_ONE_FEN' : 'STANDARD', acceptancePricingScope: scopedAcceptanceOffer(review, entity.id) };
+  return { ...(entity.subscriptionPlan as Record<string, unknown> ?? entity.plan as Record<string, unknown> ?? {}), ...(entity.finalPlan as Record<string, unknown> ?? {}), commercialTerms: prefillHandoverTerms(entity,(entity.finalPlan as Record<string, unknown> | undefined)?.commercialTerms), mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, revision: entity.revision ?? 0, creditVerificationId: review?.verification?.id ?? '', creditBand: review?.verification?.band ?? '', creditRevision: review?.creditRevision, creditRuleVersion: review?.ruleVersion, pricingMode: (entity.finalPlan as Record<string, unknown> | undefined)?.acceptancePricing ? 'V1_ONE_FEN' : 'STANDARD', acceptancePricingScope: scopedAcceptanceOffer(review, entity.id) };
 }
 export function creditDepositPreview(values: Record<string, string>, initial: Record<string, unknown>): string {
   if (values.pricingMode === 'V1_ONE_FEN') return (initial.acceptancePricingScope as AcceptancePricingOffer | undefined)?.mode === 'V1_ONE_FEN' ? '0.01' : '本单验收报价未授权，请重新核对';

@@ -1,3 +1,4 @@
+const { locationPayload } = require('../utils/handover-location');
 const { money, date } = require('../utils/format');
 const { createUsageApi } = require('./usage');
 const { createOrderChangesApi } = require('./order-changes');
@@ -238,7 +239,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   }
   async function submitApplication(payload) {
     if (!payload.accepted || !Array.isArray(payload.consents) || !payload.consents.length || payload.consents.some(c => !c.documentId || c.version == null)) throw error('请阅读并同意当前已发布的申请协议。', 'CONSENT_REQUIRED');
-    return call('POST', '/customer/applications', { vehicleId: payload.vehicleId, subscriptionPlanId: payload.subscriptionPlanId || payload.planId, profile: payload.profile || { name: payload.name, mobile: payload.mobile }, consents: payload.consents, idempotencyKey: payload.idempotencyKey || idempotencyKey('application') });
+    return call('POST', '/customer/applications', { vehicleId: payload.vehicleId, subscriptionPlanId: payload.subscriptionPlanId || payload.planId, profile: { ...(payload.profile || { name: payload.name, mobile: payload.mobile }), ...(payload.profile?.handoverLocation !== undefined ? { handoverLocation: locationPayload(payload.profile.handoverLocation) } : {}) }, consents: payload.consents, idempotencyKey: payload.idempotencyKey || idempotencyKey('application') });
   }
   async function getRecords(type, params = {}) {
     if (type === 'orderchanges') return (await changesApi.getOrderChanges(params)).items;
@@ -393,7 +394,8 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     getModelDefinitions: async () => list(await call('GET', '/public/model-definitions', undefined, false)).items,
     getDashboard: async () => { const result = await call('GET', '/customer/dashboard'); const tracked = result.subscription && Object.prototype.hasOwnProperty.call(result.subscription, 'currentAssignment'); const assignment = tracked ? assignmentView(result.subscription.currentAssignment, () => { throw error('当前车辆分配尚未核实。', 'RESPONSE'); }) : null; return { ...result, ...(result.application ? { application: application(result.application) } : {}), ...(result.subscription ? { subscription: { ...result.subscription, ...(tracked ? { currentAssignment: assignment, vehicleName: assignment ? assignment.vehicle.title : '当前暂无车辆，换车待交付' } : {}), ...(tracked && !assignment ? { mileageText: '暂无当前车辆读数' } : {}), imageUrl: tracked && !assignment ? '' : media(result.subscription.imageUrl) } } : {}) }; },
     getApplication: async id => application(await call('GET', '/customer/applications/' + identifier(id))),
-    amendApplication: (id, payload) => call('POST', '/customer/applications/' + identifier(id) + '/amend', { profile: { name: payload.profile.name, drivingYears: payload.profile.drivingYears, fileIds: fileIds({ fileIds: payload.profile.fileIds || [] }) }, note: payload.note || '', idempotencyKey: payload.idempotencyKey || idempotencyKey('amend') }),
+    amendApplication: (id, payload) => call('POST', '/customer/applications/' + identifier(id) + '/amend', { profile: { name: payload.profile.name, drivingYears: payload.profile.drivingYears, fileIds: fileIds({ fileIds: payload.profile.fileIds || [] }), ...(Object.prototype.hasOwnProperty.call(payload.profile, 'handoverLocation') ? { handoverLocation: locationPayload(payload.profile.handoverLocation) } : {}) }, note: payload.note || '', idempotencyKey: payload.idempotencyKey || idempotencyKey('amend') }),
+    getHandoverLocationCapability: () => call('GET', '/public/handover-location', undefined, false),
     getLoginDocuments: () => Promise.all(['terms','privacy'].map(type => call('GET', '/public/legal/' + type, undefined, false))),
     acceptConsents: consents => call('POST', '/customer/consents', { consents: consentSnapshot(consents) }),
     getESignReadiness: () => call('GET', '/customer/esign/readiness'),

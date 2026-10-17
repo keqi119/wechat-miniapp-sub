@@ -114,3 +114,15 @@ safe记录至少含 `{id,amount,currency,status,expiresAt,createdAt,paidAt,canPa
 ## 实现协调
 
 API 实现人员负责把以上入口细化为 DTO、Prisma 实体与共享类型；新增必要字段写入本文并及时通知两个前端。支付和签署的具体 Gateway TypeScript 接口由 API 任务先定义，主控集成时适配接口，不以 placeholder success 代替第三方能力。
+# 交还地点建议（2026-10-17）
+
+`GET /public/handover-location`返回`enabled/mapEnabled/notice/policyHash`；notice只在当前已发布且与配置精确匹配时返回。配置规则见`docs/handover-location.md`。
+
+申请提交及`POST /customer/applications/:id/amend`的profile可含可空的handoverLocation：
+
+- 手填：`{source:"MANUAL",name:"地点名称（可为空）",address:"完整地址"}`。
+- 地图：`{source:"MAP",name,address,accepted:true,policyHash:"本次展示的能力摘要"}`。
+- name最多100字，address为2–500字；结构严格，不接收坐标、客户端同意时间或额外字段。地图需开关开启、当前文案摘要一致和独立同意。
+- 服务器生成`consent:{customerId,documentId,version,contentHash,policyHash,acceptedAt}`。不把地图同意写成普通登录同意，也不由后台代客户勾选。
+- 补件省略字段保留已有地点，null清除。仅当前客户、NEEDS_INFO状态允许新补件，幂等回放保留原结果。新增地点须当前隐私政策同意；清除不受此限制。
+- 当前profile采用严格字段name/drivingYears/fileIds/mobile（mobile仅申请提交），防止通过扩展字段保存坐标。个人资料接口不承担交接建议存储。

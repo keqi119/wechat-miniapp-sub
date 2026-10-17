@@ -1,3 +1,4 @@
+import { locationInput, resolveLocation } from './handover-location';
 import { snapshotUsagePolicy, usagePolicyAppendix } from '../usage/policy';
 import { Body, Controller, Get, Inject, Param, Post, Req } from '@nestjs/common';
 import { z } from 'zod';
@@ -20,7 +21,7 @@ const finalInput = z.object({ pricingMode: z.enum(['STANDARD','V1_ONE_FEN']).def
 export class ApplicationsController {
   constructor(@Inject(Db) private db: Db) {}
   @Post('customer/applications') async submit(@Body() body: any, @Req() request: any) {
-    const input = z.object({ vehicleId: text, subscriptionPlanId: text, profile: z.object({ name: z.string().trim().min(1).max(40), drivingYears: z.number().int().min(0).max(70).optional(), fileIds: z.array(z.string()).default([]) }).passthrough(), consents: z.array(z.object({ documentId: text, version: z.number().int().positive() })).min(1), idempotencyKey: key }).parse(body);
+    const input = z.object({ vehicleId: text, subscriptionPlanId: text, profile: z.object({ name: z.string().trim().min(1).max(40), drivingYears: z.number().int().min(0).max(70).optional(), fileIds: z.array(z.string()).default([]), mobile: z.string().max(20).optional(), handoverLocation: locationInput }).strict(), consents: z.array(z.object({ documentId: text, version: z.number().int().positive() })).min(1), idempotencyKey: key }).parse(body);
     const customerId = request.customer.id; const requestHash = hash(input);
     const operation = () => this.db.serial(async tx => {
       const existing = await tx.application.findUnique({ where: { customerId_idempotencyKey: { customerId, idempotencyKey: input.idempotencyKey } }, include: applicationInclude });
@@ -31,7 +32,8 @@ export class ApplicationsController {
       await acceptConsents(tx, customerId, input.consents, ['application'], 'APPLICATION');
       const count = await tx.storedFile.count({ where: { id: { in: input.profile.fileIds }, customerId } }); ensure(count === new Set(input.profile.fileIds).size, 403, 'FILE_OWNERSHIP', '附件不属于当前客户');
       const open = await tx.application.count({ where: { customerId, status: { in: ['SUBMITTED','IN_REVIEW','NEEDS_INFO','AWAITING_CONFIRMATION'] } } }); ensure(open === 0, 409, 'ACTIVE_APPLICATION', '已有进行中的申请');
-      const application = await tx.application.create({ data: { ...input, profile: JSON.parse(JSON.stringify(input.profile)), customerId, requestHash }, include: applicationInclude });
+      const handoverLocation = await resolveLocation(tx, input.profile.handoverLocation, customerId);
+      const application = await tx.application.create({ data: { ...input, profile: JSON.parse(JSON.stringify({ ...input.profile, handoverLocation })), customerId, requestHash }, include: applicationInclude });
       await tx.customer.update({ where: { id: customerId }, data: { name: input.profile.name, ...(input.profile.drivingYears == null ? {} : { drivingYears: input.profile.drivingYears }) } });
       await audit(tx, customerId, 'SUBMIT', 'applications', application.id, {}, 'CUSTOMER');
       return applicationView(application);
@@ -39,15 +41,18 @@ export class ApplicationsController {
     try { return await operation(); } catch (error: any) { if (error.code === 'P2002') return operation(); throw error; }
   }
   @Post('customer/applications/:id/amend') amend(@Param('id') id: string, @Body() body: any, @Req() request: any) {
-    const input = z.object({ profile: z.object({ name: z.string().trim().min(1).max(40), drivingYears: z.number().int().min(0).max(70).optional(), fileIds: z.array(text).max(20).default([]) }), note: z.string().max(2000).default(''), idempotencyKey: key }).parse(body);
+    const input = z.object({ profile: z.object({ name: z.string().trim().min(1).max(40), drivingYears: z.number().int().min(0).max(70).optional(), fileIds: z.array(text).max(20).default([]), handoverLocation: locationInput }).strict(), note: z.string().max(2000).default(''), idempotencyKey: key }).parse(body);
     return this.db.serial(async tx => {
       const app = await tx.application.findFirst({ where: { id, customerId: request.customer.id }, include: applicationInclude }); ensure(app, 404, 'NOT_FOUND', '申请不存在');
       const prior = await tx.auditLog.findFirst({ where: { resourceId: id, action: 'AMEND', data: { path: ['idempotencyKey'], equals: input.idempotencyKey } } });
       if (prior) { ensure((prior.data as any).requestHash === hash(input), 409, 'IDEMPOTENCY_CONFLICT', '补件请求编号与内容冲突'); return applicationView(app); }
       ensure(app.status === 'NEEDS_INFO', 409, 'STATE_CONFLICT', '申请当前不可补件');
       ensure(await tx.storedFile.count({ where: { id: { in: input.profile.fileIds }, customerId: request.customer.id, purpose: { not: 'vehicle' } } }) === new Set(input.profile.fileIds).size, 403, 'FILE_OWNERSHIP', '附件不属于当前客户');
-      const updated = await tx.application.update({ where: { id }, data: { profile: input.profile, note: input.note, status: 'IN_REVIEW' }, include: applicationInclude });
-      await audit(tx, request.customer.id, 'AMEND', 'applications', id, { previousProfile: app.profile, profile: input.profile, note: input.note, idempotencyKey: input.idempotencyKey, requestHash: hash(input) }, 'CUSTOMER'); return applicationView(updated);
+      if (input.profile.handoverLocation != null) await requireCurrentConsents(tx, request.customer.id, ['privacy']);
+      const handoverLocation = await resolveLocation(tx, input.profile.handoverLocation, request.customer.id, (app.profile as any)?.handoverLocation);
+      const profile = JSON.parse(JSON.stringify({ ...input.profile, handoverLocation }));
+      const updated = await tx.application.update({ where: { id }, data: { profile, note: input.note, status: 'IN_REVIEW' }, include: applicationInclude });
+      await audit(tx, request.customer.id, 'AMEND', 'applications', id, { previousProfile: app.profile, profile, note: input.note, idempotencyKey: input.idempotencyKey, requestHash: hash(input) }, 'CUSTOMER'); return applicationView(updated);
     });
   }
   @Get('customer/applications/:id') async get(@Param('id') id: string, @Req() request: any) { const item = await this.db.application.findFirst({ where: { id, customerId: request.customer.id }, include: applicationInclude }); ensure(item, 404, 'NOT_FOUND', '申请不存在'); return applicationView(item); }
