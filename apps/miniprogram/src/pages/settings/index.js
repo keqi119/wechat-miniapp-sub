@@ -2,7 +2,7 @@ const services = require('../../services/index');
 const config = require('../../config');
 const { toastError, confirm, go } = require('../../utils/page');
 Page({
-  data: { authenticated: false, profile: null, busy: false, error: '', message: '', mobile: '', code: '', cooldown: 0, accepted: false, legalDocuments: [], consentCurrent: false, customerServiceTelephone: config.customerServiceTelephone, readiness: null, identityVerified: false, identityStatusText: '实名状态尚待核验', certificateStatusText: '签署证书尚待核验', identityName: '', idCardNo: '', identityAccepted: false, signingConfig: null, signingError: '', paymentVerifications: [], verificationError: '', verificationMessage: '', technicalAcceptances: [], technicalError: '' },
+  data: { authenticated: false, profile: null, busy: false, error: '', message: '', mobile: '', code: '', cooldown: 0, termsAccepted: false, privacyAccepted: false, legalDocumentsReady: false, legalDocuments: [], consentCurrent: false, customerServiceTelephone: config.customerServiceTelephone, readiness: null, identityVerified: false, identityStatusText: '实名状态尚待核验', certificateStatusText: '签署证书尚待核验', identityName: '', idCardNo: '', identityAccepted: false, signingConfig: null, signingError: '', paymentVerifications: [], verificationError: '', verificationMessage: '', technicalAcceptances: [], technicalError: '' },
   pageSession() { return { customerId: services.getContext().customer?.id || null, token: wx.getStorageSync?.(config.storageKey)?.token || null, generation: this._pageGeneration || 0 }; },
   isCurrentSession(stamp) { const current = this.pageSession(); return !this._disposed && stamp.customerId === current.customerId && stamp.token === current.token && stamp.generation === current.generation; },
   applyReadiness(readiness) {
@@ -15,16 +15,17 @@ Page({
     const context = services.getContext(), stamp = this.pageSession(), revision = this._refreshRevision = (this._refreshRevision || 0) + 1;
     const current = () => this.isCurrentSession(stamp) && this._refreshRevision === revision;
     if (this._identityQuery && !this.isCurrentSession(this._identityQuery.stamp)) { this._identityQuery = null; this.setData({ busy: false }); }
-    if (!this._readinessSession || this._readinessSession.customerId !== stamp.customerId || this._readinessSession.token !== stamp.token) { this.applyReadiness(null); this.setData({ identityName: '', idCardNo: '', identityAccepted: false, message: '' }); }
+    if (!this._readinessSession || this._readinessSession.customerId !== stamp.customerId || this._readinessSession.token !== stamp.token) { this.applyReadiness(null); this.setData({ termsAccepted: false, privacyAccepted: false, identityName: '', idCardNo: '', identityAccepted: false, message: '' }); }
     this._readinessSession = stamp;
-    this.setData({ authenticated: context.authenticated, profile: context.profile, error: '', signingConfig: null, signingError: '', ...(!context.authenticated ? { paymentVerifications: [], verificationError: '', verificationMessage: '', consentCurrent: false, identityName: '', idCardNo: '', identityAccepted: false } : {}) });
+    this.setData({ authenticated: context.authenticated, profile: context.profile, error: '', legalDocumentsReady: false, signingConfig: null, signingError: '', ...(!context.authenticated ? { paymentVerifications: [], verificationError: '', verificationMessage: '', consentCurrent: false, identityName: '', idCardNo: '', identityAccepted: false } : {}) });
     try {
       await this.refreshTechnicalAcceptances(); if (!current()) return;
       const documents = await services.getLoginDocuments();
       if (!current()) return;
       if (documents.length !== 2 || documents.some((doc,index) => doc.type !== ['terms','privacy'][index] || !doc.id || !Number.isInteger(doc.version) || !doc.content)) throw new Error('当前已发布协议暂不可用，请稍后重试。');
-      const changed = JSON.stringify(documents.map(doc => [doc.id,doc.version])) !== JSON.stringify(this.data.legalDocuments.map(doc => [doc.id,doc.version]));
-      this.setData({ legalDocuments: documents, accepted: changed ? false : this.data.accepted, identityAccepted: changed ? false : this.data.identityAccepted });
+      const changed = JSON.stringify(documents.map(doc => [doc.id,doc.version,doc.content])) !== JSON.stringify(this.data.legalDocuments.map(doc => [doc.id,doc.version,doc.content]));
+      this._legalDocumentsSession = stamp;
+      this.setData({ legalDocuments: documents, legalDocumentsReady: true, termsAccepted: changed ? false : this.data.termsAccepted, privacyAccepted: changed ? false : this.data.privacyAccepted, identityAccepted: changed ? false : this.data.identityAccepted });
       if (!context.authenticated) return;
       const updated = await services.refreshContext();
       if (!current()) return;
@@ -37,7 +38,10 @@ Page({
         catch (error) { if (!current()) return; if (identityRevision === (this._identityRevision || 0)) throw error; }
       }
       try { const signingConfig = await services.getSigningConfig(); if (current()) this.setData({ signingConfig }); } catch (error) { if (current()) this.setData({ signingConfig: null, signingError: error.message }); }
-    } catch (error) { if (current()) this.setData({ error: error.message, authenticated: services.getContext().authenticated }); }
+    } catch (error) {
+      if (current()) this.setData({ error: error.message, authenticated: services.getContext().authenticated, ...(!this.data.legalDocumentsReady ? { legalDocuments: [], termsAccepted: false, privacyAccepted: false, consentCurrent: false } : {}) });
+      else if (!this._disposed && this._refreshRevision === revision) { this.hasCurrentConsentSession(); this.setData({ authenticated: services.getContext().authenticated }); }
+    }
   },
   async refreshTechnicalAcceptances() {
     const stamp = this.pageSession(), revision = this._technicalRevision = (this._technicalRevision || 0) + 1;
@@ -81,11 +85,16 @@ Page({
     catch(error){this.disableVerification(id);this.setData({verificationError:'查询未完成：'+error.message+' 结果尚未核实，请稍后重新查询。'});if(!services.getContext().authenticated)this.setData({authenticated:false,consentCurrent:false,paymentVerifications:[]});}
     finally{this._verificationBusy=false;this.setData({busy:false});}
   },
+  hasCurrentConsentSession() {
+    if (this._legalDocumentsSession && this.isCurrentSession(this._legalDocumentsSession)) return true;
+    if (!this._disposed) this.setData({ termsAccepted: false, privacyAccepted: false, legalDocumentsReady: false, consentCurrent: false });
+    return false;
+  },
   consentSnapshot() {
-    if (!this.data.accepted || this.data.legalDocuments.length !== 2) throw new Error('请阅读并同意当前已发布的用户协议和隐私政策。');
+    if (!this.hasCurrentConsentSession() || !this.data.legalDocumentsReady || !this.data.termsAccepted || !this.data.privacyAccepted || this.data.legalDocuments.length !== 2) throw new Error('请分别阅读并同意当前已发布的用户协议和隐私政策。');
     return this.data.legalDocuments.map(doc => ({ documentId: doc.id, version: doc.version }));
   },
-  async acceptCurrentConsents() { await this.run(async () => { await services.acceptConsents(this.consentSnapshot()); await this.refresh(); this.setData({ message: '当前版本协议同意已记录。' }); }); },
+  async acceptCurrentConsents() { if (this.data.busy) return; await this.run(async () => { await services.acceptConsents(this.consentSnapshot()); await this.refresh(); this.setData({ message: '当前版本协议同意已记录。' }); }); },
   callService() { wx.makePhoneCall({ phoneNumber: this.data.customerServiceTelephone, fail: error => { if (!/cancel/i.test(error.errMsg || '')) toastError(new Error('电话暂时无法拨打，请手动拨号。')); } }); },
   async verifyIdentity() {
     if (this.data.busy || this.data.identityVerified || this.data.readiness?.realNameStatus === 'VERIFIED') return;
@@ -105,24 +114,27 @@ Page({
     finally { if (current()) this.setData({ busy: false }); if (this._identityQuery === lease) this._identityQuery = null; }
   },
   input(e) { const field = e.currentTarget.dataset.field; if (['mobile', 'code', 'identityName', 'idCardNo'].includes(field)) this.setData({ [field]: e.detail.value }); },
-  consent(e) { this.setData({ accepted: e.detail.value.includes('accepted') }); },
+  consent(e) {
+    if (this.data.busy || !this.hasCurrentConsentSession() || !this.data.legalDocumentsReady) return;
+    const type = e.currentTarget?.dataset?.type;
+    if (!['terms', 'privacy'].includes(type) || !Array.isArray(e.detail?.value)) return;
+    this.setData({ [type === 'terms' ? 'termsAccepted' : 'privacyAccepted']: e.detail.value.includes(type) });
+  },
   async phoneLogin(e) {
     if (this.data.busy) return;
-    if (!this.data.accepted) return toastError(new Error('请先阅读并同意用户协议和隐私政策。'));
     if (!e.detail.code) return toastError(new Error('手机号授权未完成，可使用短信验证码登录。'));
     await this.run(async () => { await services.loginWechat(e.detail.code, this.consentSnapshot()); await this.refresh(); this.setData({ message: '已登录。' }); });
   },
   async sendSms() {
     if (this.data.busy || this.data.cooldown) return;
-    if (!this.data.accepted) return toastError(new Error('请先阅读并同意用户协议和隐私政策。'));
     await this.run(async () => {
+      this.consentSnapshot();
       await services.requestSms(this.data.mobile.trim()); this.setData({ cooldown: 60, message: '验证码已发送。' });
       this._cooldownTimer = setInterval(() => { this.setData({ cooldown: Math.max(0, this.data.cooldown - 1) }); if (!this.data.cooldown) clearInterval(this._cooldownTimer); }, 1000);
     });
   },
   async smsLogin() {
     if (this.data.busy) return;
-    if (!this.data.accepted) return toastError(new Error('请先阅读并同意用户协议和隐私政策。'));
     await this.run(async () => { await services.loginSms(this.data.mobile.trim(), this.data.code.trim(), this.consentSnapshot()); this.setData({ code: '', message: '已登录。' }); await this.refresh(); });
   },
   async logout() {

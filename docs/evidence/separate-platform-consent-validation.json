@@ -1,0 +1,48 @@
+{
+  "verifiedOn": "2026-10-17",
+  "scope": "Separate terms and privacy choices in native settings, bound to current document and session; published legal documents and API request shape unchanged.",
+  "sourceFiles": {
+    "apps/miniprogram/src/pages/settings/index.js": "7c89eaae2cf9cd254a6ab4c7e19ec7a490c0edaa896c6bdd9a9cfd00bab65db5",
+    "apps/miniprogram/src/pages/settings/index.wxml": "9ed6eb12306e958bd47331fd172b1ef321baca932b91c31ceb9d4c6ceba66e2c",
+    "apps/miniprogram/tests/settings-consents.test.cjs": "c7e8890639c445715956bb4c262b10f27aaa7456ad1344493a32764c79cd6cb5"
+  },
+  "baseline": {
+    "miniappTests": 217
+  },
+  "red": {
+    "initialFailures": 8,
+    "reviewRegressionFailures": 2
+  },
+  "green": {
+    "targetedTests": 10,
+    "miniappTests": 227,
+    "failures": 0,
+    "skipped": 0
+  },
+  "checks": {
+    "source": true,
+    "officialWxmlTemplates": 18,
+    "officialWxssTemplates": 19,
+    "productionBundleFiles": 101,
+    "productionBundleBuilt": true
+  },
+  "independentReview": {
+    "agent": "/root/review_separate_consents",
+    "findings": [
+      {
+        "priority": "P2",
+        "issue": "Session changes without refresh and a 401 after document loading could retain previous choices.",
+        "resolution": "Added session-bound checks at consent changes and submission; invalidate readiness after session change.",
+        "regressionTests": 2,
+        "regressionResults": "Failed before repair, passed after repair."
+      }
+    ],
+    "finalDiffRereviewed": false
+  },
+  "limitations": [
+    "No new native-device visual test",
+    "No miniapp upload or production release",
+    "No new legal text publication",
+    "No real SMS, payment or signature request"
+  ]
+}

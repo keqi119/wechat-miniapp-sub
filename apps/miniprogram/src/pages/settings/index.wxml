@@ -8,15 +8,16 @@
   </view>
   <view wx:else class="card">
     <view class="section-title">登录后办理订阅与用车服务</view>
-    <checkbox-group bindchange="consent"><label class="consent-row"><checkbox value="accepted" checked="{{accepted}}" color="#252723"/><text>我已阅读并同意用户协议和隐私政策</text></label></checkbox-group>
-    <button class="primary" open-type="getPhoneNumber" bindgetphonenumber="phoneLogin" disabled="{{busy || !accepted}}" loading="{{busy}}">微信手机号一键登录</button>
+    <checkbox-group data-type="terms" bindchange="consent"><label class="consent-row"><checkbox value="terms" checked="{{termsAccepted}}" disabled="{{busy || !legalDocumentsReady}}" color="#252723"/><text>我已阅读并同意《用户协议》</text></label></checkbox-group>
+    <checkbox-group data-type="privacy" bindchange="consent"><label class="consent-row"><checkbox value="privacy" checked="{{privacyAccepted}}" disabled="{{busy || !legalDocumentsReady}}" color="#252723"/><text>我已阅读并同意《隐私政策》</text></label></checkbox-group>
+    <button class="primary" open-type="getPhoneNumber" bindgetphonenumber="phoneLogin" disabled="{{busy || !legalDocumentsReady || !termsAccepted || !privacyAccepted}}" loading="{{busy}}">微信手机号一键登录</button>
     <view class="section-title setting-heading">短信验证码备用</view>
     <view class="field"><view class="label">手机号</view><input class="input" type="number" maxlength="11" value="{{mobile}}" data-field="mobile" bindinput="input" disabled="{{busy}}"/></view>
     <view class="field"><view class="label">验证码</view><input class="input" type="number" maxlength="8" value="{{code}}" data-field="code" bindinput="input" disabled="{{busy}}"/></view>
-    <button class="secondary" bindtap="sendSms" disabled="{{busy || cooldown > 0 || !accepted}}">{{cooldown > 0 ? cooldown + ' 秒后重试' : '获取验证码'}}</button>
-    <button class="primary" bindtap="smsLogin" disabled="{{busy || !accepted}}" loading="{{busy}}">验证并登录</button>
+    <button class="secondary" bindtap="sendSms" disabled="{{busy || cooldown > 0 || !legalDocumentsReady || !termsAccepted || !privacyAccepted}}">{{cooldown > 0 ? cooldown + ' 秒后重试' : '获取验证码'}}</button>
+    <button class="primary" bindtap="smsLogin" disabled="{{busy || !legalDocumentsReady || !termsAccepted || !privacyAccepted}}" loading="{{busy}}">验证并登录</button>
   </view>
-  <view class="card"><view class="section-title">当前版本协议</view><button wx:for="{{legalDocuments}}" wx:key="id" class="text-button" data-type="{{item.type}}" bindtap="openLegal"><view><view>{{item.title}}</view><view class="muted small">版本 {{item.version}} · 查看完整协议 →</view></view></button><block wx:if="{{authenticated && !consentCurrent}}"><checkbox-group bindchange="consent"><label class="consent-row"><checkbox value="accepted" checked="{{accepted}}" color="#252723"/><text>我已阅读并同意以上版本协议</text></label></checkbox-group><button class="primary" bindtap="acceptCurrentConsents" disabled="{{busy || !accepted}}">记录当前版本同意</button></block></view>
+  <view class="card"><view class="section-title">当前版本协议</view><button wx:for="{{legalDocuments}}" wx:key="id" class="text-button" data-type="{{item.type}}" bindtap="openLegal"><view><view>{{item.title}}</view><view class="muted small">版本 {{item.version}} · 查看完整协议 →</view></view></button><block wx:if="{{authenticated && !consentCurrent}}"><checkbox-group data-type="terms" bindchange="consent"><label class="consent-row"><checkbox value="terms" checked="{{termsAccepted}}" disabled="{{busy || !legalDocumentsReady}}" color="#252723"/><text>我已阅读并同意《用户协议》</text></label></checkbox-group><checkbox-group data-type="privacy" bindchange="consent"><label class="consent-row"><checkbox value="privacy" checked="{{privacyAccepted}}" disabled="{{busy || !legalDocumentsReady}}" color="#252723"/><text>我已阅读并同意《隐私政策》</text></label></checkbox-group><button class="primary" bindtap="acceptCurrentConsents" disabled="{{busy || !legalDocumentsReady || !termsAccepted || !privacyAccepted}}">记录当前版本同意</button></block></view>
   <view wx:if="{{authenticated && paymentVerifications.length}}" class="card">
     <view class="section-title">微信支付验收</view>
     <view class="notice">微信支付验收 0.01 元，不订阅车辆、不生成租赁合同。</view>
