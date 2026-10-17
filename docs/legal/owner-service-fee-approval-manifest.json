@@ -1,0 +1,21 @@
+{
+  "status": "APPROVED",
+  "approvedOn": "2026-10-17",
+  "recordedAt": "2026-10-17T03:13:40.502Z",
+  "approvedBy": "用户代表上海晓浪网络科技有限公司",
+  "approvalStatement": "批准模板，逐车内容填写后由车主确认",
+  "approvalQuestionId": "call_a661867b888f4240b2d7d3b7e4548ea4",
+  "sourceThread": "01a1429f-b865-7d13-8589-1f63aa27b1db",
+  "published": false,
+  "editorialChanges": "仅更新模板状态及操作细则的待审阅标签；审阅源文件原样保留。未设定金额、额度或付款方式，不代表任何车主已经确认逐车内容。",
+  "documents": [
+    {
+      "type": "owner-service-fee-schedule",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/owner-service-fee-schedule-v1.md",
+      "approvedSourceSha256": "9212033db8c1c8b343367c05a192baba880a2998004a2c70601140141839420d",
+      "finalFile": "docs/legal/versions/owner-service/owner-service-fee-schedule-v1.md",
+      "finalSha256": "ac429e4531361645dde95c0921a5d41441029858ac7e29b64c7442481439259f"
+    }
+  ]
+}

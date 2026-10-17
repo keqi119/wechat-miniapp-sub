@@ -1,0 +1,50 @@
+{
+  "verifiedOn": "2026-10-17",
+  "scope": "Existing V1 API lifecycle preflight; synthetic local HTTP journey on one order with injected signing/payment providers.",
+  "sourceFile": "apps/api/test/order-lifecycle.test.ts",
+  "sourceSha256": "4a381f9e059b55af3f0f96f3e6b66a5dccc4723dd3ac3ff612afed296e31e1e1",
+  "database": {
+    "host": "loopback",
+    "name": "chundian_test",
+    "productionAccess": false
+  },
+  "commands": [
+    {
+      "cwd": "apps/api",
+      "command": "node node_modules/tsx/dist/cli.mjs --test --test-concurrency=1 test/api.test.ts test/business-completion.test.ts test/usage-policy.test.ts test/payment-recovery.test.ts test/signature-recovery.test.ts test/order-lifecycle.test.ts",
+      "tests": 56,
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "cwd": "apps/api",
+      "command": "node node_modules/tsx/dist/cli.mjs --test test/order-lifecycle.test.ts",
+      "tests": 1,
+      "passed": 1,
+      "note": "Final targeted rerun after tightening local database name and anchoring synthetic files to projectRoot."
+    }
+  ],
+  "verified": [
+    "Application confirmation creates one order and 13 bills; repeat confirmation is idempotent",
+    "Signed archive is fetched through authenticated file API",
+    "Both one-fen rent and one-fen deposit are required before handover",
+    "Unread evidence and unsigned handover cannot complete",
+    "Delivery ACTIVE; return SETTLING; completion waits for settled mileage and deposit refund",
+    "Different administrator required for refund approval",
+    "Pending refund prevents completion; successful repeated refund query creates one ledger entry",
+    "Completed settlement replay preserves one result; future unperformed bills voided and vehicle reservation released",
+    "Another customer cannot read this order"
+  ],
+  "initialHarnessCorrections": [
+    "First command used repository root instead of API working directory, preventing decorator transformation",
+    "Native route guard was initially disabled; enabled only in local test process while injecting provider doubles"
+  ],
+  "productDefectsFound": 0,
+  "limitations": [
+    "No real customer, vehicle, charge, signature, delivery or return",
+    "Provider signing authorization/dual-seal approval is outside this injected-boundary test and covered separately",
+    "Synthetic B700_749 tier does not assert the real customer tier or implement the pending one-fen deposit exception",
+    "No production deployment or miniapp release in this preflight"
+  ]
+}
