@@ -1,0 +1,57 @@
+{
+  "deployed": {
+    "release": "20261017-field-v1",
+    "sourceCommit": "73135542755404fcff4fccbb6b705820ff5392e0",
+    "healthy": true,
+    "staffEntry": true,
+    "unauthenticatedDenied": true,
+    "businessCountsUnchanged": {
+      "application": 0,
+      "order": 0,
+      "handover": 0,
+      "contract": 0,
+      "bill": 0,
+      "payment": 0,
+      "ownerESignAccount": 1
+    },
+    "mapEnabled": false,
+    "migrations": [
+      "20261017120000_field_handover",
+      "20261017130000_field_vehicle_context"
+    ],
+    "freeBytes": 808853504
+  },
+  "browser": {
+    "at": "2026-10-17T12:41:09.321Z",
+    "release": "20261017-field-v1",
+    "productionBrowserLogin": true,
+    "sessionRestored": true,
+    "emptyTasks": true,
+    "passwordForm": true,
+    "logout": true,
+    "viewportWidth": 390,
+    "horizontalOverflow": false,
+    "pageErrors": 0,
+    "createdOrders": 0,
+    "passwordChanged": false
+  },
+  "account": {
+    "username": "keqi_110",
+    "role": "FIELD",
+    "login": true,
+    "onlyAssignedTaskPermissions": true,
+    "forbiddenResources": [
+      "orders",
+      "customers",
+      "users",
+      "handover-tasks"
+    ],
+    "assignedTaskCount": 0,
+    "eligibleForAssignment": true
+  },
+  "pending": [
+    "Public account menu name and placement",
+    "Employee changes initial password",
+    "Actual phone camera and assigned real-order handover acceptance"
+  ]
+}
