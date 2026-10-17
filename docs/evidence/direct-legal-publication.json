@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-17T08:57:43.388Z",
+  "checkedAt": "2026-10-17T09:00:08.204Z",
   "reason": "User directed direct operations first; republished previously approved exact body without rewriting past records.",
   "documents": [
     {
@@ -25,17 +25,17 @@
     "privacy": {
       "documentId": "cmvc5yh7a0004q901k6k9q5al",
       "version": 5,
-      "contentHash": "257fb0698edc27e4d52a32b1ab9f4cbbc041f6c3ce9e840de3a4ebf9c7fc4f76"
+      "contentHash": "91c77c6ba6ae5a56e0e938c735950ba5922ea9ff34b10b6aabf2f592500beff7"
     },
     "application": {
       "documentId": "cmvbwcnca0004mf01i1x7db2i",
       "version": 3,
-      "contentHash": "ac1538cb48ce77f869c3cd2d8d11a66a21b80c460aa51dc8471affb5e1e9a776"
+      "contentHash": "fecf66df29f8b71d17987bc06b0329b0df7467c3cf12c86d8503b76326aeb400"
     },
     "handover-location": {
       "documentId": "cmvbwcnlm0007mf01hrzsctk2",
       "version": 1,
-      "contentHash": "be20281dc9dc9f5594a51c919dc11ea022a9076b8886092cf1aa78a2a688548e"
+      "contentHash": "ba6fb7771f5b661ad82dc1b078d1a22521ef8e1a4bc3ba73eb6d7f11d2712dee"
     }
   },
   "wechatChooseLocationApprovedByUser": true,
