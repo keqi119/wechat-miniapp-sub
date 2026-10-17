@@ -86,7 +86,12 @@ export class ContractPdfArtifactWriterService {
     const files=await this.db.storedFile.findMany({where:{id:{in:resource.fileIds}}});ensure(files.length===resource.fileIds.length,409,'EVIDENCE_MISSING','交接附件缺失');
     for(const file of files){ensure(resolve(file.storagePath).startsWith(this.root+sep),409,'STORAGE_PATH','交接附件路径无效');const bytes=await fs.readFile(file.storagePath);ensure(createHash('sha256').update(bytes).digest('hex')===file.sha256,409,'EVIDENCE_HASH','交接附件已变化');doc.addPage();doc.fontSize(10).text(`证据 ${file.name}\n文件编号 ${file.id}\nSHA-256 ${file.sha256}`).moveDown();if(['image/jpeg','image/png'].includes(file.mimeType))doc.image(bytes,{fit:[490,620],align:'center'});}
     doc.addPage();doc.fontSize(12).text('独立交接签署区').moveDown();
-    for(const [slotId,label] of [['STAGE2_HANDOVER_CUSTOMER','客户签署'],['STAGE2_HANDOVER_PLATFORM','上海晓浪网络科技有限公司盖章']]){doc.fontSize(11).text(label);const y=doc.y+20;coordinates.push({slotId,pageNumber:page,x:80/doc.page.width*800,y:y/doc.page.height*1131,coordinateSource:'PDFKIT_RENDERER',coordinateSystem:'FADADA_800_1131_TOP_LEFT'});doc.rect(80,y,180,65).stroke();doc.y=y+100;}
+    for(const slot of [{slotId:'STAGE2_HANDOVER_CUSTOMER',label:'客户签署',height:80},{slotId:'STAGE2_HANDOVER_PLATFORM',label:'上海晓浪网络科技有限公司盖章',height:150}]){
+      doc.fontSize(11).text(slot.label);const left=80,top=doc.y+10,width=180,height=slot.height;
+      // SearchLocation uses the image centre; dimensions reserve PDF space only.
+      coordinates.push({slotId:slot.slotId,pageNumber:page,x:(left+width/2)/doc.page.width*800,y:(top+height/2)/doc.page.height*1131,width:width/doc.page.width*800,height:height/doc.page.height*1131,pdfPageWidth:doc.page.width,pdfPageHeight:doc.page.height,coordinateSource:'PDFKIT_RENDERER',coordinateSystem:'FADADA_800_1131_TOP_LEFT'});
+      doc.rect(left,top,width,height).stroke();doc.y=top+height+24;
+    }
     doc.end();return {buffer:await done,slotCoordinates:coordinates};
   }
 }

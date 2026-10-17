@@ -1,0 +1,168 @@
+{
+  "checkedAt": "2026-10-17T02:09:29.379Z",
+  "release": "20261017-signature-layout-v1",
+  "recordId": "92d1cafa-99fd-4d91-91af-8c168893f0cb",
+  "status": "SIGNED",
+  "taskId": "7324bc14-c49a-4a6f-b282-24f4e8497ab9",
+  "taskStatus": "SIGNED",
+  "customerSignedAt": "2026-10-17T02:06:59.785Z",
+  "platformSignedAt": "2026-10-17T02:07:01.493Z",
+  "taskCount": 1,
+  "approvalId": "cmvbr5aj9000go301z86yg2a7",
+  "approvedAt": "2026-10-17T02:03:21.113Z",
+  "approvalValidAtSeal": true,
+  "sealRequestedAt": "2026-10-17T02:07:00.112Z",
+  "completedAt": "2026-10-17T02:07:01.530Z",
+  "retentionDueAt": "2027-04-15T02:07:01.530Z",
+  "sourceFileId": "cmvbqylpa0005o301slececcj",
+  "sourcePdfHash": "ed8fca86ff59a9f368ce9ea9e1502ecb034d6ee2d2add2e7fe5edc1933d55fe3",
+  "documentHash": "9f54a13e668ee521e5b4e57799a391ba65fc9940e665c9b7f03156d31ca506d1",
+  "slotCoordinates": [
+    {
+      "x": 228.4639161403038,
+      "y": 433.6836688878595,
+      "width": 241.9029700309098,
+      "height": 107.4724726508214,
+      "slotId": "TECHNICAL_CUSTOMER",
+      "pageNumber": 2,
+      "pdfPageWidth": 595.28,
+      "pdfPageHeight": 841.89,
+      "coordinateSource": "PDFKIT_RENDERER",
+      "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+    },
+    {
+      "x": 228.4639161403038,
+      "y": 653.303666749813,
+      "width": 241.9029700309098,
+      "height": 201.51088622029,
+      "slotId": "TECHNICAL_PLATFORM",
+      "pageNumber": 2,
+      "pdfPageWidth": 595.28,
+      "pdfPageHeight": 841.89,
+      "coordinateSource": "PDFKIT_RENDERER",
+      "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+    }
+  ],
+  "signedFile": {
+    "id": "cmvbrabg1000po301mgbs6099",
+    "size": 251020,
+    "sha256": "955c43c3a8c7f9d247899cdbbe8dacf9ba61500fffc5595243b61af7df0a30a6",
+    "mimeType": "application/pdf",
+    "purpose": "technical-acceptance"
+  },
+  "audits": [
+    {
+      "action": "ENTERPRISE_SEAL_EXECUTION",
+      "createdAt": "2026-10-17T02:07:00.119Z"
+    },
+    {
+      "action": "SIGNED_PDF_ARCHIVED",
+      "createdAt": "2026-10-17T02:07:01.497Z"
+    }
+  ],
+  "commercialSigningEnabled": false,
+  "commercialPaymentEnabled": false,
+  "businessWrites": false,
+  "channelCheckedAt": "2026-10-17T02:09:46.779Z",
+  "channelQueries": [
+    {
+      "signer": "CUSTOMER",
+      "status": "SIGNED",
+      "resultCode": "3000",
+      "absent": false,
+      "queryIdentityBindingVerified": true
+    },
+    {
+      "signer": "PLATFORM",
+      "status": "SIGNED",
+      "resultCode": "3000",
+      "absent": false,
+      "queryIdentityBindingVerified": true
+    }
+  ],
+  "customerView": {
+    "recordId": "92d1cafa-99fd-4d91-91af-8c168893f0cb",
+    "taskId": "7324bc14-c49a-4a6f-b282-24f4e8497ab9",
+    "revision": 3,
+    "status": "SIGNED",
+    "signatureStatus": "SIGNED",
+    "statusMessage": "双方签署及文件归档已核验",
+    "canSign": false,
+    "canSync": true,
+    "signedFileId": "cmvbrabg1000po301mgbs6099",
+    "customerSignedAt": "2026-10-17T02:06:59.785Z",
+    "platformSignedAt": "2026-10-17T02:07:01.493Z",
+    "sealRequestedAt": "2026-10-17T02:07:00.112Z",
+    "signedPdfHash": "955c43c3a8c7f9d247899cdbbe8dacf9ba61500fffc5595243b61af7df0a30a6"
+  },
+  "pdfInspection": {
+    "pageCount": 3,
+    "sourceAndSignedTransferHashesVerified": true,
+    "signatureFieldCount": 2,
+    "signatureAppearanceCount": 2,
+    "byteRangesAndContentsPresent": true,
+    "cryptographicCertificateValidationPerformed": false,
+    "placements": [
+      {
+        "slotId": "TECHNICAL_CUSTOMER",
+        "page": 3,
+        "boxPoints": [
+          80.0,
+          479.066,
+          260.0,
+          559.066
+        ],
+        "appearancePoints": [
+          120.02,
+          497.22,
+          219.63,
+          541.82
+        ],
+        "appearanceSizePoints": [
+          99.61,
+          44.6
+        ],
+        "minimumMarginPoints": 17.25,
+        "fullyInsideBox": true,
+        "providerCentreMatchesBox": true
+      },
+      {
+        "slotId": "TECHNICAL_PLATFORM",
+        "page": 3,
+        "boxPoints": [
+          80.0,
+          280.586,
+          260.0,
+          430.586
+        ],
+        "appearancePoints": [
+          108.13,
+          294.57,
+          231.52,
+          417.96
+        ],
+        "appearanceSizePoints": [
+          123.39,
+          123.39
+        ],
+        "minimumMarginPoints": 12.63,
+        "fullyInsideBox": true,
+        "providerCentreMatchesBox": true
+      }
+    ],
+    "archivedPdfModified": false
+  },
+  "enterpriseSealExecutionAuditCount": 1,
+  "archiveAuditCount": 1,
+  "visualLayoutAccepted": true,
+  "layoutCorrectionVerified": true,
+  "archivedPdfModified": false,
+  "allThreePagesVisuallyReviewed": true,
+  "providerSigningOrSealingCallsByAgent": false,
+  "userFeedback": {
+    "questionId": "call_20bf44a0b1be4d468fde1b212a48633b",
+    "statement": "已签署完成，确认签名及印章均落在各自框内，且签后自动给返回小程序。",
+    "bothAppearancesInsideBoxes": true,
+    "automaticReturnToMiniapp": true
+  }
+}

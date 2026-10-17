@@ -39,10 +39,11 @@ const CJK_PATTERN = /[\u3400-\u9fff\uf900-\ufaff]/;
 const FADADA_COORDINATE_WIDTH = 800;
 const FADADA_COORDINATE_HEIGHT = 1131;
 const SIGNING_BLANK_WIDTH = 180;
-const SIGNING_BLANK_HEIGHT = 18;
+const CUSTOMER_SIGNING_HEIGHT = 80;
+const PLATFORM_SIGNING_HEIGHT = 150;
 const SIGNING_BLANK_GAP = 12;
-const SIGNING_KEYWORD_LINE_HEIGHT = 14;
-const SIGNING_SLOT_VERTICAL_SEPARATION = 90;
+const SIGNING_BOX_TOP_GAP = 10;
+const SIGNING_SLOT_BOTTOM_GAP = 24;
 const STAGE1_REQUIRED_SLOT_IDS: ContractPdfSigningSlotId[] = [
   "STAGE1_BODY_CUSTOMER",
   "STAGE1_BODY_PLATFORM",
@@ -244,10 +245,9 @@ async function renderPdf(
   writeSection(doc, "合同正文");
   writeParagraph(doc, buildStage1MainBodyText(model.contentTemplate));
   const bodySlots = model.signingSlots.filter((slot) => slot.documentType === "CONTRACT_BODY");
-  ensureSpace(doc, 50 + estimateSigningSlotsHeight(bodySlots.length));
-  writeSection(doc, "合同正文签署区");
-  writeSigningSlots(
+  writeSigningSection(
     doc,
+    "合同正文签署区",
     bodySlots,
     slotCoordinates,
     () => currentPageNumber
@@ -256,10 +256,9 @@ async function renderPdf(
   writeSection(doc, "附件1：订阅方案 / 交易条件快照");
   writeAppendix(doc, model.appendix.sections);
   const appendixSlots = model.signingSlots.filter((slot) => slot.documentType === "ATTACHMENT1_SUBSCRIPTION_PLAN");
-  ensureSpace(doc, 50 + estimateSigningSlotsHeight(appendixSlots.length));
-  writeSection(doc, "附件1签署区");
-  writeSigningSlots(
+  writeSigningSection(
     doc,
+    "附件1签署区",
     appendixSlots,
     slotCoordinates,
     () => currentPageNumber
@@ -405,27 +404,36 @@ function writePartyKeyValue(doc: PDFKit.PDFDocument, label: string, value: Contr
   });
 }
 
-function writeSigningSlots(
+function writeSigningSection(
   doc: PDFKit.PDFDocument,
+  title: string,
   slots: ContractPdfSigningSlot[],
   slotCoordinates: ContractPdfSigningSlotCoordinate[],
   getPageNumber: () => number
 ) {
-  ensureSpace(doc, estimateSigningSlotsHeight(slots.length));
-  for (const [index, slot] of slots.entries()) {
-    if (index > 0) {
-      ensureSpace(doc, SIGNING_SLOT_VERTICAL_SEPARATION + 68);
-      doc.y += SIGNING_SLOT_VERTICAL_SEPARATION;
-    }
+  // Reserve the actual font-dependent labels and both full-size appearances
+  // before writing the heading, so neither signature moves away from its title.
+  doc.fontSize(13);
+  const headingHeight=doc.heightOfString(title,{width:doc.page.width-doc.page.margins.left-doc.page.margins.right,lineGap:0})+doc.currentLineHeight(true)*0.9;
+  const slotsHeight=slots.reduce((height,slot)=>height+signingSlotHeight(doc,slot),0);
+  ensureSpace(doc,headingHeight+slotsHeight);
+  doc.fontSize(13);
+  writeSection(doc,title);
+  for (const slot of slots) {
     writeSigningSlot(doc, slot, slotCoordinates, getPageNumber);
   }
 }
 
-function estimateSigningSlotsHeight(slotCount: number) {
-  if (slotCount <= 0) {
-    return 0;
-  }
-  return slotCount * 68 + (slotCount - 1) * SIGNING_SLOT_VERTICAL_SEPARATION;
+function signingBlankHeight(slot: ContractPdfSigningSlot) {
+  return slot.signerRole==='PLATFORM'?PLATFORM_SIGNING_HEIGHT:CUSTOMER_SIGNING_HEIGHT;
+}
+
+function signingSlotHeight(doc: PDFKit.PDFDocument,slot: ContractPdfSigningSlot) {
+  doc.fontSize(10);
+  const width=doc.page.width-doc.page.margins.left-doc.page.margins.right;
+  const labelHeight=doc.heightOfString(`${slot.title} / ${slot.label}:`,{width,lineGap:2});
+  const keywordHeight=slot.documentType==='CONTRACT_BODY'?0:doc.heightOfString(slot.keyword,{width,lineGap:0});
+  return labelHeight+keywordHeight+SIGNING_BOX_TOP_GAP+signingBlankHeight(slot)+SIGNING_SLOT_BOTTOM_GAP;
 }
 
 function writeSigningSlot(
@@ -434,7 +442,7 @@ function writeSigningSlot(
   slotCoordinates: ContractPdfSigningSlotCoordinate[],
   getPageNumber: () => number
 ) {
-  ensureSpace(doc, 68);
+  ensureSpace(doc, signingSlotHeight(doc,slot));
   const lineTop = doc.y;
   const left = doc.page.margins.left;
   const right = doc.page.width - doc.page.margins.right;
@@ -447,16 +455,14 @@ function writeSigningSlot(
     width: fullRowWidth
   });
   const keywordBottom = writeVisibleSlotKeywordIfNeeded(doc, slot, left);
-  const blankY = keywordBottom + 2;
+  const blankY = keywordBottom + SIGNING_BOX_TOP_GAP;
+  const blankHeight = signingBlankHeight(slot);
 
-  doc
-    .moveTo(blankX, blankY + SIGNING_BLANK_HEIGHT - 4)
-    .lineTo(right, blankY + SIGNING_BLANK_HEIGHT - 4)
-    .stroke();
+  doc.rect(blankX,blankY,blankWidth,blankHeight).stroke();
 
   slotCoordinates.push(
     buildSlotCoordinate({
-      blankHeight: SIGNING_BLANK_HEIGHT,
+      blankHeight,
       blankWidth,
       blankX,
       blankY,
@@ -467,8 +473,7 @@ function writeSigningSlot(
   );
 
   doc.x = left;
-  doc.y = Math.max(keywordBottom, blankY + SIGNING_BLANK_HEIGHT + 4);
-  doc.moveDown(0.8);
+  doc.y = blankY + blankHeight + SIGNING_SLOT_BOTTOM_GAP;
 }
 
 function writeVisibleSlotKeywordIfNeeded(
@@ -480,11 +485,11 @@ function writeVisibleSlotKeywordIfNeeded(
     return doc.y;
   }
 
-  const keywordTop = doc.y;
-  doc.fontSize(10).text(slot.keyword, left, keywordTop, {
-    lineBreak: false
+  doc.fontSize(10).text(slot.keyword, left, doc.y, {
+    width:doc.page.width-doc.page.margins.left-doc.page.margins.right,
+    lineGap:0
   });
-  return keywordTop + SIGNING_KEYWORD_LINE_HEIGHT;
+  return doc.y;
 }
 
 function buildSlotCoordinate(input: {

@@ -51,5 +51,17 @@
     "evidence": "docs/evidence/technical-signing-final-verification.json",
     "visualLayoutAccepted": false,
     "layoutCorrectionRequired": true
+  },
+  "correctedSignedArchiveVerification": {
+    "recordId": "92d1cafa-99fd-4d91-91af-8c168893f0cb",
+    "approvalId": "cmvbr5aj9000go301z86yg2a7",
+    "taskId": "7324bc14-c49a-4a6f-b282-24f4e8497ab9",
+    "status": "SIGNED",
+    "completedAt": "2026-10-17T02:07:01.530Z",
+    "signedPdfSha256": "955c43c3a8c7f9d247899cdbbe8dacf9ba61500fffc5595243b61af7df0a30a6",
+    "evidence": "docs/evidence/technical-signing-layout-final-verification.json",
+    "visualLayoutAccepted": true,
+    "automaticReturnConfirmedByUser": true,
+    "commercialLeaseCreationAuthorized": false
   }
 }
