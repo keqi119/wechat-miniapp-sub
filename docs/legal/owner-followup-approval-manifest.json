@@ -1,0 +1,34 @@
+{
+  "status": "APPROVED",
+  "documents": [
+    {
+      "finalSha256": "00cc4051e9a06501b1a2201bc97ecaa88cba8396653d6c83ddaad485407135a5",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/owner-delivery-delay-v1.md",
+      "approvedSourceSha256": "812066590774a9e81b67326d31c95fea3bd4b7686122a3428b6dd943e6d8d67c",
+      "finalFile": "docs/legal/versions/owner-signing/owner-delivery-delay-v1.md",
+      "type": "owner-delivery-delay"
+    },
+    {
+      "finalSha256": "856785bbbebd355756c04de51e814abcadbd5dab51f7e870c9112e2f2f5b4235",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/owner-vehicle-change-v1.md",
+      "approvedSourceSha256": "42f9963173e6981586de43264b9bf775528037d597c7cca3180f6688ac0aae90",
+      "finalFile": "docs/legal/versions/owner-signing/owner-vehicle-change-v1.md",
+      "type": "owner-vehicle-change"
+    },
+    {
+      "finalSha256": "3ebc9e885c92ecd389c11317d09b961543e849274ff622d3384839a0275e9bfc",
+      "version": 1,
+      "approvedSource": "docs/legal/drafts/owner-handover-v1.md",
+      "approvedSourceSha256": "ca4fa5189f0512c418661a974612c6330d34a3c5c85b770ce16179db0bc67db1",
+      "finalFile": "docs/legal/versions/owner-signing/owner-handover-v1.md",
+      "type": "owner-handover"
+    }
+  ],
+  "editorialChanges": "仅替换草稿状态标记",
+  "approvedOn": "2026-10-17",
+  "approvalQuestionId": "call_5dc19ddd40224708b153e37b1eb52615",
+  "approvalStatement": "批准三份模板，逐单内容另行确认",
+  "published": false
+}

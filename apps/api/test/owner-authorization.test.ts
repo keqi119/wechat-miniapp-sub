@@ -35,3 +35,10 @@ test('closing locally remains available when provider capability is disabled and
  process.env.OWNER_AUTO_SIGNING_ENABLED='false';grant=await service.setEnabled(f.customer.id,f.owner.id,grant.id,{enabled:false,revision:0,scopeHash:''});assert.equal(grant.enabled,false);
  const result=await service.revoke(f.customer.id,f.owner.id,grant.id);assert.match(result.url,/cancel_extsign_auto_page/);assert.equal((await db.ownerAutoAuthority.findUniqueOrThrow({where:{id:grant.id}})).status,'REVOKING');
 });
+test('authorization callback requires the exact persisted provider grant and only refreshes evidence, never enables',async()=>{
+ const stored=await db.ownerAutoAuthority.findUniqueOrThrow({where:{id:grant.id}});certSerial=stored.certificateSerialNo;authorized=true;
+ provider.verifyCallback=()=>({transactionId:stored.providerTransactionId,providerContractId:'wrong',record:{customer_id:stored.providerCustomerId}});
+ await assert.rejects(service.callback({synthetic:true}),error('OWNER_CALLBACK_BINDING'));
+ provider.verifyCallback=()=>({transactionId:stored.providerTransactionId,providerContractId:stored.providerContractId,record:{customer_id:stored.providerCustomerId}});
+ assert.equal((await service.callback({synthetic:true})).accepted,true);const current=await db.ownerAutoAuthority.findUniqueOrThrow({where:{id:grant.id}});assert.equal(current.enabled,false);assert.equal(current.status,'REVOKING');
+});

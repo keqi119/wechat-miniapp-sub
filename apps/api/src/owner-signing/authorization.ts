@@ -11,6 +11,7 @@ const requestInput=z.object({scope:ownerScope,sealId:z.string().min(1),accepted:
 const switchInput=z.object({enabled:z.boolean(),revision:z.number().int().min(0),scopeHash:z.string()}).strict();
 export class OwnerAuthorizationService {
  constructor(private db:Db,private owners:OwnerService,private api:FadadaOwnerClient){}
+ async callback(payload:unknown){const event=this.api.verifyCallback(payload),a=await this.db.ownerAutoAuthority.findUnique({where:{providerTransactionId:event.transactionId}});ensure(a&&a.providerContractId===event.providerContractId&&(!event.record.customer_id||event.record.customer_id===a.providerCustomerId),409,'OWNER_CALLBACK_BINDING','授权回调与原任务不匹配');await this.refresh(a.requestedBy,a.ownerId,a.id);return{accepted:true};}
  private enabled(){ensure(process.env.OWNER_AUTO_SIGNING_ENABLED==='true',503,'OWNER_AUTO_DISABLED','企业自动签署授权入口尚未开放，可继续逐份签署');}
  view(a:any){return{id:a.id,ownerId:a.ownerId,sealId:a.sealId,scope:a.scope,scopeHash:a.scopeHash,status:a.status,enabled:a.enabled,revision:a.revision,checkedAt:a.checkedAt,enabledAt:a.enabledAt,disabledAt:a.disabledAt,createdAt:a.createdAt};}
  private async grant(customerId:string,ownerId:string,id:string){await this.owners.member(customerId,ownerId);const a=await this.db.ownerAutoAuthority.findFirst({where:{id,ownerId}});ensure(a,404,'NOT_FOUND','授权记录不存在');return a;}

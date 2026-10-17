@@ -1,3 +1,4 @@
+const { createOwnerApi } = require('./owners');
 const { locationPayload } = require('../utils/handover-location');
 const { money, date } = require('../utils/format');
 const { createUsageApi } = require('./usage');
@@ -39,6 +40,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
   const paymentKeys = new Map();
   const verificationPayments = new Set();
   const creditKeys = new Map();
+  const ownerApi = createOwnerApi({call,identifier,error});
   const usageApi = createUsageApi({ call, identifier, error, idempotencyKey, getContext });
   const swapApi = createSwapApi({ call, identifier, error, idempotencyKey, getContext, sessionKey: () => session()?.token });
   const changesApi = createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, enterSigning: (kind, id, body) => nativeSigning.startSigning(kind, id, body) });
@@ -297,6 +299,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     return { ...value, isSwap: swap, actualAtValid: Boolean(actualAtValid), actualAtDisplay, actualAtLabel: { DELIVERY: '实际交车时间', RETURN: '实际还车时间', SWAP_RETURN: '旧车实际交还时间', SWAP_DELIVERY: '新车实际交付时间' }[value.type] || '实际交接时间（类型待核对）', actualAtText: actualAtValid ? actualAtDisplay + '（北京时间）' : '缺少有效实际时间，待后台核对' };
   }
   async function getSignStatus(id, kind = 'contract') {
+    if (kind.startsWith('owner-')) return ownerApi.ownerSigningStatus(id,kind);
     if (kind === 'technical-acceptance') return technicalApi.technicalSignStatus(id);
     if (!['contract', 'handover', 'order-change', 'identity'].includes(kind)) throw error('签署业务类型无效。', 'SIGN_CONTEXT');
     if (kind === 'order-change') return changesApi.queryOrderChangeSignature(id);
@@ -363,7 +366,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (type === 'application' && ['cancel', 'confirm', 'reject'].includes(action)) {
       if (action === 'reject' && !String(payload.reason || '').trim()) throw error('请填写拒绝当前方案的原因。', 'VALIDATION');
       if (action !== 'cancel' && (!Number.isInteger(payload.revision) || payload.revision < 1 || (action === 'confirm' && !payload.commercialHash))) throw error('当前方案版本不完整，请刷新后重新阅读。', 'VALIDATION');
-      return call('POST', '/customer/applications/' + value + '/' + action, action === 'confirm' ? { revision: payload.revision, commercialHash: payload.commercialHash } : action === 'reject' ? { revision: payload.revision, reason: payload.reason.trim() } : { reason: payload.reason });
+      return call('POST', '/customer/applications/' + value + '/' + action, action === 'confirm' ? { revision: payload.revision, commercialHash: payload.commercialHash, ...(payload.ownerSharing ? {ownerSharing:payload.ownerSharing}: {}) } : action === 'reject' ? { revision: payload.revision, reason: payload.reason.trim() } : { reason: payload.reason });
     }
     if (type === 'bills' && action === 'pay') return pay(id, payload);
     if (type === 'contracts' && action === 'sign') return nativeSigning.startSigning('contract', id);
@@ -379,10 +382,14 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (['SUCCESS', 'SUCCEEDED', 'PAID', 'CLOSED', 'FAILED'].includes(result.status)) { platform.removeStorageSync(pendingKey + ':payment'); paymentKeys.delete(pending.billId); }
     return result;
   }
-  async function openPrivateFile(id) {
+  async function openOwnerFile(ownerId,taskId,kind) {
+    if(!['source','signed'].includes(kind))throw error('文件类型无效。','FILE_TYPE');
+    return openPrivateFile(null,'/owners/'+identifier(ownerId)+'/contracts/'+identifier(taskId)+'/files/'+kind);
+  }
+  async function openPrivateFile(id,ownerPath) {
     const current = session(), version = sessionVersion;
     if (!current) throw error('请先登录再查看文件。', 'AUTH_REQUIRED');
-    const downloaded = await native('downloadFile', { url: validateBase(options.apiBase) + '/api/customer/files/' + identifier(id), header: { Authorization: 'Bearer ' + current.token }, timeout: 60000 });
+    const downloaded = await native('downloadFile', { url: validateBase(options.apiBase) + '/api/customer' + (ownerPath || '/files/' + identifier(id)), header: { Authorization: 'Bearer ' + current.token }, timeout: 60000 });
     if (sessionVersion !== version || session()?.token !== current.token || session()?.customer.id !== current.customer.id) throw error('登录会话已变化，不能打开上一账户的文件。', 'SESSION_CHANGED');
     if (downloaded.statusCode !== 200) throw failure({ statusCode: downloaded.statusCode }, current.token);
     if (!downloaded.tempFilePath) throw error('文件下载未完成，请重试。', 'FILE_DOWNLOAD');
@@ -390,7 +397,7 @@ function createApi(options, request, platform = typeof wx !== 'undefined' ? wx :
     if (/^image\//i.test(contentType)) await native('previewImage', { current: downloaded.tempFilePath, urls: [downloaded.tempFilePath] });
     else await native('openDocument', { filePath: downloaded.tempFilePath, showMenu: false });
   }
-  return { ...usageApi, ...swapApi, ...changesApi, ...nativeSigning, ...technicalApi, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
+  return { ...ownerApi, openOwnerFile, ...usageApi, ...swapApi, ...changesApi, ...nativeSigning, ...technicalApi, getContext, refreshContext, loginWechat, requestSms, loginSms, logout, getHome, getVehicles, getVehicle,
     getModelDefinitions: async () => list(await call('GET', '/public/model-definitions', undefined, false)).items,
     getDashboard: async () => { const result = await call('GET', '/customer/dashboard'); const tracked = result.subscription && Object.prototype.hasOwnProperty.call(result.subscription, 'currentAssignment'); const assignment = tracked ? assignmentView(result.subscription.currentAssignment, () => { throw error('当前车辆分配尚未核实。', 'RESPONSE'); }) : null; return { ...result, ...(result.application ? { application: application(result.application) } : {}), ...(result.subscription ? { subscription: { ...result.subscription, ...(tracked ? { currentAssignment: assignment, vehicleName: assignment ? assignment.vehicle.title : '当前暂无车辆，换车待交付' } : {}), ...(tracked && !assignment ? { mileageText: '暂无当前车辆读数' } : {}), imageUrl: tracked && !assignment ? '' : media(result.subscription.imageUrl) } } : {}) }; },
     getApplication: async id => application(await call('GET', '/customer/applications/' + identifier(id))),

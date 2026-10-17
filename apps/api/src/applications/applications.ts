@@ -1,3 +1,4 @@
+import {buildLessorSnapshot,confirmLessor,lessorIdentityHash} from '../owner-signing/lessor';
 import { locationInput, resolveLocation } from './handover-location';
 import { snapshotUsagePolicy, usagePolicyAppendix } from '../usage/policy';
 import { Body, Controller, Get, Inject, Param, Post, Req } from '@nestjs/common';
@@ -14,7 +15,7 @@ export const applicationInclude = { vehicle: { include: { plans: true } }, subsc
 const statusNames: Record<string, string> = { SUBMITTED: '已提交', IN_REVIEW: '审核中', NEEDS_INFO: '待补充资料', REJECTED: '已拒绝', CANCELLED: '已取消', AWAITING_CONFIRMATION: '待确认最终方案', FINAL_PLAN_CONFIRMED: '方案已确认' };
 export function applicationView(a: any) {
   const plan = a.finalPlans?.[0];
-  return { ...a, type: 'applications', title: a.vehicle?.title || '订阅申请', subtitle: a.subscriptionPlan?.name || '', statusText: statusNames[a.status], vehicleName: a.vehicle?.title, planName: a.subscriptionPlan?.name, plan: a.subscriptionPlan, finalPlan: plan ? { ...plan, pricingMode: plan.acceptancePricing ? 'V1_ONE_FEN' : 'STANDARD', pricingDescription: acceptancePricingDescription(plan), monthlyFeeText: fen(plan.monthlyFeeAmount), depositText: fen(plan.depositAmount), termMonths: plan.months, mileageText: `每月 ${plan.mileagePerMonthKm} 公里`, energyText: plan.energyDescription, vehicleName: a.vehicle?.title, title: a.subscriptionPlan?.name } : null, commercialHash: plan?.commercialHash, nextAction: a.status === 'AWAITING_CONFIRMATION' ? '请核对并确认最终方案' : a.note || statusNames[a.status], details: [{ label: '申请编号', value: a.id }, { label: '审核说明', value: a.note || '等待审核' }], documents: [], timeline: [{ title: '提交申请', description: '申请已记录', done: true }, { title: '资料与方案审核', description: a.note || '等待审核', done: a.revision > 0 }, { title: '确认最终方案', description: '确认后建立订单', done: a.status === 'FINAL_PLAN_CONFIRMED' }], actions: a.status === 'AWAITING_CONFIRMATION' ? [{ id: 'confirm', label: '确认最终方案' }, { id: 'reject', label: '拒绝方案' }] : ['SUBMITTED','IN_REVIEW','NEEDS_INFO'].includes(a.status) ? [{ id: 'cancel', label: '取消申请' }] : [] };
+  return { ...a, type: 'applications', title: a.vehicle?.title || '订阅申请', subtitle: a.subscriptionPlan?.name || '', statusText: statusNames[a.status], vehicleName: a.vehicle?.title, planName: a.subscriptionPlan?.name, plan: a.subscriptionPlan, finalPlan: plan ? { ...plan, lessorHash:plan.lessorSnapshot?lessorIdentityHash(plan.lessorSnapshot):null, pricingMode: plan.acceptancePricing ? 'V1_ONE_FEN' : 'STANDARD', pricingDescription: acceptancePricingDescription(plan), monthlyFeeText: fen(plan.monthlyFeeAmount), depositText: fen(plan.depositAmount), termMonths: plan.months, mileageText: `每月 ${plan.mileagePerMonthKm} 公里`, energyText: plan.energyDescription, vehicleName: a.vehicle?.title, title: a.subscriptionPlan?.name } : null, commercialHash: plan?.commercialHash, nextAction: a.status === 'AWAITING_CONFIRMATION' ? '请核对并确认最终方案' : a.note || statusNames[a.status], details: [{ label: '申请编号', value: a.id }, { label: '审核说明', value: a.note || '等待审核' }], documents: [], timeline: [{ title: '提交申请', description: '申请已记录', done: true }, { title: '资料与方案审核', description: a.note || '等待审核', done: a.revision > 0 }, { title: '确认最终方案', description: '确认后建立订单', done: a.status === 'FINAL_PLAN_CONFIRMED' }], actions: a.status === 'AWAITING_CONFIRMATION' ? [{ id: 'confirm', label: '确认最终方案' }, { id: 'reject', label: '拒绝方案' }] : ['SUBMITTED','IN_REVIEW','NEEDS_INFO'].includes(a.status) ? [{ id: 'cancel', label: '取消申请' }] : [] };
 }
 const finalInput = z.object({ pricingMode: z.enum(['STANDARD','V1_ONE_FEN']).default('STANDARD'), creditVerificationId:text, commercialTerms: commercialTermsInput, revision: z.number().int().nonnegative(), monthlyFeeAmount: money.positive(), depositAmount: money.optional(), months: z.number().int().min(12).max(120), mileagePerMonthKm: z.literal(1500), excessMileagePriceAmount: z.literal(150), energyDescription: text, benefits: z.array(text).max(50), conditions: text, startDate: z.string(), firstDueDate: z.string() }).strict();
 @Controller()
@@ -72,7 +73,8 @@ export class ApplicationsController {
       const pricing=finalPlanPricing(app,input,standardDeposit,request.admin);
       const {pricingMode,...proposal}=input;
       const usagePolicy=await snapshotUsagePolicy(tx);
-      const fixed={...proposal,...pricing,usagePolicyVersion:'USAGE_V1',usagePolicy,creditBand:credit.verification.band,creditRuleVersion:CREDIT_RULE,creditRevision:app.creditRevision};
+      const lessorSnapshot=await buildLessorSnapshot(tx,app.vehicleId);
+      const fixed={...proposal,...pricing,...(lessorSnapshot?{lessorSnapshot}:{}),usagePolicyVersion:'USAGE_V1',usagePolicy,creditBand:credit.verification.band,creditRuleVersion:CREDIT_RULE,creditRevision:app.creditRevision};
       const revision = app.revision + 1; const commercialHash = hash({ ...fixed, vehicleId: app.vehicleId, revision });
       await tx.finalPlan.create({ data: { ...fixed, applicationId: id, revision, commercialHash, startDate, firstDueDate } });
       const updated = await tx.application.update({ where: { id }, data: { revision, status: 'AWAITING_CONFIRMATION' }, include: applicationInclude });
@@ -82,7 +84,7 @@ export class ApplicationsController {
     });
   }
   @Post('customer/applications/:id/confirm') async confirm(@Param('id') id: string, @Body() body: any, @Req() request: any) {
-    const input = z.object({ revision: z.number().int().nonnegative(), commercialHash: z.string().length(64) }).parse(body);
+    const input = z.object({ revision: z.number().int().nonnegative(), commercialHash: z.string().length(64), ownerSharing:z.unknown().optional() }).strict().parse(body);
     return this.db.serial(async tx => {
       const app = await tx.application.findFirst({ where: { id, customerId: request.customer.id }, include: applicationInclude }); ensure(app, 404, 'NOT_FOUND', '申请不存在');
       const final = app.finalPlans[0]; ensure(final && input.revision === app.revision && input.commercialHash === final.commercialHash, 409, 'REVISION_CONFLICT', '最终方案已更新，请重新阅读');
@@ -94,11 +96,13 @@ export class ApplicationsController {
       assertFinalPricing(app,final,final.monthlyFeeAmount*credit.multiplier);
       ensure(commercialTermsInput.safeParse(final.commercialTerms).success, 409, 'COMMERCIAL_TERMS_REQUIRED', '最终方案条款不完整，请后台重新出具完整方案');
       usagePolicyAppendix(final.usagePolicy);
+      const ownerDataConsent=final.lessorSnapshot?await confirmLessor(tx,app.customerId,app.vehicleId,final.lessorSnapshot,input.ownerSharing):null;
+      if(!final.lessorSnapshot)ensure(!await tx.ownerVehicle.count({where:{vehicleId:app.vehicleId}})&&process.env.OWNER_CONTRACTS_ENABLED!=='true',409,'OWNER_LESSOR_CHANGED','车辆出租方已变化，请重新出具最终方案');
       const claim = await tx.vehicle.updateMany({ where: { id: app.vehicleId, reservedOrderId: null, holdId:null, status: 'PUBLISHED' }, data: { status: 'RESERVED' } }); ensure(claim.count === 1, 409, 'VEHICLE_UNAVAILABLE', '该车已被其他订单占用');
-      const order = await tx.order.create({ data: { applicationId: id, customerId: request.customer.id, vehicleId: app.vehicleId, confirmedMileageKm: app.vehicle.mileageKm, finalPlanSnapshot: JSON.parse(JSON.stringify(final)) } });
+      const order = await tx.order.create({ data: { applicationId: id, customerId: request.customer.id, vehicleId: app.vehicleId, confirmedMileageKm: app.vehicle.mileageKm, finalPlanSnapshot: JSON.parse(JSON.stringify({...final,...(ownerDataConsent?{ownerDataConsent}:{})})) } });
       await tx.vehicle.update({ where: { id: app.vehicleId }, data: { reservedOrderId: order.id } });
       await tx.application.update({ where: { id }, data: { status: 'FINAL_PLAN_CONFIRMED' } });
-      await tx.contract.create({ data: { orderId: order.id, customerId: order.customerId, documentHash: final.commercialHash } });
+      await tx.contract.create({ data: { orderId: order.id, customerId: order.customerId, documentHash: final.commercialHash, ...(final.lessorSnapshot?{documentId:(final.lessorSnapshot as any).templateId,templateVersion:(final.lessorSnapshot as any).templateVersion}:{}) } });
       const schedule = billSchedule(final.firstDueDate.toISOString().slice(0, 10), final.months, final.monthlyFeeAmount);
       await tx.bill.createMany({ data: schedule.map(b => ({ orderId: order.id, customerId: order.customerId, type: 'SUBSCRIPTION', sequence: b.sequence, amount: b.amount, dueDate: dateOnly(b.dueDate) })) });
       if (final.depositAmount > 0) await tx.bill.create({ data: { orderId: order.id, customerId: order.customerId, type: 'DEPOSIT', sequence: 0, amount: final.depositAmount, dueDate: final.firstDueDate } });

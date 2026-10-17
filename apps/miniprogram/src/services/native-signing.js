@@ -1,6 +1,7 @@
 const policy = require('./native-signing-policy');
 const KINDS = { identity: '实名与证书准备', contract: '主合同签署', handover: '交接单签署', 'order-change': '订阅变更补充协议签署', 'technical-acceptance': '电子签署流程验证确认书' };
 const TTL = 10 * 60 * 1000;
+Object.assign(KINDS,{'owner-identity':'企业车主实名认证','owner-authority':'企业自动签署授权','owner-revoke':'撤销企业自动签署授权','owner-contract':'企业车主订阅合同签署'});
 function createNativeSigningApi({ call, native, identifier, error, getContext, sessionKey = () => null, getSignStatus, platform, pendingKey }) {
   const tasks = new Map(), running = new Map(), flowVersions = new Map(); let generation = 0;
   const keyOf = (kind, id) => kind + ':' + id;
@@ -29,8 +30,8 @@ function createNativeSigningApi({ call, native, identifier, error, getContext, s
     if (!result || !['PENDING', 'SIGNED'].includes(result.status) || (kind !== 'identity' && (typeof result.taskId !== 'string' || !result.taskId))) throw error('实名或签署任务响应未核实，请刷新原记录。', 'SIGN_RESPONSE');
     const url = result.url ? policy.providerUrl(result.url, config) : '';
     if (!url && result.status !== 'SIGNED') throw error('尚未取得有效的实名或签署页面，请查询当前状态后重试。', 'SIGN_RESPONSE');
-    if (kind === 'identity' && url && !/^https:\/\/realnameverify16\.fadada\.com\//.test(url)) throw error('实名页面域名与已核验配置不符。', 'SIGN_URL');
-    if (kind !== 'identity' && url && !/^https:\/\/textapi17\.fadada\.com\//.test(url)) throw error('签署页面域名与已核验配置不符。', 'SIGN_URL');
+    if (['identity','owner-identity'].includes(kind) && url && !/^https:\/\/realnameverify16\.fadada\.com\//.test(url)) throw error('实名页面域名与已核验配置不符。', 'SIGN_URL');
+    if (!['identity','owner-identity'].includes(kind) && url && !/^https:\/\/textapi17\.fadada\.com\//.test(url)) throw error('签署页面域名与已核验配置不符。', 'SIGN_URL');
     if (result.status === 'SIGNED' && (await getSignStatus(id, kind)).status !== 'SIGNED') throw error('服务端尚未确认双方签署归档，请查询当前状态。', 'SIGN_STATUS');
     assertCurrent(stamp);
     // Short URLs and any identity input never enter storage or logs.
@@ -41,10 +42,17 @@ function createNativeSigningApi({ call, native, identifier, error, getContext, s
   }
   async function startSigning(kind, id, body = {}) {
     const stamp = snapshot(kind, id);
-    if (kind === 'identity') throw error('请从账户设置明确同意后发起实名。', 'SIGN_CONTEXT');
+    if (kind === 'identity' || kind.startsWith('owner-')) throw error('请从对应本人业务入口阅读并确认。', 'SIGN_CONTEXT');
     const key = keyOf(kind, id), lease = {}; if (running.has(key)) throw error('签署页面正在准备，请勿重复点击。', 'SIGN_BUSY'); running.set(key, lease);
     try { const config = await enabled(); assertCurrent(stamp); const route = kind === 'handover' ? 'handovers' : kind === 'order-change' ? 'order-changes' : kind === 'technical-acceptance' ? 'technical-acceptances' : 'contracts'; const result = await call('POST', '/customer/' + route + '/' + identifier(id) + '/sign', body); assertCurrent(stamp); return await enter(kind, id, result, config, stamp); }
     finally { if (running.get(key) === lease) running.delete(key); }
+  }
+  async function startOwnerSigning(kind,ownerId,recordId,body={}){
+    if(!['owner-identity','owner-authority','owner-revoke','owner-contract'].includes(kind)||!/^[A-Za-z0-9-]{1,100}$/.test(ownerId)||recordId&&!/^[A-Za-z0-9-]{1,100}$/.test(recordId))throw error('企业签署记录无效。','SIGN_CONTEXT');
+    if(['owner-contract','owner-revoke'].includes(kind)&&!recordId)throw error('缺少企业业务记录。','SIGN_CONTEXT');
+    const id=ownerId+':'+(recordId||'new'),stamp=snapshot(kind,id),key=keyOf(kind,id),lease={};if(running.has(key))throw error('企业页面正在准备。','SIGN_BUSY');running.set(key,lease);
+    try{const config=await enabled();assertCurrent(stamp);const suffix=kind==='owner-identity'?'/verification':kind==='owner-authority'?'/authorities':kind==='owner-revoke'?'/authorities/'+identifier(recordId)+'/revoke':'/contracts/'+identifier(recordId)+'/sign';const result=await call('POST','/customer/owners/'+identifier(ownerId)+suffix,body);assertCurrent(stamp);if(!result?.url)throw error('企业页面尚未就绪，请查询当前状态。','SIGN_RESPONSE');return await enter(kind,id,{taskId:result.taskId||result.id||id,status:'PENDING',url:result.url},config,stamp);}
+    finally{if(running.get(key)===lease)running.delete(key);}
   }
   async function startESignVerification(input) {
     const id = getContext().customer?.id, stamp = snapshot('identity', id);
@@ -68,6 +76,6 @@ function createNativeSigningApi({ call, native, identifier, error, getContext, s
     return result;
   }
   function forgetSigningTask(kind, id) { context(kind, id); const key = keyOf(kind, id); flowVersions.set(key, (flowVersions.get(key) || 0) + 1); tasks.delete(key); const pending = platform.getStorageSync?.(pendingKey); if (pending?.kind === kind && pending.id === id) platform.removeStorageSync(pendingKey); }
-  return { getSigningConfig, getSigningTask, startSigning, startESignVerification, refreshESignReadiness, purgeLegacySigningCache, resumeSigning, reloadSigningPage, prepareFaceBridge, forgetSigningTask, clearSigningState: () => { generation++; tasks.clear(); running.clear(); flowVersions.clear(); } };
+  return { startOwnerSigning, getSigningConfig, getSigningTask, startSigning, startESignVerification, refreshESignReadiness, purgeLegacySigningCache, resumeSigning, reloadSigningPage, prepareFaceBridge, forgetSigningTask, clearSigningState: () => { generation++; tasks.clear(); running.clear(); flowVersions.clear(); } };
 }
 module.exports = { createNativeSigningApi };

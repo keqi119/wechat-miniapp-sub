@@ -126,3 +126,16 @@ API 实现人员负责把以上入口细化为 DTO、Prisma 实体与共享类�
 - 服务器生成`consent:{customerId,documentId,version,contentHash,policyHash,acceptedAt}`。不把地图同意写成普通登录同意，也不由后台代客户勾选。
 - 补件省略字段保留已有地点，null清除。仅当前客户、NEEDS_INFO状态允许新补件，幂等回放保留原结果。新增地点须当前隐私政策同意；清除不受此限制。
 - 当前profile采用严格字段name/drivingYears/fileIds/mobile（mobile仅申请提交），防止通过扩展字段保存坐标。个人资料接口不承担交接建议存储。
+
+## 企业车主签约（OWNER）
+
+- `OWNER_ONBOARDING_ENABLED`、`OWNER_CONTRACTS_ENABLED`、`OWNER_AUTO_SIGNING_ENABLED` 独立控制新操作，默认 false。旧技术验收与已归档文件不迁入车主任务。
+- ADMIN/OPERATIONS 通过 `/admin/vehicle-owners` 建档、生成7天手机号绑定邀请、更新联系号码和审核车辆归属。邀请原文仅创建时返回；存储 token/手机号摘要，不授予登录或用印权限。
+- 本人通过 `/customer/owners/claim` 接受邀请。`/:id/verification` 要求当前用户协议、隐私政策及 owner-identity 的主动同意；`/:id/refresh` 只以企业名称、信用代码、认证经办人手机号、当前证书和印章渠道证据更新就绪状态。选用印章须本人操作。
+- `/:id/authorities` 创建冻结授权范围，明确车辆、模板ID/版本/摘要、有效期、月租/押金和期数边界。渠道授权成功后仍默认关闭；本人 `switch` 开启，运营只能暂停。关闭本地开关不谎称撤销渠道授权；每次自动执行前重新查询授权和身份，未知结果不重发。
+- 最终方案冻结 `lessorSnapshot` 及解析后的信息提供告知。客户确认时须单独提交 `{accepted:true,lessorHash,noticeHash}`；身份、车辆归属或告知变化要求重出方案。车主绑定车辆不会降级成晓浪出租。
+- 主合同和补充协议生成 OWNER/CUSTOMER 两方任务及独立交易。运营在 `/admin/vehicle-owners/:id/contracts/:contractId/prepare` 生成文件，在 `/tasks/:taskId/review` 核对完整PDF与摘要；此操作不代替企业授权或本人签署。
+- 经核验的当前企业经办人才能读取 `/customer/owners/:id/contracts/:taskId` 及其 `files/source|signed`。逐份签署需 accepted、documentHash、sourceSha256，不能传供应商身份或印章编号。手动选择与自动执行持久化意图互斥；在途不重签。
+- 延期及同一车主的换车补充协议仅支持逐份手动签署。目标车归属审核固定在报价中，变化要求重新确认；更换出租方不可套用同一合同。交接单列明实际出租方，由晓浪作为交接作业方与客户确认事实。
+- 查询绑定原合同、原交易和原签署账号。双方签署证据与签后PDF校验齐备后才归档并推进原订单/变更。供应商失败状态保留原任务并停止后续用印；回跳事件不作为签署证据。
+- 企业客户、印章、授权和任务表位于本项目独立库；不访问旧系统业务库。平台清分/车主结算不在本版实现范围。

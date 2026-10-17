@@ -6,6 +6,7 @@ import {Db} from '../src/common/db';
 import {createApp} from '../src/app';
 import {tokenHash} from '../src/auth/auth.service';
 import {listenForHttpTests} from './http-listener';
+import {ContractPdfArtifactWriterService} from '../src/contract/contract-pdf-artifact-writer.service';
 let db:Db,app:any,base:string;const admins:any={},customers:any[]=[];let ownerId:string;
 before(async()=>{
  assert.ok(new URL(process.env.TEST_DATABASE_URL!).pathname.endsWith('_test'));process.env.NODE_ENV='test';db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});
@@ -36,4 +37,17 @@ test('customer routes bind invitation and read access to authenticated phone and
 });
 test('owner identity callback cannot create readiness from unsigned claims',async()=>{
  const result=await req('/callbacks/fadada-owner-identity',{transactionNo:'unknown',status:'4'});assert.ok([401,400,503].includes(result.status));assert.equal(await db.ownerESignAccount.count({where:{ownerId}}),0);
+});
+test('owner operational entry requires explicit evidence and blocks unverified members from contract data',async()=>{
+ assert.equal((await req('/admin/vehicle-owners/'+ownerId+'/contact',{contactPhone:'021-55550123',revision:0},'OPERATIONS')).status,201);
+ assert.equal((await req('/admin/vehicle-owners/'+ownerId+'/vehicles',{vehicleId:'missing',evidenceFileId:'missing',accepted:true},'SUPPORT')).status,403);
+ const rejected=await req('/admin/vehicle-owners/'+ownerId+'/vehicles',{vehicleId:'missing',evidenceFileId:'missing',accepted:true},'OPERATIONS');assert.equal(rejected.status,409);
+ assert.equal((await req('/customer/owners/'+ownerId+'/contracts',undefined,undefined,0)).status,403);
+ assert.equal((await req('/customer/owners/'+ownerId+'/contracts/unknown/files/source',undefined,undefined,1)).status,404);
+ assert.ok([400,401,503].includes((await req('/callbacks/fadada-owner-sign',{transaction_id:'unknown'})).status));
+});
+test('finance and support cannot download a private owner contract by guessing its file ID',async()=>{
+ const file=await new ContractPdfArtifactWriterService(db).persistPdf(Buffer.from('%PDF-1.7\n'+ 'synthetic privacy fixture '.repeat(5)),{customerId:customers[0].customer.id,name:'synthetic.pdf',purpose:'contract'});
+ await db.ownerSigningTask.create({data:{ownerId,customerId:customers[0].customer.id,kind:'SUBSCRIPTION',resourceId:randomUUID(),documentHash:'a'.repeat(64),sourceFileId:file.id,sourceSha256:file.sha256,providerContractId:randomUUID(),snapshot:{synthetic:true},ownerSealId:'synthetic'}});
+ for(const role of ['FINANCE','SUPPORT']){const r=await fetch(base+'/api/admin/files/'+file.id,{headers:{Cookie:'admin_session='+admins[role].token}});assert.equal(r.status,403);}
 });

@@ -50,6 +50,7 @@ const STAGE1_REQUIRED_SLOT_IDS: ContractPdfSigningSlotId[] = [
   "STAGE1_ATTACHMENT1_CUSTOMER",
   "STAGE1_ATTACHMENT1_PLATFORM"
 ];
+function requiredSlotIds(model:ContractPdfRenderModel):ContractPdfSigningSlotId[]{return model.signingSlots.some(slot=>slot.signerRole==='OWNER')?STAGE1_REQUIRED_SLOT_IDS.map(id=>id.replace('_PLATFORM','_OWNER') as ContractPdfSigningSlotId):STAGE1_REQUIRED_SLOT_IDS;}
 
 export interface ContractPdfRenderOptions {
   allowBuiltinFontForAsciiOnlyTests?: boolean;
@@ -114,9 +115,9 @@ function buildDiagnostics(model: ContractPdfRenderModel): ContractPdfRenderDiagn
     ),
     hasLegalBody: model.contentTemplate.trim().length > 0,
     hasPlatformSealKeyword: model.signingSlots.some(
-      (slot) => slot.signerRole === "PLATFORM" && slot.keyword.trim().length > 0
+      (slot) => (slot.signerRole === "PLATFORM" || slot.signerRole === "OWNER") && slot.keyword.trim().length > 0
     ),
-    hasStage1SigningSlots: STAGE1_REQUIRED_SLOT_IDS.every(
+    hasStage1SigningSlots: requiredSlotIds(model).every(
       (slotId) => stage1SigningSlotOccurrences[slotId] === 1
     ),
     stage1SigningSlotOccurrences
@@ -425,7 +426,7 @@ function writeSigningSection(
 }
 
 function signingBlankHeight(slot: ContractPdfSigningSlot) {
-  return slot.signerRole==='PLATFORM'?PLATFORM_SIGNING_HEIGHT:CUSTOMER_SIGNING_HEIGHT;
+  return slot.signerRole==='PLATFORM'||slot.signerRole==='OWNER'?PLATFORM_SIGNING_HEIGHT:CUSTOMER_SIGNING_HEIGHT;
 }
 
 function signingSlotHeight(doc: PDFKit.PDFDocument,slot: ContractPdfSigningSlot) {
@@ -604,24 +605,7 @@ function countStage1SlotOccurrences(model: ContractPdfRenderModel) {
     ...buildSigningSlotSearchableText(model.signingSlots)
   ].join("\n");
 
-  return {
-    STAGE1_ATTACHMENT1_CUSTOMER: countOccurrences(
-      text,
-      findSlotKeyword(model.signingSlots, "STAGE1_ATTACHMENT1_CUSTOMER")
-    ),
-    STAGE1_ATTACHMENT1_PLATFORM: countOccurrences(
-      text,
-      findSlotKeyword(model.signingSlots, "STAGE1_ATTACHMENT1_PLATFORM")
-    ),
-    STAGE1_BODY_CUSTOMER: countOccurrences(
-      text,
-      findSlotKeyword(model.signingSlots, "STAGE1_BODY_CUSTOMER")
-    ),
-    STAGE1_BODY_PLATFORM: countOccurrences(
-      text,
-      findSlotKeyword(model.signingSlots, "STAGE1_BODY_PLATFORM")
-    )
-  };
+  return Object.fromEntries(requiredSlotIds(model).map(slotId=>[slotId,countOccurrences(text,findSlotKeyword(model.signingSlots,slotId))]));
 }
 
 function validateStage1SigningSlots(
@@ -634,7 +618,7 @@ function validateStage1SigningSlots(
     );
   }
 
-  for (const slotId of STAGE1_REQUIRED_SLOT_IDS) {
+  for (const slotId of requiredSlotIds(model)) {
     const slots = model.signingSlots.filter((slot) => slot.slotId === slotId);
     if (slots.length !== 1 || slots[0]!.keyword.trim().length === 0) {
       throw new Error(`${CONTRACT_PDF_RENDER_STAGE1_SIGNING_SLOT_MISSING}: ${slotId} is required`);

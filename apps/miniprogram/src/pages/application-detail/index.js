@@ -9,6 +9,7 @@ Page({
     busy: false,
     application: null,
     planRead: false,
+    ownerSharingAccepted: false,
     actionMessage: '',
     actionError: '',
     rejectReason: '',
@@ -24,7 +25,7 @@ Page({
     this.refresh();
   },
   refresh() {
-    this.setData({ creditAccepted: false, creditReview: null, creditError: '', planRead: false });
+    this.setData({ creditAccepted: false, creditReview: null, creditError: '', planRead: false, ownerSharingAccepted:false });
     return load(this, async () => {
       const [application, credit] = await Promise.all([
         service.getApplication(this.applicationId),
@@ -64,6 +65,7 @@ Page({
   onPlanRead(event) {
     this.setData({ planRead: event.detail.value.includes('read'), actionError: '' });
   },
+  onOwnerSharing(event) {if(!this.data.busy)this.setData({ownerSharingAccepted:event.detail.value.includes('owner'),actionError:''});},
   openCatalog() {
     go('/pages/catalog/index');
   },
@@ -117,6 +119,7 @@ Page({
       if (!credit?.canConfirmFinalPlan || !credit.verification || final.creditVerificationId !== credit.verification.id || final.creditRuleVersion !== credit.ruleVersion || final.creditBand !== credit.verification.band || final.creditRevision !== credit.creditRevision) { this.setData({ actionError: '信用核验授权或押金依据尚未就绪、已变更，请联系运营重新核验并出具方案。', planRead: false }); return; }
     }
     if (action === 'confirm' && !application.finalPlan.complete) { this.setData({ actionError: '最终方案信息不完整，请等待后台补齐费用和日期后重新确认。' }); return; }
+    if(action==='confirm'&&application.finalPlan.lessorSnapshot&&!this.data.ownerSharingAccepted){this.setData({actionError:'请单独阅读并同意向本单实际出租方提供必要合同资料。'});return;}
     if (action === 'confirm' && !this.data.planRead) {
       this.setData({ actionError: '请先阅读并勾选确认最终方案内容。' });
       return;
@@ -133,6 +136,7 @@ Page({
       const result = await service.performAction('application', application.id, action, {
         revision: application.finalPlan.revision,
         commercialHash: application.finalPlan.commercialHash,
+        ...(action==='confirm'&&application.finalPlan.lessorSnapshot?{ownerSharing:{accepted:true,lessorHash:application.finalPlan.lessorHash,noticeHash:application.finalPlan.lessorSnapshot.sharingNotice.contentHash}}:{}),
         reason: this.data.rejectReason.trim(),
       });
       this.setData({ actionMessage: result.message || '处理已保存。' });

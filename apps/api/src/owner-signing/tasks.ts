@@ -24,6 +24,7 @@ export class OwnerSigningTasks {
  }
  async beginAuto(id:string){ensure(process.env.OWNER_AUTO_SIGNING_ENABLED==='true',503,'OWNER_AUTO_DISABLED','自动签署已停用');return this.begin(id);}
  async beginManual(customerId:string,ownerId:string,id:string){await this.owners.requireSigningMember(customerId,ownerId);return this.begin(id,{customerId,ownerId});}
+ async assertManualReentry(customerId:string,ownerId:string,id:string){await this.owners.requireSigningMember(customerId,ownerId);const t=await this.load(this.db,id);ensure(t.ownerId===ownerId&&t.ownerMode==='MANUAL'&&t.manualBy===customerId&&t.ownerDispatchAt&&t.status!=='ARCHIVED',409,'OWNER_ALREADY_DISPATCHED','不能重开本份企业签署');this.manager(t,customerId);ensure(evaluateOwnerSigning(this.facts(t)).decision!=='BLOCKED',409,'OWNER_NOT_READY','企业身份或本份合同印章已变化');}
  private async begin(id:string,manual?:{customerId:string;ownerId:string}){
   return this.db.serial(async tx=>{
    const t=await this.load(tx,id);this.mutable(t);

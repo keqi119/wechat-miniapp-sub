@@ -60,6 +60,7 @@ export function statusLabel(value: string) { return labels[value] ?? value; }
 Object.assign(labels, commercialTermLabels, handoverFactLabels);
 Object.assign(labels,{'handover-location':'交接地点选择说明',handoverProposal:'客户建议交还地点',TECHNICAL_ACCEPTANCE:'独立技术验收文件','technical-signing-verification':'技术签署验证确认书','technical-acceptances':'签署技术验收',STOPPED:'已记录停止',PURGED:'独立资料已清理',RETAINED:'期限内保留',REVIEW_DUE:'到期等待人工复核',HELD:'必要留存中'});
 export const resources: Resource[] = [
+  {key:'vehicle-owners',title:'企业车主签约',singular:'企业车主',subtitle:'实际企业车主认证及订阅合同',readRoles:['ADMIN','OPERATIONS'],writeRoles:['ADMIN','OPERATIONS'],columns:[]},
   technicalResource,
   swapCreditResource,
   { key: 'payment-verifications', title: '支付验收', singular: '支付验收授权', subtitle: '固定0.01元，用于微信支付验证，不生成订阅订单/合同。状态以服务端可信渠道核验为准。', adminOnly: true, create: true, statuses: ['AUTHORIZED', 'CREATING', 'PENDING', 'SUCCEEDED', 'CLOSED', 'FAILED', 'EXPIRED'], columns: [{ key: 'title', label: '验收用途' }, { key: 'customerId', label: '授权客户' }, { key: 'amount', label: '固定验收金额', format: 'money' }, statusColumn, { key: 'expiresAt', label: '授权有效期', format: 'date' }, { key: 'paidAt', label: '可信到账时间', format: 'date' }], fields: [ref('customerId', '指定客户', 'customers'), { key: 'authorizationNote', label: '授权说明', type: 'textarea', required: true, hint: '固定0.01元，用于微信支付验证，不生成订阅订单/合同。授权24小时有效；客户须自行确认微信付款。请记录本次明确授权范围。' }], actions: [{ label: '查询并关闭未付验收', path: 'close', warning: '服务端将先查询渠道结果，再关闭未付款验收。已成功到账不能关闭；未知结果保留原交易，不会自动新建第二笔。', kind: 'danger' }] },
@@ -97,7 +98,7 @@ export const groups = [
   { label: '资金与账务', keys: ['bills', 'payments', 'deposits', 'refunds', 'swap-credit-purchases', 'payment-verifications'] },
   { label: '交付与服务', keys: ['handovers', 'mileages', 'services', 'entitlements', 'notifications'] },
   { label: '里程与退订', keys: ['usage-periods', 'return-settlements'] },
-  { label: '签章运营', keys: ['technical-acceptances', 'enterprise-seals', 'seal-authorities', 'signature-policies', 'esign-approvals'] },
+  { label: '签章运营', keys: ['vehicle-owners','technical-acceptances', 'enterprise-seals', 'seal-authorities', 'signature-policies', 'esign-approvals'] },
   { label: '系统管理', keys: ['users', 'audit-logs', 'legal-documents'] },
 ];
 export function valueAt(entity: Entity, key: string): unknown { return key.split('.').reduce<unknown>((obj, part) => typeof obj === 'object' && obj !== null ? (obj as Record<string, unknown>)[part] : undefined, entity); }

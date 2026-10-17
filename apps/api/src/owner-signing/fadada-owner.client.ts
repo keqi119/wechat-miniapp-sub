@@ -3,7 +3,7 @@ import {FadadaHttpClient,FadadaTransport} from '../esign/fadada/fadada-http-clie
 import {buildFadadaRequest} from '../esign/fadada/fadada-request-builder';
 import {formatFadadaTimestamp} from '../esign/fadada/fadada-digest';
 import {MINIAPP_PROVIDER_API,MINIAPP_RETURN} from '../esign/native-signing';
-import {certificateCurrentlyValid} from '../esign/fadada/fadada-safety';
+import {certificateCurrentlyValid,verifiedCallback} from '../esign/fadada/fadada-safety';
 import {authorizationEvidence,checkEcho,enterpriseEvidence,providerId,record,requireEvidence,requiredText,scalar,sealEvidence} from './provider-evidence';
 
 const IDENTITY_NOTIFY='https://mini-api.subauto.keybox.cloud/api/callbacks/fadada-owner-identity';
@@ -12,14 +12,14 @@ const SIGN_NOTIFY='https://mini-api.subauto.keybox.cloud/api/callbacks/fadada-ow
 export interface OwnerCompanyIdentity {customerId:string;name:string;creditCode:string;}
 export interface OwnerGrantIdentity {customerId:string;contractId:string;transactionId:string;}
 
-const ownerTransport:FadadaTransport=async request=>{
+export const ownerTransport:FadadaTransport=async request=>{
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),request.timeoutMs);
   try{
     const response=await fetch(request.url,{method:request.method,body:request.body as never,headers:request.headers,signal:controller.signal,redirect:'error'});
     // Company responses can contain identity photos. Do not accept an unbounded response body.
     const reader=response.body?.getReader();let length=0;const chunks:Uint8Array[]=[];
-    if(reader)try{for(;;){const part=await reader.read();if(part.done)break;length+=part.value.length;requireEvidence(length<=4_000_000,'OWNER_PROVIDER_RESPONSE_SIZE');chunks.push(part.value);}}finally{await reader.cancel();}
-    return{status:response.status,headers:Object.fromEntries(response.headers),bodyText:Buffer.concat(chunks).toString('utf8')};
+    if(reader)try{for(;;){const part=await reader.read();if(part.done)break;length+=part.value.length;requireEvidence(length<=(request.responseType==='arraybuffer'?20*1024*1024:4_000_000),'OWNER_PROVIDER_RESPONSE_SIZE');chunks.push(part.value);}}finally{await reader.cancel();}
+    const bytes=Buffer.concat(chunks);return{status:response.status,headers:Object.fromEntries(response.headers),...(request.responseType==='arraybuffer'?{bodyBuffer:bytes}:{bodyText:bytes.toString('utf8')})};
   }finally{clearTimeout(timer);}
 };
 
@@ -72,6 +72,7 @@ export class FadadaOwnerClient {
     const timestamp=formatFadadaTimestamp(new Date()),request=buildFadadaRequest({config:this.config,endpoint,method:'GET',timestamp,explicitMd5Seed:input.transactionId+timestamp,explicitSortString:input.customerId,businessParams:{...extra,customer_id:input.customerId,signature_id:input.signatureId,contract_id:input.contractId,transaction_id:input.transactionId,return_url:MINIAPP_RETURN,open_environment:'4'}});
     const url=new URL(request.url);for(const [key,value]of Object.entries(request.params))url.searchParams.set(key,value);return{url:url.href};
   }
+  verifyCallback(payload:unknown){return verifiedCallback(payload,this.config);}
   createAuthorizationUrl(input:OwnerGrantIdentity&{signatureId:string}){return this.page('before_authsign.api',input,{auth_type:'1',notify_url:AUTH_NOTIFY});}
   createRevocationUrl(customerId:string){
     this.enabled();providerId(customerId);const request=buildFadadaRequest({config:this.config,endpoint:'cancel_extsign_auto_page.api',method:'GET',businessParams:{customer_id:customerId,notify_url:AUTH_NOTIFY,return_url:MINIAPP_RETURN}});

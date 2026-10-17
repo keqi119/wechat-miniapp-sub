@@ -33,6 +33,7 @@ export class OwnerCustomerController {
 }
 @Controller('callbacks')
 export class OwnerCallbacksController {
- constructor(@Inject(OwnerIdentityService) private identity:OwnerIdentityService){}
+ constructor(@Inject(OwnerIdentityService) private identity:OwnerIdentityService,@Inject(OwnerAuthorizationService)private authority:OwnerAuthorizationService){}
+ @Post('fadada-owner-authorization') authorityCallback(@Body() body:unknown){return this.authority.callback(body);}
  @Post('fadada-owner-identity') identityCallback(@Body() body:unknown){return this.identity.callback(body);}
 }

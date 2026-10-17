@@ -1,0 +1,37 @@
+{
+  "scope": "Actual WXML/WXSS synthetic offline states only",
+  "cases": [
+    {
+      "name": "invitation",
+      "sign": false,
+      "passed": true
+    },
+    {
+      "name": "identity-unchecked",
+      "sign": false,
+      "passed": true
+    },
+    {
+      "name": "scope-unchecked",
+      "sign": false,
+      "passed": true
+    },
+    {
+      "name": "manual-unchecked",
+      "sign": false,
+      "passed": true
+    },
+    {
+      "name": "manual-explicit",
+      "sign": true,
+      "passed": true
+    },
+    {
+      "name": "signed-archived",
+      "sign": false,
+      "passed": true
+    }
+  ],
+  "runtimeErrors": [],
+  "externalRequests": []
+}

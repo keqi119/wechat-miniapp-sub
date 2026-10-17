@@ -1,3 +1,4 @@
+import {verifySwapOwner} from '../owner-signing/followup';
 import {recoverSwapQuote} from './recovery';
 import {z} from 'zod';
 import {key,text,money,hash} from '../common/data';
@@ -27,12 +28,13 @@ export async function swapQuote(tx:any,change:any,input:any,actor:any){
  ensure(input.periods.length===funds.rows.length&&new Set(input.periods.map((r:any)=>r.sequence)).size===funds.rows.length,400,'PERIODS_REQUIRED','须列明全部原服务期');
  const rows=funds.rows.map((r:any)=>{const x=input.periods.find((i:any)=>i.sequence===r.sequence);ensure(x,400,'PERIODS_REQUIRED','期数不完整');if(r.sequence<affected.sequence)ensure(x.amount===r.amount&&x.dueDate===r.dueDate,409,'HISTORICAL_MONEY_IMMUTABLE','已经履行的更早服务月份不可改价');return{...x,startDate:r.startDate,endDate:r.endDate,originalAmount:r.amount,netPaidAmount:r.netPaidAmount,carryAmount:Math.min(x.amount,r.netPaidAmount),chargeAmount:Math.max(0,x.amount-r.netPaidAmount),refundAmount:Math.max(0,r.netPaidAmount-x.amount)};});
  const target=await tx.vehicle.findUnique({where:{id:input.targetVehicleId}});ensure(target&&target.id!==old.vehicleId&&target.status==='PUBLISHED'&&!target.reservedOrderId,409,'VEHICLE_UNAVAILABLE','目标车辆不可用');const held=target.holdId?await tx.vehicleHold.findUnique({where:{id:target.holdId}}):null;ensure(!held||held.changeId===change.id,409,'VEHICLE_UNAVAILABLE','目标车辆已被其他换车预留');
+ const ownerVehicleBinding=await verifySwapOwner(tx,order,target.id);
  // Serialize every stock consumer through the physical vehicle row.
  await tx.vehicle.update({where:{id:target.id},data:{updatedAt:new Date()}});
  const deposits=await tx.payment.findMany({where:{customerId:order.customerId,status:'SUCCEEDED',bill:{orderId:order.id,type:{in:['DEPOSIT','DEPOSIT_ADJUSTMENT']}}},include:{refunds:true},orderBy:{id:'asc'}});
  const depositFunds=deposits.map((p:any)=>({id:p.id,amount:p.amount,net:p.amount-p.refunds.filter((r:any)=>r.status==='SUCCEEDED').reduce((n:number,r:any)=>n+r.amount,0)})),net=depositFunds.reduce((n:number,p:any)=>n+p.net,0);
  const {revision:_,idempotencyKey:__,periods:___,...fields}=input;
- const snapshot={...fields,financialGate:'BEFORE_RETURN',newStartDate:String(change.priorTerms.startDate).slice(0,10),newEndDate:day(new Date(new Date(funds.rows.at(-1)!.endDate).getTime()-86400000)),months:change.priorTerms.months,periods:rows,originalAssignmentId:old.id,oldVehicleIdentification:vehicleIdentity(old.vehicle),targetVehicleIdentification:vehicleIdentity(target),targetVehicleTitle:target.title,affectedSequence:affected.sequence,depositNetPaidAmount:net,depositChargeAmount:Math.max(0,input.depositAmount-net),depositRefundAmount:Math.max(0,net-input.depositAmount),depositFunds,document:null};
+ const snapshot={...fields,...(ownerVehicleBinding?{ownerVehicleBinding}:{}),financialGate:'BEFORE_RETURN',newStartDate:String(change.priorTerms.startDate).slice(0,10),newEndDate:day(new Date(new Date(funds.rows.at(-1)!.endDate).getTime()-86400000)),months:change.priorTerms.months,periods:rows,originalAssignmentId:old.id,oldVehicleIdentification:vehicleIdentity(old.vehicle),targetVehicleIdentification:vehicleIdentity(target),targetVehicleTitle:target.title,affectedSequence:affected.sequence,depositNetPaidAmount:net,depositChargeAmount:Math.max(0,input.depositAmount-net),depositRefundAmount:Math.max(0,net-input.depositAmount),depositFunds,document:null};
  const revision=((await tx.delayQuote.aggregate({where:{changeId:change.id},_max:{revision:true}}))._max.revision||0)+1;
  await releaseHold(tx,change.id);if(active)await tx.delayQuote.update({where:{id:active.id},data:{status:'SUPERSEDED'}});
  const quote=await tx.delayQuote.create({data:{changeId:change.id,revision,commercialHash:hash({priorTermsHash:change.priorTermsHash,snapshot}),snapshot,fundsSnapshot:funds.rows,createdBy:actor.id}});

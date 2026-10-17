@@ -26,9 +26,11 @@ export type ContractPdfSigningSlotId =
   | "STAGE1_ATTACHMENT1_CUSTOMER"
   | "STAGE1_ATTACHMENT1_PLATFORM"
   | "STAGE1_BODY_CUSTOMER"
+  | "STAGE1_ATTACHMENT1_OWNER"
+  | "STAGE1_BODY_OWNER"
   | "STAGE1_BODY_PLATFORM";
 
-export type ContractPdfSignerRole = "CUSTOMER" | "PLATFORM";
+export type ContractPdfSignerRole = "CUSTOMER" | "PLATFORM" | "OWNER";
 
 export interface ContractPdfSigningSlot {
   documentType: ContractPdfDocumentType;
@@ -96,7 +98,7 @@ export interface ContractPdfVehicleSwapTerms {
   targetVehicleNo: ContractPdfValue;
 }
 
-export type ContractPdfStage1SigningSlotOccurrences = Record<ContractPdfSigningSlotId, number>;
+export type ContractPdfStage1SigningSlotOccurrences = Partial<Record<ContractPdfSigningSlotId, number>>;
 
 export interface ContractPdfRenderDiagnostics {
   hasAppendix: boolean;
@@ -187,6 +189,9 @@ export const STAGE1_CONTRACT_PDF_SIGNING_SLOT_DEFINITIONS: ContractPdfSigningSlo
 
 export function createStage1ContractPdfSigningSlots(): ContractPdfSigningSlot[] {
   return STAGE1_CONTRACT_PDF_SIGNING_SLOT_DEFINITIONS.map((slot) => ({ ...slot }));
+}
+export function createOwnerContractPdfSigningSlots(ownerName:string):ContractPdfSigningSlot[]{
+  return createStage1ContractPdfSigningSlots().map(slot=>slot.signerRole==='PLATFORM'?{...slot,signerRole:'OWNER',slotId:slot.slotId.replace('_PLATFORM','_OWNER') as ContractPdfSigningSlotId,keyword:slot.keyword.replace('服务提供方','实际出租方'),label:ownerName+'（出租方）盖章'}:slot);
 }
 
 export function createEmptyStage1SigningSlotOccurrences(): ContractPdfStage1SigningSlotOccurrences {

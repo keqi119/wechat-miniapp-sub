@@ -149,6 +149,7 @@ Page({
   },
   clearCache() { services.clearSigningCache(); services.clearSigningState(); this.setData({ identityName: '', idCardNo: '', identityAccepted: false, message: '已清理实名与签署恢复缓存，业务记录由服务端保存。' }); },
   openLegal(e) { go('/pages/legal/index?type=' + e.currentTarget.dataset.type); },
+  openOwner() { go('/pages/owner/index'); },
   openProfile() { go('/pages/profile/index'); },
   openHome() { go('/pages/home/index'); },
   onUnload() { this._disposed = true; this._pageGeneration = (this._pageGeneration || 0) + 1; this._refreshRevision = (this._refreshRevision || 0) + 1; this._identityRevision = (this._identityRevision || 0) + 1; clearInterval(this._cooldownTimer); },

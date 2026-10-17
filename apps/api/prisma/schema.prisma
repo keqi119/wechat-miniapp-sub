@@ -347,6 +347,7 @@ model Application {
 }
 model FinalPlan {
  id String @id @default(cuid())
+ lessorSnapshot Json?
  acceptancePricing Json?
  applicationId String
  application Application @relation(fields:[applicationId],references:[id])
@@ -981,6 +982,7 @@ model OwnerSigningTask {
  uploadedAt DateTime?
  archivedAt DateTime?
  signedFileId String?
+ signedPdfHash String?
  processingToken String?
  processingUntil DateTime?
  revision Int @default(0)

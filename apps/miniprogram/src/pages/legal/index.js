@@ -2,7 +2,7 @@ const services = require('../../services/index');
 const { load, go } = require('../../utils/page');
 Page({
   data: { loading: true, error: '', title: '协议', intro: '', sections: [], version: '' },
-  onLoad(options) { this.type = ['privacy', 'terms', 'application', 'credit-verification', 'mileage-pack'].includes(options.type) ? options.type : 'terms'; this.reload(); },
+  onLoad(options) { this.type = ['privacy', 'terms', 'application', 'credit-verification', 'mileage-pack','owner-identity','owner-auto-sign','owner-rental-contract','owner-data-sharing'].includes(options.type) ? options.type : 'terms'; this.reload(); },
   reload() {
     return load(this, async () => {
       const document = await services.getLegal(this.type);

@@ -24,7 +24,7 @@
       >{{actionMessage}}</view
     >
 <view wx:if="{{application.profile.handoverLocation}}" class="card"><view class="section-title">建议交还地点</view><view>{{application.profile.handoverLocation.name}}</view><view>{{application.profile.handoverLocation.address}}</view><view class="muted">客户提交的建议地点；以双方确认的最终方案及实际交接记录为准。</view></view>
-    <view class="summary-card"
+    <view wx:if="{{application.finalPlan.lessorSnapshot}}" class="card"><view class="section-title">本单实际出租方</view><view>{{application.finalPlan.lessorSnapshot.name}}</view><view>{{application.finalPlan.lessorSnapshot.creditCode}}</view><view>{{application.finalPlan.lessorSnapshot.address}}</view><view>{{application.finalPlan.lessorSnapshot.phone}}</view><view class="muted">晓浪提供平台与电子签接入服务；本单出租方为上述企业。</view><view style="white-space:pre-wrap;line-height:1.8">{{application.finalPlan.lessorSnapshot.sharingNotice.content}}</view><checkbox-group wx:if="{{application.status === 'AWAITING_CONFIRMATION'}}" bindchange="onOwnerSharing"><label class="plan-read"><checkbox value="owner" color="#B44919" checked="{{ownerSharingAccepted}}" disabled="{{busy}}"/><text>我已阅读上述实际出租方信息与资料提供说明，单独同意为本单合同向该企业提供说明中必要资料。</text></label></checkbox-group></view><view class="summary-card"
       ><view class="section-title">申请意向</view
       ><view class="summary-row row between"
         ><text class="muted">车辆</text><text>{{application.vehicleName}}</text></view

@@ -22,7 +22,7 @@ function withoutCredit(value:any):any {
   if(!value||typeof value!=='object'||value instanceof Date)return value;
   return Object.fromEntries(Object.entries(value).filter(([key])=>!['creditBand','creditVerificationId','creditRevision','creditRuleVersion','standardDepositAmount'].includes(key)).map(([key,item])=>[key,withoutCredit(item)]));
 }
-function safe(resource: string, value: any, role?:string) { if (!value) return value; if(resource==='contracts'&&value.kind==='AMENDMENT'&&!['ADMIN','OPERATIONS'].includes(role||'')){const{body,sourceFileId,signedFileId,...summary}=value;return summary;} if (resource === 'users') { const { passwordHash: _, ...rest } = value; return rest; } if (resource === 'customers') { const { openId: _, providerCustomerId: __, ...rest } = value; return rest; } if(['applications','orders'].includes(resource)&&!['ADMIN','OPERATIONS'].includes(role||''))return withoutCredit(value); return value; }
+function safe(resource: string, value: any, role?:string) { if (!value) return value; if(resource==='contracts'&&!['ADMIN','OPERATIONS'].includes(role||'')){const{body,sourceFileId,signedFileId,...summary}=value;return summary;} if (resource === 'users') { const { passwordHash: _, ...rest } = value; return rest; } if (resource === 'customers') { const { openId: _, providerCustomerId: __, ...rest } = value; return rest; } if(['applications','orders'].includes(resource)&&!['ADMIN','OPERATIONS'].includes(role||''))return withoutCredit(value); return value; }
 @Controller('admin')
 export class AdminController {
   constructor(@Inject(Db) private db: Db) {}

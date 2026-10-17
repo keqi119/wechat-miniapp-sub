@@ -1,0 +1,9 @@
+{
+  "scope": "Built UI, synthetic intercepted HTTP only; no database/provider requests",
+  "checks": [
+    "OPS mobile: invitation, unchecked vehicle attestation, PDF review disabled before opening, no administrator auto-enable",
+    "FINANCE denied",
+    "SUPPORT denied"
+  ],
+  "errors": []
+}

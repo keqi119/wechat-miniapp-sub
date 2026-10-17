@@ -34,7 +34,7 @@ export class Access implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const path = request.path.replace(/^\/api/, '');
     if(path.startsWith('/h5-sign/'))return h5Access(this.db,request,context.switchToHttp().getResponse(),path);
-    if (request.method === 'POST' && ['/callbacks/wechat-pay', '/callbacks/wechat-refund', '/callbacks/fadada-sign', '/callbacks/fadada-identity', '/callbacks/fadada-owner-identity', '/callbacks/wechat-pay-verification'].includes(path)) return true;
+    if (request.method === 'POST' && ['/callbacks/wechat-pay', '/callbacks/wechat-refund', '/callbacks/fadada-sign', '/callbacks/fadada-identity', '/callbacks/fadada-owner-identity', '/callbacks/fadada-owner-sign', '/callbacks/fadada-owner-authorization', '/callbacks/wechat-pay-verification'].includes(path)) return true;
     if (path.startsWith('/public/') || path === '/health') return true;
     if (path === '/admin/auth/login') { adminOrigin(request); return true; }
     if (['/customer/auth/wechat','/customer/auth/sms/request','/customer/auth/sms/login'].includes(path)) return true;

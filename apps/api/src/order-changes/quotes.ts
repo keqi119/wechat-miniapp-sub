@@ -1,3 +1,4 @@
+import {followupTemplateType,verifySwapOwner} from '../owner-signing/followup';
 import {vehicleIdentity} from '../vehicle-changes/quotes';
 import {approvedTemplate} from '../contract/contract-template';
 import { hash } from '../common/data';
@@ -37,15 +38,16 @@ export async function publish(tx:any,change:any){
   ensure(change.status==='REVIEWED',409,'CHANGE_STATE','请先完成独立财务复核');
   const q=await tx.delayQuote.findUniqueOrThrow({where:{id:change.activeQuoteId}});
   ensure(new Date(q.snapshot.expiresAt)>new Date(),409,'QUOTE_EXPIRED','报价已过期，请重新报价及复核');
-  const legal=await tx.legalDocument.findFirst({where:{type:change.kind==='VEHICLE_CHANGE'?'vehicle-change-amendment':'delivery-delay-amendment',status:'PUBLISHED',confirmedAt:{not:null}},orderBy:{version:'desc'}});
-  if(change.kind==='VEHICLE_CHANGE'){const target=await tx.vehicle.findUnique({where:{id:change.targetVehicleId}}),hold=target?.holdId?await tx.vehicleHold.findUnique({where:{id:target.holdId}}):null;ensure(hold?.changeId===change.id&&hold.quoteId===q.id&&hold.status==='HELD'&&vehicleIdentity(target)===q.snapshot.targetVehicleIdentification&&(target.vin||target.plateNumber),409,'VEHICLE_HOLD_MISMATCH','目标车辆身份或预留已变化，须重新报价');}
+  const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId},include:{customer:true}});
+  const legal=await tx.legalDocument.findFirst({where:{type:followupTemplateType(order,change.kind),status:'PUBLISHED',confirmedAt:{not:null}},orderBy:{version:'desc'}});
+  if(change.kind==='VEHICLE_CHANGE'){if(order.finalPlanSnapshot?.lessorSnapshot){ensure(q.snapshot.ownerVehicleBinding,409,'OWNER_SWAP_BINDING','目标车辆归属尚未确认');await verifySwapOwner(tx,order,change.targetVehicleId,q.snapshot.ownerVehicleBinding);}const target=await tx.vehicle.findUnique({where:{id:change.targetVehicleId}}),hold=target?.holdId?await tx.vehicleHold.findUnique({where:{id:target.holdId}}):null;ensure(hold?.changeId===change.id&&hold.quoteId===q.id&&hold.status==='HELD'&&vehicleIdentity(target)===q.snapshot.targetVehicleIdentification&&(target.vin||target.plateNumber),409,'VEHICLE_HOLD_MISMATCH','目标车辆身份或预留已变化，须重新报价');}
   ensure(legal,409,'LEGAL_UNAVAILABLE','延期补充协议尚未批准发布');approvedTemplate(legal);
   const account=await tx.eSignAccount.findUnique({where:{customerId:change.customerId}});
   ensure(accountReadiness(account).realNameStatus==='VERIFIED',409,'REALNAME_REQUIRED','请先核验客户现有实名资料再发布补充协议');
   const identity=decryptIdentity(account.identityCiphertext,change.customerId,process.env.ESIGN_IDENTITY_ENCRYPTION_KEY||'');
   const original=await tx.contract.findUnique({where:{id:change.originalContractId}}),file=original?.signedFileId?await tx.storedFile.findUnique({where:{id:original.signedFileId}}):null;
   ensure(original?.status==='SIGNED'&&original.kind==='SUBSCRIPTION'&&file?.mimeType==='application/pdf'&&file.customerId===change.customerId,409,'ORIGINAL_CONTRACT','原主合同已签归档缺失，不能发布补充协议');
-  const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId},include:{customer:true}}),contractId=randomUUID(),templateHash=hash(legal.content);
+  const contractId=randomUUID(),templateHash=hash(legal.content);
   const commercialHash=hash({priorTermsHash:change.priorTermsHash,snapshot:q.snapshot,templateHash,identityHash:account.verifiedIdentityHash,contractId,originalContractHash:file.sha256});
   const preview={...q.snapshot,document:{id:legal.id,type:legal.type,version:legal.version,templateHash}};
   const body=resolveDelayTemplate(legal.content,{id:contractId,orderId:order.id,order,originalContractHash:file.sha256,delayQuote:{...q,status:'PUBLISHED',commercialHash,snapshot:preview,change}},identity);

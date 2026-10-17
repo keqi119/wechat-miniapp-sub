@@ -18,7 +18,7 @@ Page({
       return { title: task.title, url: enabled && !this._terminal && (!technical || record.canSign && !terminal) ? task.url : '', enabled, faceBridgeConfigured: false, ...(technical ? { technicalStopped: !!record.stoppedAt } : {}), ...(statusRevision === this._statusRevision ? { status } : {}) };
     });
   },
-  async onShow() { if (this.id && ['contract', 'handover', 'order-change', 'identity', 'technical-acceptance'].includes(this.kind)) await this.refreshStatus(undefined, true); },
+  async onShow() { if (this.id && ['contract', 'handover', 'order-change', 'identity', 'technical-acceptance','owner-identity','owner-contract','owner-authority','owner-revoke'].includes(this.kind)) await this.refreshStatus(undefined, true); },
   async refreshStatus(event, passive = false) {
     if (this._querying || this._disposed) return; const generation = this._pageGeneration; this._querying = true; this._statusRevision = (this._statusRevision || 0) + 1; this.setData({ statusError: '' });
     try { const technical = this.kind === 'technical-acceptance'; let result; if (technical && !passive) { const record = await services.syncTechnicalAcceptance(this.id); result = { ...record, status: record.signatureCompleted ? 'SIGNED' : record.stoppedAt ? 'CLOSED' : record.signatureStatus }; } else result = await services.getSignStatus(this.id, this.kind); if (this._disposed || generation !== this._pageGeneration) return; this._statusRevision++; const done = ['SIGNED', 'VERIFIED', 'REJECTED', 'EXPIRED', 'CLOSED'].includes(result.status); if (done || technical && !result.enabled) { this._terminal = true; services.forgetSigningTask(this.kind, this.id); } this.setData({ status: result.status, technicalStopped: technical && !!result.stoppedAt, ...(technical ? { enabled: this.data.enabled && result.enabled && !result.stoppedAt } : {}), message: result.status === 'SIGNED' ? technical ? '本份双方真实签署已核验并归档，不表示整套系统、租赁或商业服务验收通过。' + (result.stoppedAt ? '后续验证已停止，原签署事实保留。' : '') : '服务端已确认双方签署并归档。实际交付、资金或变更生效请查看原业务进度。' : result.status === 'VERIFIED' ? '服务端已确认实名与证书就绪。' : done ? technical && result.stoppedAt ? '后续验证已停止；不能据此认定供应商在途任务已撤销，迟到结果仍按事实核对。' : '本流程已终止或过期，请联系运营。' : '服务端尚未确认完成。页面返回或提示完成都不代表已实名或已签署，请查询最新结果。', ...(done || technical && (!result.enabled || result.stoppedAt) ? { url: '' } : {}) }); }
@@ -31,6 +31,7 @@ Page({
   onWebMessage() { return this.refreshStatus(undefined, true); },
   async retry() {
     if (this.data.busy || !this.data.enabled) return;
+    if(this.kind.startsWith('owner-'))return go('/pages/owner/index?id='+encodeURIComponent(this.id.split(':')[0]));
     if (this.kind === 'identity') return go('/pages/settings/index');
     if (this.kind === 'technical-acceptance') return go('/pages/technical-acceptance/index?id=' + encodeURIComponent(this.id));
     this.setData({ busy: true, error: '' });
