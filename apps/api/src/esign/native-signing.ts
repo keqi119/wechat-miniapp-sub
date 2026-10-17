@@ -12,10 +12,14 @@ export function nativeProviderHosts(){
 }
 export function nativeSigningConfig(){
  const providerHosts=nativeProviderHosts();
+ const enabled=process.env.MINIAPP_SIGNING_ENABLED==='true';
+ const signProviderConfigured=process.env.FADADA_BASE_URL===MINIAPP_PROVIDER_API&&[...APPROVED_HOSTS].every(host=>providerHosts.includes(host));
+ const faceBridgeConfigured=enabled&&signProviderConfigured&&process.env.MINIAPP_FACE_BRIDGE_ENABLED==='true';
  return {
-  mode:'MINIAPP_WEBVIEW', enabled:process.env.MINIAPP_SIGNING_ENABLED==='true',
-  signProviderConfigured:process.env.FADADA_BASE_URL===MINIAPP_PROVIDER_API&&[...APPROVED_HOSTS].every(host=>providerHosts.includes(host)),
-  providerHosts,returnUrl:MINIAPP_RETURN,faceBridgeConfigured:false,faceBridgeAllowlist:[],fallback:h5Config()
+  mode:'MINIAPP_WEBVIEW', enabled,signProviderConfigured,
+  providerHosts,returnUrl:MINIAPP_RETURN,faceBridgeConfigured,faceBridgeAllowlist:[],
+  faceBridgeProtocol:faceBridgeConfigured?'FADADA_H5_CURRENT_FLOW_V1':null,
+  faceBridgeKinds:faceBridgeConfigured?['identity','owner-identity']:[],fallback:h5Config()
  };
 }
 export function requireNativeSigning(){

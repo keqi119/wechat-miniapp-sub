@@ -7,7 +7,7 @@ function routeId(value) {
 Page({
   data: { loading: true, error: '', url: '', kind: '', title: '实名与签署', status: 'UNKNOWN', statusError: '', message: '', busy: false, enabled: false, faceBridgeConfigured: false },
   onLoad(options = {}) { this.id = routeId(options.id); this.kind = options.kind || ''; this._disposed = false; this._pageGeneration = (this._pageGeneration || 0) + 1; this._terminal = false; this._statusRevision = 0; this.setData({ kind: this.kind }); this.reload(); },
-  onUnload() { this._disposed = true; this._pageGeneration++; this._loadRevision = (this._loadRevision || 0) + 1; this.setData({ url: '' }); },
+  onUnload() { this._disposed = true; this._pageGeneration++; this._loadRevision = (this._loadRevision || 0) + 1; services.clearFaceBridgeContext(this.kind, this.id); this.setData({ url: '' }); },
   reload() {
     if (this._disposed) return;
     const statusRevision = this._statusRevision;
@@ -30,7 +30,7 @@ Page({
     finally { this._querying = false; }
   },
   reloadPage(url) { try { this.setData({ url: services.reloadSigningPage(this.kind, this.id, url), statusError: '' }); return true; } catch (error) { this.setData({ url: '', statusError: error.message }); return false; } },
-  onWebLoad() { this.setData({ message: '请在实名或签署页面自行核对并操作，返回后查询真实结果。' }); },
+  onWebLoad() { try { services.markSigningWebLoaded(this.kind, this.id, this.data.url); this.setData({ message: '请在实名或签署页面自行核对并操作，返回后查询真实结果。' }); } catch { this.setData({ url: '', error: '当前认证页面已变化，请返回原记录重新进入。' }); } },
   onWebError() { this.setData({ url: '', error: '实名或签署页面暂时无法打开，请联系运营核对业务域名，或返回原记录查询。' }); },
   onWebMessage() { return this.refreshStatus(undefined, true); },
   async retry() {

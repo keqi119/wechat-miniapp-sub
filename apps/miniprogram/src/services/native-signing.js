@@ -1,10 +1,17 @@
 const policy = require('./native-signing-policy');
+const { createFaceBridgeApi } = require('./native-face-bridge');
 const KINDS = { identity: '实名与证书准备', contract: '主合同签署', handover: '交接单签署', 'order-change': '订阅变更补充协议签署', 'technical-acceptance': '电子签署流程验证确认书' };
 const TTL = 10 * 60 * 1000;
 Object.assign(KINDS,{'owner-identity':'企业车主实名认证','owner-authority':'企业自动签署授权','owner-revoke':'撤销企业自动签署授权','owner-contract':'企业车主订阅合同签署'});
 function createNativeSigningApi({ call, native, identifier, error, getContext, sessionKey = () => null, getSignStatus, platform, pendingKey }) {
   const tasks = new Map(), running = new Map(), flowVersions = new Map(); let generation = 0;
+  let activeFlow = null;
   const keyOf = (kind, id) => kind + ':' + id;
+  const faceBridge = createFaceBridgeApi({ native, error, currentTask(kind, id) {
+    const view = getSigningTask(kind, id);
+    if (view.contextOnly || activeFlow !== keyOf(kind, id)) return null;
+    return tasks.get(keyOf(kind, id));
+  } });
   function context(kind, id) {
     const current = getContext();
     if (!current.authenticated) throw error('请先登录后办理实名或签署。', 'AUTH_REQUIRED');
@@ -36,6 +43,7 @@ function createNativeSigningApi({ call, native, identifier, error, getContext, s
     assertCurrent(stamp);
     // Short URLs and any identity input never enter storage or logs.
     tasks.set(keyOf(kind, id), { stamp, customerId: current.customer.id, taskId: result.taskId || 'identity', url, status: result.status, expiresAt: Date.now() + TTL, config });
+    activeFlow = keyOf(kind, id); faceBridge.clearFaceBridge();
     purgeLegacySigningCache(); platform.setStorageSync(pendingKey, { kind, id });
     await native('navigateTo', { url: '/pages/sign/index?kind=' + kind + '&id=' + identifier(id) });
     return { taskId: result.taskId, status: result.status, message: '实名或签署页面已打开，完成后请查询服务端结果。' };
@@ -66,16 +74,16 @@ function createNativeSigningApi({ call, native, identifier, error, getContext, s
   function reloadSigningPage(kind, id, url) {
     const task = getSigningTask(kind, id), stored = tasks.get(keyOf(kind, id));
     if (!stored || task.contextOnly || (url !== stored.url && url !== stored.config.returnUrl)) throw error('返回地址与当前实名或签署流程不匹配。', 'SIGN_RETURN');
+    if (url === stored.faceCallbackUrl) return url;
     return policy.providerUrl(url, stored.config, true);
   }
-  function prepareFaceBridge() { throw error('刷脸中间页尚缺本流程已核验的AppID、路径及回跳绑定，暂不能跳转；请联系运营。', 'FACE_BRIDGE_UNAVAILABLE'); }
   async function resumeSigning() {
     purgeLegacySigningCache(); const value = platform.getStorageSync?.(pendingKey); if (!value || !getContext().authenticated) return null;
     const stamp = snapshot(value.kind, value.id); const result = await getSignStatus(value.id, value.kind); assertCurrent(stamp);
     if (['SIGNED', 'VERIFIED', 'REJECTED', 'EXPIRED', 'CLOSED'].includes(result.status) || value.kind === 'technical-acceptance' && !result.enabled) forgetSigningTask(value.kind, value.id);
     return result;
   }
-  function forgetSigningTask(kind, id) { context(kind, id); const key = keyOf(kind, id); flowVersions.set(key, (flowVersions.get(key) || 0) + 1); tasks.delete(key); const pending = platform.getStorageSync?.(pendingKey); if (pending?.kind === kind && pending.id === id) platform.removeStorageSync(pendingKey); }
-  return { startOwnerSigning, getSigningConfig, getSigningTask, startSigning, startESignVerification, refreshESignReadiness, purgeLegacySigningCache, resumeSigning, reloadSigningPage, prepareFaceBridge, forgetSigningTask, clearSigningState: () => { generation++; tasks.clear(); running.clear(); flowVersions.clear(); } };
+  function forgetSigningTask(kind, id) { context(kind, id); const key = keyOf(kind, id); flowVersions.set(key, (flowVersions.get(key) || 0) + 1); tasks.delete(key); faceBridge.clearFaceBridgeContext(kind, id); if (activeFlow === key) activeFlow = null; const pending = platform.getStorageSync?.(pendingKey); if (pending?.kind === kind && pending.id === id) platform.removeStorageSync(pendingKey); }
+  return { ...faceBridge, startOwnerSigning, getSigningConfig, getSigningTask, startSigning, startESignVerification, refreshESignReadiness, purgeLegacySigningCache, resumeSigning, reloadSigningPage, forgetSigningTask, clearSigningState: () => { generation++; tasks.clear(); running.clear(); flowVersions.clear(); activeFlow = null; faceBridge.clearFaceBridge(); } };
 }
 module.exports = { createNativeSigningApi };

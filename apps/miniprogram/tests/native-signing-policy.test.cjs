@@ -13,7 +13,7 @@ test('provider URLs preserve opaque query but reject old hosts, host confusion, 
   const url = 'https://textapi17.fadada.com/api2/sign?opaque=a%2Bb%2F%3D'; assert.equal(policy().providerUrl(url, config), url);
   for (const bad of ['https://textapi.fadada.com/api2/sign', 'https://textapi17.fadada.com.evil.test/sign', 'https://user@textapi17.fadada.com/sign', 'https://textapi17.fadada.com:443/sign', 'https://textapi17.fadada.com:8443/sign', 'http://textapi17.fadada.com/sign', 'https://textapi17.fadada.com/sign#status=SIGNED', 'https://textapi17.fadada.com\\@evil.test/sign', 'https://textapi17.fadada.com/sign\n']) assert.throws(() => policy().providerUrl(bad, config));
 });
-test('bridge uses exact server-authorized flow appId, path, callback and TTL, never untrusted four-parameter authority', () => {
+test('bound bridge tuple rejects appId, path, callback and TTL substitution', () => {
   const b = bridge(), parsed = policy().bridgeArguments(args(b), b, config); assert.equal(parsed.appId, b.appId); assert.equal(parsed.path, b.path + '?bizToken=synthetic-biz-token'); assert.equal(parsed.callbackUrl, b.callbackUrl); assert.equal(parsed.status, undefined);
   for (const options of [{ ...args(b), miniProgramAppId: 'wx1111111111111111' }, { ...args(b), miniProgramPath: encodeURIComponent('pages/other/index') }, { ...args(b), miniProgramCallBackUrl: encodeURIComponent('https://realnameverify16.fadada.com/other') }, { ...args(b), bizToken: '%E0%A4%A' }]) assert.throws(() => policy().bridgeArguments(options, b, config));
   assert.throws(() => policy().bridgeArguments(args(b), null, config)); assert.throws(() => policy().bridgeArguments(args(b), { ...b, expiresAt: '2020-01-01T00:00:00Z' }, config));

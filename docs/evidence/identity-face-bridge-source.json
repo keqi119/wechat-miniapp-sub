@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-10-17T08:33:23.278Z",
+  "officialGuide": "https://topen.fadada.com/index.html#/portal/documentCenter/AO4UAMBGRP/U8VYKADWKSVWQX0Z",
+  "publicProviderAssets": [
+    {
+      "url": "https://realnameverify16.fadada.com/fddAuthenticationService/app/static/js/v202607302602/3.166f33f7aa3c6a94b58a.js",
+      "sha256": "1c9f167deb2e3d2161dc60fcad8080b172a10df39c0feb42e783708e2558d433"
+    },
+    {
+      "url": "https://realnameverify16.fadada.com/fddAuthenticationService/app/static/js/v202607302602/5.311f331b6c677060f2b7.js",
+      "sha256": "efabc409463270ed852741aa60614befebe6c4f3c1f14c280864654030e35565"
+    }
+  ],
+  "observedProtocol": "Current mobile H5 generates four dynamic middle-page arguments after the user requests face verification.",
+  "inspection": "Read-only existing entry GET and public static assets; no new registration, authentication submission, face-token request or signing by the agent."
+}
