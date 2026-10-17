@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-17T07:54:55.015Z",
+  "release": "20261017-owner-entry-v3",
+  "sourceCommit": "16276975a6cb02c61a6af93cbf0ea8a8dc1f9b53",
+  "method": "Official logged-in WeChat DevTools CLI preview",
+  "success": true,
+  "files": 107,
+  "sourceManifestSha256": "f711689ae53d56bc84378f769641993f41d1c5525a3772514bb20da2cbc51df3",
+  "projectConfigSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c",
+  "artifactUnchangedAfterPreview": true,
+  "qrLocalPath": ".runtime/miniapp-ci/owner-entry-v3-preview.jpg",
+  "formalUploadOrPublication": false,
+  "productionApiUnchanged": true
+}
