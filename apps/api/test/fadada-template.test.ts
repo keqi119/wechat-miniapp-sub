@@ -9,12 +9,29 @@ import { projectRoot } from '../src/common/config';
 import { commercialTermKeys, resolveSubscriptionTemplate, resolveHandoverTemplate } from '../src/contract/contract-template';
 import { ContractPdfArtifactWriterService } from '../src/contract/contract-pdf-artifact-writer.service';
 import { encryptIdentity } from '../src/esign/fadada/fadada-safety';
+import { finalPlanPricing } from '../src/applications/acceptance-pricing';
 const source=(name:string)=>readFileSync(resolve(projectRoot,'docs/legal',name),'utf8');
 const terms=Object.fromEntries(commercialTermKeys.map(key=>[key,`已确认${key}规则`]));
 const snapshot={commercialTerms:terms,revision:2,commercialHash:'a'.repeat(64),monthlyFeeAmount:0,depositAmount:100,months:2,mileagePerMonthKm:1000,excessMileagePriceAmount:80,energyDescription:'充电自付',benefits:['道路救援'],conditions:'仅限约定驾驶人',startDate:'2026-01-31',firstDueDate:'2026-01-25'};
 const resource={id:'contract-1',orderId:'order-1',customerId:'customer-1',order:{applicationId:'application-1',customer:{mobile:'13800000000'},finalPlanSnapshot:snapshot}};
 const identity={name:'合成客户',idCardNo:'110101199001010000'};
 const code=(expected:string)=>(e:any)=>e.getResponse?.().error?.code===expected;
+
+test('one-fen acceptance contract shows twelve exact rents and the agreed deposit after scope is disabled',()=>{
+ const saved=process.env.ORDER_ACCEPTANCE_SCOPE_JSON;
+ try{
+  const app={id:resource.order.applicationId,customerId:resource.customerId,vehicleId:'synthetic-car'};
+  process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify({applicationId:app.id,customerId:app.customerId,vehicleId:app.vehicleId,startDate:'2026-10-17',firstDueDate:'2026-10-17',reference:'local-contract-verification'});
+  const input={...snapshot,pricingMode:'V1_ONE_FEN',monthlyFeeAmount:1,depositAmount:1,months:12,startDate:'2026-10-17',firstDueDate:'2026-10-17'};
+  const final={...input,...finalPlanPricing(app,input,0,{id:'synthetic-admin',role:'ADMIN'})};
+  delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;
+  const text=resolveSubscriptionTemplate(source('subscription-contract.md')+'\n\n'+source('commercial-schedule.md'),{...resource,order:{...resource.order,finalPlanSnapshot:final}},identity,1);
+  assert.equal((text.match(/第\d+期：¥0\.01/g)||[]).length,12);
+  assert.ok(text.includes('2026-10-17至2027-10-16'));assert.ok(text.includes('押金¥0.01'));
+  assert.match(text,/12期租金各0\.01元（合计0\.12元）/);assert.ok(text.includes('信用核验档位不变'));
+  assert.ok(!text.includes('{{'));assert.ok(!text.includes('¥4899.00'));
+ }finally{if(saved===undefined)delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;else process.env.ORDER_ACCEPTANCE_SCOPE_JSON=saved;}
+});
 test('approved main contract plus commercial schedule resolves actual immutable values without losing clauses',()=>{
   const template=source('subscription-contract.md')+'\n\n'+source('commercial-schedule.md');
   const text=resolveSubscriptionTemplate(template,resource,identity,3);

@@ -345,6 +345,7 @@ model Application {
 }
 model FinalPlan {
  id String @id @default(cuid())
+ acceptancePricing Json?
  applicationId String
  application Application @relation(fields:[applicationId],references:[id])
  revision Int

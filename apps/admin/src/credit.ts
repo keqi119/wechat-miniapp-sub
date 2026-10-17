@@ -1,7 +1,9 @@
 import { moneyToCents, type Entity } from './core.ts';
 
 export const creditBandLabels: Record<string, string> = { GE750: '750及以上 · 免押金', B700_749: '700–749 · 月费1倍押金', B650_699: '650–699 · 月费2倍押金', LT650: '低于650 · 转人工处理', UNVERIFIABLE: '无法核验 · 转人工处理' };
+export type AcceptancePricingOffer = { mode: string; monthlyFeeAmount: number; depositAmount: number; months: number; startDate: string; firstDueDate: string; reference: string; description: string };
 export type CreditReview = {
+  acceptancePricing?: AcceptancePricingOffer;
   applicationId: string; creditRevision: number; ruleVersion: string; status: string;
   document: { id: string; type: string; version: number; title: string; content: string } | null;
   consent: { id: string; status: string; documentId: string; version: number; acceptedAt?: string | null; withdrawnAt?: string | null } | null;
@@ -38,10 +40,15 @@ export function creditVerificationPayload(body: Record<string, unknown>, idempot
   if (Object.keys(body).some(key => !['consentId', 'creditRevision', 'band', 'customerPresented'].includes(key)) || typeof body.consentId !== 'string' || !body.consentId || !Number.isSafeInteger(body.creditRevision) || Number(body.creditRevision) < 0 || !Object.hasOwn(creditBandLabels, String(body.band)) || body.customerPresented !== true) throw new Error('请核对申请授权、信用档位及客户主动出示声明');
   return { consentId: body.consentId, creditRevision: body.creditRevision, band: body.band, customerPresented: true, idempotencyKey };
 }
+export function scopedAcceptanceOffer(review: CreditReview | undefined, applicationId: string): AcceptancePricingOffer | undefined {
+  const offer = review?.acceptancePricing;
+  return review?.applicationId === applicationId && offer?.mode === 'V1_ONE_FEN' && offer.monthlyFeeAmount === 1 && offer.depositAmount === 1 && offer.months === 12 && !!offer.startDate && !!offer.firstDueDate && !!offer.reference ? offer : undefined;
+}
 export function creditPlanInitial(entity: Entity, review?: CreditReview): Record<string, unknown> {
-  return { ...(entity.subscriptionPlan as Record<string, unknown> ?? entity.plan as Record<string, unknown> ?? {}), ...(entity.finalPlan as Record<string, unknown> ?? {}), mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, revision: entity.revision ?? 0, creditVerificationId: review?.verification?.id ?? '', creditBand: review?.verification?.band ?? '', creditRevision: review?.creditRevision, creditRuleVersion: review?.ruleVersion };
+  return { ...(entity.subscriptionPlan as Record<string, unknown> ?? entity.plan as Record<string, unknown> ?? {}), ...(entity.finalPlan as Record<string, unknown> ?? {}), mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, revision: entity.revision ?? 0, creditVerificationId: review?.verification?.id ?? '', creditBand: review?.verification?.band ?? '', creditRevision: review?.creditRevision, creditRuleVersion: review?.ruleVersion, pricingMode: (entity.finalPlan as Record<string, unknown> | undefined)?.acceptancePricing ? 'V1_ONE_FEN' : 'STANDARD', acceptancePricingScope: scopedAcceptanceOffer(review, entity.id) };
 }
 export function creditDepositPreview(values: Record<string, string>, initial: Record<string, unknown>): string {
+  if (values.pricingMode === 'V1_ONE_FEN') return (initial.acceptancePricingScope as AcceptancePricingOffer | undefined)?.mode === 'V1_ONE_FEN' ? '0.01' : '本单验收报价未授权，请重新核对';
   try { const amount = creditDeposit(moneyToCents(values.monthlyFeeAmount ?? ''), String(initial.creditBand ?? '')); return amount === undefined ? '待有效信用核验' : (amount / 100).toFixed(2); }
   catch (error) { return error instanceof Error ? error.message : '请核对月费'; }
 }

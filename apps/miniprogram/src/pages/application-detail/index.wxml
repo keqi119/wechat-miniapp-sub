@@ -100,6 +100,7 @@
         ><text>月费</text><text class="price">{{application.finalPlan.monthlyFeeText}}</text></view
       ><view class="summary-row row between"
         ><text class="muted">押金</text><text>{{application.finalPlan.depositText}}</text></view
+      ><view wx:if="{{application.finalPlan.pricingDescription}}" class="notice">{{application.finalPlan.pricingDescription}}</view
       ><view class="summary-row row between"><text class="muted">超里程单价</text><text>{{application.finalPlan.excessMileagePriceText}} / 公里</text></view
       ><view class="summary-row row between"><text class="muted">起租日期</text><text>{{application.finalPlan.startDateText}}</text></view
       ><view class="summary-row row between"><text class="muted">结束日期</text><text>{{application.finalPlan.endDateText}}</text></view

@@ -1,4 +1,5 @@
 import { usagePolicyAppendix } from '../usage/policy';
+import { acceptancePricingDescription } from '../applications/acceptance-pricing';
 import { ensure } from '../common/errors';
 import { fen } from '../common/data';
 import { amount, billSchedule, dateOnly } from '../billing/rules';
@@ -24,7 +25,7 @@ export function commercialSnapshot(snapshot:any){
 export function resolveSubscriptionTemplate(template:string,resource:any,identity:any,version:number){const snapshot=resource.order.finalPlanSnapshot;const{terms,billing,finalEnd,startDate,firstDueDate}=commercialSnapshot(snapshot);return interpolate(template,{
   contractNo:required(resource.id),templateVersion:String(version),orderNo:required(resource.orderId),applicationId:required(resource.order.applicationId),revision:String(snapshot.revision),commercialHash:snapshot.commercialHash,
   customerName:required(identity.name,'LEGAL_PLACEHOLDERS'),customerIdentityNo:required(identity.idCardNo,'LEGAL_PLACEHOLDERS'),customerMobile:required(resource.order.customer.mobile),customerAddress:terms.customerAddress,
-  ...terms,subscriptionDates:`${startDate}至${finalEnd}，共${snapshot.months}期`,billingSchedule:billing,depositSchedule:`押金${fen(snapshot.depositAmount)}，支付时间${firstDueDate}`,
+  ...terms,subscriptionDates:`${startDate}至${finalEnd}，共${snapshot.months}期`,billingSchedule:billing,depositSchedule:`押金${fen(snapshot.depositAmount)}，支付时间${firstDueDate}${acceptancePricingDescription(snapshot)?'；'+acceptancePricingDescription(snapshot):''}`,
   mileageAllowance:`每月${snapshot.mileagePerMonthKm}公里；${terms.mileageCarryRule}`,excessMileageRule:`${fen(snapshot.excessMileagePriceAmount)}/公里；${terms.excessMileageCalculation}`,
   serviceBenefits:`${snapshot.benefits.length?snapshot.benefits.join('；'):'本方案未列其他服务权益'}；${terms.serviceCoverage}；能源：${snapshot.energyDescription}；使用条件：${snapshot.conditions}`,
   platformSignatureSlot:'由企业签章区签署',customerSignatureSlot:'由订阅方签署区签署'

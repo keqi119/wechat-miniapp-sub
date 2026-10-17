@@ -1,0 +1,72 @@
+{
+  "verifiedOn": "2026-10-17",
+  "base": "9dd95f0",
+  "scope": "Scoped real-order one-fen quote with immutable server authorization; no public plan or actual credit tier modification.",
+  "sourceFiles": {
+    "apps/api/src/applications/acceptance-pricing.ts": "be32045025c1cca8b622b258d91d8a59c5457c80ac5cc0042ea0ca3e38a888a1",
+    "apps/api/src/applications/applications.ts": "8a975391241e6df4992a1c3393dae608c4079ad81a545aefadebaa77eda61d13",
+    "apps/api/src/applications/credit-review.ts": "ba5345bc86913161e22f9d3f9d438f29af01d68b547bd2d88bba6760a061b49d",
+    "apps/api/src/contract/contract-template.ts": "df35f842fab90403b242e57e2f6e11964e359e0b0f9c7cfdce994a118cc29c64",
+    "apps/api/src/operations/admin.ts": "45b3e0928dabc72abd20673483c74a50ddc75a6da92ec3732a6b8d54aa2750b3",
+    "apps/api/prisma/schema.prisma": "17a4b57aa27dd96832c5c119c8d8ea49abc5faf77a54438fa24f55795ef2357a",
+    "apps/api/prisma/migrations/202610170020_acceptance_pricing/migration.sql": "5380fed1421fc9372663d801a264902771c07561bd31def4f9a51cb680aef651",
+    "apps/admin/src/credit.ts": "7270535517deb71943acdae697130e5f51980df65e5a82abbd0e3b4798d4e28d",
+    "apps/admin/src/form.ts": "2e2b268d56ee0072194441c5efd6c5cdb41d85472dbc740598a5ddcf435be01a",
+    "apps/admin/src/resources.ts": "53b2c50cd54640a424435f6ef7f2bd8505ef9b4b5c2d713764b12b65443e08c8",
+    "apps/admin/src/App.tsx": "79523100c0ff6b8afb8c95a550b2ee2e58e3d6ab65d821c7e3da2933cea56987",
+    "apps/miniprogram/src/pages/application-detail/index.wxml": "a4d9ef245949ec7db39b01be94bb1c284532be9544914589686aa6fc9313c0fe"
+  },
+  "red": [
+    "Missing pricing helper before implementation",
+    "HTTP rejects new mode before implementation",
+    "Admin selector and one-fen preview fail before implementation",
+    "FINANCE can see derived standardDepositAmount before redaction fix"
+  ],
+  "green": {
+    "targetedApiHttpContract": 24,
+    "apiFull": 242,
+    "adminFull": 96,
+    "nativeFull": 227,
+    "failures": 0,
+    "skipped": 0
+  },
+  "builds": {
+    "api": true,
+    "admin": true,
+    "nativeSourceCheck": true,
+    "wxml": 18,
+    "wxss": 19,
+    "nativeProductionBundleFiles": 101
+  },
+  "database": {
+    "environment": "local loopback chundian_test only",
+    "migration": "202610170020_acceptance_pricing",
+    "applied": true
+  },
+  "externalActions": {
+    "productionConfigChanged": false,
+    "productionDeployment": false,
+    "realOrderCreated": false,
+    "realPayment": false,
+    "realSignature": false,
+    "wechatUpload": false
+  },
+  "review": {
+    "status": "passed",
+    "reviewer": "fresh-context code reviewer",
+    "model": "gpt-6-astra",
+    "critical": 0,
+    "important": 0,
+    "minor": 0,
+    "independentlyReranDatabaseTests": false
+  },
+  "rulings": [
+    "Reuse existing isolated feature branch under prior direct-start authorization; no main-branch merge.",
+    "Implement locally while real vehicle prerequisites remain outstanding; local green evidence does not authorize an actual order.",
+    "Add setup documentation and redact newly derived credit value for finance/support; financial receivables remain visible.",
+    "Use verified native PowerShell commands instead of Bash bookkeeping helpers; retain complete execution logs.",
+    "Production and device success still require separate deployment/acceptance; current local evidence does not claim them.",
+    "Vehicle authorization, insurance readiness and early return fees remain factual prerequisites; synthetic tests are not evidence of these.",
+    "Ordinary manual monthly-price authority is retained; only explicit acceptance mode and deposit exception are scoped. Operators still review ordinary low prices before publication."
+  ]
+}

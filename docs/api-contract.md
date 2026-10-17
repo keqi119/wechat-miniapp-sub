@@ -84,6 +84,12 @@ safe包含current document、申请独立consent、最新verification、creditRe
 
 核验历史追加保存；新核验或授权变化使尚未确认方案回到审核并更新版本，旧版本确认被拒绝。前三档月费倍数为0/1/2，后两档转人工并禁止最终方案。后台可读状态不等于已获客户授权。
 
+## 指定申请的真实订单验收报价
+
+`POST /admin/applications/:id/final-plan` 可选 `pricingMode: STANDARD | V1_ONE_FEN`，默认 STANDARD。仅匹配服务器 `ORDER_ACCEPTANCE_SCOPE_JSON` 的申请、客户、车辆和日期允许 ADMIN 选择 V1_ONE_FEN；仍须有效的本申请信用授权与核验。该模式限定12期各1分和一次1分押金，不改变信用档位或公开套餐。服务器生成 `acceptancePricing` 快照并纳入方案摘要，禁止客户端提交该字段。
+
+管理员信用核验视图对匹配申请增加 `acceptancePricing` 报价提示；其他角色无该选项。客户方案返回 `pricingMode` 与 `pricingDescription`。确认前复核配置和信用版本；已确认订单的重复请求返回原订单，随后关闭配置不改写历史价格。财务/客服不能读取快照中的 `standardDepositAmount`。配置说明见 `controlled-order-pricing.md`。
+
 ## 指定客户的 0.01 元支付验收
 
 与 `Bill/Payment/Order` 分离，不改变正式报价，不创建订阅或合同。服务端固定 `amount=1`、`currency=CNY`，默认关闭独立开关。创建授权后24小时内可发起；已在渠道处理中即使过期仍须查询或关单，不自动重新建单。

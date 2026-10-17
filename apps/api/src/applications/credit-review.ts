@@ -4,6 +4,7 @@ import { Db } from '../common/db';
 import { audit, hash, key, text } from '../common/data';
 import { ensure } from '../common/errors';
 import { requireCurrentConsents } from '../auth/consents';
+import { acceptancePricingOffer } from './acceptance-pricing';
 export const CREDIT_RULE = 'ZHIMA_MANUAL_V1';
 const editable = ['SUBMITTED','IN_REVIEW','NEEDS_INFO','AWAITING_CONFIRMATION'];
 const multipliers: Record<string,number> = { GE750:0, B700_749:1, B650_699:2 };
@@ -26,12 +27,12 @@ export async function requireCredit(tx:any, app:any, verificationId:string) {
 async function touch(tx:any,app:any) {
   return tx.application.update({where:{id:app.id},data:{creditRevision:{increment:1},...(app.status==='AWAITING_CONFIRMATION'?{status:'IN_REVIEW',revision:{increment:1}}:{})}});
 }
-async function view(tx:any,app:any,admin=false) {
+async function view(tx:any,app:any,admin=false,actorRole?:string) {
   const s=await state(tx,app), open=editable.includes(app.status);
   let consentRequirementsMet=true;
   try { await requireCurrentConsents(tx,app.customerId,['terms','privacy']); } catch(error:any) { const code=error?.getResponse?.()?.error?.code; if(!['CONSENT_REQUIRED','LEGAL_UNAVAILABLE'].includes(code))throw error;consentRequirementsMet=false; }
   const multiplier=s.verified ? multipliers[s.verification.band] ?? null : null;
-  return {applicationId:app.id,creditRevision:app.creditRevision,ruleVersion:CREDIT_RULE,
+  return {applicationId:app.id,creditRevision:app.creditRevision,ruleVersion:CREDIT_RULE,...(admin&&actorRole==='ADMIN'&&acceptancePricingOffer(app)?{acceptancePricing:acceptancePricingOffer(app)}:{}),
     document:s.document?{id:s.document.id,type:s.document.type,version:s.document.version,title:s.document.title,content:s.document.content}:null,
     consent:s.consent?{id:s.consent.id,status:s.consent.status,documentId:s.consent.documentId,version:s.consent.version,acceptedAt:s.consent.acceptedAt,withdrawnAt:s.consent.withdrawnAt}:null,
     verification:s.verification?{id:s.verification.id,band:s.verification.band,verifiedBy:s.verification.verifiedBy,verifiedAt:s.verification.verifiedAt,consentId:s.verification.consentId}:null,
@@ -46,7 +47,7 @@ export class CreditReviewController {
   constructor(@Inject(Db) private db:Db) {}
   private async application(tx:any,id:string,customerId?:string) {const app=await tx.application.findFirst({where:{id,...(customerId?{customerId}:{})}});ensure(app,404,'NOT_FOUND','申请不存在');return app;}
   @Get('customer/applications/:id/credit-review') customer(@Param('id')id:string,@Req()r:any){return this.db.serial(async tx=>view(tx,await this.application(tx,id,r.customer.id)));}
-  @Get('admin/applications/:id/credit-review') admin(@Param('id')id:string,@Req()r:any){ensure(['ADMIN','OPERATIONS'].includes(r.admin.role),403,'FORBIDDEN','当前角色无权读取信用核验资料');return this.db.serial(async tx=>view(tx,await this.application(tx,id),true));}
+  @Get('admin/applications/:id/credit-review') admin(@Param('id')id:string,@Req()r:any){ensure(['ADMIN','OPERATIONS'].includes(r.admin.role),403,'FORBIDDEN','当前角色无权读取信用核验资料');return this.db.serial(async tx=>view(tx,await this.application(tx,id),true,r.admin.role));}
   @Post('customer/applications/:id/credit-consent') consent(@Param('id')id:string,@Body()body:any,@Req()r:any){
     const input=z.object({documentId:text,version:z.number().int().positive(),decision:z.enum(['ACCEPT','DECLINE']),idempotencyKey:key}).strict().parse(body);
     return this.db.serial(async tx=>{

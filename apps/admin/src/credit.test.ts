@@ -55,3 +55,28 @@ test('declining authorization never implies a low score and current privacy cons
   assert.match(declined, /暂不授权/); assert.doesNotMatch(declined, /低于650/);
   assert.match(creditReviewMessage({ ...review, consentRequirementsMet: false, canVerify: false, canFinalize: false }), /当前用户协议与隐私政策/);
 });
+
+test('acceptance mode is offered only to the matching application and defaults to ordinary pricing', async () => {
+  const { fieldsForAction } = await import('./form.ts');
+  const offer = { mode: 'V1_ONE_FEN', monthlyFeeAmount: 1, depositAmount: 1, months: 12, startDate: '2026-10-17', firstDueDate: '2026-10-17', reference: 'test-reference', description: '本单验收报价' };
+  const scoped = { ...review, acceptancePricing: offer };
+  const entity = { id: 'a1', revision: 0, creditReview: scoped };
+  const action = resources.find(r => r.key === 'applications')!.actions!.find(a => a.path === 'final-plan')!;
+  const fields = fieldsForAction('applications', action, entity);
+  assert.ok(fields.find(f => f.key === 'pricingMode')?.options?.some(o => o[0] === 'V1_ONE_FEN'));
+  assert.equal(creditPlanInitial(entity, scoped).pricingMode, 'STANDARD');
+  for (const creditReview of [review, { ...scoped, applicationId: 'other' }, { ...scoped, acceptancePricing: { ...offer, depositAmount: 2 } }]) assert.ok(!fieldsForAction('applications', action, { ...entity, creditReview }).some(f => f.key === 'pricingMode'));
+  const old = { ...entity, creditReview: review, finalPlan: { acceptancePricing: { ruleVersion: 'V1_ONE_FEN' } } };
+  assert.equal(creditPlanInitial(old, review).pricingMode, 'V1_ONE_FEN');
+  assert.deepEqual(fieldsForAction('applications', action, old).find(f => f.key === 'pricingMode')?.options, [['STANDARD', '按信用档位计算押金']]);
+  assert.deepEqual(serializeForm(fields.filter(f => ['pricingMode', 'depositAmount'].includes(f.key)), { pricingMode: 'V1_ONE_FEN', depositAmount: '9999', acceptancePricing: 'forged' }), { pricingMode: 'V1_ONE_FEN' });
+});
+
+test('scoped acceptance preview shows one fen without changing the real credit tier', () => {
+  const offer = { mode: 'V1_ONE_FEN', monthlyFeeAmount: 1, depositAmount: 1, months: 12, startDate: '2026-10-17', firstDueDate: '2026-10-17', reference: 'test-reference', description: '本单验收报价' };
+  const initial = creditPlanInitial({ id: 'a1' }, { ...review, acceptancePricing: offer, verification: { ...review.verification!, band: 'GE750' } });
+  assert.equal(initial.creditBand, 'GE750');
+  assert.equal(creditDepositPreview({ monthlyFeeAmount: '0.01', pricingMode: 'V1_ONE_FEN' }, initial), '0.01');
+  assert.equal(creditDepositPreview({ monthlyFeeAmount: '0.01', pricingMode: 'STANDARD' }, initial), '0.00');
+  assert.match(creditDepositPreview({ monthlyFeeAmount: '0.01', pricingMode: 'V1_ONE_FEN' }, { ...initial, acceptancePricingScope: undefined }), /未授权/);
+});

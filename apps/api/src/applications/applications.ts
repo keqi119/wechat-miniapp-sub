@@ -8,13 +8,14 @@ import { acceptConsents, requireCurrentConsents } from '../auth/consents';
 import { commercialTermsInput } from './commercial-terms';
 import { billSchedule, dateOnly } from '../billing/rules';
 import { CREDIT_RULE, requireCredit } from './credit-review';
+import { finalPlanPricing, assertFinalPricing, acceptancePricingDescription } from './acceptance-pricing';
 export const applicationInclude = { vehicle: { include: { plans: true } }, subscriptionPlan: true, finalPlans: { orderBy: { revision: 'desc' as const }, take: 1 }, order: true };
 const statusNames: Record<string, string> = { SUBMITTED: '已提交', IN_REVIEW: '审核中', NEEDS_INFO: '待补充资料', REJECTED: '已拒绝', CANCELLED: '已取消', AWAITING_CONFIRMATION: '待确认最终方案', FINAL_PLAN_CONFIRMED: '方案已确认' };
 export function applicationView(a: any) {
   const plan = a.finalPlans?.[0];
-  return { ...a, type: 'applications', title: a.vehicle?.title || '订阅申请', subtitle: a.subscriptionPlan?.name || '', statusText: statusNames[a.status], vehicleName: a.vehicle?.title, planName: a.subscriptionPlan?.name, plan: a.subscriptionPlan, finalPlan: plan ? { ...plan, monthlyFeeText: fen(plan.monthlyFeeAmount), depositText: fen(plan.depositAmount), termMonths: plan.months, mileageText: `每月 ${plan.mileagePerMonthKm} 公里`, energyText: plan.energyDescription, vehicleName: a.vehicle?.title, title: a.subscriptionPlan?.name } : null, commercialHash: plan?.commercialHash, nextAction: a.status === 'AWAITING_CONFIRMATION' ? '请核对并确认最终方案' : a.note || statusNames[a.status], details: [{ label: '申请编号', value: a.id }, { label: '审核说明', value: a.note || '等待审核' }], documents: [], timeline: [{ title: '提交申请', description: '申请已记录', done: true }, { title: '资料与方案审核', description: a.note || '等待审核', done: a.revision > 0 }, { title: '确认最终方案', description: '确认后建立订单', done: a.status === 'FINAL_PLAN_CONFIRMED' }], actions: a.status === 'AWAITING_CONFIRMATION' ? [{ id: 'confirm', label: '确认最终方案' }, { id: 'reject', label: '拒绝方案' }] : ['SUBMITTED','IN_REVIEW','NEEDS_INFO'].includes(a.status) ? [{ id: 'cancel', label: '取消申请' }] : [] };
+  return { ...a, type: 'applications', title: a.vehicle?.title || '订阅申请', subtitle: a.subscriptionPlan?.name || '', statusText: statusNames[a.status], vehicleName: a.vehicle?.title, planName: a.subscriptionPlan?.name, plan: a.subscriptionPlan, finalPlan: plan ? { ...plan, pricingMode: plan.acceptancePricing ? 'V1_ONE_FEN' : 'STANDARD', pricingDescription: acceptancePricingDescription(plan), monthlyFeeText: fen(plan.monthlyFeeAmount), depositText: fen(plan.depositAmount), termMonths: plan.months, mileageText: `每月 ${plan.mileagePerMonthKm} 公里`, energyText: plan.energyDescription, vehicleName: a.vehicle?.title, title: a.subscriptionPlan?.name } : null, commercialHash: plan?.commercialHash, nextAction: a.status === 'AWAITING_CONFIRMATION' ? '请核对并确认最终方案' : a.note || statusNames[a.status], details: [{ label: '申请编号', value: a.id }, { label: '审核说明', value: a.note || '等待审核' }], documents: [], timeline: [{ title: '提交申请', description: '申请已记录', done: true }, { title: '资料与方案审核', description: a.note || '等待审核', done: a.revision > 0 }, { title: '确认最终方案', description: '确认后建立订单', done: a.status === 'FINAL_PLAN_CONFIRMED' }], actions: a.status === 'AWAITING_CONFIRMATION' ? [{ id: 'confirm', label: '确认最终方案' }, { id: 'reject', label: '拒绝方案' }] : ['SUBMITTED','IN_REVIEW','NEEDS_INFO'].includes(a.status) ? [{ id: 'cancel', label: '取消申请' }] : [] };
 }
-const finalInput = z.object({ creditVerificationId:text, commercialTerms: commercialTermsInput, revision: z.number().int().nonnegative(), monthlyFeeAmount: money.positive(), depositAmount: money.optional(), months: z.number().int().min(12).max(120), mileagePerMonthKm: z.literal(1500), excessMileagePriceAmount: z.literal(150), energyDescription: text, benefits: z.array(text).max(50), conditions: text, startDate: z.string(), firstDueDate: z.string() }).strict();
+const finalInput = z.object({ pricingMode: z.enum(['STANDARD','V1_ONE_FEN']).default('STANDARD'), creditVerificationId:text, commercialTerms: commercialTermsInput, revision: z.number().int().nonnegative(), monthlyFeeAmount: money.positive(), depositAmount: money.optional(), months: z.number().int().min(12).max(120), mileagePerMonthKm: z.literal(1500), excessMileagePriceAmount: z.literal(150), energyDescription: text, benefits: z.array(text).max(50), conditions: text, startDate: z.string(), firstDueDate: z.string() }).strict();
 @Controller()
 export class ApplicationsController {
   constructor(@Inject(Db) private db: Db) {}
@@ -62,10 +63,11 @@ export class ApplicationsController {
       ensure(app.revision === input.revision, 409, 'REVISION_CONFLICT', '最终方案已更新，请刷新');
       ensure(['IN_REVIEW','AWAITING_CONFIRMATION'].includes(app.status), 409, 'STATE_CONFLICT', '请先完成审核');
       await requireCurrentConsents(tx,app.customerId,['terms','privacy']);
-      const credit=await requireCredit(tx,app,input.creditVerificationId),depositAmount=money.parse(input.monthlyFeeAmount*credit.multiplier);
-      ensure(input.depositAmount===undefined||input.depositAmount===depositAmount,409,'DEPOSIT_POLICY','押金必须按当前人工核验档位和月费计算');
+      const credit=await requireCredit(tx,app,input.creditVerificationId),standardDeposit=money.parse(input.monthlyFeeAmount*credit.multiplier);
+      const pricing=finalPlanPricing(app,input,standardDeposit,request.admin);
+      const {pricingMode,...proposal}=input;
       const usagePolicy=await snapshotUsagePolicy(tx);
-      const fixed={...input,usagePolicyVersion:'USAGE_V1',usagePolicy,depositAmount,creditBand:credit.verification.band,creditRuleVersion:CREDIT_RULE,creditRevision:app.creditRevision};
+      const fixed={...proposal,...pricing,usagePolicyVersion:'USAGE_V1',usagePolicy,creditBand:credit.verification.band,creditRuleVersion:CREDIT_RULE,creditRevision:app.creditRevision};
       const revision = app.revision + 1; const commercialHash = hash({ ...fixed, vehicleId: app.vehicleId, revision });
       await tx.finalPlan.create({ data: { ...fixed, applicationId: id, revision, commercialHash, startDate, firstDueDate } });
       const updated = await tx.application.update({ where: { id }, data: { revision, status: 'AWAITING_CONFIRMATION' }, include: applicationInclude });
@@ -83,7 +85,8 @@ export class ApplicationsController {
       ensure(app.status === 'AWAITING_CONFIRMATION', 409, 'STATE_CONFLICT', '当前申请不能确认');
       await requireCurrentConsents(tx,app.customerId,['terms','privacy']);
       const credit=await requireCredit(tx,app,final.creditVerificationId||'');
-      ensure(final.creditRevision===app.creditRevision&&final.creditRuleVersion===CREDIT_RULE&&final.creditBand===credit.verification.band&&final.depositAmount===final.monthlyFeeAmount*credit.multiplier,409,'CREDIT_REVIEW_REQUIRED','核验或押金规则已更新，请重新确认最终方案');
+      ensure(final.creditRevision===app.creditRevision&&final.creditRuleVersion===CREDIT_RULE&&final.creditBand===credit.verification.band,409,'CREDIT_REVIEW_REQUIRED','核验或押金规则已更新，请重新确认最终方案');
+      assertFinalPricing(app,final,final.monthlyFeeAmount*credit.multiplier);
       ensure(commercialTermsInput.safeParse(final.commercialTerms).success, 409, 'COMMERCIAL_TERMS_REQUIRED', '最终方案条款不完整，请后台重新出具完整方案');
       usagePolicyAppendix(final.usagePolicy);
       const claim = await tx.vehicle.updateMany({ where: { id: app.vehicleId, reservedOrderId: null, holdId:null, status: 'PUBLISHED' }, data: { status: 'RESERVED' } }); ensure(claim.count === 1, 409, 'VEHICLE_UNAVAILABLE', '该车已被其他订单占用');

@@ -3,6 +3,7 @@ import type { Action, Field } from './resources.ts';
 import { statusLabel } from './resources.ts';
 import { parseCommercialTerms, handoverFactLabels } from './business-terms.ts';
 import { parseShanghaiDateTime } from './usage.ts';
+import { scopedAcceptanceOffer, type CreditReview } from './credit.ts';
 export function serializeForm(fields: Field[], values: Record<string, string>): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   for (const field of fields) {
@@ -31,6 +32,11 @@ export function serializeForm(fields: Field[], values: Record<string, string>): 
   return body;
 }
 export function fieldsForAction(resource: string, action: Action, entity: Entity): Field[] {
+  if (resource === 'applications' && action.path === 'final-plan') {
+    const available = scopedAcceptanceOffer(entity.creditReview as CreditReview | undefined, entity.id);
+    const previous = (entity.finalPlan as Record<string, unknown> | undefined)?.acceptancePricing;
+    return (action.fields ?? []).filter(field => field.key !== 'pricingMode' || !!available || !!previous).map(field => field.key === 'pricingMode' && !available ? { ...field, options: [['STANDARD', '按信用档位计算押金']] as [string, string][] } : field);
+  }
   if (resource === 'mileages') return (action.fields ?? []).filter(field => field.key !== 'boundaryConfirmed' || !!entity.periodId || !!entity.segmentId);
   if (resource === 'esign-approvals' && action.path === 'renew') return (action.fields ?? []).map(field => field.key === 'policyId' ? { ...field, sourceFilters: { status: 'ACTIVE', kind: String(entity.kind), sealId: String(entity.sealId) }, hint: '选择已启用、文档类型一致且使用原印章的策略；服务端核验原任务企业身份不变' } : field);
   if (resource !== 'services' || action.path !== 'status') return action.fields ?? [];

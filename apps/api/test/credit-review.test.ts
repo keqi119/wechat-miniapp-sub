@@ -29,10 +29,10 @@ async function verify(f:any,band='GE750',extra:any={}) {
   const c=(await req(`/admin/applications/${f.id}/credit-review`)).data;
   return req(`/admin/applications/${f.id}/credit-verifications`,{consentId:c.consent?.id,creditRevision:c.creditRevision,band,customerPresented:true,idempotencyKey:randomUUID(),...extra});
 }
-async function plan(f:any,extra:any={}) {
+async function plan(f:any,extra:any={},identity='ADMIN') {
   const credit=(await req(`/admin/applications/${f.id}/credit-review`)).data;
   const a=await db.application.findUniqueOrThrow({where:{id:f.id}});
-  return req(`/admin/applications/${f.id}/final-plan`,{creditVerificationId:credit.verification?.id||'unverified-test-id',revision:a.revision,commercialTerms:terms,monthlyFeeAmount:519900,months:12,mileagePerMonthKm:1500,excessMileagePriceAmount:150,energyDescription:'自费',benefits:[],conditions:'测试',startDate:'2026-11-01',firstDueDate:'2026-11-01',...extra});
+  return req(`/admin/applications/${f.id}/final-plan`,{creditVerificationId:credit.verification?.id||'unverified-test-id',revision:a.revision,commercialTerms:terms,monthlyFeeAmount:519900,months:12,mileagePerMonthKm:1500,excessMileagePriceAmount:150,energyDescription:'自费',benefits:[],conditions:'测试',startDate:'2026-11-01',firstDueDate:'2026-11-01',...extra},identity);
 }
 before(async()=>{
   assert.ok(process.env.TEST_DATABASE_URL?.includes('_test')); process.env.NODE_ENV='test';process.env.ADMIN_ORIGIN=origin;
@@ -132,4 +132,54 @@ test('finance/support can read financial amounts but cannot retrieve credit deta
   }
   for(const role of ['ADMIN','OPERATIONS'])assert.equal((await req(`/admin/applications/${f.id}/credit-review`,undefined,role)).data.verification.band,'B700_749');
   assert.equal((await req(`/customer/applications/${f.id}/credit-review`,undefined,f.token)).data.verification.band,'B700_749');
+});
+
+test('scoped one-fen price preserves actual credit band, creates thirteen exact bills and never edits public plan',async()=>{
+ const saved=process.env.ORDER_ACCEPTANCE_SCOPE_JSON;
+ try{
+  for(const band of ['GE750','B650_699']){
+   const f=await fixture();await consent(f);await verify(f,band);const application=await db.application.findUniqueOrThrow({where:{id:f.id}});
+   const scope={applicationId:f.id,customerId:f.customerId,vehicleId:application.vehicleId,startDate:'2026-11-01',firstDueDate:'2026-11-01',reference:'local-scope-'+f.id};
+   const special={pricingMode:'V1_ONE_FEN',monthlyFeeAmount:1,depositAmount:1};
+   delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;assert.equal((await plan(f,special)).status,409);
+   process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify(scope);
+   assert.equal((await req(`/admin/applications/${f.id}/credit-review`)).data.acceptancePricing?.depositAmount,1);
+   assert.equal((await req(`/admin/applications/${f.id}/credit-review`,undefined,'OPERATIONS')).data.acceptancePricing,undefined);
+   assert.equal((await plan(f,special,'OPERATIONS')).status,403);
+   const result=await plan(f,special);assert.equal(result.status,201,JSON.stringify(result.data));const final=result.data.finalPlan;
+   assert.equal(final.creditBand,band);assert.equal(final.depositAmount,1);assert.match(final.pricingDescription,/12期.*0.01/);
+   const confirmation={revision:final.revision,commercialHash:final.commercialHash};
+   process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify({...scope,customerId:'other'});assert.equal((await req(`/customer/applications/${f.id}/confirm`,confirmation,f.token)).status,409);
+   process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify(scope);const order=await req(`/customer/applications/${f.id}/confirm`,confirmation,f.token);assert.equal(order.status,201,JSON.stringify(order.data));
+   delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;assert.equal((await req(`/customer/applications/${f.id}/confirm`,confirmation,f.token)).data.id,order.data.id);
+   const bills=await db.bill.findMany({where:{orderId:order.data.id}});assert.equal(bills.length,13);assert.ok(bills.every(b=>b.amount===1));
+   assert.equal((await db.subscriptionPlan.findUniqueOrThrow({where:{id:application.subscriptionPlanId}})).monthlyFeeAmount,519900);
+   assert.equal((order.data.finalPlanSnapshot as any).acceptancePricing.scope.applicationId,f.id);
+   for(const role of ['FINANCE','SUPPORT'])for(const path of [`/admin/applications/${f.id}`,`/admin/orders/${order.data.id}`]){
+    const response=await req(path,undefined,role);assert.equal(response.status,200);
+    assert.ok(!JSON.stringify(response.data).includes('standardDepositAmount'),role+' must not infer the private credit tier from acceptance metadata');
+   }
+  }
+ }finally{if(saved===undefined)delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;else process.env.ORDER_ACCEPTANCE_SCOPE_JSON=saved;}
+});
+
+test('one-fen scope never bypasses missing, low, changed or withdrawn credit authorization',async()=>{
+ const saved=process.env.ORDER_ACCEPTANCE_SCOPE_JSON;
+ try{
+  for(const band of ['LT650','UNVERIFIABLE','GE750']){
+   const f=await fixture(),application=await db.application.findUniqueOrThrow({where:{id:f.id}});
+   process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify({applicationId:f.id,customerId:f.customerId,vehicleId:application.vehicleId,startDate:'2026-11-01',firstDueDate:'2026-11-01',reference:'local-credit-guards'});
+   const special={pricingMode:'V1_ONE_FEN',monthlyFeeAmount:1,depositAmount:1};
+   assert.equal((await plan(f,special)).status,409);
+   await consent(f);const verification=await verify(f,band);
+   if(band!=='GE750'){assert.equal((await plan(f,special)).status,409);continue;}
+   const original=(await plan(f,special)).data.finalPlan;await verify(f,'B650_699');
+   assert.equal((await req(`/customer/applications/${f.id}/confirm`,{revision:original.revision,commercialHash:original.commercialHash},f.token)).status,409);
+   const revised=(await plan(f,special)).data.finalPlan;
+   assert.equal((await req(`/customer/applications/${f.id}/credit-consent/withdraw`,{consentId:verification.data.consent.id,idempotencyKey:randomUUID()},f.token)).status,201);
+   assert.equal((await req(`/customer/applications/${f.id}/confirm`,{revision:revised.revision,commercialHash:revised.commercialHash},f.token)).status,409);
+   assert.equal((await plan(f,special)).status,409);
+   assert.equal(await db.order.count({where:{applicationId:f.id}}),0);
+  }
+ }finally{if(saved===undefined)delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;else process.env.ORDER_ACCEPTANCE_SCOPE_JSON=saved;}
 });
