@@ -1,0 +1,86 @@
+{
+  "checkedAt": "2026-10-17T02:29:41.161Z",
+  "deployment": {
+    "release": "20261017-signature-layout-v2",
+    "sourceCommit": "7b985181e3a9a4677cd82862bfa9a8f7cbe78e40",
+    "healthy": true,
+    "apiOnly": true,
+    "configurationChangedOnly": [
+      "BUILD_VERSION",
+      "API_IMAGE"
+    ],
+    "staticRelease": "20261016-technical-signing-v2",
+    "staticRoutingUnchanged": true,
+    "originalSignedPdfUnchanged": true,
+    "correctedSignedPdfUnchanged": true,
+    "commercialSigningEnabled": false,
+    "commercialPaymentEnabled": false,
+    "backup": "20261017T021627Z.tar.enc",
+    "backupIsolatedRestoreTables": 58,
+    "schemaChanged": false
+  },
+  "runtimeReadback": {
+    "checkedAt": "2026-10-17T02:25:32.858Z",
+    "release": "20261017-signature-layout-v2",
+    "archives": [
+      {
+        "recordId": "41960c89-ae8f-4dcf-a2a4-440b4a405739",
+        "status": "SIGNED",
+        "taskCount": 1,
+        "signedPdfHash": "74e569f7a49bb11c0d72da470ae438e5c4abcec4d36a3f62477be3a30f3f9650",
+        "bytesVerified": true
+      },
+      {
+        "recordId": "92d1cafa-99fd-4d91-91af-8c168893f0cb",
+        "status": "SIGNED",
+        "taskCount": 1,
+        "signedPdfHash": "955c43c3a8c7f9d247899cdbbe8dacf9ba61500fffc5595243b61af7df0a30a6",
+        "bytesVerified": true
+      }
+    ],
+    "migrations": 19,
+    "commercialCounts": {
+      "orders": 0,
+      "contracts": 0,
+      "bills": 0,
+      "payments": 0
+    },
+    "commercialSigningEnabled": false,
+    "commercialPaymentEnabled": false,
+    "technicalSigningEnabled": true,
+    "nativeSigningEnabled": true,
+    "runtimeHashes": {
+      "contractRenderer": "ce3d39f96d40706309ea9e5a9cee4d7efb94c0ca1cbe1402cbc319ddec5b06f3",
+      "artifactWriter": "7dae8d395f232520d5fe2785ef3a6b254d07a415fff1b3db66446f4f4bd211ac",
+      "technicalRenderer": "36b498b5c6e04856e972912df66ec4a3132357a056bedf95f7f3f132f615ad2a",
+      "font": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a"
+    },
+    "businessWrites": false,
+    "providerCalls": false
+  },
+  "health": {
+    "httpStatus": 200,
+    "version": "20261017-signature-layout-v2"
+  },
+  "returnPage": {
+    "httpStatus": 200,
+    "sha256": "89b04d599a6c1ad06a5b921f28a546123694b18544ab907cee5b4b5db5dbf076",
+    "matchesBuiltSource": true,
+    "cacheControl": "no-store",
+    "referrerPolicy": "no-referrer"
+  },
+  "admin": {
+    "filesVerified": 3,
+    "staticRelease": "20261016-technical-signing-v2",
+    "unchanged": true
+  },
+  "validation": "commercial-signature-layout-validation.json",
+  "technicalSigning": "technical-signing-layout-final-verification.json",
+  "boundaries": {
+    "actualCommercialSignatureVerified": false,
+    "officialWechatReleaseCompleted": false,
+    "existingArchiveBytesUnchanged": true,
+    "businessWritesDuringVerification": false,
+    "providerCallsDuringVerification": false
+  }
+}

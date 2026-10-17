@@ -69,7 +69,7 @@
     "additionalFontBoundaryCasesPassed": 14,
     "scope": "Measured real PDFKit text line and rectangle events; no production access, provider calls or writes"
   },
-  "deploymentPending": true,
+  "deploymentPending": false,
   "additionalLegacyTests": {
     "renderer": 19,
     "fixedProviderAndPolicyTests": 51,
@@ -78,5 +78,6 @@
     "initialFailureReason": "Legacy fake PDFKit recorders lacked heightOfString, currentLineHeight and rect used by the new measured layout. Only the recorders were completed; real geometry is checked separately with production fonts.",
     "finalFailures": 0,
     "productionCodeChangedDuringRecorderRepair": false
-  }
+  },
+  "deploymentEvidence": "commercial-signature-layout-production.json"
 }
