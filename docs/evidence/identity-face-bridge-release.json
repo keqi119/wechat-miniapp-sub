@@ -1,0 +1,55 @@
+{
+  "checkedAt": "2026-10-17T08:46:28.916Z",
+  "release": "20261017-identity-face-v1",
+  "sourceCommit": "5ba2907c6913a38fac966f2fe49cbe385c7b32d0",
+  "tests": {
+    "miniapp": 251,
+    "apiRelated": 22
+  },
+  "builds": {
+    "miniapp": true,
+    "api": true
+  },
+  "review": {
+    "completed": true,
+    "importantFindings": 2,
+    "resolved": 2,
+    "regressionsObservedFailingBeforeFix": true
+  },
+  "deployment": {
+    "release": "20261017-identity-face-v1",
+    "sourceCommit": "5ba2907c6913a38fac966f2fe49cbe385c7b32d0",
+    "healthy": true,
+    "identityRecordUnchanged": true,
+    "commercialCounts": {
+      "application": 0,
+      "order": 0,
+      "contract": 0,
+      "bill": 0,
+      "payment": 0,
+      "ownerSigningTask": 0,
+      "ownerESignAccount": 1
+    },
+    "faceBridgeConfigured": true,
+    "faceBridgeProtocol": "FADADA_H5_CURRENT_FLOW_V1",
+    "staticReleaseUnchanged": true,
+    "databaseMigration": false,
+    "freeBytes": 847421440
+  },
+  "nativeUi": {
+    "directEntryDenied": true,
+    "syntheticReadyRendered": true,
+    "realFaceJumpAttempted": false
+  },
+  "preview": {
+    "method": "Official logged-in WeChat DevTools CLI",
+    "success": true,
+    "files": 108,
+    "sourceManifestSha256": "a1546fddd0d850aa5e5b77b3b595ea48417053bd2eb62a22f12aa640c7763217",
+    "projectConfigSha256": "c3af4699a4c43e934ecc3566dc4ebd4252464bb636c592d58319b4f81e27ca3c",
+    "artifactUnchangedAfterPreview": true,
+    "qrLocalPath": ".runtime/miniapp-ci/identity-face-v1-preview.jpg",
+    "formalUploadOrPublication": false
+  },
+  "awaiting": "Actual manager personally completes native face flow, then server verifies company, certificate and seal."
+}
