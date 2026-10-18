@@ -1,0 +1,521 @@
+{
+  "date": "2026-10-18",
+  "checkedAt": "2026-10-18T04:08:51.233021Z",
+  "conclusion": "Core V1 implemented and deployed for controlled acceptance; not ready for public paid rental launch",
+  "scope": "Xiaolang direct operation first; third-party owner onboarding, signing authorization and settlement deferred",
+  "production": {
+    "image": "chundian-api:20261017-field-v1",
+    "imageRevision": "73135542755404fcff4fccbb6b705820ff5392e0",
+    "staticRelease": "/opt/wechat-miniapp-sub/releases/20261017-field-v1",
+    "apiState": {
+      "Status": "running",
+      "Running": true,
+      "StartedAt": "2026-10-17T12:39:52.648243352Z",
+      "OOMKilled": false,
+      "ExitCode": 0
+    },
+    "restartCount": 0,
+    "flags": {
+      "BUILD_VERSION": "20261017-field-v1",
+      "NODE_ENV": "production",
+      "WECHAT_PAY_ENABLED": "false",
+      "WECHAT_PAY_VERIFICATION_ENABLED": "true",
+      "FADADA_ENABLED": "true",
+      "FADADA_SIGNING_ENABLED": "false",
+      "TECHNICAL_ACCEPTANCE_SIGNING_ENABLED": "true",
+      "MINIAPP_SIGNING_ENABLED": "true",
+      "PORTAL_SMS_ENABLED": "true",
+      "OWNER_WORKSPACE_ENABLED": "false",
+      "OWNER_ONBOARDING_ENABLED": "false",
+      "OWNER_CONTRACTS_ENABLED": "false",
+      "OWNER_AUTO_SIGNING_ENABLED": "false",
+      "HANDOVER_LOCATION_MAP_ENABLED": "false",
+      "SWAP_CREDIT_PURCHASE_ENABLED": "UNSET"
+    },
+    "orderAcceptanceScopeConfigured": false,
+    "http": {
+      "https://mini-api.subauto.keybox.cloud/api/health": 200,
+      "https://mini-api.subauto.keybox.cloud/api/public/handover-location": 200,
+      "https://mini-admin.subauto.keybox.cloud/": 200,
+      "https://mini-admin.subauto.keybox.cloud/field.html": 200
+    },
+    "location": {
+      "manualEnabled": true,
+      "mapEnabled": false
+    },
+    "disk": {
+      "totalBytes": 41881894912,
+      "freeBytes": 801427456,
+      "usedPercent": 93.46
+    },
+    "memoryKiB": {
+      "MemTotal": 1915896,
+      "MemAvailable": 1073248,
+      "SwapTotal": 4195320,
+      "SwapFree": 3736936
+    },
+    "maintenance": {
+      "chundian-backup": {
+        "service": "Result=success\nExecMainStartTimestamp=Sun 2026-10-18 03:32:33 CST\nExecMainExitTimestamp=Sun 2026-10-18 03:32:36 CST\nExecMainStatus=0",
+        "timer": "NextElapseUSecRealtime=Mon 2026-10-19 03:34:56 CST\nLastTriggerUSec=Sun 2026-10-18 03:32:33 CST\nActiveState=active"
+      },
+      "chundian-tls": {
+        "service": "Result=success\nExecMainStartTimestamp=Sun 2026-10-18 04:08:55 CST\nExecMainExitTimestamp=Sun 2026-10-18 04:08:57 CST\nExecMainStatus=0",
+        "timer": "NextElapseUSecRealtime=Mon 2026-10-19 04:04:48 CST\nLastTriggerUSec=Sun 2026-10-18 04:08:55 CST\nActiveState=active"
+      },
+      "chundian-pay-certificates": {
+        "service": "Result=success\nExecMainStartTimestamp=Sun 2026-10-18 12:07:08 CST\nExecMainExitTimestamp=Sun 2026-10-18 12:07:10 CST\nExecMainStatus=0",
+        "timer": "NextElapseUSecRealtime=Mon 2026-10-19 04:34:02 CST\nLastTriggerUSec=Sun 2026-10-18 04:39:04 CST\nActiveState=active"
+      }
+    },
+    "encryptedBackups": [
+      {
+        "name": "20261017T193233Z.tar.enc",
+        "bytes": 18872352,
+        "modifiedAt": "2026-10-17T19:32:36.091474Z"
+      },
+      {
+        "name": "20261017T062556Z.tar.enc",
+        "bytes": 18790432,
+        "modifiedAt": "2026-10-17T06:25:59.290795Z"
+      },
+      {
+        "name": "20261017T042222Z.tar.enc",
+        "bytes": 18780192,
+        "modifiedAt": "2026-10-17T04:22:24.877009Z"
+      }
+    ],
+    "db": {
+      "counts": {
+        "customer": 3,
+        "application": 0,
+        "order": 0,
+        "contract": 0,
+        "bill": 0,
+        "payment": 0,
+        "refund": 0,
+        "handover": 0,
+        "fieldHandoverTask": 0,
+        "mileage": 0,
+        "usageAccount": 0,
+        "returnSettlement": 0,
+        "serviceRequest": 0
+      },
+      "vehicle": [
+        {
+          "_count": 1,
+          "status": "DRAFT"
+        },
+        {
+          "_count": 1,
+          "status": "PUBLISHED"
+        }
+      ],
+      "paymentVerification": [
+        {
+          "_count": 1,
+          "status": "SUCCEEDED"
+        }
+      ],
+      "technicalAcceptance": [
+        {
+          "_count": 2,
+          "status": "SIGNED"
+        }
+      ],
+      "plans": [
+        {
+          "_count": 1,
+          "active": false
+        },
+        {
+          "_count": 2,
+          "active": true
+        }
+      ],
+      "publishedLegal": [
+        {
+          "type": "subscription",
+          "version": 1
+        },
+        {
+          "type": "handover",
+          "version": 1
+        },
+        {
+          "type": "credit-verification",
+          "version": 1
+        },
+        {
+          "type": "usage-policy",
+          "version": 1
+        },
+        {
+          "type": "mileage-pack",
+          "version": 1
+        },
+        {
+          "type": "vehicle-change",
+          "version": 1
+        },
+        {
+          "type": "delivery-delay-amendment",
+          "version": 1
+        },
+        {
+          "type": "vehicle-change-amendment",
+          "version": 1
+        },
+        {
+          "type": "technical-signing-verification",
+          "version": 1
+        },
+        {
+          "type": "application",
+          "version": 3
+        },
+        {
+          "type": "owner-data-sharing",
+          "version": 1
+        },
+        {
+          "type": "owner-rental-contract",
+          "version": 2
+        },
+        {
+          "type": "owner-delivery-delay",
+          "version": 1
+        },
+        {
+          "type": "owner-vehicle-change",
+          "version": 1
+        },
+        {
+          "type": "owner-handover",
+          "version": 1
+        },
+        {
+          "type": "handover-location",
+          "version": 1
+        },
+        {
+          "type": "owner-identity",
+          "version": 1
+        },
+        {
+          "type": "owner-auto-sign",
+          "version": 1
+        },
+        {
+          "type": "terms",
+          "version": 3
+        },
+        {
+          "type": "privacy",
+          "version": 5
+        }
+      ],
+      "fieldPasswordChanged": false,
+      "migrations": [
+        {
+          "migration_name": "202610160001_initial",
+          "finished_at": "2026-10-16T05:02:11.640Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160002_sms_challenges",
+          "finished_at": "2026-10-16T05:02:11.677Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160003_esign_governance",
+          "finished_at": "2026-10-16T05:02:11.723Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160004_payment_recovery",
+          "finished_at": "2026-10-16T05:02:11.732Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160005_business_completion",
+          "finished_at": "2026-10-16T05:02:11.760Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160006_commercial_terms",
+          "finished_at": "2026-10-16T05:02:11.768Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160007_esign_review_attempts",
+          "finished_at": "2026-10-16T05:02:11.778Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160008_identity_attempt_binding",
+          "finished_at": "2026-10-16T05:20:32.508Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160009_signing_preparation_lease",
+          "finished_at": "2026-10-16T05:20:32.515Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160010_payment_verification",
+          "finished_at": "2026-10-16T07:15:31.219Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160011_credit_review",
+          "finished_at": "2026-10-16T07:43:27.484Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160012_usage_policy",
+          "finished_at": "2026-10-16T08:32:05.439Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160013_usage_policy_snapshot",
+          "finished_at": "2026-10-16T08:32:05.447Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160014_pack_refund",
+          "finished_at": "2026-10-16T08:32:05.464Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160015_delivery_delay",
+          "finished_at": "2026-10-16T10:23:22.873Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160016_h5_signing_session",
+          "finished_at": "2026-10-16T10:23:22.886Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160017_vehicle_change",
+          "finished_at": "2026-10-16T12:36:51.023Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160018_paid_swap_credits",
+          "finished_at": "2026-10-16T12:36:51.053Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610160019_technical_acceptance",
+          "finished_at": "2026-10-16T14:39:15.137Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610170020_acceptance_pricing",
+          "finished_at": "2026-10-17T04:28:23.226Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610170021_owner_signing",
+          "finished_at": "2026-10-17T06:55:29.621Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610170022_owner_authority",
+          "finished_at": "2026-10-17T06:55:29.660Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "202610170023_lessor_contract",
+          "finished_at": "2026-10-17T06:55:29.668Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "20261017120000_field_handover",
+          "finished_at": "2026-10-17T12:39:51.242Z",
+          "rolled_back_at": null
+        },
+        {
+          "migration_name": "20261017130000_field_vehicle_context",
+          "finished_at": "2026-10-17T12:39:51.253Z",
+          "rolled_back_at": null
+        }
+      ]
+    }
+  },
+  "publicCatalog": {
+    "total": 1,
+    "vehicles": [
+      {
+        "title": "2024款 蔚来 ES6 75kWh 南极星蓝",
+        "status": "PUBLISHED",
+        "available": true,
+        "plans": [
+          {
+            "name": "ES6 基础订阅套餐（12个月）",
+            "months": 12,
+            "monthlyFeeAmount": 519900,
+            "active": true
+          },
+          {
+            "name": "ES6 基础订阅套餐（6个月）",
+            "months": 6,
+            "monthlyFeeAmount": 539900,
+            "active": true
+          }
+        ]
+      }
+    ]
+  },
+  "verification": [
+    {
+      "name": "api",
+      "passed": 73,
+      "failed": 0,
+      "scope": "Targeted core lifecycle, permissions, recovery and usage regression"
+    },
+    {
+      "name": "admin",
+      "passed": 101,
+      "failed": 0,
+      "scope": "Current package suite"
+    },
+    {
+      "name": "miniapp",
+      "passed": 251,
+      "failed": 0,
+      "scope": "Current package suite"
+    }
+  ],
+  "builds": {
+    "api": true,
+    "admin": true,
+    "miniappSourceCheck": true,
+    "miniappOfficialTemplateCompile": {
+      "wxml": 19,
+      "wxss": 20
+    },
+    "wechatDeviceBuildOrRelease": false
+  },
+  "certificateFix": {
+    "sourceCommit": "446896a",
+    "rootCause": "JSON parsing of blank lines before error handler",
+    "regressionTestsPassed": 3,
+    "diagnosis": {
+      "invalidJsonConfigLines": [
+        {
+          "line": 64,
+          "key": "<blank/comment/non-assignment>",
+          "error": "JSONDecodeError"
+        },
+        {
+          "line": 66,
+          "key": "<blank/comment/non-assignment>",
+          "error": "JSONDecodeError"
+        },
+        {
+          "line": 68,
+          "key": "<blank/comment/non-assignment>",
+          "error": "JSONDecodeError"
+        },
+        {
+          "line": 70,
+          "key": "<blank/comment/non-assignment>",
+          "error": "JSONDecodeError"
+        },
+        {
+          "line": 72,
+          "key": "<blank/comment/non-assignment>",
+          "error": "JSONDecodeError"
+        },
+        {
+          "line": 74,
+          "key": "<blank/comment/non-assignment>",
+          "error": "JSONDecodeError"
+        },
+        {
+          "line": 76,
+          "key": "<blank/comment/non-assignment>",
+          "error": "JSONDecodeError"
+        }
+      ],
+      "journalIndicators": {
+        "SyntaxError": true,
+        "Unexpected end of JSON input": true,
+        "JSON.parse": true,
+        "CERTIFICATE_REFRESH_FAILED": false,
+        "CERTIFICATE_DOWNLOAD_REJECTED": false,
+        "EACCES": false,
+        "ENOSPC": false
+      },
+      "deployedScriptSha256": "355102d419616129d76e37230f606baf6a67ed473a2aa869e4531d436c37812f",
+      "certificate": {
+        "certificates": [
+          {
+            "validFrom": "Jun 18 08:01:38 2026 GMT",
+            "validTo": "Jun 17 08:01:38 2031 GMT",
+            "currentlyValid": true
+          }
+        ]
+      }
+    },
+    "production": {
+      "checkedAt": "2026-10-18T04:07:10.749906Z",
+      "scriptSha256": "8cb9b6b3ec01bb47cd81de25e234666ca580ce3e90bb11ed3a5edce879e28a91",
+      "previousScriptSha256": "355102d419616129d76e37230f606baf6a67ed473a2aa869e4531d436c37812f",
+      "service": "Result=success\nExecMainStartTimestamp=Sun 2026-10-18 12:07:08 CST\nExecMainExitTimestamp=Sun 2026-10-18 12:07:10 CST\nExecMainStatus=0",
+      "apiRestarted": false,
+      "businessFlagsChanged": false,
+      "paymentCreated": false
+    }
+  },
+  "realAcceptance": {
+    "wechatPhoneLogin": true,
+    "smsBackupLogin": true,
+    "oneFenTechnicalPayment": true,
+    "technicalDocumentBothPartiesSignedAndArchived": true,
+    "signatureLayoutAndMiniappReturnConfirmedByUser": true,
+    "officialAccountFieldLogin": true,
+    "commercialRentalLifecycle": false,
+    "realRefund": false,
+    "fieldCameraAndCustomerAcceptance": false
+  },
+  "release": {
+    "lastRecordedUpload": "1.0.3 (2026-10-16)",
+    "latestNativeWork": "direct-v2 preview (2026-10-17)",
+    "formalReviewAndPublicationEvidence": false,
+    "liveWechatInspection": "Chrome miniapp tab timed out; current platform release state unverified",
+    "privacyLocationGuide": "Last user-confirmed state under review on 2026-10-17; current effective status unverified"
+  },
+  "blockers": [
+    {
+      "item": "Real rental acceptance",
+      "detail": "No application/order/ordinary payment/handover/refund records; formal signing and payment switches remain disabled; one-fen order scope not configured"
+    },
+    {
+      "item": "Per-vehicle and per-order readiness",
+      "detail": "ET5T owner rental authorization and insurance-use evidence pending; actual start/delivery dates and full terms must be confirmed; public ES6 6-month plan differs from previously confirmed minimum 12 months"
+    },
+    {
+      "item": "Production capacity",
+      "detail": "Approximately 0.8 GB filesystem free; media, backups and logs require capacity headroom before public launch"
+    },
+    {
+      "item": "WeChat formal release",
+      "detail": "Latest final package upload, review and publication not verified; effective privacy guide must match actual first-release collection"
+    }
+  ],
+  "nonBlockersIfDeferred": [
+    "Third-party owner features deferred by user",
+    "Map location may remain disabled with manual address entry",
+    "Advanced mileage/swap sales can remain outside initial controlled launch"
+  ],
+  "remainingUserOperations": [
+    "FIELD user initial password change",
+    "Real vehicle handover facts and customer signing/payment/confirmation performed by actual participants"
+  ],
+  "productionBusinessFlagsChanged": false,
+  "realTransactionsCreatedThisAudit": false
+}
