@@ -1,8 +1,21 @@
 import { readFileSync, writeFileSync, renameSync, chmodSync, chownSync, statSync } from 'node:fs';
 import { createSign, createVerify, createDecipheriv, randomBytes, X509Certificate } from 'node:crypto';
-const configPath = process.argv[2] || '.env.providers.local';
-const env = Object.fromEntries(readFileSync(configPath, 'utf8').trim().split('\n').map(line => { const i = line.indexOf('='); return [line.slice(0, i), JSON.parse(line.slice(i + 1))]; }));
-async function refresh() {
+import { pathToFileURL } from 'node:url';
+export function parseCertificateConfig(source) {
+  const entries = [], keys = new Set();
+  for (const original of source.replace(/^\uFEFF/, '').split(/\r?\n/)) {
+    const line = original.trim();
+    if (!line || line.startsWith('#')) continue;
+    const match = /^([A-Z][A-Z0-9_]*)\s*=\s*(.*)$/.exec(line);
+    if (!match || keys.has(match[1])) throw new Error('CERTIFICATE_CONFIG_INVALID');
+    let value;
+    try { value = JSON.parse(match[2]); } catch { throw new Error('CERTIFICATE_CONFIG_INVALID'); }
+    entries.push([match[1], value]); keys.add(match[1]);
+  }
+  return Object.fromEntries(entries);
+}
+async function refresh(configPath) {
+  const env = parseCertificateConfig(readFileSync(configPath, 'utf8'));
   const timestamp = String(Math.floor(Date.now() / 1000)), nonce = randomBytes(16).toString('hex'), path = '/v3/certificates';
   const key = readFileSync(env.WECHAT_PAY_MERCHANT_PRIVATE_KEY_PATH);
   const signature = createSign('RSA-SHA256').update(`GET\n${path}\n${timestamp}\n${nonce}\n\n`).sign(key, 'base64');
@@ -45,4 +58,6 @@ async function refresh() {
   renameSync(temp, target);
   console.log(JSON.stringify({ certificateCount: certificates.length, responseVerified: true, updated: true, validity: certificates.map(item => ({ validFrom: item.cert.validFrom, validTo: item.cert.validTo })) }));
 }
-refresh().catch(error => { console.error(JSON.stringify({ updated: false, code: /^[A-Z_]+$/.test(error.message) ? error.message : 'CERTIFICATE_REFRESH_FAILED' })); process.exitCode = 1; });
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  refresh(process.argv[2] || '.env.providers.local').catch(error => { console.error(JSON.stringify({ updated: false, code: /^[A-Z_]+$/.test(error.message) ? error.message : 'CERTIFICATE_REFRESH_FAILED' })); process.exitCode = 1; });
+}
