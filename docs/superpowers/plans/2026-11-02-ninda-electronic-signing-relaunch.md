@@ -75,10 +75,10 @@
 - `ArchiveVersion.executionMode` 与电子任务关系区分电子、纸质来源；现有业务版本引用继续有效，但电子证据不填写伪造 reviewedBy/partyChecks。
 - `loadElectronicArchiveProof(tx, archiveVersionId): Promise<ElectronicArchiveProof | null>`、`finalizeElectronicArchive(tx, taskId): Promise<void>` 使用 Task 1。
 
-- [ ] DB 失败用例：跨订单或跨合作商关联、同版本重复任务／重复交易、两个派发者竞争、未完整签署不得写 ARCHIVED。
-- [ ] 运行新测试确认失败，再加迁移／模型／事务实现。
-- [ ] 通过受保护本地迁移命令 `node scripts/run-mvp-api-tests.mjs --migrate`；生成 Prisma 后运行数据库测试及 API build。
-- [ ] 验证重入不改 provider IDs、业务引用不会绑定另一归档版本；提交本任务增量并记录结果。
+- [x] DB 失败用例：跨订单或跨合作商关联、同版本重复任务／重复交易、两个派发者竞争、未完整签署不得写 ARCHIVED。
+- [x] 运行新测试确认失败，再加迁移／模型／事务实现。
+- [x] 通过受保护本地迁移命令 `node scripts/run-mvp-api-tests.mjs --migrate`；生成 Prisma 后运行数据库测试及 API build。
+- [x] 验证重入不改 provider IDs、业务引用不会绑定另一归档版本；提交本任务独立文件并记录结果。23 项通过；schema 含前序未提交改动，保留完整工作区版本，不夹带提交。
 
 ### Task 3: 三方身份、企业授权及申请时点
 

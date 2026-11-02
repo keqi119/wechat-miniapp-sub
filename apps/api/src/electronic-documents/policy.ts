@@ -5,7 +5,7 @@ import type {ElectronicAction,ElectronicDocumentKind,ElectronicTaskFacts,SignerR
 export const electronicHash=(value:unknown):value is string=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 export const electronicId=(value:unknown):value is string=>typeof value==='string'&&value.trim()===value&&value.length>0&&value.length<=200&&!/[\u0000-\u001f\u007f]/.test(value);
 export const electronicInstant=(value:unknown):number=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T.+(?:Z|[+-]\d{2}:\d{2})$/.test(value)?Date.parse(value):NaN;
-const fresh=(value:unknown,now:Date)=>{const time=electronicInstant(value);return Number.isFinite(time)&&time<=now.getTime()&&now.getTime()-time<24*60*60*1000;};
+const fresh=(value:unknown,now:Date,maxAgeMs=24*60*60*1000)=>{const time=electronicInstant(value);return Number.isFinite(time)&&time<=now.getTime()&&now.getTime()-time<maxAgeMs;};
 
 export function requiredSignerRoles(kind:ElectronicDocumentKind):SignerRole[]{
   ensure(electronicDocumentKinds.includes(kind),409,'ELECTRONIC_KIND_INVALID','此类记录不属于电子合同签署范围');
@@ -21,7 +21,7 @@ export function electronicIdentityReady(p:SigningPartyInput,now:Date):boolean{
 }
 export function electronicAutoAuthorityReady(p:SigningPartyInput,context:SigningContext,now:Date):boolean{
   const a=p.autoAuthority,at=now.getTime();
-  return p.subjectType==='ENTERPRISE'&&!!a&&electronicId(a.id)&&a.subjectId===p.subjectId&&a.providerCustomerId===p.providerCustomerId&&a.signatureId===p.signatureId&&a.delegateSubjectId===context.platformSubjectId&&a.enabled===true&&a.providerStatus==='AUTHORIZED'&&a.granteeVerified===true&&electronicHash(a.businessEvidenceHash)&&electronicHash(a.channelEvidenceHash)&&electronicInstant(a.validFrom)<=at&&electronicInstant(a.validUntil)>at&&fresh(a.checkedAt,now)&&Array.isArray(a.documentKinds)&&a.documentKinds.includes(context.kind)&&(a.cooperationVersionIds===null||Array.isArray(a.cooperationVersionIds)&&!!context.cooperationVersionId&&a.cooperationVersionIds.includes(context.cooperationVersionId))&&(a.vehicleIds===null||Array.isArray(a.vehicleIds)&&context.vehicleIds.every(id=>a.vehicleIds!.includes(id)));
+  return p.subjectType==='ENTERPRISE'&&!!a&&electronicId(a.id)&&a.subjectId===p.subjectId&&a.providerCustomerId===p.providerCustomerId&&a.signatureId===p.signatureId&&a.delegateSubjectId===context.platformSubjectId&&a.enabled===true&&a.providerStatus==='AUTHORIZED'&&a.granteeVerified===true&&electronicHash(a.businessEvidenceHash)&&electronicHash(a.channelEvidenceHash)&&electronicInstant(a.validFrom)<=at&&electronicInstant(a.validUntil)>at&&fresh(a.checkedAt,now,60_000)&&Array.isArray(a.documentKinds)&&a.documentKinds.includes(context.kind)&&(a.cooperationVersionIds===null||Array.isArray(a.cooperationVersionIds)&&!!context.cooperationVersionId&&a.cooperationVersionIds.includes(context.cooperationVersionId))&&(a.vehicleIds===null||Array.isArray(a.vehicleIds)&&context.vehicleIds.every(id=>a.vehicleIds!.includes(id)));
 }
 function assertContext(parties:SigningPartyInput[],context:SigningContext){
   assertElectronicParties(parties,context.kind);

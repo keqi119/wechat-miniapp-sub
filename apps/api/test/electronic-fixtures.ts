@@ -9,7 +9,7 @@ export function signingParties(): SigningPartyInput[] {
     return {
       role,subjectId,subjectType:role==='CUSTOMER'?'INDIVIDUAL':'ENTERPRISE',providerCustomerId:`account-${role}`,identityVersion:1,identityHash:sha('a'),
       identityVerified:true,certificate:{serialNo:`certificate-${role}`,status:'VALID',validFrom:'2026-01-01T00:00:00Z',validUntil:'2027-01-01T00:00:00Z',checkedAt:'2026-11-02T07:00:00Z'},
-      ...(role==='CUSTOMER'?{}:{signatureId:`seal-${role}`,autoAuthority:{id:`grant-${role}`,subjectId,providerCustomerId:`account-${role}`,signatureId:`seal-${role}`,delegateSubjectId:'ninda',enabled:true,providerStatus:'AUTHORIZED',granteeVerified:true,businessEvidenceHash:sha('b'),channelEvidenceHash:sha('c'),validFrom:'2026-11-01T00:00:00Z',validUntil:'2026-12-01T00:00:00Z',checkedAt:'2026-11-02T07:00:00Z',documentKinds:['SUBSCRIPTION'],cooperationVersionIds:['cooperation-v1'],vehicleIds:['vehicle-a']}})
+      ...(role==='CUSTOMER'?{}:{signatureId:`seal-${role}`,autoAuthority:{id:`grant-${role}`,subjectId,providerCustomerId:`account-${role}`,signatureId:`seal-${role}`,delegateSubjectId:'ninda',enabled:true,providerStatus:'AUTHORIZED',granteeVerified:true,businessEvidenceHash:sha('b'),channelEvidenceHash:sha('c'),validFrom:'2026-11-01T00:00:00Z',validUntil:'2026-12-01T00:00:00Z',checkedAt:'2026-11-02T07:59:30Z',documentKinds:['SUBSCRIPTION'],cooperationVersionIds:['cooperation-v1'],vehicleIds:['vehicle-a']}})
     };
   });
 }

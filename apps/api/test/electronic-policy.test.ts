@@ -21,6 +21,11 @@ test('personal lessor always signs personally, and enterprise identity cannot be
   assert.equal(selectSigningModes(parties,esignNow,signingContext()).modes.OWNER,'MANUAL');
   parties[2].subjectId='api-company';assert.throws(()=>selectSigningModes(parties,esignNow,signingContext()),code('ELECTRONIC_PLATFORM_MISMATCH'));
 });
+test('provider automatic authorization keeps the existing one-minute freshness limit, separately from certificate freshness',()=>{
+  const parties=signingParties();parties[1].autoAuthority!.checkedAt='2026-11-02T07:59:00Z';
+  assert.deepEqual(selectSigningModes(parties,esignNow,signingContext()).modes,{CUSTOMER:'MANUAL',OWNER:'MANUAL',PLATFORM:'MANUAL'});
+  parties[1].autoAuthority!.checkedAt='2026-11-02T08:00:01Z';assert.equal(selectSigningModes(parties,esignNow,signingContext()).modes.OWNER,'MANUAL');
+});
 test('missing or duplicated parties and unverified identity block preparation instead of enabling a two-party path',()=>{
   for(const parties of [signingParties().slice(0,2),[...signingParties(),signingParties()[0]]])assert.throws(()=>selectSigningModes(parties,esignNow,signingContext()),code('ELECTRONIC_PARTIES_MISMATCH'));
   const parties=signingParties();parties[0].identityVerified=false;assert.throws(()=>selectSigningModes(parties,esignNow,signingContext()),code('ELECTRONIC_IDENTITY_REQUIRED'));
