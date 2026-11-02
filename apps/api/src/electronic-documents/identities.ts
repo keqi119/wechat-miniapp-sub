@@ -51,13 +51,15 @@ async function ownerParty(tx:any,subjectId:string,role:'OWNER'|'PLATFORM',now:Da
  ensure(seal&&seal.selectedBy===account.managerCustomerId&&seal.selectedAt&&seal.selectedAt<=now&&current(seal.checkedAt,now)&&electronicHash(seal.imageHash)&&(role!=='PLATFORM'||process.env.FADADA_PLATFORM_SIGNATURE_ID&&seal.providerSignatureId===process.env.FADADA_PLATFORM_SIGNATURE_ID),409,'ELECTRONIC_SEAL_REQUIRED','请由企业本人核验并选择本企业当前印章');
  return{role,subjectId,subjectType:'ENTERPRISE',providerCustomerId:account.providerCustomerId,identityVersion:owner.legalRepresentative.revision,identityHash:canonicalHash({subjectId,name:owner.name,creditCode:owner.creditCode,identityEvidenceHash:account.evidenceHash,legalRevision:owner.legalRepresentative.revision,legalEvidenceHash:owner.legalRepresentative.evidenceHash,sealImageHash:seal.imageHash}),identityVerified:true,certificate:certificate(account,now),signatureId:seal.providerSignatureId};
 }
-export async function resolveSigningParties(tx:any,archiveVersionId:string,now=new Date()):Promise<SigningPartyInput[]>{
+export async function resolveSigningParties(tx:any,archiveVersionId:string,now=new Date(),completed:SigningPartyInput[]=[]):Promise<SigningPartyInput[]>{
  const version=await tx.archiveVersion.findUnique({where:{id:archiveVersionId},include:{archive:true}}),context:SigningContext=version?.scopeSnapshot?.electronicContext;
  ensure(version?.executionMode==='ELECTRONIC'&&!version.invalidatedAt&&context,409,'ELECTRONIC_SOURCE_REQUIRED','本版电子合同尚未准备');
  const frozen=version.partiesSnapshot;assertElectronicParties(Array.isArray(frozen)?frozen.map((p:any)=>({role:p.role,subjectId:p.partyId})):[],context.kind);
  const result:SigningPartyInput[]=[];
  for(const role of requiredSignerRoles(context.kind)){
   const p=frozen.find((item:any)=>item.role===role);
+  const signed=completed.find(item=>item.role===role);
+  if(signed){ensure(signed.subjectId===p.partyId&&signed.subjectType===p.subjectType,409,'ELECTRONIC_PARTIES_MISMATCH','历史已签主体不匹配');result.push(signed);continue;}
   if(role==='OWNER')ensure(p.partyId===version.archive.ownerId,409,'ELECTRONIC_PARTIES_MISMATCH','合作商归属不匹配');
   if(role==='PLATFORM')ensure(p.partyId===context.platformSubjectId,409,'ELECTRONIC_PLATFORM_MISMATCH','平台主体不匹配');
   const resolved=role==='CUSTOMER'?await personalParty(tx,p.partyId,p.partyId,role,now):await ownerParty(tx,p.partyId,role,now);

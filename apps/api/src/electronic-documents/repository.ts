@@ -71,9 +71,12 @@ export async function createElectronicTask(tx:any,input:PrepareElectronicTaskInp
 }
 export interface ReserveElectronicOperationInput {taskId:string;revision:number;kind:'UPLOAD'|'SIGN'|'FILE'|'DOWNLOAD';role?:SignerRole;now:Date;}
 export async function reserveElectronicOperation(tx:any,input:ReserveElectronicOperationInput){
-  const task=await lockElectronicTask(tx,input.taskId),operationKey=`${task.id}:${input.kind}:${input.role??''}`;
-  const existing=await tx.electronicSigningOperation.findUnique({where:{operationKey}});
-  if(existing)return{task,operation:existing,dispatchRequired:false};
+  const task=await lockElectronicTask(tx,input.taskId);let operationKey=`${task.id}:${input.kind}:${input.role??''}`;
+  const existing=input.kind==='FILE'?await tx.electronicSigningOperation.findFirst({where:{taskId:task.id,kind:'FILE'},orderBy:{requestedAt:'desc'}}):await tx.electronicSigningOperation.findUnique({where:{operationKey}});
+  if(existing){
+    if(!(input.kind==='FILE'&&existing.status==='FAILED'&&task.filingStatus==='NOT_STARTED'&&task.lastErrorCode==='ELECTRONIC_FILING_RETRYABLE'))return{task,operation:existing,dispatchRequired:false};
+    operationKey+=':retry:'+await tx.electronicSigningOperation.count({where:{taskId:task.id,kind:'FILE'}});
+  }
   ensure(task.revision===input.revision,409,'VERSION_CONFLICT','签署任务已变化，请刷新');
   const action=nextSigningAction(electronicTaskFacts(task),input.now),wanted=input.kind==='DOWNLOAD'?'ARCHIVE':input.kind;
   ensure(action.kind===wanted&&(action.kind!=='SIGN'||action.role===input.role),409,'ELECTRONIC_OPERATION_NOT_AVAILABLE','当前签署阶段不允许此操作');

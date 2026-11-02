@@ -102,11 +102,11 @@
 - `ElectronicDocumentService.prepare/start/sign/sync/withdraw`：所有写操作带 `revision`、`idempotencyKey`，本人 sign 另带 `sourceSha256` 和全文同意。
 - 路由 `/admin/electronic-documents`、`/customer/electronic-documents`、`/owner-h5/owners/:ownerId/electronic-documents`；回调 `/callbacks/fadada-electronic-sign`。
 
-- [ ] 写模拟渠道失败用例：乱序／伪造／重放、回跳非成功、上传未知、自动签未知不重发、半签不可归档、备案失败或下载失败只恢复原任务。
-- [ ] 实现持久意图、查询绑定、租约和互斥，复用现有 SDK 参数签名；正式自动签必须同时满足 Task 3 及渠道主体核验。
-- [ ] 验证 `contractFiling.api` 的显式成功结果，再读取最终 PDF；无备案编号不伪造编号。
-- [ ] 验证 owner-h5 Cookie/Origin/CSRF、跨客户／跨企业／财务岗位拒绝签署、普通管理员审阅规则及归档文件 ACL。
-- [ ] 通过新测试和现有 digest／query-binding／native-domain 回归，完成接口文档增量。
+- [x] 写模拟渠道失败用例：乱序／伪造／重放、回跳非成功、上传未知、自动签未知不重发、半签不可归档、备案失败或下载失败只恢复原任务。
+- [x] 实现持久意图、查询绑定、租约和互斥，复用现有 SDK 参数签名；正式自动签必须同时满足 Task 3 及渠道主体核验。
+- [x] 验证 `contractFiling.api` 的显式成功结果，再读取最终 PDF；无备案编号不伪造编号。
+- [x] 验证 owner-h5 Cookie/Origin/CSRF、跨客户／跨企业／财务岗位拒绝签署、普通管理员审阅规则及归档文件 ACL。
+- [x] 通过新测试和现有 digest／query-binding／native-domain 回归，完成接口文档增量。
 
 ### Task 5: 正式文件准备与合作协议电子化
 
