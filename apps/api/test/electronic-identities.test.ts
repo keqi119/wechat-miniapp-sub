@@ -1,0 +1,58 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {encryptIdentity} from '../src/esign/fadada/fadada-safety';
+import {canonicalHash} from '../src/customers/types';
+import {ownerMobileHash} from '../src/owner-h5/legal-representative';
+import {bindIndividualOwnerIdentity,requireElectronicCustomerIdentity,resolveSigningParties,requireElectronicOwnerActor} from '../src/electronic-documents/identities';
+import {readAutomaticSigningAuthority} from '../src/electronic-documents/authorization';
+import {captureCustomerProfileSnapshot,readCustomerProfile} from '../src/customers/profile';
+import {certificateEvidence} from '../src/esign/fadada/certificate-evidence';
+const now=new Date(),key=Buffer.alloc(32,54).toString('base64'),sha='a'.repeat(64);
+const code=(v:string)=>(e:any)=>e?.getResponse?.().error?.code===v;
+async function env(fn:()=>Promise<void>){const flags={CUSTOMER_IDENTITY_POLICY:'SIGNING_REQUIRED',ESIGN_IDENTITY_ENCRYPTION_KEY:key,FADADA_PLATFORM_CUSTOMER_ID:'platform-account',FADADA_PLATFORM_SIGNATURE_ID:'platform-seal',SESSION_SECRET:'synthetic-electronic-identity-session-secret'};const old=Object.fromEntries(Object.keys(flags).map(k=>[k,process.env[k]]));Object.assign(process.env,flags);try{await fn();}finally{for(const[k,v]of Object.entries(old))if(v===undefined)delete process.env[k];else process.env[k]=v;}}
+function fixture(){
+ const customers:any={customer:{id:'customer',name:'合成客户',mobile:'13800000001',drivingYears:5,profile:{revision:1,identityFrontFileId:'front',identityBackFileId:'back',drivingLicenseFileId:'driver'}},legal:{id:'legal',name:'合成法人',mobile:'13800000002'},person:{id:'person',name:'合成自然人',mobile:'13800000003'}};
+ const accounts:any={};for(const c of Object.values<any>(customers)){const ciphertext=encryptIdentity({name:c.name,idCardNo:'110101199001010000'},c.id,key);accounts[c.id]={customerId:c.id,providerCustomerId:c.id+'-account',registrationStatus:'REGISTERED',realNameStatus:'VERIFIED',verificationSource:'QUERY',identityCiphertext:ciphertext,verifiedIdentityHash:createHash('sha256').update(ciphertext).digest('hex'),identityVersion:2,verifiedSerialNo:'serial-'+c.id,verificationTransactionNo:'verify-'+c.id,verificationLeaseToken:null,verifiedAt:new Date(now.getTime()-3600000),checkedAt:now,certStatus:'BOUND',certSerialNo:'cert-'+c.id,certValidFrom:new Date(now.getTime()-86400000),certValidUntil:new Date(now.getTime()+86400000),certEvidenceHash:sha,certCheckedAt:now};}
+ const owners:any={};for(const id of ['owner','platform']){const profile={revision:1,name:customers.legal.name,mobileHash:ownerMobileHash(customers.legal.mobile),evidenceHash:sha};owners[id]={id,subjectType:'ENTERPRISE',name:id==='platform'?'上海宁达信息科技有限公司':'合成合作商',creditCode:id==='platform'?'913100001234567890':'913100009876543210',status:'VERIFIED',legalRepresentative:profile,esignAccount:{ownerId:id,providerCustomerId:id+'-account',realNameStatus:'VERIFIED',certStatus:'BOUND',certSerialNo:'cert-'+id,certValidFrom:new Date(now.getTime()-86400000),certValidUntil:new Date(now.getTime()+86400000),certEvidenceHash:sha,certCheckedAt:now,verifiedAt:now,checkedAt:now,evidenceHash:sha,managerCustomerId:'legal',verificationTransactionNo:'verify-'+id,consentedAt:now,consentSnapshot:{channel:'OWNER_LEGAL_H5',ownerId:id,customerId:'legal',legalRevision:1,legalName:profile.name,legalMobileHash:profile.mobileHash}}};}
+ const members:any={};for(const owner of Object.values<any>(owners))members[owner.id]={id:'member-'+owner.id,owner,customer:customers.legal,customerId:'legal',status:'VERIFIED',verifiedAt:now,verifiedSerialNo:owner.esignAccount.verificationTransactionNo};
+ const version:any={id:'version',executionMode:'ELECTRONIC',archive:{ownerId:'owner',orderId:'order'},partiesSnapshot:[{role:'CUSTOMER',partyId:'customer',subjectType:'INDIVIDUAL',name:customers.customer.name},{role:'OWNER',partyId:'owner',subjectType:'ENTERPRISE',name:owners.owner.name},{role:'PLATFORM',partyId:'platform',subjectType:'ENTERPRISE',name:owners.platform.name}],scopeSnapshot:{electronicContext:{kind:'SUBSCRIPTION',platformSubjectId:'platform',cooperationVersionId:'cooperation-v1',vehicleIds:['vehicle']}}};
+ const db:any={$queryRaw:async()=>[],customer:{findUnique:async({where}:any)=>customers[where.id]},eSignAccount:{findUnique:async({where}:any)=>accounts[where.customerId]},vehicleOwner:{findUnique:async({where}:any)=>owners[where.id],update:async({where,data}:any)=>Object.assign(owners[where.id],data)},ownerMember:{findUnique:async({where}:any)=>{const m=members[where.ownerId_customerId.ownerId];return m?.customerId===where.ownerId_customerId.customerId?m:null;},update:async({where,data}:any)=>Object.assign(Object.values<any>(members).find(m=>m.id===where.id)!,data)},ownerESignAccount:{upsert:async({where,create,update}:any)=>owners[where.ownerId].esignAccount=Object.assign(owners[where.ownerId].esignAccount||create,update)},ownerSeal:{findMany:async({where}:any)=>[{id:'seal-'+where.ownerId,providerCustomerId:where.ownerId+'-account',providerSignatureId:where.ownerId+'-seal',status:'ACTIVE',imageHash:sha,checkedAt:now,selectedAt:now,selectedBy:'legal'}]},archiveVersion:{findUnique:async()=>version},storedFile:{findMany:async()=>['front','back','driver'].map(id=>({id,customerId:'customer',purpose:'identity',mimeType:'image/jpeg',sha256:sha,name:id,size:10}))},electronicAutoAuthority:{findMany:async()=>[]},auditLog:{create:async()=>({})}};
+ return{db,accounts,customers,owners,members,version};
+}
+test('qualified documents can be submitted before identity; signing and handover still require current provider identity',async()=>env(async()=>{
+ const f=fixture();delete f.accounts.customer;const profile=await readCustomerProfile(f.db,'customer');assert.equal(profile.readiness.readyForApplication,true);assert.equal(profile.readiness.realNameVerified,false);const snapshot=await captureCustomerProfileSnapshot(f.db,'customer','APPLICATION_SUBMISSION');assert.equal(snapshot.version,3);
+ await assert.rejects(requireElectronicCustomerIdentity(f.db,'customer',now),code('ELECTRONIC_IDENTITY_REQUIRED'));await assert.rejects(resolveSigningParties(f.db,'version',now),code('ELECTRONIC_IDENTITY_REQUIRED'));
+}));
+test('signing uses actual three identities and rejects wrong platform, name or missing certificate dates',async()=>env(async()=>{
+ const f=fixture(),parties=await resolveSigningParties(f.db,'version',now);assert.deepEqual(parties.map(p=>p.providerCustomerId),['customer-account','owner-account','platform-account']);assert.ok(parties.every(p=>p.identityVerified));assert.ok(!JSON.stringify(parties).includes('110101'));
+ f.owners.platform.name='上海晓浪网络科技有限公司';await assert.rejects(resolveSigningParties(f.db,'version',now),code('ELECTRONIC_PLATFORM_MISMATCH'));f.owners.platform.name='上海宁达信息科技有限公司';
+ f.customers.customer.name='另一人';await assert.rejects(resolveSigningParties(f.db,'version',now),code('ELECTRONIC_IDENTITY_REQUIRED'));f.customers.customer.name='合成客户';
+ f.accounts.customer.certValidUntil=null;await assert.rejects(resolveSigningParties(f.db,'version',now),code('ELECTRONIC_CERTIFICATE_REQUIRED'));
+}));
+test('a company viewing account, changed representative and revoked membership cannot sign',async()=>env(async()=>{
+ const f=fixture();await assert.rejects(requireElectronicOwnerActor(f.db,'readonly','owner',now),code('OWNER_LEGAL_REQUIRED'));
+ await requireElectronicOwnerActor(f.db,'legal','owner',now);f.owners.owner.legalRepresentative.revision++;
+ await assert.rejects(requireElectronicOwnerActor(f.db,'legal','owner',now),code('ELECTRONIC_OWNER_IDENTITY_REQUIRED'));f.owners.owner.legalRepresentative.revision--;
+ f.members.owner.status='SUSPENDED';await assert.rejects(requireElectronicOwnerActor(f.db,'legal','owner',now));
+}));
+test('natural owner binds their own verified personal account and never borrows enterprise identity or seal',async()=>env(async()=>{
+ const f=fixture(),p=f.customers.person;f.owners.owner.subjectType='INDIVIDUAL';f.owners.owner.name=p.name;f.owners.owner.legalRepresentative={revision:2,name:p.name,mobileHash:ownerMobileHash(p.mobile),evidenceHash:sha};f.owners.owner.esignAccount=null;Object.assign(f.members.owner,{customerId:'person',customer:p,status:'CLAIMED'});f.version.partiesSnapshot[1]={role:'OWNER',partyId:'owner',subjectType:'INDIVIDUAL',name:p.name};
+ await bindIndividualOwnerIdentity(f.db,'person','owner',now);const party=(await resolveSigningParties(f.db,'version',now))[1];assert.equal(party.providerCustomerId,'person-account');assert.equal(party.subjectType,'INDIVIDUAL');assert.equal(party.signatureId,undefined);assert.equal(party.autoAuthority,undefined);
+ await assert.rejects(bindIndividualOwnerIdentity(f.db,'customer','owner',now));
+}));
+test('current identity cannot use a future query timestamp or mismatching ciphertext',async()=>env(async()=>{
+ const f=fixture();f.accounts.customer.checkedAt=new Date(now.getTime()+1);await assert.rejects(requireElectronicCustomerIdentity(f.db,'customer',now),code('ELECTRONIC_IDENTITY_REQUIRED'));
+ f.accounts.customer.checkedAt=now;f.accounts.customer.verifiedIdentityHash='b'.repeat(64);await assert.rejects(requireElectronicCustomerIdentity(f.db,'customer',now),code('ELECTRONIC_IDENTITY_REQUIRED'));
+}));
+test('automatic permission needs both business scope and original provider grant to Ningda; unilateral paper is insufficient',async()=>env(async()=>{
+ const f=fixture(),scope={version:1,subjectId:'owner',delegateSubjectId:'platform',documentKinds:['SUBSCRIPTION'],cooperationVersionIds:['cooperation-v1'],vehicleIds:['vehicle'],validFrom:new Date(now.getTime()-86400000).toISOString(),validUntil:new Date(now.getTime()+86400000).toISOString()},provider={id:'grant',ownerId:'owner',method:'PROVIDER_AUTO_GRANT',enabled:true,status:'AUTHORIZED',providerCustomerId:'owner-account',providerSignatureId:'owner-seal',certificateSerialNo:'cert-owner',requestedBy:'legal',checkedAt:now,revokedAt:null};
+ const row:any={id:'business-grant',ownerId:'owner',providerAuthorityId:'grant',providerAuthority:provider,scope,scopeHash:canonicalHash(scope),acceptedBy:'legal',acceptedAt:now,businessEvidenceHash:canonicalHash({scope,acceptedBy:'legal',acceptedAt:now.toISOString()}),enabled:true,revokedAt:null,channelGranteeOwnerId:'platform',channelGranteeName:'上海宁达信息科技有限公司',channelEvidenceHash:sha,channelEvidenceFile:{sha256:sha},channelReviewedAt:now,channelReviewedBy:'operator'};
+ f.db.electronicAutoAuthority.findMany=async()=>[row];const subject=(await resolveSigningParties(f.db,'version',now))[1],context=f.version.scopeSnapshot.electronicContext;
+ assert.ok(await readAutomaticSigningAuthority(f.db,subject,context,now));row.channelGranteeName='上海晓浪网络科技有限公司';assert.equal(await readAutomaticSigningAuthority(f.db,subject,context,now),null);row.channelGranteeName='上海宁达信息科技有限公司';provider.method='UNILATERAL_LETTER';assert.equal(await readAutomaticSigningAuthority(f.db,subject,context,now),null);provider.method='PROVIDER_AUTO_GRANT';provider.checkedAt=new Date(now.getTime()-60000);assert.equal(await readAutomaticSigningAuthority(f.db,subject,context,now),null);
+}));
+test('certificate dates are taken from the bound provider data and contradictory intervals fail closed',()=>{
+ assert.deepEqual(certificateEvidence({startTime:'2026-01-01 00:00:00',endTime:'2027-01-01 00:00:00'},Date.parse('2026-11-02T00:00:00Z'))?.validFrom,'2025-12-31T16:00:00.000Z');
+ assert.equal(certificateEvidence({startTime:'2026-01-01',endTime:'2027-01-01',other:{end_time:'2025-01-01'}},Date.parse('2026-11-02T00:00:00Z')),null);
+ assert.equal(certificateEvidence({startTime:'2026-02-31',endTime:'2027-01-01'},Date.parse('2026-11-02T00:00:00Z')),null);
+});
