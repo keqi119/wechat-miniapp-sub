@@ -1,0 +1,2 @@
+# Test-only official SDK oracle; deployed scripts use the Python standard library.
+oss2==2.19.1

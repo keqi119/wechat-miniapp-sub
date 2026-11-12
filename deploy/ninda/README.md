@@ -1,5 +1,15 @@
 # 宁达独立生产部署
 
+## 2026-11-13：当前生产采用 ECS + RDS
+
+定价参考版本 `20261113-pricing-reference-v1` 已发布。ECS 承载 Nginx、静态页面和单实例 API；业务数据库已迁入同 VPC 的 PostgreSQL 17 高可用 RDS，内网连接强制 TLS。API 容器上限 2 GiB、Node 堆 1 GiB、连接池 12；旧本地 PostgreSQL 已停用，其卷保留供核对。下方按日期保留的本地库、旧资源上限、首次空库初始化和发布脚本均是历史说明，不能直接套用于当前生产。
+
+当前 Compose 源文件为 [`compose.rds.yml`](compose.rds.yml)，部署时安装为 `/opt/ninda-platform/deploy/compose.production.yml`。保持当前线上 `.env.production`、`.env.active` 与 `secrets/`，只更新核对过的发布字段。旧 `prepare-production-config.mjs` 生成的本地数据库 URL 不能覆盖当前 RDS 配置；旧 `activate-release.sh`、`activate-mvp-release.sh` 不能直接用于此架构。不要启用 `legacy-local-db` profile 或运行数据库初始化。
+
+备份采用 [`rds-backup.py`](rds-backup.py)，`backup-rds.sh` 和 `verify-backup-rds.sh` 分别安装为服务器的 `backup.sh`、`verify-backup.sh`。RDS 客户端凭据只在 `secrets/rds-client.env`；OSS 使用 ECS 专用角色，通过 IMDSv2 临时凭据访问固定私有内网桶，服务器不存长期云 API 密钥。
+
+详细部署状态、备份恢复步骤、保留规则、预算预警待办与人工验收见 [本次生产发布记录](../../docs/operations/ninda-pricing-rds-release-20261113.md)。以该记录和当前生产只读核验为准。
+
 ## 2026-11-10：保留企业实名认证和印章
 
 晓浪、宁达的企业及法人认证、电子签账号、证书和本人选定印章已经保存在宁达生产数据库；受保护的材料与签署文件保存在持久上传目录。它们是业务数据，不随前端构建或 API 镜像重建。2026-11-10 的 API 补丁及 H5 发布前后已作只读指纹比对，两家公司的认证、证书和印章记录均保持一致，平台账号与印章配置绑定一致；两份合作文书均已归档。见 [本轮发布及保留核验](../../docs/evidence/v31-owner-h5-documents-20261110.json)。

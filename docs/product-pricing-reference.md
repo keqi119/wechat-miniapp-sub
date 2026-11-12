@@ -46,6 +46,8 @@ review 记录估值对应日期、车龄、里程、金额、依据及生效时�
 
 ## 本地验证与部署
 
+2026-11-13 已随 `20261113-pricing-reference-v1` 发布到宁达生产后台。实际迁移、权限与页面核验见 [生产发布记录](operations/ninda-pricing-rds-release-20261113.md)。下列为后续部署依赖说明。
+
 新增迁移：`apps/api/prisma/migrations/202611130001_product_pricing_reference/migration.sql`。部署前按既有备份和迁移流程执行，并重新生成 Prisma Client、构建 API 与管理中台。业务参数需按实际经营假设录入，系统不会把 Excel 的 350 元运营预留或 728/1128 元电池租金静默当作全车通用预算。
 
 相关接口见 [API 总约定](api-contract.md)，业务依据见 [定价参考设计](superpowers/specs/2026-11-12-product-roa-pricing-reference-design.md)。
