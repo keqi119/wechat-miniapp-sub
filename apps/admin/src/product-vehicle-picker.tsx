@@ -6,7 +6,7 @@ import './product-vehicle-picker.css';
 
 type VehicleChoice={id:string;title:string;registeredOwnerName:string|null;brand:string;model:string;modelYear:number|null;ageMonths:number|null;mileageKm:number;plateNumber:string|null;vin:string|null;batteryOwnership:'OWNED'|'BAAS'|'UNKNOWN';batteryCapacityKwh:string|null};
 type VehicleResults=Page<VehicleChoice>&{ageAsOf?:string};
-type Props={value:string[];onChange:(ids:string[])=>void;disabled:boolean};
+type Props={value:string[];onChange:(ids:string[])=>void;disabled:boolean;pricingReference?:boolean};
 const fields:{key:keyof VehicleFilters;label:string;numeric?:boolean}[]=[
  {key:'registeredOwnerName',label:'车辆登记人'},{key:'brand',label:'品牌'},{key:'model',label:'车型'},
  {key:'modelYear',label:'年款',numeric:true},{key:'ageMonthsMin',label:'最小车龄（月）',numeric:true},{key:'ageMonthsMax',label:'最大车龄（月）',numeric:true},
@@ -18,15 +18,15 @@ export function ProductVehiclePicker(props:Props){
  if(scope.current.session!==api.session||scope.current.identity!==identity)scope.current={session:api.session,identity,generation:scope.current.generation+1};
  const generation=scope.current.generation;
  useEffect(()=>{if(committedScope.current!==generation){committedScope.current=generation;props.onChange([]);}},[generation,props.onChange]);
- const allowed=['ADMIN','OPERATIONS'].includes(api.session?.user.role||'')&&can(api.session?.user.permissions||[],'vehicles.read');
+ const allowed=(props.pricingReference?['ADMIN','OPERATIONS','FINANCE'].includes(api.session?.user.role||'')&&can(api.session?.user.permissions||[],'pricing-reference.read'):['ADMIN','OPERATIONS'].includes(api.session?.user.role||''))&&can(api.session?.user.permissions||[],'vehicles.read');
  return allowed?<VehiclePicker key={generation} {...props} value={committedScope.current===generation?props.value:[]}/>:<p className="muted">当前岗位无车辆选择权限。</p>;
 }
-function VehiclePicker({value,onChange,disabled}:Props){
+function VehiclePicker({value,onChange,disabled,pricingReference}:Props){
  const[filters,setFilters]=useState<VehicleFilters>({}),[query,setQuery]=useState(''),[page,setPage]=useState(1),[refresh,setRefresh]=useState(0);
  const[result,setResult]=useState<VehicleResults>(),[loading,setLoading]=useState(true),[error,setError]=useState<unknown>(),[bulkBusy,setBulkBusy]=useState(false);
  const bulk=useRef<AbortController|null>(null),scope=useRef({session:api.session,key:sessionScope()}),latest=useRef({value,onChange,disabled});latest.current={value,onChange,disabled};
  const currentScope=()=>scope.current.session===api.session&&scope.current.key===sessionScope();
- const url=(targetPage:number,pageSize=20)=>{const params=new URLSearchParams(query);params.set('view','product-selection');params.set('page',String(targetPage));params.set('pageSize',String(pageSize));return '/admin/vehicles?'+params;};
+ const url=(targetPage:number,pageSize=20)=>{const params=new URLSearchParams(query);params.set('view',pricingReference?'pricing-selection':'product-selection');params.set('page',String(targetPage));params.set('pageSize',String(pageSize));return '/admin/vehicles?'+params;};
  useEffect(()=>{const controller=new AbortController();bulk.current?.abort();setBulkBusy(false);setLoading(true);setResult(undefined);setError(undefined);
   void api.request<VehicleResults>(url(page),{signal:controller.signal,permission:'vehicles.read'}).then(data=>{if(!controller.signal.aborted&&currentScope())setResult(data);}).catch(cause=>{if(!controller.signal.aborted)setError(cause);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
   return()=>controller.abort();

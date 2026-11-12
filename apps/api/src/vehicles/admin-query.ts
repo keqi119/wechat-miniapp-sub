@@ -8,7 +8,7 @@ import {cooperationRegistration,readPartnerRegistrationCandidates,type Registere
 const text=(max:number)=>z.string().trim().max(max).refine(value=>!value.includes('\u0000'),'筛选不可含空字符');
 const integer=(max:number)=>z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(0).max(max));
 const queryInput=z.object({
- view:z.literal('product-selection').optional(),keyword:text(200).optional(),brand:text(200).optional(),model:text(200).optional(),
+ view:z.enum(['product-selection','pricing-selection']).optional(),keyword:text(200).optional(),brand:text(200).optional(),model:text(200).optional(),
  modelDefinitionId:text(128).min(1).optional(),modelYear:integer(2100).refine(v=>v>=1900).optional(),
  registeredOwnerName:text(200).optional(),cooperationOwnerId:text(128).min(1).optional(),
  batteryOwnership:z.enum(['OWNED','BAAS']).optional(),
@@ -41,6 +41,11 @@ function monthsBefore(day:string,months:number){
 }
 async function operator(tx:any,actor:StaffActor,query?:Record<string,unknown>){
  const current=await requireCurrentStaff(tx,actor,'vehicles',false),full=['ADMIN','OPERATIONS'].includes(current.role);
+ if(query?.view==='pricing-selection'){
+  await requireCurrentStaff(tx,actor,'pricing-reference',false);
+  ensure(query.cooperationOwnerId===undefined,400,'PRICING_FILTER_INVALID','定价选车不按合作归属筛选');
+  return full;
+ }
  if(query&&Object.keys(query).some(key=>advanced.has(key)))ensure(full,403,'FORBIDDEN','当前岗位无车辆台账筛选权限');
  return full;
 }
@@ -90,6 +95,10 @@ export async function readAdminVehicles(tx:any,actor:StaffActor,raw:unknown,now=
  if(and.length)where.AND=and;
  if(q.cooperationOwnerId)where.id={in:await ownerVehicleIds(tx,q.cooperationOwnerId,asOf)};
  const [rows,total]=await Promise.all([tx.vehicle.findMany({where,skip:(q.page-1)*q.pageSize,take:q.pageSize,orderBy:[{createdAt:'desc'},{id:'desc'}],...(q.view?{select:selection}:full?{include:relations}:{})}),tx.vehicle.count({where})]);
+ if(q.view==='pricing-selection')return{items:rows.map((row:any)=>({id:row.id,title:row.title,modelDefinitionId:row.modelDefinitionId,brand:row.brand,model:row.model,
+  modelYear:row.modelDefinition?.modelYear??null,mileageKm:row.mileageKm,plateNumber:row.plateNumber,vin:row.vin,
+  registeredOwnerName:row.assetProfile?.registeredOwnerName??null,batteryOwnership:row.assetProfile?.batteryOwnership??'UNKNOWN',
+  batteryCapacityKwh:row.assetProfile?.batteryCapacityKwh?.toString()??null,ageMonths:vehicleAgeMonths(dateValue(row.assetProfile?.firstRegistrationDate),asOf)})),total,page:q.page,pageSize:q.pageSize,ageAsOf:asOf};
  const registrations=full?await readPartnerRegistrationCandidates(tx,rows.map((row:any)=>row.id)):new Map<string,RegisteredPartner[]>();
  const items=[];for(const row of rows){const value=await projection(tx,row,asOf,full,registrations.get(row.id));if(q.view)delete value.year;items.push(value);}
  return{items,total,page:q.page,pageSize:q.pageSize,ageAsOf:asOf};

@@ -15,7 +15,7 @@
 | 宁达汽车微信小程序 | 浏览车辆与订阅方案、提交申请和客户资料、查看订单与合同、账单支付、里程申报及用车服务 |
 | 客户管理 | 客户档案、资料核验、申请审核与风控，按权限查看和处理客户业务 |
 | 车辆与资产管理 | 车辆台账、车型、牌照、保单、BaaS 合同、资产成本、折旧、市场残值与人工估值 |
-| 产品与商品管理 | 产品工作台、版本与权益配置、产品仓库，以及具体车辆和产品版本的组合发布 |
+| 产品与商品管理 | 产品工作台、剩余期 ROA 定价参考与分组草稿、版本与权益配置、产品仓库，以及具体车辆和产品版本的组合发布 |
 | 订单与履约管理 | 订单办理、合同档案、交还车任务、延期、换车、续期及服务记录 |
 | 财务管理 | 订阅账单、支付、押金、退款、结算、逾期账单与催收 |
 | 企业与电子文书 | 合作商资料、企业办理入口、授权、签署任务和文书归档 |
@@ -102,5 +102,6 @@ node scripts/run-mvp-api-tests.mjs --all
 - [运营操作手册](docs/operations/ninda-seven-module.md)
 - [宁达部署说明](deploy/ninda/README.md)
 - [产品定价参考设计](docs/superpowers/specs/2026-11-12-product-roa-pricing-reference-design.md)
+- [产品定价参考使用说明](docs/product-pricing-reference.md)
 
 2026-11-13 定价模型实施前的代码基线已保存在标签 [`baseline/pre-roa-pricing-20261113`](https://github.com/keqi119/wechat-miniapp-sub/tree/baseline/pre-roa-pricing-20261113)，便于后续比较和回溯。

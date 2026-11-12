@@ -4245,3 +4245,49 @@ model AdvertisingCopyPublication {
  publishedAt DateTime @default(now())
  currentSets AdvertisingCopySet[]
 }
+
+// Pricing parameters and runs are append-only. The command ledger is committed
+// atomically with each write; no financial inputs are copied into customer products.
+model PricingReferenceParameter {
+ id String @id @default(cuid())
+ kind String
+ lineageId String
+ version Int
+ payload Json
+ createdBy String
+ createdAt DateTime @default(now())
+ @@unique([kind,lineageId,version])
+ @@index([kind,createdAt])
+}
+model PricingReferenceRun {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ scenarioVersionId String
+ recalculatedFromId String?
+ snapshot Json
+ createdBy String
+ createdAt DateTime @default(now())
+ adoptions PricingReferenceAdoption[]
+}
+model PricingReferenceAdoption {
+ id String @id @default(cuid())
+ runId String
+ run PricingReferenceRun @relation(fields:[runId],references:[id],onDelete:Restrict)
+ groupKey String
+ productId String
+ productVersionId String @unique
+ createdBy String
+ createdAt DateTime @default(now())
+ @@unique([runId,groupKey])
+}
+model PricingReferenceCommand {
+ id String @id @default(cuid())
+ actorId String
+ resourceId String
+ action String
+ key String
+ requestHash String
+ resultSnapshot Json
+ createdAt DateTime @default(now())
+ @@unique([actorId,resourceId,action,key])
+}

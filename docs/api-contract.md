@@ -864,3 +864,40 @@ revision 冲突 409 `REVISION_CONFLICT`，摘要变化 409 `DRAFT_CHANGED`，内
 普通交车及换车新车交付，按实际交付时刻核对交强险 COMPULSORY_TRAFFIC、商业险 COMMERCIAL，二者必须均有效。当前 REGISTERED 或 APPROVED 版本、保单期间、退保/移出车辆批改、附件用途及逐车绑定、原件真实字节与摘要均须通过；有效替代保单可满足同一险种，不要求一次覆盖整个租期。
 
 缺项返回 DELIVERY_INSURANCE_COMPULSORY_TRAFFIC_REQUIRED / DELIVERY_INSURANCE_COMMERCIAL_REQUIRED，资源为本车 vehicles，订单处理投影通过既有 OPEN_BUSINESS_RECORD 定位 insurance 页签。最终交付事务重新读取，不能使用上架状态或先前查询结果代替；交付审计保存实际时刻、车辆、产品及采用的保单版本编号。续期、历史保单投影及在租提醒保持现状，不恢复保障要求管理。
+
+
+## 产品 ROA 定价参考（2026-11-13）
+
+内部路径前缀 `/admin/pricing-reference`，资源权限 `pricing-reference.read/write`，角色 ADMIN、OPERATIONS、FINANCE；SUPPORT/FIELD 不可访问。生成产品草稿额外检查当前员工 `products.write`。所有写入需要来源/CSRF 校验、`revision`、`idempotencyKey`，事务内复核员工状态，冲突返回现有标准错误结构。
+
+| 方法与路径 | 行为 |
+| --- | --- |
+| GET/POST `/scenarios` | 读取/追加经营场景版本 |
+| GET/POST `/curves` | 读取/追加车型残值系数曲线版本 |
+| GET/POST `/reviews` | 读取/追加单车 review 版本；列表可按 vehicleId 筛选 |
+| POST `/preview` | 根据当前有效来源生成预览，不持久化，不作为历史记录 |
+| GET/POST `/runs` | 分页读取/生成不可变测算记录 |
+| GET `/runs/:id` | 读取冻结快照与逐组采用结果，不重新计算 |
+| POST `/runs/:id/groups/:groupKey/drafts` | 将该记录中的一个冻结分组保存为独立产品草稿，不发布 |
+
+参数写入：`{revision,idempotencyKey,lineageId?,payload}`。新参数 revision=0；新版本带 lineageId 和最后版本的 revision。响应包含 id、lineageId、version、revision（等于 version）、payload、createdAt、createdBy。更正和撤回只追加，不支持原地修改/删除。
+
+场景 payload 包含 name、managementVehicleCount、monthlyManagementBudgetCents、occupancyRate（0..1）、targetAnnualRoa（小数比例或 null）、expectedMonthlyMileageKm、variableCostPerOccupiedMonthCents、otherFixedMonthlyCostCents、disposalCostCents、oneTimeCostCents、notes。可空成本 null 表示未知，0 表示明确无成本。金额均整数分。
+
+曲线 payload 包含 name、modelDefinitionId、year（车型年款）、batteryOwnership、batteryCapacityKwh、configuration、mileageMinKm、mileageMaxKm、condition、effectiveFrom、valuationDate、source（MANUAL/MARKET）、sourceNotes、points（ageMonths/coefficient 正值点）。人工来源不得伪装成统计市场数据；有效范围内插值，不做默认外推；相同优先级多条匹配需明确选择。
+
+review payload 包含 vehicleId、observedAt（估值日期）、effectiveAt（ISO 时刻，兼容 YYYY-MM-DD 按上海零点解释）、ageMonths、mileageKm、valueCents、curveId（可空）、notes、withdrawn。更正/撤回必须带同一 lineageId，不能借更正改变车辆范围。新测算仅使用生成时已知、已生效且估值日不晚于定价日的有效记录。
+
+预览输入：`{scenarioVersionId,pricingDate,exitDate,groups,vehicleOverrides}`。groups 为 `{groupKey,vehicleIds,draft}` 数组；draft 使用现有 v2 产品 DTO，不含命令字段，必须准确重复本组 vehicleIds 且 modelDefinitionIds=[]。后端核验真实车型、年款、电池方式/规格一致，车辆不能跨组重复；单次上限 1000 辆，剩余经营期大于 0 且不超过 120 月。
+
+分组可带 `customerBaasIncomeTreatment`（BUSINESS_REVENUE / THIRD_PARTY_DIRECT）和 `customerBaasIncomeBasisNotes`。产品客户电池费为 SEPARATE 时，未明确该口径及依据则 ROA 缺项；经营收入按原始整数分金额及月份比值计算，TERM 不提前舍入到整数月费。该内部口径不写入客户产品快照。
+
+逐车 override 包含 vehicleId，以及可选 curveId、conditionConfirmed、exitDate、disposalCostCents、oneTimeCostCents、baasMonthlyBudgetCents、insuranceMonthlyBudgetCents、assumptionNotes。指定曲线/成本预算必须说明依据；车况适用性未确认时返回缺项。已知合同和保费不会被缺覆盖预算覆盖成零。
+
+生成记录在预览输入上增加 `revision:0,idempotencyKey,recalculatedFromId?`。响应 `{id,revision:0,createdAt,createdBy,scenarioVersionId,recalculatedFromId,snapshot,adoptions}`。snapshot 冻结原请求、知识截止时刻、标准化引擎输入、经最小化投影的来源事实、逐车和分组结果。历史读取/导出不读取最新参数。adoptions 为已生成产品/版本 ID；每 runId/groupKey 唯一，即使换幂等键重试也复用结果。
+
+结果包括逐车定价日与退出残值、参考上限、管理分摊、年化 ROA、保本与目标基础费、缺项原因；分组包括计算覆盖数、资产加权 ROA、低/中/高值、全组最小上限、组目标与逐车达标目标、冲突与超限车辆。部分数据不完整不冒充全组结果，也不新增产品保存/发布的财务阻断。
+
+`GET /admin/vehicles?view=pricing-selection` 提供定价选车的最小车辆元数据，额外检查 pricing-reference.read。财务可用此视图，不扩大既有 product-selection、车辆台账高级筛选或合作归属读取权限。定价内部成本和快照不加入客户商品/合同响应。
+
+操作说明：[产品定价参考](product-pricing-reference.md)。
