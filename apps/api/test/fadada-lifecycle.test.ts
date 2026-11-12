@@ -1,3 +1,4 @@
+import './legacy-esign-mode';
 import '../src/common/config';
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -48,9 +49,11 @@ test('approved document creates one persistent task; repeated create reuses uplo
 });
 test('customer completion alone never signs; provider PDF failure preserves pending state and retry archives before SIGNED',async()=>{
   assert.equal((await gateway.query(activeTask.taskId)).status,'PENDING');assert.equal(sealCalls,0);
-  customerSigned=true;downloadFails=true;await assert.rejects(gateway.query(activeTask.taskId),/provider download unavailable/);
-  const pending=await db.fadadaTask.findUniqueOrThrow({where:{id:activeTask.taskId}});assert.notEqual(pending.status,'SIGNED');assert.equal(pending.signedFileId,null);assert.equal(sealCalls,1);
-  downloadFails=false;const signed=await gateway.query(activeTask.taskId);assert.equal(signed.status,'SIGNED');assert.ok(signed.signedFileId);assert.equal(sealCalls,1);
+  customerSigned=true;assert.equal((await gateway.query(activeTask.taskId)).status,'PENDING');assert.equal(sealCalls,0,'historical queries never start a new seal');
+  platformSigned=true;await db.fadadaTask.update({where:{id:activeTask.taskId},data:{sealRequestedAt:new Date()}});
+  downloadFails=true;await assert.rejects(gateway.query(activeTask.taskId),/provider download unavailable/);
+  const pending=await db.fadadaTask.findUniqueOrThrow({where:{id:activeTask.taskId}});assert.notEqual(pending.status,'SIGNED');assert.equal(pending.signedFileId,null);assert.equal(sealCalls,0);
+  downloadFails=false;const signed=await gateway.query(activeTask.taskId);assert.equal(signed.status,'SIGNED');assert.ok(signed.signedFileId);assert.equal(sealCalls,0);
   assert.equal((await db.storedFile.findUniqueOrThrow({where:{id:signed.signedFileId!}})).sha256,createHash('sha256').update(pdf).digest('hex'));
 });
 test('verified callback queries persisted authoritative result and replay never repeats settlement',async()=>{

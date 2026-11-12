@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resources, actionAllowed, resourceWritable, resourceActionWritable, detailFor } from './resources.ts';
 import { fieldsForAction, serializeForm, mutationPayload } from './form.ts';
-import { creditPlanInitial } from './credit.ts';
 import { parseShanghaiDateTime, shanghaiDateTime, usageStatusLabel, usageLedgerLabel } from './usage.ts';
 
 test('usage and return settlement use server capabilities, never editable amounts or pack balances', () => {
@@ -48,13 +47,11 @@ test('actual handover time is explicit Shanghai time serialized to ISO, without 
   assert.deepEqual(serializeForm([field], { actualAt: '2026-10-16T09:30' }), { actualAt: '2026-10-16T01:30:00.000Z' });
 });
 
-test('fixed usage rule reaches new final-plan fields and mileage bills retain independent finance review', () => {
+test('product usage quote fields stay read-only and mileage bills retain independent finance review', () => {
   const fields = resources.find(resource => resource.key === 'applications')!.actions!.find(action => action.path === 'final-plan')!.fields!;
   assert.equal(fields.find(field => field.key === 'mileagePerMonthKm')!.readOnly, true);
   assert.equal(fields.find(field => field.key === 'excessMileagePriceAmount')!.readOnly, true);
   assert.equal(fields.find(field => field.key === 'months')!.min, 12);
-  const initial = creditPlanInitial({ id: 'a1', finalPlan: { mileagePerMonthKm: 9000, excessMileagePriceAmount: 999 } });
-  assert.equal(initial.mileagePerMonthKm, 1500); assert.equal(initial.excessMileagePriceAmount, 150);
   const bill = { id: 'b1', status: 'DRAFT', type: 'MILEAGE_EXCESS', createdBy: 'settler' };
   assert.equal(actionAllowed('bills', { label: '审核', path: 'review' }, bill, 'settler'), false);
   assert.equal(actionAllowed('bills', { label: '审核', path: 'review' }, bill, 'reviewer'), true);

@@ -1,0 +1,10 @@
+import {z} from 'zod';
+import {key,text} from '../common/data';
+import {inspectionSelectionsInput} from '../vehicle-inspections/service';
+const revision=z.number().int().nonnegative();
+const display={visible:z.boolean(),recommended:z.boolean(),sortOrder:z.number().int().min(0).max(2147483647)};
+export const createGoodsInput=z.object({vehicleId:text,productVersionId:text,...display,revision:z.literal(0),idempotencyKey:key}).strict();
+export const updateGoodsInput=z.object({...display,inspectionSelections:inspectionSelectionsInput}).partial().extend({revision,idempotencyKey:key}).strict().refine(value=>['visible','recommended','sortOrder','inspectionSelections'].some(k=>Object.hasOwn(value,k)),'请提供商品展示设置');
+export const goodsCommandInput=z.object({revision,idempotencyKey:key,reason:text.optional()}).strict();
+export const goodsPresentationInput=z.object({revision,vehicleRevision:revision,idempotencyKey:key,title:text.refine(v=>!v.includes('\0')),description:z.string().max(5000).refine(v=>!v.includes('\0')),conditionDisclosure:z.string().max(10000).refine(v=>!v.includes('\0'))}).strict();
+export const goodsListInput=z.object({vehicleId:text.refine(value=>!value.includes('\u0000'),'车辆编号无效').optional(),keyword:z.string().trim().max(100).default(''),status:z.enum(['DRAFT','PUBLISHED','WITHDRAWN']).optional(),page:z.coerce.number().int().min(1).default(1),pageSize:z.coerce.number().int().min(1).max(100).default(20)}).strict();

@@ -18,22 +18,26 @@ Page({
   async startFace() {
     if (!this.data.ready || this.data.busy || this.disposed) return;
     this.jumpRequested = true; this.leftForFace = false; this.setData({ busy: true, error: '' });
-    try { await services.startFaceBridge(this.bridge.bridgeId, this.parentContext()); this.resumeFaceReturn(); }
+    try { await services.startFaceBridge(this.bridge.bridgeId, this.parentContext()); await this.resumeFaceReturn(); }
     catch (error) { this.jumpRequested = false; this.leftForFace = false; if (!this.disposed) this.setData({ error: error.message }); }
     finally { if (!this.disposed) this.setData({ busy: false }); }
   },
   onHide() { if (this.jumpRequested) this.leftForFace = true; },
-  onShow() { this.resumeFaceReturn(); },
-  resumeFaceReturn() {
+  onShow() { return this.resumeFaceReturn(); },
+  async resumeFaceReturn() {
     if (this.disposed || !this.jumpRequested || !this.leftForFace) return;
+    const revision = this._returnRevision = (this._returnRevision || 0) + 1;
     try {
+      const capability = await services.getSigningConfig(this.parentContext().kind);
+      if (!capability.enabled || !capability.signProviderConfigured) throw new Error('当前办理入口未开放');
+      if (this.disposed || revision !== this._returnRevision || !this.jumpRequested || !this.leftForFace) return;
       const result = services.completeFaceBridge(this.bridge.bridgeId, undefined, this.parentContext());
       if (!result) return;
       this.jumpRequested = false; this.leftForFace = false;
       if (!this.parent.reloadPage(result.reloadUrl)) throw new Error('原认证页面无法继续');
       this.setData({ ready: false, message: '正在返回原实名认证页面，认证结果仍需核验。' });
       wx.navigateBack({ delta: 1 });
-    } catch { this.jumpRequested = false; this.leftForFace = false; this.setData({ ready: false, error: '本次刷脸返回尚未核实，请返回原认证流程查询或重新进入。' }); }
+    } catch { if (this.disposed || revision !== this._returnRevision) return; this.jumpRequested = false; this.leftForFace = false; this.setData({ ready: false, error: '本次刷脸返回尚未核实，请返回原认证流程查询或重新进入。' }); }
   },
   onUnload() { this.disposed = true; if (this.bridge) services.cancelFaceBridge(this.bridge.bridgeId); this.bridge = null; this.parent = null; },
   back() { if (this.bridge) services.cancelFaceBridge(this.bridge.bridgeId); wx.navigateBack({ delta: 1 }); },

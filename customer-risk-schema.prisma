@@ -1,0 +1,62 @@
+// N03 scalar snapshot references are checked together inside serializable transactions.
+// Add these standalone models; no inverse relation fields are required.
+model CustomerQualificationVersion {
+ id String @id @default(cuid())
+ customerId String
+ revision Int
+ profileHash String
+ status String @default("SUBMITTED")
+ verificationSource String @default("MANUAL")
+ identityFileIds String[]
+ drivingLicenseFileIds String[]
+ evidenceHash String
+ identityExpiresAt DateTime
+ drivingLicenseExpiresAt DateTime
+ submittedBy String
+ reviewedBy String?
+ reviewedAt DateTime?
+ reasonCodes String[] @default([])
+ supplementaryInstructions String @default("")
+ idempotencyKey String
+ requestHash String
+ createdAt DateTime @default(now())
+ @@unique([customerId,revision])
+ @@unique([customerId,idempotencyKey])
+ @@index([customerId,status])
+}
+
+model ApplicationRiskReview {
+ id String @id @default(cuid())
+ applicationId String
+ customerId String
+ revision Int
+ applicationRevision Int
+ profileHash String
+ applicationProfileHash String
+ qualificationId String
+ qualificationRevision Int
+ finalPlanId String
+ planRevision Int
+ commercialHash String
+ planInputHash String
+ vehicleId String
+ vehicleInputHash String
+ creditConsentId String
+ creditConsentRevision Int
+ creditConsentVersion Int
+ creditVerificationId String
+ creditVerificationRevision Int
+ creditRevision Int
+ decision String
+ reasonCodes String[] @default([])
+ supplementaryInstructions String @default("")
+ identityChecked Boolean
+ drivingQualificationChecked Boolean
+ reviewedBy String
+ reviewedAt DateTime @default(now())
+ idempotencyKey String
+ requestHash String
+ @@unique([applicationId,revision])
+ @@unique([applicationId,idempotencyKey])
+ @@index([customerId,reviewedAt])
+}

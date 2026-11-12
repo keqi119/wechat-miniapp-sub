@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-02",
+  "scope": "Project-local reusable skill and three design proposals; no production application changes",
+  "upstream": {
+    "repository": "https://github.com/alchaincyf/huashu-design",
+    "commit": "9b01ee8751679724dd43d855a532944aaa2c2b59",
+    "license": "MIT",
+    "adaptation": "Original WeChat-focused guidance based on context-first, distinct-layout comparison and rendered visual verification. No upstream installer or global preference store executed."
+  },
+  "skill": ".agents/skills/wechat-miniapp-design/SKILL.md",
+  "proposalStatus": "User selected 明朗原生 on 2026-11-02 and authorized actual miniapp implementation and experience upload",
+  "selectedDirection": "native",
+  "implementationSpec": "docs/superpowers/specs/2026-11-02-miniapp-bright-native-design.md",
+  "authorizedReleaseScope": "1.2.2 experience only; no production review or release",
+  "directions": [
+    {
+      "id": "native",
+      "name": "明朗原生",
+      "recommended": true,
+      "reason": "Preserves Ningda yellow-white brand and familiar fee-first selection",
+      "tradeoff": "Less immersive vehicle presentation"
+    },
+    {
+      "id": "premium",
+      "name": "静奢出行",
+      "recommended": false,
+      "reason": "Large vehicle photography and restrained editorial hierarchy",
+      "tradeoff": "More scrolling and stronger dependence on consistent vehicle photography"
+    },
+    {
+      "id": "city",
+      "name": "轻盈城市",
+      "recommended": false,
+      "reason": "Soft modular service pages for ongoing subscription use",
+      "tradeoff": "Introduces a new green palette and takes more vertical space"
+    }
+  ],
+  "sharedContent": {
+    "vehicle": "NIO ET5, illustrative model photography, no real inventory identity",
+    "plans": [
+      {
+        "months": 12,
+        "baseFeeCents": 399900,
+        "mileageFeeCents": 30000
+      },
+      {
+        "months": 24,
+        "baseFeeCents": 369900,
+        "mileageFeeCents": 30000
+      }
+    ],
+    "depositCents": 600000,
+    "includedMonthlyKm": 1500,
+    "overagePriceCentsPerKm": 150,
+    "charging": "customer pays",
+    "bills": "Synthetic first-period rent and deposit, paid; no payment requests",
+    "handoverStates": [
+      "pending customer",
+      "customer confirmed awaiting platform",
+      "completed read-only"
+    ]
+  },
+  "validation": {
+    "baseline": "A read-only agent without the skill already proposed three distinct directions, shared content, manual review wording and no production changes. No baseline failure or quantified improvement is claimed.",
+    "withSkill": "A fresh read-only agent respected a pre-selected style and a two-page scope, separated paid/confirmed/completed states, hid repeat confirmation, and separated manual review from real-name authentication.",
+    "refinement": "Clarified that representative pages are selected only from the user's requested scope.",
+    "schema": "skill-creator quick_validate.py passes",
+    "browser": "qa-prototype.mjs checks 27 page/width combinations plus plan selection, local dialogs, evidence reading, confirmation and read-only states across all three directions; results recorded under .runtime/design-20261102/qa-results.json",
+    "visualInspection": "Rendered comparison sheets for catalog, bills and handover inspected; supporting-text spacing and centered status icon refined.",
+    "limits": "Browser prototype only; not implemented in WXML/WXSS and not tested in WeChat developer tools or on a real device."
+  },
+  "implementation": {
+    "style": "明朗原生",
+    "version": "1.2.2",
+    "scope": "Real native miniapp presentation; source and API rules retained",
+    "testsPassed": 525,
+    "layoutChecks": 96,
+    "nativeSimulator": {
+      "SDKVersion": "3.17.5",
+      "pages": 4,
+      "publicPagesLive": true,
+      "customerPages": "Explicit login states; authenticated device acceptance remains pending"
+    },
+    "nativePackageFiles": 112,
+    "experienceVersionSet": true,
+    "productionReleased": false,
+    "experienceConfirmationSource": "USER_CONFIRMATION",
+    "experienceConfirmedAtUtc": "2026-11-01T17:42:14.635Z"
+  }
+}

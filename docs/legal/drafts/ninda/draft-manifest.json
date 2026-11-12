@@ -1,0 +1,26 @@
+{
+  "status": "DRAFT_UNAPPROVED",
+  "documents": [
+    {
+      "file": "docs/legal/drafts/ninda/user-agreement.md",
+      "source": "docs/legal/user-agreement.md",
+      "sha256": "0d325b306a1dec2e2c00128d844442efa3ac40b5197bface0dd06160d581a491",
+      "approved": false,
+      "published": false
+    },
+    {
+      "file": "docs/legal/drafts/ninda/privacy-policy.md",
+      "source": "docs/legal/versions/location-update/privacy-policy-v3-location.md",
+      "sha256": "04ebfbe4f82cb940f19b2daf2a83f9c16d376a164134d89a263d2e06405c1b30",
+      "approved": false,
+      "published": false
+    },
+    {
+      "file": "docs/legal/drafts/ninda/application-notice.md",
+      "source": "docs/legal/application-notice.md",
+      "sha256": "710762bf5562ceaf3a515722e42a59ddbf8efe213b5625438a08998bdd875d9d",
+      "approved": false,
+      "published": false
+    }
+  ]
+}

@@ -2,17 +2,22 @@ import type {Entity} from './core.ts';
 const states=['PENDING_PAYMENT','ACTIVE','CONSUMED','EXPIRED','PAYMENT_REVIEW','REFUND_PENDING','REFUNDED','VOID'];
 const object=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const pick=(v:Record<string,unknown>,keys:string[])=>Object.fromEntries(keys.filter(k=>v[k]!==undefined).map(k=>[k,v[k]]));
+const hash=(value:unknown)=>typeof value==='string'&&/^[a-f0-9]{64}$/i.test(value);
+const positiveAmount=(value:unknown)=>Number.isSafeInteger(value)&&Number(value)>0&&Number(value)<=2147483647;
+export function validSwapPricing(value:Record<string,unknown>){return value.quantity===1&&value.currency==='CNY'&&(value.policyVersion==='SWAP_TERM_V2'?positiveAmount(value.amount)&&hash(value.pricingHash):value.policyVersion==null&&value.pricingHash==null&&value.amount===80000);}
+export function validSwapProduct(value:unknown){return object(value)&&validSwapPricing(value)&&value.id===(value.policyVersion==='SWAP_TERM_V2'?'SWAP_CREDIT_TERM_1':'SWAP_CREDIT_1');}
+export function validSwapTerms(value:unknown,term:boolean){return object(value)&&typeof value.documentId==='string'&&!!value.documentId.trim()&&Number.isInteger(value.documentVersion)&&Number(value.documentVersion)>0&&hash(value.hash)&&(term?value.version==='SWAP_CREDIT_V2'&&hash(value.templateHash)&&typeof value.templateContent==='string'&&!!value.templateContent.trim():value.version==='SWAP_CREDIT_V1');}
 export function swapPurchaseSafe(value:Record<string,unknown>):Entity{
- const safe=pick(value,['id','orderId','customerId','quantity','amount','currency','status','billId','creditId','paymentId','acceptedAt','createdAt','paidAt','expiresOn','reservedChangeId','consumedChangeId','canPay','canClose','canRequestRefund','canRestore','restoreRefundId','manualReviewRequired','statusMessage']);
- if(object(value.terms))safe.terms=pick(value.terms,['version','documentId','documentVersion','hash']);
+ const safe=pick(value,['id','orderId','customerId','quantity','amount','currency','policyVersion','pricingHash','status','billId','creditId','paymentId','acceptedAt','createdAt','paidAt','expiresOn','reservedChangeId','consumedChangeId','canPay','canClose','canRequestRefund','canRestore','restoreRefundId','manualReviewRequired','statusMessage']);
+ if(object(value.terms))safe.terms=pick(value.terms,['version','documentId','documentVersion','hash',...(value.terms.version==='SWAP_CREDIT_V2'?['templateContent','templateHash','content']:[])]);
  if(object(value.bill))safe.bill=pick(value.bill,['id','type','amount','paidAmount','status']);
  if(Array.isArray(value.refunds))safe.refunds=value.refunds.filter(object).map(r=>pick(r,['id','amount','status']));
  return safe as Entity;
 }
-export function validSwapPurchase(value:Record<string,unknown>){return value.quantity===1&&value.amount===80000&&value.currency==='CNY'&&states.includes(String(value.status))&&object(value.bill)&&value.bill.id===value.billId&&value.bill.type==='SWAP_CREDIT'&&value.bill.amount===80000;}
+export function validSwapPurchase(value:Record<string,unknown>){return validSwapPricing(value)&&validSwapTerms(value.terms,value.policyVersion==='SWAP_TERM_V2')&&states.includes(String(value.status))&&object(value.bill)&&value.bill.id===value.billId&&value.bill.type==='SWAP_CREDIT'&&value.bill.amount===value.amount&&Number.isSafeInteger(value.bill.paidAmount)&&Number(value.bill.paidAmount)>=0&&Number(value.bill.paidAmount)<=Number(value.amount);}
 function refundable(value:Record<string,unknown>){
- if(!validSwapPurchase(value)||value.canRequestRefund!==true||!['ACTIVE','EXPIRED','PAYMENT_REVIEW','REFUND_PENDING'].includes(String(value.status))||typeof value.paymentId!=='string'||!value.paymentId||value.reservedChangeId||value.consumedChangeId||(value.bill as Record<string,unknown>).paidAmount!==80000)return false;
- if(!Array.isArray(value.refunds)||value.refunds.some(r=>!object(r)||!['FAILED','REJECTED'].includes(String(r.status))))return false;
+ if(!validSwapPurchase(value)||value.canRequestRefund!==true||!['ACTIVE','EXPIRED','PAYMENT_REVIEW','REFUND_PENDING'].includes(String(value.status))||typeof value.paymentId!=='string'||!value.paymentId||value.reservedChangeId||value.consumedChangeId||(value.bill as Record<string,unknown>).paidAmount!==value.amount)return false;
+ if(!Array.isArray(value.refunds)||value.refunds.some(r=>!object(r)||r.amount!==value.amount||!['FAILED','REJECTED'].includes(String(r.status))))return false;
  return value.status!=='REFUND_PENDING'||value.refunds.length>0;
 }
 export function swapPurchaseActionAllowed(action:string,value:Record<string,unknown>,role?:string){
@@ -24,7 +29,7 @@ export function swapCreditRestorePayload(value:Record<string,unknown>,reason:str
 export function swapCreditRefundPayload(value:Record<string,unknown>,reason:string,key:string){
  if(!refundable(value))throw new Error('该来源当前不支持完整例外退款，请先核对预占、消费及原退款结果');
  if(!reason.trim())throw new Error('请填写例外退款原因与依据');if(!key||key.length<8)throw new Error('请求编号缺失，请重新打开表单');
- return{paymentId:value.paymentId,amount:80000,reason:reason.trim(),idempotencyKey:key};
+ return{paymentId:value.paymentId,amount:value.amount,reason:reason.trim(),idempotencyKey:key};
 }
 export function swapPurchaseNotice(value:Record<string,unknown>):{title:string;message:string}|undefined{
  if(value.status==='PAYMENT_REVIEW'||value.manualReviewRequired===true)return{title:'真实收款需人工核账',message:typeof value.statusMessage==='string'&&value.statusMessage.trim()?value.statusMessage:'真实晚到款已记账，可用次数为0；核对原收款与例外退款，不把已收款删除或当作未付款。'};

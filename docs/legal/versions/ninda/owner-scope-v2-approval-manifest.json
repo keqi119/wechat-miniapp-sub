@@ -1,0 +1,20 @@
+{
+  "status": "APPROVED",
+  "approvedAt": "2026-10-21T13:05:48.627Z",
+  "approvedBy": "宁达运营方（当前会话用户明确确认）",
+  "approvalQuestionId": "call_a2a22d9cdbb04a26a238aebeebe6d9cb",
+  "approvalStatement": "确认发布并切换三项授权页面",
+  "scope": [
+    "发布owner-auto-sign v2",
+    "切换OWNER_AUTHORIZATION_SCOPE_VERSION=2"
+  ],
+  "executionScope": "仅发布说明并开放三项授权办理；法人自行授权；三个签署执行开关保持关闭。",
+  "reviewedDraftSha256": "f887ac8b93a626ed65aabbf683d815ba95bf1bcfa8cfd5157b37866fc36b088f",
+  "reviewedTextSha256": "707dbebdb59b411389c795b94ddee1aaf0009c8d4c5daa2e0bd8c1e61f052172",
+  "formalSha256": "0eb6cfe5a344b43d6d49b10d397087a0f6c82c03e657558ddecbf7f24babc790",
+  "formalPath": "docs/legal/versions/ninda/owner-auto-sign-v2.md",
+  "formalText": "output/text/宁达-企业车主自动用印授权说明-v2-正式版-20261021.txt",
+  "editorialChangesAfterApproval": [
+    "仅更新待确认状态行为正式版本状态行，正文内容保持获批文本"
+  ]
+}

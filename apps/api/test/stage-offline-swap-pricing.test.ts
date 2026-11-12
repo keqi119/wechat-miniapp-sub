@@ -1,0 +1,17 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {stageSwapSourceFixture} from './stage-swap-source-fixture';
+import {composeOfflineSwapPricing} from '../src/vehicle-changes/offline-pricing';
+import {canonicalHash} from '../src/customers/types';
+async function input(){const f=await stageSwapSourceFixture(),product={...f.product,productId:'target-product',productVersionId:'target-version',monthlyFeeAmount:260000,baseFeeAmount:210000,vehicleIds:['target-car']},listingId='target-goods',listingRevision=2,subscriptionPlanId='target-plan',target={vehicleId:'target-car',subscriptionPlanId,product:{...product,listingId,listingRevision,sourceHash:canonicalHash({listingId,listingRevision,vehicleId:'target-car',subscriptionPlanId,product})}};return{priorTermsVersionId:'renewal-terms',priorTermsHash:'a'.repeat(64),originalStartDate:'2027-01-31',months:12,currentMonthlyFeeAmount:250000,target,deliveryAt:'2027-02-27T23:59:59+08:00',currentPeriods:f.snap.billingSchedule,serviceStageScope:{version:1,serviceStageId:'stage-2',stageSourceHash:canonicalHash(f.snap),...f.snap.period}};}
+test('stage upgrade retains global 13..24 and local 1..12, using the existing actual-day calculation and frozen original due dates',async()=>{
+ const body:any=await input(),result:any=composeOfflineSwapPricing(body);assert.deepEqual(result.periods.map((p:any)=>p.sequence),Array.from({length:12},(_,i)=>i+13));assert.deepEqual(result.periods.map((p:any)=>p.stageSequence),Array.from({length:12},(_,i)=>i+1));assert.equal(result.periods[0].differenceAmount,357);assert.equal(result.pricing.totalDifferenceAmount,110357);assert.equal(result.pricing.periods[0].sequence,13);assert.equal(result.pricing.periods[0].stageSequence,1);assert.equal(result.pricing.endDate,'2028-01-31');assert.deepEqual(result.serviceStageScope,body.serviceStageScope);assert.equal(result.target.product.sourceHash,body.target.product.sourceHash);
+});
+test('same-day second upgrade and final-day adjustment preserve each global obligation and never extend the stage',async()=>{
+ const body:any=await input(),first:any=composeOfflineSwapPricing(body),second:any=composeOfflineSwapPricing({...body,priorTermsVersionId:'swap-terms',currentMonthlyFeeAmount:260000,target:{...body.target,product:{...body.target.product,monthlyFeeAmount:270000}},currentPeriods:first.periods});assert.equal(second.periods[0].originalAmount,250357);assert.equal(second.periods[0].amount,250714);assert.equal(second.periods[0].sequence,13);
+ const last:any=composeOfflineSwapPricing({...body,deliveryAt:'2028-01-30T23:59:59+08:00'});assert.equal(last.periods.at(-1).differenceAmount,323);assert.equal(last.periods.at(-1).sequence,24);assert.equal(last.pricing.endDate,'2028-01-31');
+});
+test('scope/hash/date/sequence mismatch fails rather than renumbering or silently using INITIAL',async()=>{
+ const body:any=await input();for(const change of [{firstPeriodSequence:1},{lastPeriodSequence:25},{endDate:'2028-02-01'},{stageSourceHash:'bad'},{serviceStageId:''}])assert.throws(()=>composeOfflineSwapPricing({...body,serviceStageScope:{...body.serviceStageScope,...change}}));
+ const rows=structuredClone(body.currentPeriods);rows[0].stageSequence=2;assert.throws(()=>composeOfflineSwapPricing({...body,currentPeriods:rows}));const changed:any=composeOfflineSwapPricing({...body,serviceStageScope:{...body.serviceStageScope,stageSourceHash:'b'.repeat(64)}});assert.notEqual(changed.pricingHash,(composeOfflineSwapPricing(body) as any).pricingHash);
+});

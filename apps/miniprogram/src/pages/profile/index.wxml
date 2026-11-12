@@ -1,26 +1,115 @@
-<view class="page"><view class="eyebrow">PROFILE / {{applicationId ? '补充审查资料' : '个人资料'}}</view><view class="title">认识用车的人。</view>
-<view wx:if="{{loading}}" class="empty">正在读取资料…</view><view wx:elif="{{error}}" class="empty"><view>{{error}}</view><button wx:if="{{authRequired}}" class="primary" bindtap="openLogin">登录账户</button><button class="secondary" bindtap="reload">重新加载</button></view>
-<block wx:else><view class="notice">{{applicationId ? reviewNote : '资料保存到当前账户。认证手机号如需变更，请重新登录验证。'}}</view><view class="card">
-<view class="field"><view class="label">姓名</view><input class="input" value="{{name}}" maxlength="30" data-field="name" bindinput="input" disabled="{{busy}}"/></view>
-<view class="field"><view class="label">认证手机号</view><input class="input" value="{{mobile}}" disabled="{{true}}"/></view>
-<view class="field"><view class="label">驾龄（年）</view><input class="input" type="number" value="{{drivingYears}}" maxlength="2" data-field="drivingYears" bindinput="input" disabled="{{busy}}"/></view></view>
+<view class="page profile-page"><view class="title">{{authenticated ? '个人资料' : '登录账户'}}</view><view class="muted">{{!authenticated ? '登录后办理订阅与用车服务' : identityLocked || identityVerified ? '查看实名信息，管理本人证件资料。' : identityPolicy === 'MANUAL_REVIEW' ? '完善个人资料，提交后由运营审核。' : '完善资料并完成实名，即可继续申请。'}}</view>
 
-<view wx:if="{{locationEnabled || locationSaved}}" class="card">
-  <view class="section-title">建议交还地点</view>
-  <view class="muted">默认交车和还车使用同一地点。运营核对后，双方在最终方案中确认。</view>
-  <view wx:if="{{locationSaved}}" class="notice">以下为已提交建议；修改后须重新提交补充资料。</view>
-  <view class="field"><view class="label">地点名称（选填）</view><input class="input" value="{{locationName}}" maxlength="100" data-field="name" bindinput="onLocationInput" disabled="{{busy || locationChoosing || !locationEnabled}}" placeholder="例如：停车场入口"/></view>
-  <view class="field"><view class="label">详细地址</view><textarea class="textarea" value="{{locationAddress}}" maxlength="500" data-field="address" bindinput="onLocationInput" disabled="{{busy || locationChoosing || !locationEnabled}}" placeholder="请填写城市、道路、门牌及交接入口"/></view>
-  <button class="text-button" bindtap="clearLocation" disabled="{{busy || locationChoosing}}">清除本次地点</button>
-  <button wx:if="{{locationNotice}}" class="text-button" bindtap="toggleLocationNotice" disabled="{{busy || locationChoosing}}">{{locationNoticeOpen ? '收起' : '阅读'}}《交接地点选择说明》</button>
-  <view wx:if="{{locationNoticeOpen}}" class="notice">{{locationNotice.title}} · 版本 {{locationNotice.version}}<view style="white-space: pre-wrap">{{locationNotice.content}}</view></view>
-  <block wx:if="{{locationMapEnabled}}">
-    <checkbox-group bindchange="onLocationAccepted"><label class="acceptance"><checkbox value="location" checked="{{locationAccepted}}" disabled="{{busy || locationChoosing || !locationNoticeOpen}}" color="#B44919"/><text>我已阅读《交接地点选择说明》，同意本次通过微信地图选择交接地点，并在我提交申请或资料补充时保存确认的地点名称和地址。</text></label></checkbox-group>
-    <button class="secondary" bindtap="chooseLocation" disabled="{{busy || locationChoosing || !locationAccepted}}" loading="{{locationChoosing}}">在地图中选择地点</button>
-  </block>
-  <view wx:else class="muted">当前可手动填写地址，地图选点暂未启用。</view>
-  <view wx:if="{{locationMessage}}" class="notice">{{locationMessage}}</view>
+<view wx:if="{{!authenticated}}" class="card login-card">
+      <view class="login-methods" aria-label="选择登录方式">
+        <button class="login-method {{loginMethod === 'wechat' ? 'is-selected' : ''}}" data-method="wechat" bindtap="selectLoginMethod" disabled="{{busy}}" aria-pressed="{{loginMethod === 'wechat'}}">手机号快捷登录</button>
+        <button class="login-method {{loginMethod === 'sms' ? 'is-selected' : ''}}" data-method="sms" bindtap="selectLoginMethod" disabled="{{busy}}" aria-pressed="{{loginMethod === 'sms'}}">短信验证登录</button>
+      </view>
+      <view wx:if="{{loginMethod === 'sms'}}" id="sms-login-fields" class="sms-login-fields">
+      <view class="field"><view class="label">手机号</view><input class="input" type="number" maxlength="11" value="{{mobile}}" data-field="mobile" bindinput="input" disabled="{{busy}}"/></view>
+      <view class="field"><view class="label">验证码</view><input class="input" type="number" maxlength="8" value="{{code}}" data-field="code" bindinput="input" disabled="{{busy}}"/></view>
+      </view>
+      <view wx:else class="login-method-description muted">使用微信绑定的手机号，快捷完成登录。</view>
+      <checkbox-group bindchange="loginConsent"><view class="consent-row login-consent"><label class="consent-choice"><checkbox value="agreements" checked="{{termsAccepted && privacyAccepted}}" disabled="{{busy || !legalDocumentsReady}}" color="#231815" aria-label="同意用户协议和隐私政策"/><text>已阅读并同意</text></label><button class="text-button consent-link" data-type="terms" bindtap="openLegal" disabled="{{!legalDocumentsReady}}" aria-label="阅读用户协议">《用户协议》</button><text>和</text><button class="text-button consent-link" data-type="privacy" bindtap="openLegal" disabled="{{!legalDocumentsReady}}" aria-label="阅读隐私政策">《隐私政策》</button></view></checkbox-group>
+      <view wx:if="{{!legalDocumentsReady}}" class="login-hint muted">正在读取登录协议，请稍候；若读取失败，请重试。</view>
+      <view wx:elif="{{!termsAccepted || !privacyAccepted}}" class="login-hint muted">请先勾选同意协议，再继续登录。</view>
+      <button wx:if="{{loginMethod === 'wechat'}}" class="primary" open-type="getPhoneNumber" bindgetphonenumber="phoneLogin" disabled="{{busy || !legalDocumentsReady || !termsAccepted || !privacyAccepted}}" loading="{{busy}}">手机号快捷登录</button>
+      <view wx:else class="sms-login-actions">
+      <button class="secondary" bindtap="sendSms" disabled="{{busy || cooldown > 0 || !legalDocumentsReady || !termsAccepted || !privacyAccepted}}">{{cooldown > 0 ? cooldown + ' 秒后重试' : '获取验证码'}}</button>
+      <button class="primary" bindtap="smsLogin" disabled="{{busy || !legalDocumentsReady || !termsAccepted || !privacyAccepted}}" loading="{{busy}}">验证并登录</button>
+      </view>
 </view>
-<view class="card"><view class="section-title">私密资料附件</view><view class="muted">最多4张，每张不超过10MB，仅当前账户和授权审核人员可查看。</view><view wx:for="{{attachments}}" wx:key="id" class="row between"><button class="text-button" data-id="{{item.id}}" bindtap="openAttachment">{{item.name}}</button><button class="text-button" data-index="{{index}}" bindtap="removeAttachment" disabled="{{busy}}">移除</button></view><button class="secondary" bindtap="chooseAttachments" disabled="{{busy || choosing || attachments.length >= 4}}" loading="{{choosing}}">上传资料图片</button></view>
-<view wx:if="{{applicationId}}" class="card"><view class="label">补充说明</view><textarea class="textarea" value="{{note}}" maxlength="500" data-field="note" bindinput="input" disabled="{{busy}}"/></view>
-<view wx:if="{{message}}" class="notice">{{message}}</view><button class="primary" bindtap="submit" disabled="{{busy || choosing || locationChoosing}}" loading="{{busy}}">{{applicationId ? '提交补充资料' : '保存资料'}}</button></block></view>
+<block wx:if="{{authenticated}}">
+  <view class="card profile-card personal-card">
+    <view class="card-heading">
+      <view class="section-title">个人信息</view>
+      <view class="profile-statuses">
+        <view wx:if="{{profile.identity.verified || identityVerified}}" class="status-tag identity-verified"><text aria-hidden="true">✓ </text>已实名</view>
+        <view wx:if="{{dirty}}" class="status-tag">待保存</view>
+      </view>
+    </view>
+    <view wx:if="{{profileLoading}}" class="muted small" role="status">正在读取个人资料…</view>
+    <view class="profile-info">
+      <view class="profile-info-row">
+        <text class="profile-info-label">姓名：</text>
+        <view wx:if="{{identityLocked}}" class="profile-info-value">{{profile.identity.verified ? profile.identity.name : profile.name}}</view>
+        <input wx:else class="input profile-info-input" aria-label="姓名" value="{{name}}" maxlength="40" data-field="name" bindinput="input" bindblur="commitProfileField" disabled="{{busy || profileLoading}}" placeholder="与证件姓名一致"/>
+      </view>
+      <view class="profile-info-row">
+        <text class="profile-info-label">手机号：</text>
+        <view class="profile-info-value">{{profileMobile || '—'}}</view>
+      </view>
+      <view class="profile-info-row">
+        <text class="profile-info-label">身份证号码：</text>
+        <view wx:if="{{identityLocked}}" class="profile-info-value {{!maskedIdCardNo ? 'profile-info-note' : ''}}">{{maskedIdCardNo || '实名资料暂无法读取，请查询原实名结果'}}</view>
+        <input wx:elif="{{identityPolicy !== 'MANUAL_REVIEW' && identityEnabled && !identityVerified && !identityLoading}}" class="input profile-info-input" aria-label="身份证号码" type="idcard" maxlength="18" value="{{idCardNo}}" data-field="idCardNo" bindinput="input" disabled="{{busy || profileLoading}}"/>
+        <view wx:else class="profile-info-value profile-info-note">{{identityLoading ? '正在读取…' : identityVerified ? '实名资料正在同步，请刷新状态' : '尚未实名认证'}}</view>
+      </view>
+    </view>
+    <view wx:if="{{identityLocked || identityVerified}}" class="profile-identity-footer">
+      <text class="muted small">{{identityLocked ? '实名信息已锁定' : '实名已核验'}}</text>
+      <button wx:if="{{!identityLoading && identityPolicy !== 'MANUAL_REVIEW'}}" class="text-button identity-refresh" bindtap="queryIdentity" disabled="{{busy}}" aria-label="查询原实名与证书结果">刷新状态</button>
+      <text wx:elif="{{identityLoading}}" class="muted small" role="status">正在刷新…</text>
+    </view>
+    <view wx:if="{{!consentCurrent}}" class="profile-legal">
+      <checkbox-group data-type="terms" bindchange="consent"><view class="consent-row login-consent"><label class="consent-choice"><checkbox value="terms" checked="{{termsAccepted}}" disabled="{{busy || !legalDocumentsReady}}" color="#231815" aria-label="同意用户协议"/><text>我已阅读并同意</text></label><button class="text-button consent-link" data-type="terms" bindtap="openLegal" disabled="{{!legalDocumentsReady}}" aria-label="阅读用户协议">《用户协议》</button></view></checkbox-group>
+      <checkbox-group data-type="privacy" bindchange="consent"><view class="consent-row login-consent"><label class="consent-choice"><checkbox value="privacy" checked="{{privacyAccepted}}" disabled="{{busy || !legalDocumentsReady}}" color="#231815" aria-label="同意隐私政策"/><text>我已阅读并同意</text></label><button class="text-button consent-link" data-type="privacy" bindtap="openLegal" disabled="{{!legalDocumentsReady}}" aria-label="阅读隐私政策">《隐私政策》</button></view></checkbox-group>
+      <button class="primary" bindtap="acceptCurrentConsents" disabled="{{busy || !legalDocumentsReady || !termsAccepted || !privacyAccepted}}">记录当前版本同意</button>
+    </view>
+    <button wx:if="{{identityError}}" class="text-button" bindtap="refreshIdentity" disabled="{{busy}}" aria-label="重新获取实名核验状态">重试读取实名状态</button>
+    <view wx:if="{{!identityLocked && !identityVerified}}" class="profile-identity-section">
+      <view class="card-heading"><view class="section-title">{{identityPolicy === 'MANUAL_REVIEW' ? '资料审核说明' : '实名认证'}}</view><view role="status" class="status-tag identity-status">{{identityLoading ? '加载中' : identityError ? '获取失败' : identityStatusText}}</view></view>
+      <view wx:if="{{identityBlocker}}" class="notice">{{identityBlocker}}</view>
+      <view wx:if="{{identityPolicy === 'MANUAL_REVIEW'}}" class="notice">未进行线上实名认证，由运营审核资料。请上传完整的身份证和驾驶证后提交申请。</view>
+      <block wx:if="{{identityPolicy !== 'MANUAL_REVIEW' && !identityLoading}}">
+        <block wx:if="{{identityEnabled}}">
+          <checkbox-group bindchange="onIdentityAccepted"><label class="consent-row"><checkbox value="identity" checked="{{identityAccepted}}" disabled="{{busy}}" color="#231815"/><text>我已阅读隐私政策，同意本次为实名认证处理本人姓名、手机号和身份证信息。</text></label></checkbox-group>
+          <button class="primary" bindtap="verifyIdentity" disabled="{{busy || dirty || !consentCurrent || !identityAccepted}}" loading="{{busy}}">开始实名认证</button>
+          <button class="text-button query-identity" bindtap="queryIdentity" disabled="{{busy}}">我已完成，查询实名结果</button>
+        </block>
+        <view wx:else class="notice">新实名认证暂未开放。上传证件不代表已实名。</view>
+      </block>
+    </view>
+  </view>
+
+  <view class="card profile-card documents-card">
+    <view class="card-heading"><view class="section-title">证件资料</view><text class="muted small">操作后自动保存</text></view>
+    <view wx:for="{{slots}}" wx:key="key" class="document-slot">
+      <view class="document-row">
+        <button class="text-button document-label" data-id="{{profileFiles[item.meta].id}}" bindtap="openAttachment" disabled="{{!profileFiles[item.meta]}}" aria-label="{{'查看' + item.label}}"><text>{{item.label}}</text><text class="document-state">{{profileFiles[item.meta] ? '已上传 · 点击查看' : '未上传'}}</text></button>
+        <view class="document-actions"><button class="secondary document-upload" data-slot="{{item.key}}" bindtap="chooseDocument" disabled="{{busy || choosing || profileSaving || profileLoading}}">{{profileFiles[item.meta] ? '替换' : '上传'}}</button><button wx:if="{{profileFiles[item.meta]}}" class="text-button" data-slot="{{item.key}}" bindtap="removeDocument" disabled="{{busy || choosing || profileSaving}}">移除</button></view>
+      </view>
+    </view>
+    <view class="field driving-years-field"><view class="label">驾龄（年）</view><input class="input" aria-label="驾龄" type="number" value="{{drivingYears}}" maxlength="2" data-field="drivingYears" bindinput="input" bindblur="commitProfileField" disabled="{{busy || profileLoading}}" placeholder="0–70"/></view>
+    <view class="muted small documents-note">仅本人及授权审核人员可查看证件。</view>
+    <block wx:if="{{applicationId}}">
+      <view class="notice">{{reviewNote}}</view>
+      <view wx:if="{{locationEnabled || locationSaved}}" class="section-divider">
+        <view class="section-title">建议交还地点</view>
+        <view class="muted">默认交车和还车使用同一地点。运营核对后，双方在最终方案中确认。</view>
+        <view wx:if="{{locationSaved}}" class="notice">以下为已提交建议；修改后须重新提交补充资料。</view>
+        <view class="field"><view class="label">地点名称（选填）</view><input class="input" value="{{locationName}}" maxlength="100" data-field="name" bindinput="onLocationInput" disabled="{{busy || locationChoosing || !locationEnabled}}" placeholder="例如：停车场入口"/></view>
+        <view class="field"><view class="label">详细地址</view><textarea class="textarea" value="{{locationAddress}}" maxlength="500" data-field="address" bindinput="onLocationInput" disabled="{{busy || locationChoosing || !locationEnabled}}" placeholder="请填写城市、道路、门牌及交接入口"/></view>
+        <button class="text-button" bindtap="clearLocation" disabled="{{busy || locationChoosing}}">清除本次地点</button>
+        <button wx:if="{{locationNotice}}" class="text-button" bindtap="toggleLocationNotice" disabled="{{busy || locationChoosing}}">阅读《交接地点选择说明》 →</button>
+        <block wx:if="{{locationMapEnabled}}">
+          <checkbox-group bindchange="onLocationAccepted"><label class="acceptance"><checkbox value="location" checked="{{locationAccepted}}" disabled="{{busy || locationChoosing || !locationNoticeOpen}}" color="#231815"/><text>我已阅读《交接地点选择说明》，同意本次通过微信地图选择交接地点，并在我提交申请或资料补充时保存确认的地点名称和地址。</text></label></checkbox-group>
+          <button class="secondary" bindtap="chooseLocation" disabled="{{busy || locationChoosing || !locationAccepted}}" loading="{{locationChoosing}}">在地图中选择地点</button>
+        </block>
+        <view wx:else class="muted">当前可手动填写地址，地图选点暂未启用。</view>
+        <view wx:if="{{locationMessage}}" class="muted small location-hint">{{locationMessage}}</view>
+      </view>
+      <view class="field"><view class="label">补充说明</view><textarea class="textarea" value="{{note}}" maxlength="500" data-field="note" bindinput="input" disabled="{{busy}}"/></view>
+    </block>
+    <view wx:if="{{profileSaving || profileError || applicationId}}" class="save-actions">
+      <view wx:if="{{profileSaving}}" class="muted" role="status">正在保存资料…</view>
+      <button wx:if="{{applicationId}}" class="primary" bindtap="submit" disabled="{{busy || choosing || profileLoading}}" loading="{{busy}}">提交补充资料</button>
+      <button wx:if="{{profileError}}" class="text-button" bindtap="retryProfileSave" disabled="{{profileSaving}}">重试保存</button>
+      <button wx:if="{{profileError}}" class="text-button" bindtap="reloadProfile" disabled="{{busy || choosing || profileSaving}}">重新读取资料</button>
+    </view>
+  </view>
+  <view wx:if="{{readiness && !readiness.readyForApplication}}" class="notice"><view wx:for="{{readiness.blockers}}" wx:key="code">{{item.message}}</view></view>
+  <button wx:if="{{returnToApplication}}" class="primary" bindtap="continueApplication" disabled="{{busy || dirty || !readiness.readyForApplication}}">返回继续申请</button>
+</block>
+
+<view class="profile-footer"><button class="secondary settings-contact" bindtap="callService">联系客服</button><button wx:if="{{authenticated}}" class="secondary settings-logout" bindtap="logout" disabled="{{busy}}" loading="{{busy}}">退出账户</button></view><view wx:if="{{authenticated && consentCurrent}}" class="profile-legal-footer"><button class="text-button" data-type="terms" bindtap="openLegal" disabled="{{!legalDocumentsReady}}">用户协议</button><text aria-hidden="true">·</text><button class="text-button" data-type="privacy" bindtap="openLegal" disabled="{{!legalDocumentsReady}}">隐私政策</button></view><view wx:if="{{feedback}}" class="profile-feedback feedback-{{feedback.kind}}" role="alert" aria-live="polite" catchtouchmove="stopFeedbackTouch"><view class="feedback-header"><text class="feedback-title">{{feedback.kind === 'error' ? '操作提示' : feedback.kind === 'success' ? '已完成' : '提示'}}</text><button class="feedback-close" bindtap="dismissFeedback" aria-label="关闭提示">关闭</button></view><scroll-view class="feedback-scroll" style="{{feedback.message.length > 120 ? 'height:38vh' : ''}}" scroll-y="{{true}}"><view class="feedback-message">{{feedback.message}}</view></scroll-view></view></view>

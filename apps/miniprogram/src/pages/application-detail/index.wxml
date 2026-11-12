@@ -1,44 +1,30 @@
 <view class="page bottom-space detail-page">
-  
   <view wx:if="{{loading}}" class="empty" role="status">正在加载申请进度…</view>
-  <view wx:elif="{{error}}" class="empty"
-    ><view>{{error}}</view><button class="secondary" bindtap="refresh">重新加载</button
-    ><button class="text-button" bindtap="openCatalog">返回选车</button></view
-  >
-  <view wx:elif="{{!application}}" class="empty"
-    ><view class="section-title">还没有这份申请</view
-    ><view class="muted">可以先挑选车辆与预设套餐。</view
-    ><button class="primary" bindtap="openCatalog">去选车</button
-    ><button class="text-button" bindtap="refresh">刷新申请</button></view
-  >
+  <view wx:elif="{{error}}" class="empty"><view>{{error}}</view><button class="secondary" bindtap="refresh">重新加载</button><button class="text-button" bindtap="openCatalog">返回选车</button></view>
+  <view wx:elif="{{!application}}" class="empty"><view class="section-title">还没有这份申请</view><button class="primary" bindtap="openCatalog">去选车</button><button class="text-button" bindtap="refresh">刷新申请</button></view>
   <block wx:else>
-    <view class="status-header"
-      ><view class="eyebrow">YOUR APPLICATION</view
-      ><view class="status-symbol"
-        >{{application.status === 'AWAITING_CONFIRMATION' ? '!' : '↗'}}</view
-      ><view class="title">{{application.statusText}}</view
-      ><view class="muted">{{application.title || '订阅申请'}}</view
-      ><view class="application-id">申请编号 {{application.id}}</view></view
-    >
-    <view wx:if="{{actionMessage}}" class="notice action-message" role="status"
-      >{{actionMessage}}</view
-    >
-<view wx:if="{{application.profile.handoverLocation}}" class="card"><view class="section-title">建议交还地点</view><view>{{application.profile.handoverLocation.name}}</view><view>{{application.profile.handoverLocation.address}}</view><view class="muted">客户提交的建议地点；以双方确认的最终方案及实际交接记录为准。</view></view>
-    <view wx:if="{{application.finalPlan.lessorSnapshot}}" class="card"><view class="section-title">本单实际出租方</view><view>{{application.finalPlan.lessorSnapshot.name}}</view><view>{{application.finalPlan.lessorSnapshot.creditCode}}</view><view>{{application.finalPlan.lessorSnapshot.address}}</view><view>{{application.finalPlan.lessorSnapshot.phone}}</view><view class="muted">晓浪提供平台与电子签接入服务；本单出租方为上述企业。</view><view style="white-space:pre-wrap;line-height:1.8">{{application.finalPlan.lessorSnapshot.sharingNotice.content}}</view><checkbox-group wx:if="{{application.status === 'AWAITING_CONFIRMATION'}}" bindchange="onOwnerSharing"><label class="plan-read"><checkbox value="owner" color="#B44919" checked="{{ownerSharingAccepted}}" disabled="{{busy}}"/><text>我已阅读上述实际出租方信息与资料提供说明，单独同意为本单合同向该企业提供说明中必要资料。</text></label></checkbox-group></view><view class="summary-card"
-      ><view class="section-title">申请意向</view
-      ><view class="summary-row row between"
-        ><text class="muted">车辆</text><text>{{application.vehicleName}}</text></view
-      ><view class="summary-row row between"
-        ><text class="muted">预设套餐</text><text>{{application.planTitle}}</text></view
-      ><view class="summary-row row between"
-        ><text class="muted">意向月费</text><text>{{application.monthlyFeeText}}</text></view
-      ><view class="summary-row row between"
-        ><text class="muted">押金</text
-        ><text>{{application.depositText || '待审核确认'}}</text></view
-      ></view
-    >
-    <view class="card">
-      <view class="section-title">本申请的人工信用核验</view>
+    <view class="status-header compact-header"><view class="eyebrow">YOUR APPLICATION</view><view class="title">{{application.statusText}}</view><view class="application-id">申请编号 {{application.id}}</view></view>
+    <view wx:if="{{application.finalPlan}}" class="card plan-overview">
+      <view class="row between"><view class="section-title">最终方案</view><text class="version">版本 {{application.finalPlan.revision}}</text></view>
+      <view class="overview-vehicle">{{application.finalPlan.vehicleName}}</view>
+      <view class="overview-prices"><view><text class="muted">月租</text><view class="price">{{application.finalPlan.monthlyFeeText}}<text class="price-unit"> / 月</text></view></view><view><text class="muted">押金</text><view class="deposit-price">{{application.finalPlan.depositText}}</view></view></view>
+      <view class="overview-grid"><view><text class="muted">订阅期限</text><view>{{application.finalPlan.termMonths}} 个月</view></view><view><text class="muted">包含里程</text><view>{{application.finalPlan.mileageText}}</view></view></view>
+      <view class="summary-row row between"><text class="muted">{{application.finalPlan.contractMode === 'ELECTRONIC' ? '计划交付日' : '起止日期'}}</text><text>{{application.finalPlan.startDateText}}{{application.finalPlan.contractMode === 'ELECTRONIC' ? '（非实际起租日）' : ' — ' + application.finalPlan.endDateText}}</text></view>
+      <view class="summary-row row between"><text class="muted">首期付款日</text><text>{{application.finalPlan.firstDueDateText}}</text></view>
+      <view class="summary-row row between"><text class="muted">超里程单价</text><text>{{application.finalPlan.excessMileagePriceText}} / 公里</text></view>
+      <view wx:if="{{application.finalPlan.lessorSnapshot}}" class="overview-lessor"><text class="muted">实际出租方</text><view>{{application.finalPlan.lessorSnapshot.name}}</view></view>
+      <view wx:if="{{application.finalPlan.contractMode === 'ELECTRONIC'}}" class="notice">基础月费 {{application.finalPlan.baseFeeText}} + 里程包月费 {{application.finalPlan.mileageFeeText}}；最短期限 {{application.finalPlan.minimumTermMonths}} 个月。首期为交付前预付款，实际服务期间与后续付款安排按真实交付及合同确定。</view>
+      <view wx:if="{{application.finalPlan.pricingDescription}}" class="notice">{{application.finalPlan.pricingDescription}}</view>
+      <view wx:if="{{!application.finalPlan.complete}}" class="notice">当前方案资料不完整，请联系运营核对后重新发布。</view>
+    </view>
+    <view wx:else class="card"><view class="section-title">申请意向</view><view>{{application.vehicleName}}</view><view>{{application.planTitle}} · {{application.monthlyFeeText}}</view><view class="muted">押金：{{application.depositText || '待审核确认'}}</view><view wx:if="{{application.profile.handoverLocation}}">建议交还地点：{{application.profile.handoverLocation.name}} · {{application.profile.handoverLocation.address}}</view><view wx:for="{{application.timeline}}" wx:key="title" class="plan-notes">{{item.title}} · {{item.description}}</view></view>
+    <view wx:if="{{application.status === 'AWAITING_CONFIRMATION'}}" class="confirmation-steps"><view>1 · 核对方案</view><view>2 · 阅读并同意</view><view>3 · 确认开单</view></view>
+    <view class="card credit-card">
+      <view class="row between"><view class="section-title">信用核验</view><text class="status-chip">{{!creditReview ? '待查询' : creditReview.status === 'HISTORICAL' ? '历史记录' : creditReview.status === 'VERIFIED' && creditReview.verificationCurrent ? '已核验' : creditReview.status === 'AWAITING_VERIFICATION' ? '等待核验' : creditReview.status === 'CONSENT_REQUIRED' ? '待授权' : '待人工处理'}}</text></view>
+      <view wx:if="{{creditReview.canConfirmFinalPlan}}" class="muted">核验情况已记录，费用以正式方案为准。</view>
+      <view wx:if="{{creditReview.status === 'HISTORICAL'}}" class="muted">当前保留申请结束时的核验记录，新的方案需另行核验。</view>
+      <button wx:if="{{creditReview.canConfirmFinalPlan || creditReview.status === 'HISTORICAL'}}" class="text-button compact-link" bindtap="toggleCreditDetails" disabled="{{busy}}">{{showCreditDetails ? '收起核验管理 ↑' : '查看核验记录与授权管理 ↓'}}</button>
+      <block wx:if="{{showCreditDetails || (!creditReview.canConfirmFinalPlan && creditReview.status !== 'HISTORICAL')}}">
       <view class="muted">由运营核对你主动出示的本人页面，仅记录档位；请勿上传信用页面截图或提供账号密码、验证码。</view>
       <view wx:if="{{creditError}}" class="notice" role="alert">{{creditError}}</view>
       <view wx:if="{{creditMessage}}" class="notice" role="status">{{creditMessage}}</view>
@@ -48,33 +34,25 @@
         <view wx:else class="notice">当前正式核验说明暂不可用，不能提交授权；可联系人工处理。</view>
         <block wx:if="{{creditReview.document}}">
           <view class="muted small">750分及以上：押金0元；700—749分：最终方案中1个月订阅费；650—699分：2个月订阅费。低于650分或无法核验转人工处理，暂不生成正式方案。月费不因核验改变，金额以最终确认方案为准。</view>
-          <block wx:if="{{!creditReview.consentRequirementsMet && creditReview.status !== 'HISTORICAL'}}"><view class="notice">接受核验授权前，请先更新当前用户协议与隐私政策的同意记录；暂不授权或撤回仍可操作。</view><button class="secondary" bindtap="openCreditSettings" disabled="{{busy}}">到账户设置查看并更新协议</button></block>
+          <block wx:if="{{!creditReview.consentRequirementsMet && creditReview.status !== 'HISTORICAL'}}"><view class="notice">接受核验授权前，请先更新当前用户协议与隐私政策的同意记录；暂不授权或撤回仍可操作。</view><button class="secondary" bindtap="openCreditSettings" disabled="{{busy}}">到个人资料查看并更新协议</button></block>
           <block wx:if="{{creditReview.canConsent && !creditReview.consentCurrent}}">
-            <checkbox-group bindchange="onCreditAccepted"><label class="plan-read"><checkbox value="credit" color="#B44919" checked="{{creditAccepted}}" disabled="{{busy}}"/><text>我已阅读上述说明，单独同意为审核本次申请及确定押金，由运营核对我主动出示的本人芝麻分，并按说明记录档位及核验信息。我了解可以拒绝、撤回或申请人工复核。</text></label></checkbox-group>
+            <checkbox-group bindchange="onCreditAccepted"><label class="plan-read"><checkbox value="credit" color="#231815" checked="{{creditAccepted}}" disabled="{{busy}}"/><text>我已阅读上述说明，单独同意为审核本次申请及确定押金，由运营核对我主动出示的本人芝麻分，并按说明记录档位及核验信息。我了解可以拒绝、撤回或申请人工复核。</text></label></checkbox-group>
             <button class="primary" bindtap="acceptCreditConsent" disabled="{{busy || !creditAccepted}}" loading="{{busy}}">单独授权本申请人工核验</button>
           </block>
           <button wx:if="{{creditReview.canDecline}}" class="secondary" bindtap="declineCreditConsent" disabled="{{busy}}">暂不授权，转人工联系处理</button>
         </block>
-        <block wx:if="{{creditReview.verification}}"><view class="section-title">运营已记录的核验</view><view>档位：{{creditReview.bandText}}</view><view class="muted small">核验时间：{{creditReview.verifiedAtText}}</view><view>{{creditReview.depositRuleText}}</view><view class="muted small">押金规则 {{creditReview.ruleVersion}}</view><view wx:if="{{!creditReview.verificationCurrent}}" class="notice">此记录不能用于继续确认新的方案；当前申请状态或授权发生变化时，请联系人工核对。已有合同保留当时确认的押金依据。</view></block>
+        <block wx:if="{{creditReview.verification}}"><view class="section-title">运营已记录的核验</view><view>人工核验记录</view><view class="muted small">核验时间：{{creditReview.verifiedAtText}}</view><view>{{creditReview.depositRuleText}}</view><view wx:if="{{!creditReview.verificationCurrent}}" class="notice">此记录不能用于继续确认新的方案；当前申请状态或授权发生变化时，请联系人工核对。已有合同保留当时确认的押金依据。</view></block>
         <button wx:if="{{creditReview.canWithdraw}}" class="text-button" bindtap="withdrawCreditConsent" disabled="{{busy}}">撤回本申请后续核验授权</button>
       </block>
       <button class="secondary" bindtap="contactCreditService" disabled="{{busy}}">联系人工客服</button>
       <button class="text-button" bindtap="refresh" disabled="{{busy}}">刷新申请与核验状态</button>
+      </block>
     </view>
-    <view class="progress-section"
-      ><view class="section-title">办理进度</view
-      ><view
-        wx:for="{{application.timeline}}"
-        wx:key="title"
-        class="timeline-item {{item.done ? 'done' : ''}}"
-        ><view class="timeline-marker">{{item.done ? '✓' : '·'}}</view
-        ><view class="timeline-copy"
-          ><view class="timeline-title">{{item.title}}</view
-          ><view class="muted">{{item.description}}</view></view
-        ></view
-      ></view
-    >
-    <view wx:if="{{application.finalPlan}}" class="final-plan"
+    <view wx:if="{{application.finalPlan}}" class="card document-entry">
+      <view class="section-title">完整方案与条款</view><view class="muted">包含逐期账单、车辆和商业约定、保险与免责、月里程及退订规则。</view>
+      <button class="secondary" bindtap="togglePlanDetails" disabled="{{busy}}">{{showPlanDetails ? '收起完整方案 ↑' : '查看完整方案与费用明细 ↓'}}</button>
+    </view>
+    <view wx:if="{{application.finalPlan && showPlanDetails}}" class="final-plan"
       ><view class="row between"
         ><view class="eyebrow">FINAL PLAN</view
         ><text class="version">版本 {{application.finalPlan.revision}}</text></view
@@ -103,52 +81,36 @@
         ><text class="muted">押金</text><text>{{application.finalPlan.depositText}}</text></view
       ><view wx:if="{{application.finalPlan.pricingDescription}}" class="notice">{{application.finalPlan.pricingDescription}}</view
       ><view class="summary-row row between"><text class="muted">超里程单价</text><text>{{application.finalPlan.excessMileagePriceText}} / 公里</text></view
-      ><view class="summary-row row between"><text class="muted">起租日期</text><text>{{application.finalPlan.startDateText}}</text></view
+      ><view class="summary-row row between"><text class="muted">{{application.finalPlan.contractMode === 'ELECTRONIC' ? '计划交付日（非实际起租日）' : '起租日期'}}</text><text>{{application.finalPlan.startDateText}}</text></view
       ><view class="summary-row row between"><text class="muted">结束日期</text><text>{{application.finalPlan.endDateText}}</text></view
       ><view class="summary-row row between"><text class="muted">首期付款及押金支付日</text><text>{{application.finalPlan.firstDueDateText}}</text></view
-      ><view class="final-benefits"><view class="section-title">逐期账单与服务期间</view><view wx:for="{{application.finalPlan.billingRows}}" wx:key="sequence" class="plan-notes"><view>第 {{item.sequence}} 期 · {{item.amountText}} · 到期 {{item.dueDateText}}</view><view>{{item.periodText}}</view></view></view
+      ><view wx:if="{{application.finalPlan.contractMode !== 'ELECTRONIC'}}" class="final-benefits"><view class="section-title">逐期账单与服务期间</view><view wx:for="{{application.finalPlan.billingRows}}" wx:key="sequence" class="plan-notes"><view>第 {{item.sequence}} 期 · {{item.amountText}} · 到期 {{item.dueDateText}}</view><view>{{item.periodText}}</view></view></view
       ><view class="final-benefits"><view class="section-title">逐单商业约定</view><view wx:for="{{application.finalPlan.commercialRows}}" wx:key="key" class="plan-notes"><view class="muted">{{item.label}}</view><view>{{item.value || '未填写，请联系运营重出完整方案'}}</view></view></view
-      ><view wx:if="{{application.finalPlan.usagePolicy}}" class="final-benefits"><view class="section-title">本方案固定的月里程与加购、退订规则</view><view class="muted small">正式文案版本 {{application.finalPlan.usagePolicy.documentVersion}} · {{application.finalPlan.usagePolicy.version}}</view><view class="plan-notes">{{application.finalPlan.usagePolicy.content}}</view></view><view wx:if="{{!application.finalPlan.usagePolicyComplete}}" class="notice">本方案尚未固定完整、已批准的月里程用量规则，不能确认；请联系运营重新出具方案。</view
+      ><view wx:if="{{application.finalPlan.usagePolicy}}" class="final-benefits"><view class="section-title">本方案固定的月里程与加购、退订规则</view><view class="muted small">正式文案版本 {{application.finalPlan.usagePolicy.documentVersion}} · {{application.finalPlan.usagePolicy.policyVersion}}</view><button class="text-button" bindtap="openUsageTerms">阅读本方案固定的月里程与加购、退订规则 →</button></view><view wx:if="{{!application.finalPlan.usagePolicyComplete}}" class="notice">本方案尚未固定完整、已批准的月里程用量规则，不能确认；请联系运营重新出具方案。</view
       ><view wx:if="{{!application.finalPlan.complete}}" class="notice">此方案资料尚不完整，请联系运营重新发布；补齐后再阅读确认。</view
       ><view class="plan-notes">{{application.finalPlan.notes}}</view
-      ><checkbox-group
-        wx:if="{{application.status === 'AWAITING_CONFIRMATION'}}"
-        bindchange="onPlanRead"
-        ><label class="plan-read"
-          ><checkbox value="read" color="#B44919" checked="{{planRead}}" disabled="{{busy}}" /><text
-            >我已阅读当前版本全部商业约定、保险与免责、用车限制、各期费用、押金、月里程用量及加购、退订规则。</text
-          ></label
-        ></checkbox-group
+
       ></view
     >
-    <view wx:if="{{application.status === 'NEEDS_INFO'}}" class="card"><view class="section-title">补充审查资料</view><view class="muted">{{application.note}}</view><button class="primary" bindtap="openAmendment">补充资料并重新提交</button></view>
-    <view wx:if="{{actionError}}" class="action-error" role="alert"
-      >{{actionError}}<button class="text-button" bindtap="refresh" disabled="{{busy}}"
-        >重新加载最新方案</button
-      ></view
-    >
-    <view class="notice flow-note"
-      >申请不等于正式订单。只有确认最终方案后才进入订单流程，签约、支付和交付仍需分别完成。</view
-    >
-    <button
-      wx:if="{{application.status === 'SUBMITTED' || application.status === 'IN_REVIEW' || application.status === 'NEEDS_INFO' || application.status === 'AWAITING_CONFIRMATION'}}"
-      class="text-button"
-      bindtap="cancelApplication"
-      disabled="{{busy}}"
-      >取消申请</button
-    >
-    <view
-      wx:if="{{application.status === 'AWAITING_CONFIRMATION' && application.finalPlan}}"
-      class="sticky-actions"
-      ><view class="field"><view class="label">暂不接受原因（拒绝方案时必填）</view><textarea class="textarea" value="{{rejectReason}}" bindinput="onRejectReason" maxlength="500" disabled="{{busy}}"/></view><button class="primary" bindtap="confirmPlan" loading="{{busy}}" disabled="{{busy}}"
-        >确认最终方案</button
-      ><button class="text-button" bindtap="rejectPlan" disabled="{{busy}}"
-        >暂不接受此方案</button
-      ></view
-    >
-    <view wx:else class="detail-navigation"
-      ><button class="primary" bindtap="openUse">查看用车与待办</button
-      ><button class="text-button" bindtap="refresh">刷新申请进度</button></view
-    >
+    <view wx:if="{{reviewStatus}}" class="card"><view class="section-title">资料与方案审核</view><view>身份与驾驶资格：{{reviewStatus.qualification.statusText}}</view><view class="muted">{{reviewStatus.qualification.instructions}}</view><view>本申请风控审核：{{reviewStatus.risk.statusText}}</view><view class="muted">{{reviewStatus.risk.instructions}}</view><view class="muted small">待审候选条件由平台核对，审核通过后才展示可确认的正式方案。</view><button wx:if="{{application.status !== 'NEEDS_INFO' && (reviewStatus.qualification.status === 'NEEDS_INFO' || reviewStatus.qualification.status === 'RECHECK_REQUIRED')}}" class="secondary" bindtap="contactCreditService">联系平台补充资料</button></view><view wx:if="{{application.status === 'NEEDS_INFO'}}" class="card"><view class="section-title">补充审查资料</view><view class="muted">{{application.note}}</view><button class="primary" bindtap="openAmendment">补充资料并重新提交</button></view>
+    <view wx:if="{{application.finalPlan}}" class="card confirmation-section">
+      <view class="section-title">{{application.status === 'AWAITING_CONFIRMATION' ? '阅读并确认' : '出租方与资料提供说明'}}</view>
+      <block wx:if="{{application.finalPlan.lessorSnapshot}}">
+        <view>本单实际出租方：{{application.finalPlan.lessorSnapshot.name}}</view>
+        <button class="text-button compact-link" bindtap="toggleLessorDetails" disabled="{{busy}}">{{showLessorDetails ? '收起出租方与资料提供说明 ↑' : '查看出租方与资料提供说明 ↓'}}</button>
+        <button class="text-button" bindtap="openSharingNotice">阅读本方案出租方信息共享说明 →</button><view wx:if="{{showLessorDetails}}" class="lessor-details"><view>{{application.finalPlan.lessorSnapshot.creditCode}}</view><view>{{application.finalPlan.lessorSnapshot.address}}</view><view>{{application.finalPlan.lessorSnapshot.phone}}</view><view wx:if="{{application.finalPlan.contractMode === 'OFFLINE'}}" class="muted">上海宁达信息科技有限公司提供宁达平台服务；本单实际出租方为页面列明的企业或个人。你、实际出租方与宁达平台三方办理纸质合同签署，平台审核归档后继续付款与交车。</view><view wx:else class="muted">宁达汽车提供平台服务，晓浪提供电子签接入服务；本单出租方为上述企业。</view></view>
+        <checkbox-group wx:if="{{application.status === 'AWAITING_CONFIRMATION'}}" bindchange="onOwnerSharing"><label class="plan-read"><checkbox value="owner" color="#231815" checked="{{ownerSharingAccepted}}" disabled="{{busy}}"/><text>我已阅读本单实际出租方信息与资料提供说明，单独同意为履行本单合同向该实际出租方提供说明中的必要资料。</text></label></checkbox-group>
+      </block>
+      <checkbox-group wx:if="{{application.status === 'AWAITING_CONFIRMATION'}}" bindchange="onPlanRead"><label class="plan-read"><checkbox value="read" color="#231815" checked="{{planRead}}" disabled="{{busy}}"/><text>我已阅读当前版本全部商业约定、保险与免责、用车限制、各期费用、押金、月里程用量及加购、退订规则，并确认最终方案。</text></label></checkbox-group>
+      <view wx:if="{{application.status === 'AWAITING_CONFIRMATION'}}" class="muted small confirmation-note">{{application.finalPlan.contractMode === 'OFFLINE' ? '确认后创建正式订单；三方纸质签署、平台审核归档、付款与交车仍需分别完成。' : '确认后创建正式待签约订单；签约、支付和交付仍需分别完成。'}}</view>
+    </view>
+    <view wx:if="{{application.status === 'AWAITING_CONFIRMATION' && application.finalPlan && showRejectForm}}" id="rejection-section" class="card rejection-section">
+      <view class="section-title">暂不接受此方案</view><view class="muted">请说明原因，便于运营调整；不会生成该方案订单。</view>
+      <view class="field"><view class="label">暂不接受原因</view><textarea class="textarea" value="{{rejectReason}}" bindinput="onRejectReason" maxlength="500" disabled="{{busy}}" placeholder="请填写原因"/></view>
+      <button class="secondary" bindtap="rejectPlan" disabled="{{busy}}">提交暂不接受</button><button class="text-button" bindtap="beginReject" disabled="{{busy}}">收起，继续核对方案</button>
+    </view>
+    <view class="secondary-actions"><button class="text-button" bindtap="refresh" disabled="{{busy}}">刷新申请状态</button><button wx:if="{{application.status === 'SUBMITTED' || application.status === 'IN_REVIEW' || application.status === 'NEEDS_INFO' || application.status === 'AWAITING_CONFIRMATION'}}" class="text-button" bindtap="cancelApplication" disabled="{{busy}}">取消申请</button></view>
+    <view wx:if="{{application.status === 'AWAITING_CONFIRMATION' && application.finalPlan}}" class="sticky-actions application-actions"><button class="primary" bindtap="confirmPlan" loading="{{busy}}" disabled="{{busy}}">确认最终方案</button><button class="text-button" bindtap="beginReject" disabled="{{busy}}">{{showRejectForm ? '收起暂不接受' : '暂不接受此方案'}}</button></view>
+    <view wx:else class="detail-navigation"><button class="primary" bindtap="openUse">查看用车与待办</button></view>
   </block>
 </view>

@@ -1,0 +1,23 @@
+{
+  "status": "proposal-awaiting-user-review",
+  "direction": "宁达 VI × 迪特·拉姆斯：功能优先、信息清楚、克制统一",
+  "layout": "Preserve existing page groups and actions. Profile retains approved heading, two stacked cards, three identity rows and paired account buttons.",
+  "color": {
+    "brand": {"value":"#FCC900","source":"A2-01标准色规划-01.cdr / META-INF/textinfo.xml: RGB 252,201,0; fcc900"},
+    "action": {"value":"#231815","source":"Existing app.wxss body/primary foreground, adapted as action background"},
+    "onAction":"#FFFFFF",
+    "text":"#231815",
+    "muted":"#65615C",
+    "page":"#F5F6F7",
+    "surface":"#FFFFFF",
+    "line":"#E1E1DE",
+    "controlBorder":"#CCCAC7"
+  },
+  "geometry":{"pageGutterRpx":32,"cardRadiusRpx":24,"controlRadiusRpx":16,"controlMinimumHeightPx":44,"spacingGridPx":4},
+  "type":{"pageTitleRpx":48,"sectionTitleRpx":34,"bodyRpx":30,"identityRowsRpx":32,"secondaryRpx":26,"minimumRpx":24,"moneyTabularNumbers":true},
+  "controls":{"primary":"黑灰底白字，保留原有位置和动作","secondary":"白底灰边、黑灰字","textAction":"黑灰文字，去掉金棕色","selected":"标准黄底黑灰字","disabled":"明确禁用并保持原有服务端条件"},
+  "logo":{"asset":"reference/宁达汽车-中英文横向黑字无底色.png","source":"同一 VI 目录 logo日常使用.zip","keepAspectRatio":true,"clearSpace":"at least logo height / 10, following A1-03","noRedraw":true},
+  "behavior":"No business logic, identity, money, permissions or signing changes. No extra permanent buttons or explanatory panels.",
+  "sourceWritten":false,
+  "productionPublished":false
+}

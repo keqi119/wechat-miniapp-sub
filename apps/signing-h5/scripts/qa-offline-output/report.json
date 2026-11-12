@@ -1,0 +1,228 @@
+{
+  "scope": "local synthetic browser fixtures; no real users or external services",
+  "checks": [
+    "H5 320: individual/company relationship, four tabs, no electronic sign or withdrawal, version feedback with 409 retry, manual settlement, empty state, 401 clears private UI",
+    "H5 390: individual/company relationship, four tabs, no electronic sign or withdrawal, version feedback with 409 retry, manual settlement, empty state, 401 clears private UI",
+    "Miniapp 320: real compiled WXML/WXSS with Page JS, synthetic service module only in browser fixture; payment blocked, paper archive, benefit entry; no overflow",
+    "Miniapp 390: real compiled WXML/WXSS with Page JS, synthetic service module only in browser fixture; payment blocked, paper archive, benefit entry; no overflow"
+  ],
+  "requests": [
+    {
+      "path": "/config",
+      "method": "GET"
+    },
+    {
+      "path": "/legal",
+      "method": "GET"
+    },
+    {
+      "path": "/auth/me",
+      "method": "GET"
+    },
+    {
+      "path": "/owners",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/workbench",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/orders/qa-order/workspace",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives/qa-archive",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives/qa-archive/feedback",
+      "method": "POST"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives/qa-archive",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives/qa-archive/feedback",
+      "method": "POST"
+    },
+    {
+      "path": "/owners/qa-owner/vehicles",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/policies",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/settlements",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/revenue-rules",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/settlements",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/settlements/qa-settlement",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/settlements/qa-settlement/feedback",
+      "method": "POST"
+    },
+    {
+      "path": "/owners/qa-enterprise",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/workbench",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/settlements",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/offline-archives",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/revenue-rules",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/settlements",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/workbench",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/workbench",
+      "method": "GET"
+    },
+    {
+      "path": "/config",
+      "method": "GET"
+    },
+    {
+      "path": "/legal",
+      "method": "GET"
+    },
+    {
+      "path": "/auth/me",
+      "method": "GET"
+    },
+    {
+      "path": "/owners",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/workbench",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/orders/qa-order/workspace",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives/qa-archive",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives/qa-archive/feedback",
+      "method": "POST"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives/qa-archive",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives/qa-archive/feedback",
+      "method": "POST"
+    },
+    {
+      "path": "/owners/qa-owner/vehicles",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/policies",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/settlements",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/offline-archives",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/revenue-rules",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/settlements",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/settlements/qa-settlement",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-owner/settlements/qa-settlement/feedback",
+      "method": "POST"
+    },
+    {
+      "path": "/owners/qa-enterprise",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/workbench",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/settlements",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/offline-archives",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/revenue-rules",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/settlements",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/workbench",
+      "method": "GET"
+    },
+    {
+      "path": "/owners/qa-enterprise/workbench",
+      "method": "GET"
+    }
+  ],
+  "errors": []
+}

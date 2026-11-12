@@ -1,0 +1,1 @@
+.consent-row{display:flex;gap:16rpx;line-height:1.7;margin-bottom:24rpx}.row{display:flex;align-items:center;justify-content:space-between;gap:16rpx;flex-wrap:wrap}.field{overflow-wrap:anywhere}

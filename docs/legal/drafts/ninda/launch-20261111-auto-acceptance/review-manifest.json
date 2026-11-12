@@ -1,0 +1,108 @@
+{
+  "reviewVersion": 1,
+  "status": "LOCAL_REVIEW_ONLY",
+  "documents": [
+    {
+      "key": "A",
+      "id": "ND-AS-20261111-A",
+      "filename": "01-customer-and-two-enterprises-auto.pdf",
+      "label": "客户本人签署 → 合作商自动签署 → 宁达自动签署",
+      "parties": [
+        [
+          "CUSTOMER",
+          "李柯",
+          "客户本人逐份签署"
+        ],
+        [
+          "OWNER",
+          "上海晓浪网络科技有限公司",
+          "合作商企业自动签署"
+        ],
+        [
+          "PLATFORM",
+          "上海宁达信息科技有限公司",
+          "宁达企业自动签署"
+        ]
+      ],
+      "first": "客户李柯须本人阅读并逐份签署本确认书；核验该签署成功后，上海晓浪网络科技有限公司、上海宁达信息科技有限公司依次通过各自有效授权和本企业印章自动签署。",
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\drafts\\ninda\\launch-20261111-auto-acceptance\\01-customer-and-two-enterprises-auto.pdf",
+      "sha256": "efbee0746863932f5d0e3f1942a66723648a8131643d0fbca645b1f547617e77",
+      "pages": 1,
+      "signatureSlots": [
+        {
+          "role": "CUSTOMER",
+          "pageNumber": 0,
+          "x": 169.1710758377425,
+          "y": 909.4860549943882,
+          "width": 214.7019400352734,
+          "height": 147.77469135802468,
+          "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+        },
+        {
+          "role": "OWNER",
+          "pageNumber": 0,
+          "x": 400.0,
+          "y": 909.4860549943882,
+          "width": 214.7019400352734,
+          "height": 147.77469135802468,
+          "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+        },
+        {
+          "role": "PLATFORM",
+          "pageNumber": 0,
+          "x": 630.8289241622575,
+          "y": 909.4860549943882,
+          "width": 214.7019400352734,
+          "height": 147.77469135802468,
+          "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+        }
+      ],
+      "providerUploaded": false,
+      "automaticSignRequested": false
+    },
+    {
+      "key": "B",
+      "id": "ND-AS-20261111-B",
+      "filename": "02-owner-manual-platform-auto.pdf",
+      "label": "合作商本人逐份签署 → 宁达自动签署",
+      "parties": [
+        [
+          "OWNER",
+          "上海晓浪网络科技有限公司",
+          "合作商本人逐份签署"
+        ],
+        [
+          "PLATFORM",
+          "上海宁达信息科技有限公司",
+          "宁达企业自动签署"
+        ]
+      ],
+      "first": "上海晓浪网络科技有限公司由有权人员本人阅读并逐份签署本确认书；核验该签署成功后，上海宁达信息科技有限公司通过有效授权和本企业印章自动签署。",
+      "path": "D:\\wechat-miniapp-sub\\docs\\legal\\drafts\\ninda\\launch-20261111-auto-acceptance\\02-owner-manual-platform-auto.pdf",
+      "sha256": "a5f12c3f50336745c88ed94adb10dc55662c8d0414dd9f18e4ec5c1ec5ef3f27",
+      "pages": 1,
+      "signatureSlots": [
+        {
+          "role": "OWNER",
+          "pageNumber": 0,
+          "x": 226.87830687830686,
+          "y": 885.304741863075,
+          "width": 330.1164021164021,
+          "height": 147.77469135802468,
+          "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+        },
+        {
+          "role": "PLATFORM",
+          "pageNumber": 0,
+          "x": 573.121693121693,
+          "y": 885.304741863075,
+          "width": 330.1164021164021,
+          "height": 147.77469135802468,
+          "coordinateSystem": "FADADA_800_1131_TOP_LEFT"
+        }
+      ],
+      "providerUploaded": false,
+      "automaticSignRequested": false
+    }
+  ]
+}

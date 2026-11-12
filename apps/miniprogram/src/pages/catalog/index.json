@@ -1,1 +1,1 @@
-{ "navigationBarTitleText": "选车" }
+{ "navigationBarTitleText": "选车", "enablePullDownRefresh": true }

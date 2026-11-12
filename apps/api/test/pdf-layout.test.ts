@@ -63,3 +63,26 @@ test('handover provider centres and real appearance bounds match both drawn sign
   assert.equal(boxes[0].page,boxes[1].page);assert.equal(result.slotCoordinates[0].pageNumber,result.slotCoordinates[1].pageNumber);
  }
 });
+
+async function drawHandoverChecklist(checklist:any,fontPath=existsSync(productionFont)?productionFont:font){
+ const texts:Array<{text:string;page:number;y:number}>=[];const original=PDFDocument.prototype.text;let page=0,attached=false;
+ PDFDocument.prototype.text=function(value:any,...args:any[]){if(!attached){attached=true;this.on('pageAdded',()=>{page++;});}texts.push({text:String(value),page,y:this.y});return(original as any).call(this,value,...args);};
+ try{const writer=new ContractPdfArtifactWriterService({storedFile:{findMany:async()=>[]}} as any);const captured=await captureBoxes(()=>(writer as any).renderHandover({id:'synthetic-checklist',orderId:'synthetic-order',manifestHash:'a'.repeat(64),confirmedAt:new Date('2026-10-26T00:00:00Z'),readingKm:0,checklist,fileIds:[]},{version:1,content:'合成测试交接记录，仅核对实际事实，不代表真实签署。'},{name:'合成客户',idCardNo:'SYNTHETIC-ONLY'},fontPath));return{...captured,texts};}finally{PDFDocument.prototype.text=original;}
+}
+
+test('handover checklist renders Chinese human rows instead of stored JSON without altering facts or slots',{skip:!font},async()=>{
+ const checklist=[{label:'actualTimeAndPlace',value:'2026年10月26日，合成测试停车场'},{label:'batteryLevel',value:'90%'},{label:'accessoriesChecklist',value:'主钥匙、备用钥匙各一把'},{label:'conditionChecklist',value:'左侧车门有一道细痕\n照片见证据附件'},{label:'openItems',value:''},{label:'resolutionPlan',value:'已约定现场拍照并注明'},{label:'staffName',value:'合成工作人员'},{label:'人工补充清单',value:'纸质车辆资料已随车交付'},{label:'车辆身份',value:'合成测试车辆，不用于真实交易'}],before=JSON.stringify(checklist);
+ const {result,texts,boxes}=await drawHandoverChecklist(checklist);assert.equal(result.buffer.subarray(0,5).toString(),'%PDF-');const content=texts.map(row=>row.text).join('\n');
+ for(const label of ['实际交接时间与地点','交接时电量','随车物品核对','车辆状况核对','未结事项','处理方案','现场工作人员','人工补充清单','车辆身份'])assert.ok(content.includes(label),`missing readable label ${label}`);
+ for(const value of checklist.map(row=>row.value).filter(Boolean))assert.ok(content.includes(value),`missing persisted fact ${value}`);
+ assert.match(content,/未填写/);assert.doesNotMatch(content,/"(?:label|value)"\s*:|actualTimeAndPlace|batteryLevel|accessoriesChecklist|conditionChecklist|openItems|resolutionPlan|staffName/);assert.equal(JSON.stringify(checklist),before);assert.equal(result.slotCoordinates.length,2);assertContained(result.slotCoordinates,boxes);assert.equal(boxes[0].page,boxes[1].page);
+});
+
+test('handover checklist preserves object history, empty and long facts through normal page flow',{skip:!font},async()=>{
+ const long=Array.from({length:90},(_,i)=>`合成长段${String(i+1).padStart(3,'0')}：这一事实说明必须完整保留，涵盖交接证据、车辆状况和双方确认的安排。`).join('\n');const checklist={actualTimeAndPlace:'合成测试地点',batteryLevel:0,accessoriesChecklist:false,conditionChecklist:long,openItems:null,resolutionPlan:'现场记录全部保留',staffName:'历史合成人员','历史人工中文项':'全部事实不丢弃'};const before=JSON.stringify(checklist),{result,texts,boxes}=await drawHandoverChecklist(checklist);
+ const content=texts.map(row=>row.text).join('\n');assert.match(content,/实际交接时间与地点/);assert.ok(content.includes(long));assert.match(content,/历史人工中文项/);assert.ok(texts.some(row=>row.text==='0'));assert.ok(texts.some(row=>row.text==='否'));assert.match(content,/未填写/);assert.doesNotMatch(content,/actualTimeAndPlace|batteryLevel|accessoriesChecklist|"conditionChecklist"\s*:/);assert.equal(JSON.stringify(checklist),before);assertContained(result.slotCoordinates,boxes);assert.equal(boxes[0].page,boxes[1].page);assert.ok(result.slotCoordinates[0].pageNumber>=2,'long facts flow to additional pages before the signature sheet');
+});
+
+test('handover checklist retains nested notes in actual extracted PDF text',{skip:!font},async(t)=>{
+ const checklist=[{label:'车辆状况',value:{label:'右后门',value:'划痕',note:'长度5厘米'}}],before=JSON.stringify(checklist);const {result}=await drawHandoverChecklist(checklist);const {spawnSync}=await import('node:child_process');const extracted=spawnSync(process.env.PDF_TEXT_PYTHON||'python',['-c','import io,sys; from pypdf import PdfReader; sys.stdout.reconfigure(encoding="utf-8"); print("\\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(sys.stdin.buffer.read())).pages))'],{input:result.buffer,encoding:'utf8'});if(extracted.error&&(extracted.error as NodeJS.ErrnoException).code==='ENOENT'||extracted.stderr?.includes("No module named 'pypdf'")){t.skip('Python pypdf is unavailable; set PDF_TEXT_PYTHON to the bundled runtime');return;}assert.equal(extracted.status,0);const text=extracted.stdout.replace(/\s+/g,'');assert.ok(text.includes('右后门：划痕'));assert.ok(text.includes('note：长度5厘米'),'nested stored note must be in the actual PDF');assert.doesNotMatch(text,/"label":|"value":/);assert.equal(JSON.stringify(checklist),before);
+});

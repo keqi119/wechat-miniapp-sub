@@ -1,9 +1,10 @@
 import '../src/common/config';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {randomUUID} from 'node:crypto';
+import {randomBytes,randomUUID} from 'node:crypto';
 import {Db} from '../src/common/db';
 import {OwnerService} from '../src/owner-signing/owner.service';
+import {tokenHash} from '../src/auth/auth.service';
 
 let db:Db,service:OwnerService,admin:any,owner:any,customer:any,other:any,invitation:any;
 const suffix=randomUUID().replaceAll('-','').slice(0,10),mobile='138'+String(Date.now()).slice(-8);
@@ -21,6 +22,12 @@ test('operator may prepare an enterprise owner but cannot certify it or supply a
  assert.equal(owner.status,'DRAFT');assert.equal((await service.adminDetail(owner.id)).readyForSigning,false);
  await assert.rejects(service.create(admin.id,{name:'恶意',creditCode:'TEST00000000000001',address:'地址',providerCustomerId:'OtherProviderAccount'} as any));
 });
+test('new enterprise invitations are independent 24-character base64url secrets stored only as hashes',async()=>{
+ const first=await service.invite(admin.id,owner.id,{mobile}),second=await service.invite(admin.id,owner.id,{mobile});
+ assert.equal(first.token.length,24);assert.match(first.token,/^[A-Za-z0-9_-]{24}$/);assert.equal(second.token.length,24);assert.notEqual(first.token,second.token);
+ const stored=await db.ownerInvitation.findUniqueOrThrow({where:{id:first.id}});assert.equal(stored.tokenHash,tokenHash(first.token));assert.notEqual(stored.tokenHash,first.token);
+ assert.ok(stored.expiresAt.getTime()>Date.now()+6.9*86400_000);assert.ok(stored.expiresAt.getTime()<=Date.now()+7*86400_000);
+});
 test('invitation is bound to one verified phone and stored as a hash, with no owner permission before claim',async()=>{
  invitation=await service.invite(admin.id,owner.id,{mobile});
  const stored=await db.ownerInvitation.findUniqueOrThrow({where:{id:invitation.id}});assert.notEqual(stored.tokenHash,invitation.token);assert.equal(stored.mobile,undefined);
@@ -33,6 +40,13 @@ test('claim does not grant enterprise signing authority and another customer can
  await assert.rejects(service.requireSigningMember(customer.id,owner.id),code('OWNER_MEMBER_NOT_VERIFIED'));
  await assert.rejects(service.memberDetail(other.id,owner.id),code('NOT_FOUND'));
  const replay=await service.claim(customer.id,{token:invitation.token});assert.equal(replay.ownerId,owner.id);assert.equal(await db.ownerMember.count({where:{ownerId:owner.id,customerId:customer.id}}),1);
+});
+test('historical 43-character enterprise invitations remain redeemable through the legacy claim entry',async()=>{
+ const historical=await service.invite(admin.id,owner.id,{mobile}),token=randomBytes(32).toString('base64url');
+ await db.ownerInvitation.update({where:{id:historical.id},data:{tokenHash:tokenHash(token)}});
+ assert.equal(token.length,43);await assert.rejects(service.claim(other.id,{token}),code('OWNER_INVITATION_PHONE'));
+ assert.equal((await service.claim(customer.id,{token})).ownerId,owner.id);
+ assert.equal((await db.ownerInvitation.findUniqueOrThrow({where:{id:historical.id}})).claimedBy,customer.id);
 });
 test('expired invite is not redeemable and a suspended member cannot read private enterprise records',async()=>{
  const pending=await service.invite(admin.id,owner.id,{mobile:other.mobile});await db.ownerInvitation.update({where:{id:pending.id},data:{expiresAt:new Date(0)}});

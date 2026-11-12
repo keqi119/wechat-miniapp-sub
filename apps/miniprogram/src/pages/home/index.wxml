@@ -1,29 +1,21 @@
-<view class="page home-page">
+<view class="page home-page main-tab-page {{mainTabMotion}}">
   
   <view class="brand-line row between"
-    ><text class="brand">纯电主义</text><text class="city">上海 · 二手纯电</text></view
+    ><view class="brand-lockup"><image class="brand-wordmark" src="/assets/ninda-wordmark.png" mode="aspectFit" aria-label="宁达汽车 NINDA CAR"/></view><text class="city">上海 · 二手纯电</text></view
   >
   <view wx:if="{{loading}}" class="empty" role="status">正在准备你的首页…</view>
   <view wx:elif="{{error}}" class="empty"
     ><text>{{error}}</text><button class="secondary" bindtap="refresh">重新加载</button></view
   >
   <block wx:else>
-    <view wx:if="{{nextAction}}" class="next-card">
-      <view class="eyebrow">你的下一步</view>
-      <view class="section-title">{{nextAction.title}}</view>
-      <view class="muted">{{nextAction.description}}</view>
-      <button wx:if="{{nextAction.url}}" class="primary" bindtap="openNext"
-        >{{nextAction.label || '查看详情'}} <text>↗</text></button
-      >
-    </view>
     <view class="hero">
-      <view class="eyebrow">ELECTRIC. SIMPLY.</view>
-      <view class="hero-title"><view>用车，</view><view>回归简单。</view></view>
+      <view class="eyebrow">纯电汽车 · 按月订阅</view>
+      <view class="hero-title">{{heroCopy.title}}</view>
       <view class="hero-copy"
-        ><view>找到适合日常的纯电车。</view><view>选定预设套餐，按月订阅。</view></view
+        ><view>{{heroCopy.lines[0]}}</view><view>{{heroCopy.lines[1]}}</view></view
       >
-      <button class="primary hero-button" bindtap="openCatalog"
-        >查看可订阅车辆 <text>↗</text></button
+      <button class="browse-button hero-button" bindtap="openCatalog"
+        >查看可订阅车辆 <text>→</text></button
       >
       <view class="hero-caption">申请后审核 · 最终方案确认后进入订单流程</view>
     </view>
@@ -49,7 +41,7 @@
           wx:if="{{item.imageUrl}}"
           class="vehicle-image"
           src="{{item.imageUrl}}"
-          mode="aspectFit"
+          mode="aspectFill"
         /><view wx:else class="missing-photo">车辆图片待补充</view
         ><text class="photo-status">{{item.statusText}}</text></view
       >
@@ -65,7 +57,7 @@
       >
     </view>
     <view class="process"
-      ><view class="eyebrow">HOW IT WORKS</view><view class="section-title">四步，开始新的日常</view
+      ><view class="eyebrow">订阅指南</view><view class="section-title">四步，开始新的日常</view
       ><view class="step"
         ><text class="step-number">01</text
         ><view

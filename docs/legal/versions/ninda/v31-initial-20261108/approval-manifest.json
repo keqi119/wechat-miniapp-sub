@@ -1,0 +1,173 @@
+{
+  "status": "APPROVED_FOR_TEMPLATE_USE",
+  "recordedAtUtc": "2026-11-08T12:45:45Z",
+  "approvedDate": "2026-11-08",
+  "approvalSource": "Explicit user response in the current Codex conversation",
+  "approvalQuestionId": "call_0194f73db3044665a9008e895c66b638",
+  "approvalStatement": "批准这三份模板及排版",
+  "scope": [
+    "01",
+    "02-main",
+    "02-grant"
+  ],
+  "executionScope": "批准这三份模板及拆分排版用于正式填制；不代任何当事人实名、签章或授予企业自动用印权限，不批准其他V3.1模板，不证明真实渠道验收通过。",
+  "published": false,
+  "publicationStatus": "PENDING_CONTROLLED_CANDIDATE_ACTIVATION",
+  "internalDraftEnvelopeExplanation": "The approved template source bytes are preserved exactly, including their internal DRAFT envelope. Formal user approval is this manifest; database LegalDocument confirmation/publication remains a separate controlled operation.",
+  "documents": [
+    {
+      "artifact": "01",
+      "type": "ELECTRONIC_V31_SUBSCRIPTION",
+      "templateSha256": "4f7d1ae3580ee153512b5c598c61e1da323e31fcdcb41ea8e1af4b809da27467",
+      "approvedTemplatePath": "docs/legal/versions/ninda/v31-initial-20261108/01.json",
+      "reviewSamplePath": "docs/legal/drafts/ninda/launch-20261107-v31/samples/01.pdf",
+      "reviewSampleSha256": "dd878cd426bd31d0798c43af5d23f9212b5e8c1f5cd98c7aa32a09df7aa5a0b8",
+      "samplePageCount": 10,
+      "sampleOnly": true,
+      "source": {
+        "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+        "zipEntry": "01_汽车订阅合同_三方_V3.1.docx",
+        "docxSha256": "282b3a15b95936363e5f039f046ed1777744261ffa570b576edbde0d428d5328",
+        "textSha256": "04dc2d09f7e7528c0dcd1d181f3ce819a0cf16559d1330a20ca1a926f1403b83"
+      },
+      "reviewedTransforms": [
+        {
+          "operation": "remove-reviewer-paragraph",
+          "loc": "P003",
+          "original": {
+            "type": "paragraph",
+            "loc": "P003",
+            "alignment": "left",
+            "runs": [
+              {
+                "text": "审定模板。带入标记用于说明数据来源，正式文件应显示真实值；法定签署区及明确允许后续形成的履约事实除外，不签署关键交易要素空白的合同。",
+                "bold": false,
+                "italic": false,
+                "underline": false
+              }
+            ]
+          }
+        },
+        {
+          "operation": "mapped-values-only",
+          "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+        },
+        {
+          "operation": "signature-layout",
+          "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+        }
+      ]
+    },
+    {
+      "artifact": "02-main",
+      "type": "ELECTRONIC_V31_COOPERATION",
+      "templateSha256": "9fc0b582a70668d5d5c26c0315aab2c41e0c32a300cc5a1049bea39c7fa078d5",
+      "approvedTemplatePath": "docs/legal/versions/ninda/v31-initial-20261108/02-main.json",
+      "reviewSamplePath": "docs/legal/drafts/ninda/launch-20261107-v31/samples/02-main.pdf",
+      "reviewSampleSha256": "655b9594ef40185f7d707ce2ee534e8f2861c37cb64ec65002158fa709feb152",
+      "samplePageCount": 19,
+      "sampleOnly": true,
+      "source": {
+        "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+        "zipEntry": "02_车辆合作协议_V3.1.docx",
+        "docxSha256": "47c4c611f64aa3d43f09ea3d5593413326111257bb3cafa11b147da951496270",
+        "textSha256": "5ca502368de250924064fc7a7437e4c2059cedc062143a851123933171fc4017"
+      },
+      "reviewedTransforms": [
+        {
+          "operation": "remove-reviewer-paragraph",
+          "loc": "P003",
+          "original": {
+            "type": "paragraph",
+            "loc": "P003",
+            "alignment": "left",
+            "runs": [
+              {
+                "text": "审定模板。带入标记用于说明数据来源，正式文件应显示真实值；法定签署区及明确允许后续形成的履约事实除外，不签署关键交易要素空白的合同。",
+                "bold": false,
+                "italic": false,
+                "underline": false
+              }
+            ]
+          }
+        },
+        {
+          "operation": "mapped-values-only",
+          "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+        },
+        {
+          "operation": "signature-layout",
+          "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+        },
+        {
+          "operation": "split-independent-grant",
+          "boundary": "P079",
+          "reason": "Separate signatures; grant must render immutable agreement and attachment-one facts"
+        },
+        {
+          "operation": "reviewed-fixed-expression",
+          "locations": [
+            "P071",
+            "P072"
+          ],
+          "reason": "P071 replace ratio review instruction with actual owner ratio; P072 replace single review minimum with exact per-product minima, each at least three months."
+        },
+        {
+          "operation": "visible-fixed-template-appendix",
+          "reason": "Append complete approved 01 fixed clauses preserving bold and tables; label future order fields/signature controls without customer data. Bind exact approved content hash and raw UTF-8 byte SHA256; also embed exact bytes. Grant copies immutable main agreement reference and attachment-one scope."
+        },
+        {
+          "operation": "explicit-exceptions",
+          "reason": "Only actual agreed cooperation exceptions are added after P073; no blank exception fields."
+        }
+      ]
+    },
+    {
+      "artifact": "02-grant",
+      "type": "ELECTRONIC_V31_COOPERATION_GRANT",
+      "templateSha256": "5c4f56d11d488fc1bfc76ef25948ea52d342bb946454ad695055e6ab474db573",
+      "approvedTemplatePath": "docs/legal/versions/ninda/v31-initial-20261108/02-grant.json",
+      "reviewSamplePath": "docs/legal/drafts/ninda/launch-20261107-v31/samples/02-grant.pdf",
+      "reviewSampleSha256": "1bd919daa2022980042144ee6684ee85e85b043d6d08523c867b1cfa3cbd1dbd",
+      "samplePageCount": 14,
+      "sampleOnly": true,
+      "source": {
+        "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+        "zipEntry": "02_车辆合作协议_V3.1.docx",
+        "docxSha256": "47c4c611f64aa3d43f09ea3d5593413326111257bb3cafa11b147da951496270",
+        "textSha256": "5ca502368de250924064fc7a7437e4c2059cedc062143a851123933171fc4017"
+      },
+      "reviewedTransforms": [
+        {
+          "operation": "mapped-values-only",
+          "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+        },
+        {
+          "operation": "signature-layout",
+          "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+        },
+        {
+          "operation": "split-independent-grant",
+          "boundary": "P079",
+          "reason": "Separate signatures; grant must render immutable agreement and attachment-one facts"
+        },
+        {
+          "operation": "reviewed-fixed-expression",
+          "locations": [
+            "P071",
+            "P072"
+          ],
+          "reason": "P071 replace ratio review instruction with actual owner ratio; P072 replace single review minimum with exact per-product minima, each at least three months."
+        },
+        {
+          "operation": "visible-fixed-template-appendix",
+          "reason": "Append complete approved 01 fixed clauses preserving bold and tables; label future order fields/signature controls without customer data. Bind exact approved content hash and raw UTF-8 byte SHA256; also embed exact bytes. Grant copies immutable main agreement reference and attachment-one scope."
+        },
+        {
+          "operation": "explicit-exceptions",
+          "reason": "Only actual agreed cooperation exceptions are added after P073; no blank exception fields."
+        }
+      ]
+    }
+  ]
+}

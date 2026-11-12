@@ -1,12 +1,14 @@
 .catalog-header {
+  overflow-wrap: anywhere;
   padding: 34rpx 0 32rpx;
 }
+.catalog-page .text-button, .catalog-page .secondary { min-height: 44px; }
 .catalog-header .title {
   margin: 20rpx 0;
 }
 .search-bar {
   border: 1rpx solid #c9cbc1;
-  background: #fbfaf7;
+  background: #ffffff;
   padding: 8rpx 8rpx 8rpx 24rpx;
   gap: 12rpx;
 }
@@ -22,8 +24,8 @@
   line-height: 74rpx;
   font-size: 25rpx;
   border-radius: 2rpx;
-  background: #252723;
-  color: #fff;
+  background: transparent;
+  color: #231815;
 }
 .search-button::after {
   border: 0;
@@ -53,19 +55,19 @@
   border: 0;
 }
 .brand-chip.is-selected {
-  color: #fff;
-  background: #252723;
-  border-color: #252723;
+  color: #231815;
+  background: #fff9e6;
+  border-color: #d7c991;
 }
 .result-summary {
   color: #686c61;
-  font-size: 23rpx;
+  font-size: 24rpx;
   min-height: 60rpx;
   margin-bottom: 18rpx;
 }
 .catalog-card {
   border: 1rpx solid #d9dcd1;
-  background: #fbfaf7;
+  background: #ffffff;
   margin-bottom: 30rpx;
 }
 .vehicle-photo {
@@ -89,7 +91,7 @@
   left: 22rpx;
   background: #f7f7f0;
   padding: 8rpx 14rpx;
-  font-size: 21rpx;
+  font-size: 24rpx;
   color: #415446;
 }
 .status-pill.unavailable {
@@ -120,17 +122,24 @@
   align-items: baseline;
 }
 .view-label {
-  font-size: 23rpx;
+  font-size: 24rpx;
   color: #484c41;
 }
 .price-note {
-  font-size: 21rpx;
+  font-size: 24rpx;
   color: #777a70;
   margin-top: 14rpx;
   line-height: 1.6;
 }
 .catalog-note {
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.8;
   margin: 40rpx 0;
 }
+
+/* Bright native 2026-11-02 */
+.catalog-header{padding:18rpx 0 28rpx}.catalog-header .title{margin:12rpx 0 16rpx}.catalog-header .muted{font-size:28rpx}
+.search-bar{border:1rpx solid #e1e1de;background:#ffffff;border-radius:16rpx;padding:6rpx 6rpx 6rpx 24rpx}.search-input{height:82rpx;min-height:44px;font-size:30rpx}.search-button{display:flex;align-items:center;justify-content:center;line-height:1.5;min-height:44px;min-width:64px;border-radius:0;border-left:1rpx solid #e9e7e3;background:transparent;color:#231815;font-size:28rpx;padding:0 24rpx;font-weight:500}
+.brand-scroll{margin:20rpx 0 12rpx}.brand-chip{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#ffffff;border:1rpx solid #e1e1de;border-radius:12rpx;font-size:26rpx;line-height:1.4;padding:10rpx 24rpx;color:#65615c}.brand-chip.is-selected{background:#fff9e6;border-color:#d7c991;color:#231815;font-weight:600}
+.result-summary{font-size:24rpx;color:#65615c;margin:0 0 16rpx;min-height:66rpx}.catalog-card{background:#ffffff;border:1rpx solid #e1e1de;border-radius:24rpx;overflow:hidden;margin-bottom:26rpx}.vehicle-photo{height:350rpx;background:#eef0f0}.status-pill{background:#fffffff0;border-radius:8rpx;font-size:24rpx;top:20rpx;left:20rpx;color:#265d44}.status-pill.unavailable{color:#65615c}.vehicle-body{padding:28rpx 30rpx}.vehicle-name{font-size:36rpx;min-width:0;overflow-wrap:anywhere}.vehicle-arrow{font-size:30rpx;flex-shrink:0}.vehicle-facts{font-size:24rpx;color:#65615c}.vehicle-tagline{font-size:26rpx;color:#65615c;margin-bottom:18rpx}.vehicle-body .divider{margin:22rpx 0}.view-label{display:inline-flex;align-items:center;min-height:44px;font-size:26rpx;color:#231815;background:transparent;padding:0;white-space:nowrap}.price-line{align-items:center;flex-wrap:wrap;gap:16rpx}.price-note{font-size:24rpx;color:#65615c;margin-top:18rpx}.catalog-note{font-size:24rpx;color:#65615c;margin:28rpx 0}
+.vehicle-tagline{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}

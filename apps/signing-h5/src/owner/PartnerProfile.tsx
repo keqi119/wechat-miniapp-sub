@@ -1,0 +1,3 @@
+import type {PartnerDetail} from './partner-model';
+import {cooperationStatus as partnerStatus} from './partner-model';
+export function PartnerProfile({detail}:{detail:PartnerDetail}){return <section className="state-card"><h2>合作资料</h2><dl className="partner-details"><div><dt>合作主体</dt><dd>{detail.name}</dd></div><div><dt>主体类型</dt><dd>{detail.subjectType==='INDIVIDUAL'?'个人合作商':'企业合作商'}</dd></div><div><dt>合作状态</dt><dd>{partnerStatus(detail.status)}</dd></div><div><dt>资料复核</dt><dd>{detail.admissionStatus==='APPROVED'?'已复核':'待运营核对'}</dd></div><div><dt>联系地址</dt><dd>{detail.address||'待补充'}</dd></div></dl><p className="muted">资料由平台运营维护，合作协议和每笔订单合同分别归档。</p></section>;}

@@ -1,0 +1,45 @@
+import '../src/common/config';
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {Db} from '../src/common/db';
+import {WorkflowsController} from '../src/operations/workflows';
+import {FilesController} from '../src/files/files';
+import {offlineOrder,approvedOfflineArchive} from './offline-fixtures';
+import {saveFile} from '../src/files/storage';
+import {customerProfileHash,qualificationEvidence} from '../src/customers/qualifications';
+import {publishHandoverRecord} from '../src/operations/handover-records';
+import {requireOnlineTerms,isOnlineHandover} from '../src/operations/online-handover';
+import {readReturnView} from '../src/usage/returns';
+const code=(s:string)=>(e:any)=>e.getResponse?.().error?.code===s;
+test('online return freezes terms and evidence, requires actual attachment open and version-bound customer confirmation, completes without paper and remains settleable',async()=>{
+ const db=new Db();try{
+ const f=await offlineOrder(db),admin=await db.adminUser.create({data:{username:randomUUID(),name:'合成管理员',role:'ADMIN',passwordHash:'synthetic-disabled'}}),other=await db.adminUser.create({data:{username:randomUUID(),name:'资格审核人员',role:'OPERATIONS',passwordHash:'synthetic-disabled'}});
+ await approvedOfflineArchive(db,f.order.id);await db.order.update({where:{id:f.order.id},data:{status:'ACTIVE',finalPlanSnapshot:{...f.order.finalPlanSnapshot as any,riskSnapshot:'PRIVATE_RISK',revenueRuleSnapshot:'PRIVATE_REVENUE',lessorSnapshot:{ownerId:'synthetic-lessor',name:'合成出租方',account:'PRIVATE_ACCOUNT'}}}});await db.vehicle.update({where:{id:f.vehicle.id},data:{status:'IN_USE',reservedOrderId:f.order.id}});
+ const now=new Date(Date.now()-10000),start=new Date(now.getTime()-15*86400000),end=new Date(now.getTime()+15*86400000);
+ await db.usageAccount.create({data:{orderId:f.order.id,customerId:f.customer.id,policyVersion:'USAGE_V1',startedOn:start,periods:{create:{orderId:f.order.id,sequence:1,startDate:start,endDate:end,effectiveEndDate:end,startReadingKm:100}}}});
+ const bytes=Buffer.from('89504e470d0a1a0a0000000049454e44ae426082','hex'),stored=await saveFile({buffer:bytes,mimetype:'image/png',originalname:'合成照片.png',size:bytes.length} as any);
+ const photo=await db.storedFile.create({data:{...stored,purpose:'handover',adminId:admin.id}}),identity=await db.storedFile.create({data:{...stored,purpose:'identity',customerId:f.customer.id}});
+ const evidence=await qualificationEvidence(db,f.customer.id,{identityFileIds:[identity.id],drivingLicenseFileIds:[identity.id]});
+ await db.customerQualificationVersion.create({data:{customerId:f.customer.id,revision:1,profileHash:customerProfileHash(f.customer),status:'APPROVED',identityFileIds:[identity.id],drivingLicenseFileIds:[identity.id],evidenceHash:evidence.evidenceHash,identityLongTerm:true,drivingLicenseLongTerm:true,submittedBy:admin.id,reviewedBy:other.id,reviewedAt:now,idempotencyKey:randomUUID(),requestHash:'synthetic'}});
+ const oldTerms=await db.legalDocument.findMany({where:{type:'ONLINE_HANDOVER_TERMS',status:'PUBLISHED'}});await db.legalDocument.updateMany({where:{type:'ONLINE_HANDOVER_TERMS',status:'PUBLISHED'},data:{status:'RETIRED'}});
+ await assert.rejects(requireOnlineTerms(db),code('ONLINE_HANDOVER_TERMS_REQUIRED'));
+ const version=((await db.legalDocument.aggregate({where:{type:'ONLINE_HANDOVER_TERMS'},_max:{version:true}}))._max.version||0)+1;
+ const legal=await db.legalDocument.create({data:{type:'ONLINE_HANDOVER_TERMS',version,title:'合成测试约定',content:'仅测试使用的线上交接约定',status:'PUBLISHED',confirmedBy:admin.id,confirmedAt:now,publishedAt:now}});
+ const h=await db.handover.create({data:{orderId:f.order.id,customerId:f.customer.id,vehicleId:f.vehicle.id,type:'RETURN',executionMode:'OFFLINE',confirmationMode:'ONLINE_RECORD',actualAt:now,readingKm:200,fileIds:[photo.id],checklist:[{label:'actualTimeAndPlace',value:'合成场地'},{label:'conditionChecklist',value:'已核对'}],manifestHash:'unpublished'}});
+ const published:any=await db.serial(tx=>publishHandoverRecord(tx,h.id,admin.id));assert(isOnlineHandover(published));assert.equal(published.onlineRecordSnapshot.documentId,legal.id);assert.doesNotMatch(JSON.stringify(published.onlineRecordSnapshot),/PRIVATE_RISK|PRIVATE_REVENUE|PRIVATE_ACCOUNT|orderSnapshot"/);assert.match(published.onlineRecordSnapshot.source.orderSnapshotHash,/^[a-f0-9]{64}$/);
+ const controller=new WorkflowsController(db,{} as any,{} as any),req={customer:{id:f.customer.id}},input={revision:h.revision,manifestHash:published.manifestHash,readFileIds:[photo.id],fileIds:[],idempotencyKey:randomUUID(),documentId:legal.id,termsVersion:String(version),termsHash:published.onlineRecordSnapshot.termsHash,termsAccepted:true};
+ assert.equal((await controller.getHandover(h.id,req)).signingReadiness.version,3);
+ await assert.rejects(controller.confirmHandover(h.id,{manifestHash:published.manifestHash,readFileIds:[photo.id],fileIds:[],idempotencyKey:randomUUID()},req),code('MANIFEST_CONFLICT'));
+ await assert.rejects(controller.confirmHandover(h.id,input,{customer:{id:'foreign'}}),code('NOT_FOUND'));
+ await assert.rejects(controller.confirmHandover(h.id,input,req),code('EVIDENCE_UNREAD'));
+ let sent:any;await new FilesController(db).customerRead(photo.id,req,{setHeader:()=>{},send:(v:any)=>{sent=v;}});assert.deepEqual(sent,bytes);
+ await assert.rejects(controller.confirmHandover(h.id,{...input,termsHash:'0'.repeat(64)},req),code('ONLINE_TERMS_CONFIRMATION_REQUIRED'));
+ const confirmed=await controller.confirmHandover(h.id,input,req);assert.equal(confirmed.status,'CUSTOMER_CONFIRMED');assert.doesNotMatch(JSON.stringify(confirmed),/PRIVATE_RISK|PRIVATE_REVENUE|PRIVATE_ACCOUNT|requestHash|onlineRecordSnapshot/);assert.equal((await db.order.findUniqueOrThrow({where:{id:f.order.id}})).status,'ACTIVE');
+ const replay=await controller.confirmHandover(h.id,input,req);assert.equal(replay.id,h.id);assert.doesNotMatch(JSON.stringify(replay),/PRIVATE_RISK|PRIVATE_REVENUE|PRIVATE_ACCOUNT|requestHash|onlineRecordSnapshot/);await assert.rejects(controller.confirmHandover(h.id,{...input,idempotencyKey:randomUUID()},req),code('IDEMPOTENCY_CONFLICT'));
+ const completed=await controller.complete(h.id,{admin},{revision:1,idempotencyKey:randomUUID()});assert.equal(completed.status,'COMPLETED');assert.equal(await db.documentArchive.count({where:{handoverId:h.id}}),0);
+ assert.equal((await controller.getHandover(h.id,req)).signingReadiness.stage,'RECORDED');assert.equal(await db.auditLog.count({where:{resourceId:h.id,action:'ONLINE_HANDOVER_RECORDED'}}),1);
+ const settlement=await db.returnSettlement.findFirstOrThrow({where:{orderId:f.order.id}}),view=await readReturnView(db as any,settlement,true);assert(!view.documentBlockers.includes('OFFLINE_ARCHIVE_REQUIRED'));assert(!view.documentBlockers.includes('RETURN_RECEIPT_REQUIRED'));
+ await db.legalDocument.update({where:{id:legal.id},data:{status:'RETIRED'}});for(const t of oldTerms)await db.legalDocument.update({where:{id:t.id},data:{status:'PUBLISHED'}});
+ }finally{await db.$disconnect();}
+});

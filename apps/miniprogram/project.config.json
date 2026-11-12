@@ -1,9 +1,9 @@
 {
-  "description": "纯电主义 · 微信小程序前端",
+  "description": "宁达汽车 · 微信小程序前端",
   "miniprogramRoot": "src/",
   "compileType": "miniprogram",
-  "appid": "wxa7089edf4a34a7f5",
-  "projectname": "纯电主义",
+  "appid": "wxb5115e5a5f70f1b1",
+  "projectname": "宁达汽车",
   "setting": {
     "es6": true,
     "postcss": true,

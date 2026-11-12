@@ -4,9 +4,10 @@ const path = require('node:path');
 const memory = new Map();
 let calls = [], toasts = [], uploadFails = false, conflict = false, legalVersion = 3, handoverResponse = null, handoverId = 'h1', applicationStatus = 'AWAITING_CONFIRMATION', handoverActualAt='2026-10-16T00:30:00Z',handoverType='DELIVERY';
 const session = { token: 'token', expiresAt: '2099-01-01T00:00:00Z', customer: { id: 'c1', profile: { name: '测试客户', mobile: '13800000000', drivingYears: 0 } } };
+const profileFixture = {revision:1,name:'测试客户',mobile:'13800000000',drivingYears:0,identityFrontFileId:'front',identityBackFileId:'back',drivingLicenseFileId:'license',files:{identityFront:{id:'front',name:'人像面'},identityBack:{id:'back',name:'国徽面'},drivingLicense:{id:'license',name:'驾驶证'},legacy:[{id:'f-old',name:'未分类旧附件'}]},readiness:{readyForApplication:true,blockers:[]}};
 const storageKey = require('../src/config').storageKey;
 const commercialTerms = Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key => [key, '本测试确认的' + key]));
-const usagePolicy={version:'USAGE_V1',documentId:'usage-v1',documentVersion:1,hash:'a'.repeat(64),content:'离线合成的已批准月里程规则，不作为生产文案。',baseAllowanceKm:1500,excessPriceAmount:80};
+const usagePolicy={policyVersion:'USAGE_V1',documentId:'usage-v1',documentVersion:1,hash:'a'.repeat(64),content:'离线合成的已批准月里程规则，不作为生产文案。',baseAllowanceKm:1500,excessPriceAmount:150};
 global.wx = {
   getStorageSync: key => memory.get(key), setStorageSync: (key, value) => memory.set(key, value), removeStorageSync: key => memory.delete(key),
   setNavigationBarTitle() {}, showToast: v => toasts.push(v.title), navigateTo: v => { calls.push({ navigation: v.url }); v.success?.({}); }, switchTab() {},
@@ -18,7 +19,9 @@ global.wx = {
     calls.push(v);
     const route = v.url.replace(/^https:\/\/[^/]+\/api/, '');
     let data = {};
-    if (route === '/customer/context') data = { customer: session.customer };
+    if(route==='/customer/profile')data=v.method==='PUT'?{...profileFixture,...v.data}:profileFixture;
+    else if(route==='/customer/identity/readiness')data={verified:true,realNameStatus:'VERIFIED'};
+    else if (route === '/customer/context') data = { customer: session.customer };
     else if (route === '/customer/payment-verifications') data = { items: [] };
     else if (route === '/customer/applications/a1/credit-review') data = { applicationId:'a1',creditRevision:3,ruleVersion:'ZHIMA_MANUAL_V1',document:{id:'credit-v1',type:'credit-verification',version:1,title:'人工核验说明',content:'本地测试说明'},consent:{id:'cc1',status:'ACCEPTED',documentId:'credit-v1',version:1},verification:{id:'cv1',band:'GE750',consentId:'cc1',verifiedAt:'2026-10-16T08:00:00Z'},status:'VERIFIED',canConsent:true,canDecline:true,consentRequirementsMet:true,canWithdraw:true,canFinalize:false,verificationCurrent:true,canConfirmFinalPlan:true,depositMultiplier:0 };
     else if (route === '/customer/dashboard') data = { subscription: { id: 'o1', orderId: 'o1', vehicleName: '当前车辆' }, handover: { id: handoverId } };
@@ -26,7 +29,7 @@ global.wx = {
     else if (route === '/public/handover-location') data = {enabled:true,mapEnabled:false,policyHash:'a'.repeat(64),notice:{id:'location1',version:1,title:'交接地点选择说明',content:'合成测试说明'}};
     else if (route.startsWith('/public/vehicles/')) data = { vehicle: { id: 'v1', name: '当前车辆', available: true }, plans: [{ id: 'p1', available: true, monthlyFeeAmount: 0 }] };
     else if (route.startsWith('/public/legal/')) { const type = route.split('/').at(-1); data = { id: type === 'application' ? 'legal-1' : type + '-1', type, version: legalVersion, title: '正式须知', content: '正式文案' }; }
-    else if (route === '/customer/applications/a1') data = { id: 'a1', status: applicationStatus, profile: { name: '原审查资料', drivingYears: 2, fileIds: ['f-old'] }, note: '请补驾驶证', finalPlan: { creditVerificationId:'cv1',creditRuleVersion:'ZHIMA_MANUAL_V1',creditBand:'GE750',creditRevision:3,revision: 4, commercialHash: 'hash-4', title: '最终套餐', monthlyFeeAmount: 12345, depositAmount: 0, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 80, energyDescription: '自费充电', benefits: ['用车服务'], conditions: '提前退出按合同', startDate: '2026-11-01', firstDueDate: '2026-10-25', commercialTerms,usagePolicy } };
+    else if (route === '/customer/applications/a1') data = { id: 'a1', status: applicationStatus, profile: { name: '原审查资料', drivingYears: 2, fileIds: ['f-old'] }, note: '请补驾驶证', finalPlan: { creditVerificationId:'cv1',creditRuleVersion:'ZHIMA_MANUAL_V1',creditBand:'GE750',creditRevision:3,revision: 4, commercialHash: 'hash-4', title: '最终套餐', monthlyFeeAmount: 12345, depositAmount: 0, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '自费充电', benefits: ['用车服务'], conditions: '提前退出按合同', startDate: '2026-11-01', firstDueDate: '2026-10-25', commercialTerms,usagePolicyVersion:'USAGE_V1',usagePolicy } };
     else if (route === '/customer/applications') data = { id: 'a1' };
     else if (route.startsWith('/customer/handovers/')) data = { id: handoverId,type:handoverType,actualAt:handoverActualAt,manifestHash: 'manifest-' + handoverId, fileIds: ['f1'], status: handoverResponse === 'CONFIRM' ? 'CUSTOMER_CONFIRMED' : handoverResponse === 'OBJECT' ? 'OBJECTION_SUBMITTED' : 'PUBLISHED', customerResponse: handoverResponse, signatureStatus: 'PENDING', checklist: [{ label: '钥匙', value: '2把' }], evidence: [{ id: 'f1', name: '现场照片' }] };
     else if (route.endsWith('/sign-status')) data = { status: 'SIGNED' };
@@ -103,7 +106,7 @@ test('handover displays the server actual time in Beijing and missing time block
   handoverResponse='CONFIRM';await p.reload();assert.equal(p.data.submitted.id,'h1');assert.equal(p.data.error,'');await p.submit();await p.sign();assert.equal(calls.some(call=>call.method==='POST'),false);
 });
 test('production settings exposes account operations and has no scenario mutation methods', async () => {
-  const p = page('settings'); await p.refresh();
+  const p = page('profile'); await p.refresh();
   assert.equal(p.changeScenario, undefined);
   assert.equal(p.changeFault, undefined);
   assert.equal(p.reset, undefined);
@@ -139,16 +142,16 @@ test('handover reopening restores acknowledged response and a replacement id cle
   assert.equal(p.data.handover.id,'h2');assert.equal(p.data.submitted,null);assert.equal(p.data.evidenceRead,false);
 });
 test('NEEDS_INFO profile workflow uploads privately and amends application review snapshot', async () => {
-  applicationStatus='NEEDS_INFO';const p=await settle(page('profile',{applicationId:'a1'}));
-  assert.equal(p.data.name,'原审查资料');assert.equal(p.data.attachments[0].id,'f-old');
-  await p.chooseAttachments();p.setData({name:'补正客户',drivingYears:'3'});await p.submit();
+  applicationStatus='NEEDS_INFO';const p=page('profile',{applicationId:'a1'});await p.refresh();
+  assert.equal(p.data.name,'测试客户');assert.equal('legacyAttachments' in p.data,false);assert.equal('legacy' in p.data.profileFiles,false);assert.equal(p.data.identityFrontFileId,'front');
+  await p.chooseDocument({currentTarget:{dataset:{slot:'drivingLicenseFileId'}}});p.setData({name:'补正客户',drivingYears:'3'});await p.submit();
   const mutation=calls.find(v=>v.url?.endsWith('/applications/a1/amend'));
-  assert.deepEqual(mutation.data.profile.fileIds,['f-old','f1']);assert.equal(mutation.data.profile.name,'补正客户');
+  assert.deepEqual(mutation.data.profile.fileIds,['front','back','f1']);assert.equal(mutation.data.profile.name,'补正客户');
 });
 test('mileage result opens its own record type and verified public customer service number can be called', async () => {
   const mileage=await settle(page('mileage'));mileage.setData({submitted:{id:'m1'}});mileage.openRecord();
   assert.equal(calls.find(v=>v.navigation).navigation,'/pages/record/index?type=mileages&id=m1');
-  const settings=page('settings');settings.callService();assert.equal(calls.find(v=>v.phone).phone,'18616570212');
+  const settings=page('profile');settings.callService();assert.equal(calls.find(v=>v.phone).phone,'18616570212');
 });
 
 test('application and amendment pages submit manual handover proposals without map permission',async()=>{
@@ -156,8 +159,10 @@ test('application and amendment pages submit manual handover proposals without m
   p.onLocationInput({currentTarget:{dataset:{field:'address'}},detail:{value:'测试交接路100号'}});
   p.setData({accepted:true,name:'测试客户',mobile:'13800000000'});await p.submit();
   assert.equal(calls.find(v=>v.method==='POST'&&v.url.endsWith('/applications')).data.profile.handoverLocation.address,'测试交接路100号');
-  applicationStatus='NEEDS_INFO';const a=await settle(page('profile',{applicationId:'a1'}));
+  applicationStatus='NEEDS_INFO';const a=page('profile',{applicationId:'a1'});await a.refresh();
   a.onLocationInput({currentTarget:{dataset:{field:'address'}},detail:{value:'测试交接路200号'}});await a.submit();
   assert.equal(calls.find(v=>v.method==='POST'&&v.url.endsWith('/amend')).data.profile.handoverLocation.address,'测试交接路200号');
   a.onHide();assert.equal(a.data.locationAddress,'');
 });
+
+test('reading a frozen application notice preserves its location draft and selected vehicle',async()=>{const p=await settle(page('application',{vehicleId:'v1',planId:'p1'}));p.onLocationInput({currentTarget:{dataset:{field:'address'}},detail:{value:'阅读前填写的地址'}});p.setData({accepted:true});p.openTerms();p.onHide();await p.onShow();assert.equal(p.data.locationAddress,'阅读前填写的地址');assert.equal(p.data.accepted,true);assert.equal(p.vehicleId,'v1');assert.match(calls.find(v=>v.navigation).navigation,/preview=/);});

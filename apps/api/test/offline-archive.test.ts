@@ -1,0 +1,108 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {validateArchiveFile,validateManifest,assertDraft,assertFileBinding} from '../src/offline-documents/files';
+import {archiveSummary} from '../src/offline-documents/projection';
+import {ArchiveService} from '../src/offline-documents/archive.service';
+import {FieldArchiveService} from '../src/offline-documents/field';
+import {Db} from '../src/common/db';
+import {ArchiveContextService} from '../src/offline-documents/context';
+import {OfflineWorkspaceService} from '../src/offline-documents/workspace.service';
+import {contractReady} from '../src/offline-documents/readiness';
+import {randomUUID} from 'node:crypto';
+import {uploadSchema} from '../src/offline-documents/schemas';
+const file={id:'f1',mimeType:'application/pdf',size:5,sha256:'a'.repeat(64),purpose:'offline-archive'};
+test('uploaded_file_is_not_approved',()=>{const result=archiveSummary({id:'a',kind:'RENTAL',revision:0,currentApprovedVersionId:null,versions:[{id:'v',status:'DRAFT',files:[file]}]},'h');assert.equal(result.status,'DRAFT');assert.equal(result.canRead,false);});
+test('archive_upload_requires_revision_and_idempotency_key',()=>{assert.equal(uploadSchema.safeParse({position:1}).success,false);assert.equal(uploadSchema.safeParse({position:'1',revision:'0',idempotencyKey:'upload-repeat'}).success,true);});
+test('cross_order_file_cannot_be_attached_even_with_same_sha',()=>{assert.throws(()=>assertFileBinding({archiveId:'a',id:'v'}, {versionId:'other',fileId:'f',file}),(e:any)=>e.getResponse().error.code==='NOT_FOUND');});
+test('submitted_version_is_immutable',()=>{for(const status of ['SUBMITTED','REVIEWED','ARCHIVED','REJECTED','INVALIDATED'])assert.throws(()=>assertDraft({status}),(e:any)=>e.getResponse().error.code==='ARCHIVE_IMMUTABLE');});
+test('archive_file_limits_and_type',()=>{assert.equal(validateArchiveFile(Buffer.from('%PDF-hello'),'application/pdf').mimeType,'application/pdf');assert.throws(()=>validateArchiveFile(Buffer.from('not a png'),'image/png'));assert.throws(()=>validateArchiveFile(Buffer.alloc(10*1024*1024+1),'application/pdf'));assert.throws(()=>validateManifest(Array.from({length:21},(_,i)=>({position:i+1,file:{...file,id:String(i)}}))));assert.throws(()=>validateManifest(Array.from({length:6},(_,i)=>({position:i+1,file:{...file,id:String(i),size:10*1024*1024}}))));assert.throws(()=>validateManifest([{position:1,file},{position:1,file:{...file,id:'f2'}}]));});
+test('rejected_resubmission_creates_version_and_same_command_is_replayed',async()=>{let creates=0;let command:any;const archive:any={id:'a',kind:'RENTAL',subjectType:'ORDER',subjectId:'o',orderId:'o',revision:2,versions:[{id:'old',version:1,status:'REJECTED'}]};const tx:any={$queryRaw:async()=>[],adminUser:{findUnique:async()=>({id:'operator',role:'OPERATIONS',active:true})},documentArchive:{findUnique:async()=>archive,update:async()=>{archive.revision++;return archive;}},archiveVersion:{create:async({data}:any)=>{creates++;return{id:'new',...data};}},archiveCommand:{findUnique:async()=>command,create:async({data}:any)=>{command=data;}},legalDocument:{findUnique:async()=>({id:'template',type:'OFFLINE_RENTAL',version:1,status:'PUBLISHED',confirmedBy:'legal',confirmedAt:new Date()})},auditLog:{create:async()=>({})}};const context:any={resolve:async()=>({businessSnapshotHash:'a'.repeat(64),partiesSnapshot:[{role:'CUSTOMER',partyId:'c'},{role:'OWNER',partyId:'o'},{role:'PLATFORM',partyId:'p'}],requiredSigners:['CUSTOMER','OWNER','PLATFORM'],scopeSnapshot:{}})};const service=new ArchiveService({serial:async(fn:any)=>fn(tx)} as any,context);const input={revision:2,idempotencyKey:'repeat-key',templateId:'template'};const first=await service.newVersion('a',input,{id:'operator',role:'OPERATIONS'});const second=await service.newVersion('a',input,{id:'operator',role:'OPERATIONS'});assert.equal(first.id,'new');assert.deepEqual(second,first);assert.equal(creates,1);});
+test('field_receipt_rejects_changed_vehicle_assignment_before_writing',async()=>{
+ let writes=0;
+ const tx:any={$queryRaw:async()=>[],fieldHandoverTask:{findUnique:async()=>({id:'task',orderId:'o',currentHandoverId:'h',assigneeId:'field',status:'ASSIGNED',version:1,vehicleId:'car-old',vehicleAssignmentId:'assignment-old',type:'DELIVERY'})},adminUser:{findUnique:async()=>({active:true,role:'FIELD'})},documentArchive:{findUnique:async()=>({id:'a',orderId:'o',handoverId:'h',kind:'DELIVERY_RECEIPT',revision:1,versions:[{id:'v',status:'DRAFT',businessSnapshotHash:'manifest',files:[]}]}),update:async()=>({})},handover:{findUnique:async()=>({id:'h',fieldTaskId:'task',vehicleId:'car-new',assignmentId:'assignment-new',manifestHash:'manifest',type:'DELIVERY'})},storedFile:{create:async({data}:any)=>{writes++;return{id:'f',...data};}},archiveFile:{create:async()=>({})},auditLog:{create:async()=>({})}};
+ const service=new FieldArchiveService({serial:async(fn:any)=>fn(tx)} as any);
+ await assert.rejects(()=>service.upload('task',{taskVersion:1,archiveId:'a',versionId:'v',position:1,revision:1,idempotencyKey:'field-upload-repeat'},{buffer:Buffer.from('%PDF-field-regression'),mimetype:'application/pdf',originalname:'receipt.pdf'} as any,{id:'field',role:'FIELD'}),(e:any)=>e.getResponse?.().error.code==='ARCHIVE_SNAPSHOT_MISMATCH');
+ assert.equal(writes,0);
+});
+test('create_rental_archive_binds_original_offline_contract_in_same_transaction',async()=>{
+ let linked:string|null=null;
+ const tx:any={$queryRaw:async()=>[],adminUser:{findUnique:async()=>({active:true,role:'OPERATIONS'})},archiveCommand:{findUnique:async()=>null,create:async()=>({})},documentArchive:{findUnique:async()=>null,create:async({data}:any)=>({id:'archive',...data})},archiveVersion:{create:async({data}:any)=>({id:'v',...data})},legalDocument:{findUnique:async()=>({id:'template',version:1,type:'OFFLINE_RENTAL',status:'PUBLISHED',confirmedBy:'legal',confirmedAt:new Date()})},contract:{findFirst:async()=>({id:'contract',executionMode:'OFFLINE',offlineArchiveId:null}),updateMany:async({data}:any)=>{linked=data.offlineArchiveId;return{count:1};}},auditLog:{create:async()=>({})}};
+ const context:any={resolve:async()=>({orderId:'o',ownerId:'owner',handoverId:null,businessSnapshotHash:'a'.repeat(64),partiesSnapshot:[],requiredSigners:['CUSTOMER','OWNER','PLATFORM'],scopeSnapshot:{}})};
+ const service=new ArchiveService({serial:async(fn:any)=>fn(tx)} as any,context);
+ await service.create({subjectType:'ORDER',subjectId:'o',kind:'RENTAL',templateId:'template',revision:0,idempotencyKey:'create-binding'},{id:'operator',role:'OPERATIONS'});
+ assert.equal(linked,'archive');
+});
+test('database_archive_lifecycle_concurrent_review_feedback_and_read_only_workspace',{skip:process.env.OFFLINE_ARCHIVE_DB_TESTS!=='true'},async()=>{
+ const url=new URL(process.env.TEST_DATABASE_URL||'http://invalid');assert.ok(['127.0.0.1','localhost','[::1]'].includes(url.hostname)&&url.port==='55432'&&url.pathname==='/chundian_test','archive tests require the isolated local project database');
+ const db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});
+ try{
+  const token=randomUUID(),staff=await Promise.all(['uploader','reviewer','second-reviewer','finance'].map((name,i)=>db.adminUser.create({data:{username:`archive-${name}-${token}`,name,role:i===3?'FINANCE':'OPERATIONS',passwordHash:'isolated-test-no-login'}})));
+  const actor=(i:number)=>({id:staff[i].id,role:staff[i].role,authVersion:staff[i].authVersion});
+  const customer=await db.customer.create({data:{mobile:`archive-customer-${token}`,name:'档案测试客户'}}),owner=await db.vehicleOwner.create({data:{name:'档案测试合作商',creditCode:`archive-${token}`,address:'测试地址',createdBy:staff[0].id}});
+  const vehicle=await db.vehicle.create({data:{brand:'测试',model:'EV',title:'档案测试车',year:2026,city:'上海',mileageKm:100,status:'RESERVED'}});
+  const plan=await db.subscriptionPlan.create({data:{vehicleId:vehicle.id,name:'档案测试套餐',months:2,monthlyFeeAmount:10000,mileagePerMonthKm:1000,excessMileagePriceAmount:100,energyDescription:'测试',benefits:[],conditions:'测试'}});
+  const application=await db.application.create({data:{customerId:customer.id,vehicleId:vehicle.id,subscriptionPlanId:plan.id,profile:{},consents:[],idempotencyKey:token,requestHash:token,status:'FINAL_PLAN_CONFIRMED'}});
+  const parties=[{role:'CUSTOMER',partyId:customer.id,name:'档案测试客户',subjectType:'INDIVIDUAL',identityNumber:'110101199001010011',phone:'13800000000'},{role:'OWNER',partyId:owner.id,name:'档案测试合作商',subjectType:'ENTERPRISE',creditCode:'91310000TEST000001'},{role:'PLATFORM',partyId:'test-platform',name:'上海宁达信息科技有限公司',subjectType:'ENTERPRISE',creditCode:'91310000TEST000002'}];
+  const order=await db.order.create({data:{applicationId:application.id,customerId:customer.id,vehicleId:vehicle.id,contractMode:'OFFLINE',status:'AWAITING_CONTRACT_REVIEW',confirmedMileageKm:100,finalPlanSnapshot:{commercialHash:'a'.repeat(64),partiesSnapshot:parties,lessorSnapshot:{ownerId:owner.id},commercialTerms:{vehicleIdentification:'合成测试车；VIN：LSVNV2182E2182777',earlyTerminationRule:'按原合同协商终止',depositRefundRule:'核对后按原合同退还押金'}}}});
+  const original=await db.contract.create({data:{orderId:order.id,customerId:customer.id,executionMode:'OFFLINE',documentHash:'a'.repeat(64)}});
+  const template=await db.legalDocument.create({data:{type:'OFFLINE_RENTAL',version:Math.floor(Math.random()*1000000000),title:'三方测试模板',content:'测试三方线下合同',status:'PUBLISHED',confirmedBy:staff[1].id,confirmedAt:new Date()}});
+  const service=new ArchiveService(db,new ArchiveContextService()),input={subjectType:'ORDER',subjectId:order.id,kind:'RENTAL',templateId:template.id,revision:0,idempotencyKey:token};
+  const created=await service.create(input,actor(0));assert.deepEqual(await service.create(input,actor(0)),created);assert.equal(await db.archiveVersion.count({where:{archiveId:created.archiveId}}),1);
+  const fontBefore=process.env.CONTRACT_CJK_FONT_PATH;process.env.CONTRACT_CJK_FONT_PATH='C:/Windows/Fonts/simhei.ttf';
+  let prepared:any;try{prepared=await service.prepare(created.archiveId,created.versionId,{revision:0,idempotencyKey:`prepare-${token}`},actor(0));}finally{if(fontBefore===undefined)delete process.env.CONTRACT_CJK_FONT_PATH;else process.env.CONTRACT_CJK_FONT_PATH=fontBefore;}
+  const firstConfirmation=await service.confirmPrint(created.archiveId,created.versionId,{revision:prepared.revision,idempotencyKey:`print-first-${token}`},actor(0));
+  assert.equal((await service.detail(created.archiveId,actor(0))).versions[0].printConfirmed,true);
+  // A pinned template remains usable after a newer version is enabled. Reprinting invalidates the previous confirmation.
+  await db.legalDocument.update({where:{id:template.id},data:{status:'RETIRED'}});
+  process.env.CONTRACT_CJK_FONT_PATH='C:/Windows/Fonts/simhei.ttf';
+  let reprinted:any;try{reprinted=await service.prepare(created.archiveId,created.versionId,{revision:firstConfirmation.revision,idempotencyKey:`reprint-${token}`},actor(0));}finally{if(fontBefore===undefined)delete process.env.CONTRACT_CJK_FONT_PATH;else process.env.CONTRACT_CJK_FONT_PATH=fontBefore;}
+  assert.notEqual(reprinted.sourceFileId,prepared.sourceFileId);assert.equal((await service.detail(created.archiveId,actor(0))).versions[0].printConfirmed,false);
+  await assert.rejects(service.submit(created.archiveId,{versionId:created.versionId,revision:reprinted.revision,idempotencyKey:`unconfirmed-${token}`},actor(0)),(e:any)=>e.getResponse().error.code==='ARCHIVE_PRINT_CONFIRMATION_REQUIRED');
+  const confirmed=await service.confirmPrint(created.archiveId,created.versionId,{revision:reprinted.revision,idempotencyKey:`print-${token}`},actor(0));
+  assert.equal((await service.detail(created.archiveId,actor(0))).versions[0].printConfirmed,true);
+  const uploadInput={position:1,revision:confirmed.revision,idempotencyKey:`upload-${token}`},uploadFile={buffer:Buffer.from(`%PDF-archive-integration-${token}`),mimetype:'application/pdf',originalname:'signed.pdf'} as any;
+  const upload=await service.upload(created.archiveId,created.versionId,uploadInput,uploadFile,actor(0));
+  assert.deepEqual(await service.upload(created.archiveId,created.versionId,uploadInput,uploadFile,actor(0)),upload);
+  await assert.rejects(()=>service.upload(created.archiveId,created.versionId,uploadInput,{...uploadFile,buffer:Buffer.from(`%PDF-changed-content-${token}`)},actor(0)),(e:any)=>e.getResponse?.().error.code==='IDEMPOTENCY_CONFLICT');
+  assert.equal(await db.archiveFile.count({where:{versionId:created.versionId}}),1);
+  const meta=await service.patch(created.archiveId,created.versionId,{revision:upload.revision,idempotencyKey:`meta-${token}`,signedOn:'2026-10-27',contractNumber:created.archiveId,declaredPages:1},actor(0));
+  const submitted=await service.submit(created.archiveId,{versionId:created.versionId,revision:meta.revision,idempotencyKey:`submit-${token}`},actor(0));
+  await assert.rejects(()=>service.patch(created.archiveId,created.versionId,{revision:submitted.revision,idempotencyKey:`immutable-${token}`,declaredPages:2},actor(0)),(e:any)=>e.getResponse().error.code==='ARCHIVE_IMMUTABLE');
+  const checklist={partiesComplete:true,authorityChecked:true,pagesComplete:true,vehicleMatches:true,termsMatch:true,annexesComplete:true,legible:true,originalRecorded:true};
+  const review={versionId:created.versionId,revision:submitted.revision,decision:'APPROVE',checklist,partyChecks:parties.map(p=>({role:p.role,partyId:p.partyId,signerName:'测试签署人',signedOn:'2026-10-27',signaturePageRefs:[{fileId:upload.id,page:1}],passed:true})),reason:'完整三方签章及附件已核验',idempotencyKey:`review-${token}`};
+  const approvals=await Promise.allSettled([service.review(created.archiveId,review,actor(0)),service.review(created.archiveId,review,actor(1))]);assert.equal(approvals.filter(r=>r.status==='fulfilled').length,1);assert.equal(await db.archiveVersion.count({where:{archiveId:created.archiveId,status:'REVIEWED'}}),1);
+  assert.equal((await db.serial(tx=>contractReady(tx,order.id))).ready,false);
+  const awaitingArchive=await db.documentArchive.findUniqueOrThrow({where:{id:created.archiveId}});
+  const archiveInput={versionId:created.versionId,revision:awaitingArchive.revision,idempotencyKey:`archive-${token}`};
+  const archived=await service.archive(created.archiveId,archiveInput,actor(0));assert.deepEqual(await service.archive(created.archiveId,archiveInput,actor(0)),archived);
+  assert.equal((await db.documentArchive.findUniqueOrThrow({where:{id:created.archiveId}})).currentApprovedVersionId,created.versionId);
+  const untouched=await db.contract.findUniqueOrThrow({where:{id:original.id}});assert.equal(untouched.offlineArchiveId,created.archiveId);assert.equal(untouched.status,'DRAFT');assert.equal(untouched.providerTaskId,null);assert.equal(untouched.signedFileId,null);
+  assert.equal((await db.order.findUniqueOrThrow({where:{id:order.id}})).status,'AWAITING_PAYMENT');assert.equal((await db.serial(tx=>contractReady(tx,order.id))).ready,true);
+  await assert.rejects(()=>service.readFile(created.archiveId,created.versionId,upload.id,actor(3),{}),(e:any)=>e.getResponse().error.code==='FORBIDDEN');
+  const terminationTemplate=await db.legalDocument.create({data:{type:'OFFLINE_TERMINATION',version:Math.floor(Math.random()*1000000000),title:'合成三方终止协议',content:'各方终止《{{originalContractName}}》（编号：{{originalContractNumber}}）。',status:'PUBLISHED',confirmedBy:staff[0].id,confirmedAt:new Date()}});
+  const termination=await service.create({kind:'TERMINATION',subjectType:'ORDER',subjectId:order.id,templateId:terminationTemplate.id,revision:0,idempotencyKey:`term-${token}`},actor(0));
+  const details={reasonType:'CUSTOMER_REQUEST',reason:'合成未交付取消',effectiveAt:'2026-10-30T10:00:00+08:00',conditionSummary:'未交付无需还车',violationStatus:'NOT_APPLICABLE',violationSummary:'未交付不适用',additionalPaymentAmount:0,refundAmount:0,retainedDepositAmount:0,retainedDepositHandling:'无保留款',settlementBasis:'无应补应退款',unresolvedMatters:'无'};
+  const termMeta=await service.patch(termination.archiveId,termination.versionId,{revision:0,idempotencyKey:`term-meta-${token}`,terminationDetails:details},actor(0));
+  const termDetail=await service.detail(termination.archiveId,actor(0));assert.equal(termDetail.terminationContext.originalContract.number,created.archiveId);assert.equal(termDetail.terminationContext.delivery.state,'NOT_DELIVERED');assert.deepEqual(termDetail.versions[0].scopeSnapshot.terminationDetails,details);
+  process.env.CONTRACT_CJK_FONT_PATH='C:/Windows/Fonts/simhei.ttf';try{const output=await service.prepare(termination.archiveId,termination.versionId,{revision:termMeta.revision,idempotencyKey:`term-print-${token}`},actor(0));assert.ok(output.sourceFileId);const confirmedTerm=await service.confirmPrint(termination.archiveId,termination.versionId,{revision:output.revision,idempotencyKey:`term-confirm-${token}`},actor(0));assert.equal(confirmedTerm.printConfirmed,true);const frozen=(await db.archiveVersion.findUniqueOrThrow({where:{id:termination.versionId}})).scopeSnapshot as any;assert.equal(frozen.terminationPrintSnapshot.context.originalContract.versionId,created.versionId);assert.equal(frozen.terminationPrintSnapshot.context.vehicle.vin,'LSVNV2182E2182777');
+   const termUploadInput={position:1,revision:confirmedTerm.revision,idempotencyKey:`term-upload-${token}`},termFile={buffer:Buffer.from(`%PDF-termination-signed-${token}`),mimetype:'application/pdf',originalname:'termination-signed.pdf'} as any;
+   const termUpload=await service.upload(termination.archiveId,termination.versionId,termUploadInput,termFile,actor(0));assert.deepEqual(await service.upload(termination.archiveId,termination.versionId,termUploadInput,termFile,actor(0)),termUpload);
+   const termSignatureInput={revision:termUpload.revision,idempotencyKey:`term-signature-${token}`,signedOn:'2026-10-30',contractNumber:termination.archiveId,declaredPages:1};
+   const termSigned=await service.patch(termination.archiveId,termination.versionId,termSignatureInput,actor(0));assert.deepEqual(await service.patch(termination.archiveId,termination.versionId,termSignatureInput,actor(0)),termSigned);
+   const termSubmitInput={versionId:termination.versionId,revision:termSigned.revision,idempotencyKey:`term-submit-${token}`};const termSubmitted=await service.submit(termination.archiveId,termSubmitInput,actor(0));assert.deepEqual(await service.submit(termination.archiveId,termSubmitInput,actor(0)),termSubmitted);
+   const termReviewInput={versionId:termination.versionId,revision:termSubmitted.revision,decision:'APPROVE',checklist,partyChecks:parties.map(p=>({role:p.role,partyId:p.partyId,signerName:'合成终止签署人',signedOn:'2026-10-30',signaturePageRefs:[{fileId:termUpload.id,page:1}],passed:true})),reason:'合成签字版三方及冻结事实一致',idempotencyKey:`term-review-${token}`};
+   const termReviewed=await service.review(termination.archiveId,termReviewInput,actor(0));assert.equal(termReviewed.status,'REVIEWED');assert.deepEqual(await service.review(termination.archiveId,termReviewInput,actor(0)),termReviewed);
+   const termArchiveInput={versionId:termination.versionId,revision:termReviewed.revision,idempotencyKey:`term-archive-${token}`};const termArchived=await service.archive(termination.archiveId,termArchiveInput,actor(0));assert.equal(termArchived.status,'ARCHIVED');assert.deepEqual(await service.archive(termination.archiveId,termArchiveInput,actor(0)),termArchived);
+   const termStored=await db.archiveVersion.findUniqueOrThrow({where:{id:termination.versionId}});assert.equal(termStored.reviewedBy,actor(0).id);assert.equal((await db.documentArchive.findUniqueOrThrow({where:{id:termination.archiveId}})).currentApprovedVersionId,termination.versionId);assert.equal(termStored.businessSnapshotHash,'a'.repeat(64));
+  }finally{if(fontBefore===undefined)delete process.env.CONTRACT_CJK_FONT_PATH;else process.env.CONTRACT_CJK_FONT_PATH=fontBefore;}
+  const customerActor={id:customer.id,role:'CUSTOMER'};
+  const before={versions:await db.archiveVersion.count({where:{archiveId:created.archiveId}}),commands:await db.archiveCommand.count({where:{resourceId:created.archiveId}}),audit:await db.auditLog.count({where:{resourceId:created.archiveId}})};
+  const workspace=await new OfflineWorkspaceService(db).order(order.id,customerActor);assert.equal(workspace.contracts[0].canRead,true);
+  assert.deepEqual({versions:await db.archiveVersion.count({where:{archiveId:created.archiveId}}),commands:await db.archiveCommand.count({where:{resourceId:created.archiveId}}),audit:await db.auditLog.count({where:{resourceId:created.archiveId}})},before);
+  await service.feedback(created.archiveId,{versionId:created.versionId,message:'测试文件问题',idempotencyKey:`feedback-${token}`},customerActor);assert.equal((await db.serial(tx=>contractReady(tx,order.id))).ready,false);
+  await db.order.update({where:{id:order.id},data:{status:'ACTIVE'}});assert.equal((await db.serial(tx=>contractReady(tx,order.id,'PAYMENT'))).ready,true);assert.equal((await db.serial(tx=>contractReady(tx,order.id,'SETTLEMENT'))).ready,false);
+  const latest=await db.documentArchive.findUniqueOrThrow({where:{id:created.archiveId}});await service.invalidate(created.archiveId,{versionId:created.versionId,revision:latest.revision,reason:'测试留痕作废',idempotencyKey:`invalidate-${token}`},actor(1));
+  assert.equal((await db.documentArchive.findUniqueOrThrow({where:{id:created.archiveId}})).currentApprovedVersionId,null);assert.equal((await db.archiveVersion.findUniqueOrThrow({where:{id:created.versionId}})).status,'INVALIDATED');assert.equal((await db.serial(tx=>contractReady(tx,order.id))).ready,false);
+ }finally{await db.$disconnect();}
+});
+

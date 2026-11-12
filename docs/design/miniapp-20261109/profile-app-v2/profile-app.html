@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>个人资料 · App 风格修订稿</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="proposal-label"><span>个人资料 · App 风格修订稿</span><span>已实名 / 示例资料</span></div>
+  <div class="screen" id="profile-proposal">
+    <div class="system-safe" aria-hidden="true"></div>
+    <header class="navigation">
+      <button type="button" class="back" aria-label="返回" data-demo="正式页面将返回“我的”。本样式稿不跳转。"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <h1 class="nav-title">个人资料</h1>
+      <div class="capsule" aria-hidden="true"><svg viewBox="0 0 28 18"><circle cx="6" cy="9" r="1.8"/><circle cx="14" cy="9" r="2.4"/><circle cx="22" cy="9" r="1.8"/></svg><span class="separator"></span><svg viewBox="0 0 28 18"><circle cx="14" cy="9" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="9" r="3"/></svg></div>
+    </header>
+    <main>
+      <section class="profile-card" aria-labelledby="personal-title">
+        <div class="card-heading">
+          <h2 id="personal-title">个人信息</h2>
+          <span class="verified"><svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="m2.5 7 3 3 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>已实名</span>
+        </div>
+        <dl class="identity">
+          <div class="identity-row"><dt>姓名：</dt><dd>张宁</dd></div>
+          <div class="identity-row"><dt>手机号：</dt><dd>13800000000</dd></div>
+          <div class="identity-row"><dt>身份证号码：</dt><dd>3101**********0000</dd></div>
+        </dl>
+        <div class="identity-footer"><p>实名信息已锁定</p><button type="button" class="refresh" data-demo="正式页面将查询实名与证书状态，不会重新发起认证。本样式稿不会请求认证渠道。">刷新状态</button></div>
+      </section>
+      <section class="profile-card" aria-labelledby="documents-title">
+        <div class="card-heading"><h2 id="documents-title">证件资料</h2><span class="save-note">操作后自动保存</span></div>
+        <div class="document-row">
+          <button type="button" class="document-name" aria-label="查看身份证人像面" data-demo="正式页面将打开已上传的身份证人像面。这是样式稿，未载入真实证件。"><span class="label">身份证人像面</span><span class="state">已上传 · 点击查看</span></button>
+          <div class="document-actions"><button type="button" class="replace" aria-label="替换身份证人像面" data-demo="正式页面将选择替换图片，上传并自动保存；失败时保留原资料并提示重试。">替换</button><button type="button" class="remove" aria-label="移除身份证人像面" data-demo="正式页面将先确认是否移除证件，确认后保存。本样式稿不会删除任何资料。">移除</button></div>
+        </div>
+        <div class="document-row">
+          <button type="button" class="document-name" aria-label="查看身份证国徽面" data-demo="正式页面将打开已上传的身份证国徽面。这是样式稿，未载入真实证件。"><span class="label">身份证国徽面</span><span class="state">已上传 · 点击查看</span></button>
+          <div class="document-actions"><button type="button" class="replace" aria-label="替换身份证国徽面" data-demo="正式页面将选择替换图片，上传并自动保存；失败时保留原资料并提示重试。">替换</button><button type="button" class="remove" aria-label="移除身份证国徽面" data-demo="正式页面将先确认是否移除证件，确认后保存。本样式稿不会删除任何资料。">移除</button></div>
+        </div>
+        <p class="documents-note">仅本人及授权审核人员可查看证件。</p>
+      </section>
+      <div class="account-actions">
+        <button type="button" class="account-button" data-demo="正式页面将联系宁达客服。本样式稿不会拨打电话。">联系客服</button>
+        <button type="button" class="account-button" data-demo="正式页面将确认退出账户。本样式稿不会影响你的登录。">退出账户</button>
+      </div>
+      <nav class="legal" aria-label="协议与隐私"><button type="button" data-demo="正式页面将打开当前已发布的用户协议。本样式稿不替换协议正文。">用户协议</button><span class="dot" aria-hidden="true">·</span><button type="button" data-demo="正式页面将打开当前已发布的隐私政策。本样式稿不替换政策正文。">隐私政策</button></nav>
+    </main>
+    <div class="bottom-safe" aria-hidden="true"></div>
+  </div>
+  <p class="proposal-note">仅为排版样式确认；资料为合成示例。原小程序、实名记录与证件资料均未改动。</p>
+  <dialog id="demo-dialog" aria-labelledby="dialog-title"><h2 id="dialog-title">样式预览</h2><p id="dialog-message"></p><form method="dialog"><button type="submit">知道了</button></form></dialog>
+  <script>
+    const dialog = document.getElementById('demo-dialog');
+    document.getElementById('profile-proposal').addEventListener('click', event => {
+      const target = event.target.closest('[data-demo]');
+      if (!target) return;
+      document.getElementById('dialog-message').textContent = target.dataset.demo;
+      dialog.showModal();
+    });
+  </script>
+</body>
+</html>

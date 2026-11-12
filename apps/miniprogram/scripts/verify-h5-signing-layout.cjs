@@ -22,7 +22,7 @@ async function main() {
   for (const item of cases) {
     const route = item.route || 'sign', data = { ...definitions[route].data, loading: false, error: item.error || '', status: item.status || 'UNKNOWN', statusError: item.statusError || '', message: item.message || '' };
     if (route === 'sign' && !item.error) {
-      const api = createApi(config, v => v.success({ statusCode: 200, data: { mode: 'SERVICE_ACCOUNT_H5', entryUrl: 'https://app.subauto.keybox.cloud/miniapp-sign/', enabled: item.enabled } }), { getStorageSync: () => ({ token: 'offline-synthetic', expiresAt: '2099-01-01T00:00:00Z', customer: { id: 'qa-customer' } }) });
+      const api = createApi(config, v => v.success({ statusCode: 200, data: { mode: 'SERVICE_ACCOUNT_H5', entryUrl: 'https://sign.evsub.ndacar.com/miniapp-sign/', enabled: item.enabled } }), { getStorageSync: () => ({ token: 'offline-synthetic', expiresAt: '2099-01-01T00:00:00Z', customer: { id: 'qa-customer' } }) });
       data.signing = await api.getSigningGuidance(item.kind, item.kind === 'identity' ? 'qa-customer' : 'qa-record');
     }
     if (route === 'settings') Object.assign(data, { authenticated: true, profile: { name: '离线合成账户' }, consentCurrent: true, customerServiceTelephone: config.customerServiceTelephone, readiness: { readyForSigning: false, realNameStatus: 'NOT_STARTED' }, paymentVerifications: [] });

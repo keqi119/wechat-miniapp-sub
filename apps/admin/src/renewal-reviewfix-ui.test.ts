@@ -1,0 +1,53 @@
+import test,{before,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {createServer,type Server} from 'node:http';
+import {mkdir} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {build} from 'vite';
+import {chromium,expect,type Browser,type Page} from '@playwright/test';
+
+let browser:Browser,server:Server,origin:string;
+before(async()=>{
+ const root=fileURLToPath(new URL('..',import.meta.url));
+ const entry=`import React from 'react';import {createRoot} from 'react-dom/client';import {App} from '/src/App';import '/src/style.css';import '/src/ninda-brand.css';import '/src/seven-module.css';import '/src/domain-ui.css';createRoot(document.getElementById('root')).render(React.createElement(React.StrictMode,null,React.createElement(App)));`;
+ const built=await build({configFile:false,root,logLevel:'silent',define:{'import.meta.env.VITE_API_BASE_URL':JSON.stringify('/api'),'process.env.NODE_ENV':JSON.stringify('development')},plugins:[{name:'renewal-reviewfix',resolveId:id=>id==='virtual:renewal-reviewfix'?id:undefined,load:id=>id==='virtual:renewal-reviewfix'?entry:undefined}],build:{write:false,minify:false,rolldownOptions:{input:'virtual:renewal-reviewfix'}}});
+ const out=(Array.isArray(built)?built[0]:built) as {output:{type:string;fileName:string;code?:string;source?:string|Uint8Array}[]},assets=new Map(out.output.map(a=>['/'+a.fileName,a]));
+ const html=`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">${out.output.filter(a=>a.fileName.endsWith('.css')).map(a=>`<link rel="stylesheet" href="/${a.fileName}">`).join('')}</head><body><div id="root"></div><script type="module" src="/${out.output.find(a=>a.type==='chunk')!.fileName}"></script></body></html>`;
+ server=createServer((req,res)=>{const a=assets.get(new URL(req.url!,'http://localhost').pathname);res.setHeader('Content-Type',a?a.fileName.endsWith('.css')?'text/css':'text/javascript':'text/html');res.end(a?a.code||a.source:html);});await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));origin=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
+ try{browser=await chromium.launch({headless:true});}catch(error){if(!(error instanceof Error)||!error.message.includes("Executable doesn't exist"))throw error;browser=await chromium.launch({channel:'chrome',headless:true});}
+});
+after(async()=>{await browser?.close();if(server)await new Promise<void>(resolve=>server.close(()=>resolve()));});
+function record(){return{id:'renewal-local',orderId:'order-local',kind:'SUBSCRIPTION_EXTENSION',revision:2,status:'REVIEW_PENDING',canReview:true,canCancel:true,createdAt:'2026-10-31T00:00:00Z',quote:{id:'quote-local',createdBy:'maker',revision:1,status:'DRAFT',productName:'本车新租期',months:12,startDate:'2027-10-01',endDate:'2028-10-01',monthlyFeeAmount:20000,totalAmount:240000,depositAmount:50000,usagePricing:{baseAllowanceKm:2400,excessPriceAmount:230},swapPolicy:{includedCount:3,extraFeeAmount:50000}}};}
+async function fixture(role='FINANCE'){
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),state={detail:record(),writes:[] as {path:string;body:any}[],reads:[] as string[],readFailure:false,post:undefined as undefined|((path:string,body:any)=>{status:number;json:unknown})};
+ await page.route('**/*',async route=>{const req=route.request(),url=new URL(req.url());assert.equal(url.origin,origin);if(!url.pathname.startsWith('/api/'))return route.continue();const path=url.pathname.slice(4);
+  if(path==='/admin/auth/me')return route.fulfill({json:{user:{id:'reviewer',username:'本地审核',role,permissions:['order-changes.read','order-changes.write']},csrfToken:'local-reviewfix'}});
+  if(req.method()==='GET'){state.reads.push(path+url.search);if(path==='/admin/order-renewals')return route.fulfill({json:{items:[state.detail],total:48,page:Number(url.searchParams.get('page')||1),pageSize:12}});if(path==='/admin/order-renewals/renewal-local')return state.readFailure?route.fulfill({status:500,json:{error:{code:'READ_FAILED',message:'合成读取失败'}}}):route.fulfill({json:state.detail});return route.fulfill({json:{items:[],total:0}});}
+  const body=req.postDataJSON();state.writes.push({path,body});assert(state.post,'unexpected write '+path);return route.fulfill(state.post!(path,body));
+ });return{page,state};
+}
+for(const action of ['review','cancel'] as const)for(const stillAllowed of [true,false])test(`${action} conflict refresh retains exact input when capability stays ${stillAllowed}`,async()=>{
+ const {page,state}=await fixture(action==='review'?'FINANCE':'OPERATIONS'),label=action==='review'?'独立财务复核':'取消未确认草案',field=action==='review'?'复核意见':'取消原因',value='已逐项核对并保留的办理说明';
+ try{
+  state.post=(path,body)=>{assert.equal(path,'/admin/order-renewals/renewal-local/'+action);if(state.writes.length===1){state.detail.revision=3;state.detail[action==='review'?'canReview':'canCancel']=stillAllowed;return{status:409,json:{error:{code:'VERSION_CONFLICT',message:'合成他人已更新'}}};}assert.equal(body.revision,3);state.detail[action==='review'?'canReview':'canCancel']=false;state.detail.revision=4;return{status:200,json:{id:state.detail.id}};};
+  await page.goto(origin+'/#order-renewals?record=renewal-local');const dialog=page.getByRole('dialog',{name:'续期办理'});await dialog.getByRole('button',{name:label,exact:true}).click();await dialog.getByRole('button',{name:label,exact:true}).last().click();
+  if(action==='review')await page.getByLabel('复核结论',{exact:true}).selectOption('APPROVED');await page.getByLabel(field,{exact:true}).fill(value);await page.getByRole('button',{name:'确认'+label,exact:true}).click();
+  await expect(page.getByText('合成他人已更新',{exact:true})).toBeVisible();assert.equal(state.writes.length,1);const beforeReads=state.reads.length;await page.getByRole('button',{name:'重新读取并核对当前版本',exact:true}).click();
+  await expect(page.getByLabel(field,{exact:true})).toHaveValue(value);assert(state.reads.length>beforeReads);assert.equal(state.writes.length,1,'conflict recovery is GET only');if(action==='review')await expect(page.getByLabel('复核结论',{exact:true})).toHaveValue('APPROVED');
+  const submit=page.getByRole('button',{name:'确认'+label,exact:true});if(stillAllowed){await expect(submit).toBeEnabled();await submit.click();await expect(page.getByLabel(field,{exact:true})).toHaveCount(0);assert.equal(state.writes.length,2);assert.equal(state.writes[1].body[action==='review'?'note':'reason'],value);assert.notEqual(state.writes[1].body.idempotencyKey,state.writes[0].body.idempotencyKey);}else{await expect(submit).toBeDisabled();await expect(page.getByLabel(field,{exact:true})).toBeDisabled();assert.equal(state.writes.length,1);await page.getByRole('button',{name:'收起本次办理',exact:true}).click();await expect(page.getByLabel(field,{exact:true})).toHaveCount(0);}
+ }finally{await page.close();}
+});
+test('renewal real App list/detail close and deep links preserve filters and page without remount',async()=>{
+ const {page,state}=await fixture();try{
+  await page.goto(origin+'/#order-renewals?orderId=order-local&keyword=initial&status=REVIEW_PENDING&page=2');await expect(page.getByLabel('搜索续期记录')).toHaveValue('initial');await expect(page.getByLabel('续期状态')).toHaveValue('REVIEW_PENDING');await expect(page.getByText('第 2 页',{exact:true})).toBeVisible();assert(state.reads.some(p=>p.includes('page=2')&&p.includes('keyword=initial')&&p.includes('status=REVIEW_PENDING')&&p.includes('orderId=order-local')));
+  await page.getByRole('heading',{name:'同车续期',exact:true}).evaluate(el=>el.setAttribute('data-same-component','yes'));await page.getByRole('button',{name:'renewal-local',exact:true}).click();await expect(page.getByRole('dialog',{name:'续期办理'})).toBeVisible();await expect(page.locator('.app-shell')).toHaveClass(/workspace-open/);assert.equal(new URL(page.url()).hash.includes('record=renewal-local'),true);await page.getByRole('button',{name:'关闭面板',exact:true}).click();await expect(page.getByRole('dialog',{name:'续期办理'})).toHaveCount(0);await expect.poll(()=>new URL(page.url()).hash.includes('record=')).toBe(false);await expect(page.getByText('第 2 页',{exact:true})).toBeVisible();
+  await page.evaluate(()=>{window.history.replaceState(null,'','#order-renewals?keyword=replaced&status=SCHEDULED&page=3&record=renewal-local');window.dispatchEvent(new Event('process-location'));});await expect(page.getByRole('dialog',{name:'续期办理'})).toBeVisible();await expect(page.getByLabel('搜索续期记录')).toHaveValue('replaced');await expect(page.getByLabel('续期状态')).toHaveValue('SCHEDULED');await expect(page.getByText('第 3 页',{exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'同车续期',exact:true})).toHaveAttribute('data-same-component','yes');
+  const shots=fileURLToPath(new URL('../../../tmp/admin-renewal-ui-reviewfix-baseline/screenshots/',import.meta.url));await mkdir(shots,{recursive:true});await page.screenshot({path:shots+'renewal-detail-1440.png',fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:shots+'renewal-detail-390.png',fullPage:true});await page.getByRole('button',{name:'关闭面板',exact:true}).click();await expect(page.getByRole('dialog',{name:'续期办理'})).toHaveCount(0);assert.equal(new URL(page.url()).hash,'#order-renewals?keyword=replaced&status=SCHEDULED&page=3');
+  await page.evaluate(()=>{window.location.hash='order-renewals?keyword=history&status=DRAFT&page=4';});await expect(page.getByLabel('搜索续期记录')).toHaveValue('history');await expect(page.getByText('第 4 页',{exact:true})).toBeVisible();assert.equal(state.writes.length,0);
+ }finally{await page.close();}
+});
+test('known successful action with failed readback recovers by GET only after capability changes',async()=>{
+ const {page,state}=await fixture();try{
+  state.post=()=>{state.detail.canReview=false;state.detail.revision=3;state.readFailure=true;return{status:200,json:{id:state.detail.id}};};await page.goto(origin+'/#order-renewals?record=renewal-local');const dialog=page.getByRole('dialog',{name:'续期办理'});await dialog.getByRole('button',{name:'独立财务复核',exact:true}).click();await dialog.getByRole('button',{name:'独立财务复核',exact:true}).last().click();await page.getByLabel('复核结论').selectOption('APPROVED');await page.getByLabel('复核意见').fill('已保存后只回读');await page.getByRole('button',{name:'确认独立财务复核',exact:true}).click();await expect(page.getByRole('button',{name:'重新读取结果',exact:true})).toBeVisible();state.readFailure=false;await page.getByRole('button',{name:'重新读取结果',exact:true}).click();await expect(page.getByLabel('复核意见')).toHaveCount(0);assert.equal(state.writes.length,1);
+ }finally{await page.close();}
+});

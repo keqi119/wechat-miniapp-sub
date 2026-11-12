@@ -1,8 +1,14 @@
 import { config } from 'dotenv';
 import { resolve } from 'node:path';
+import { platformOrigins } from './platform-origins';
+import { platformLegalEntity } from './platform-legal-entity';
+import { customerIdentityPolicy } from '../customers/identity-policy';
 export const projectRoot = resolve(__dirname, '../../../..');
 config({ path: resolve(projectRoot, '.env'), quiet: true });
 export function validateConfig() {
+  customerIdentityPolicy();
+  platformOrigins();
+  platformLegalEntity();
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL未配置');
   if (process.env.NODE_ENV === 'production') {
     for (const name of ['JWT_SECRET', 'SESSION_SECRET', 'ADMIN_ORIGIN']) {

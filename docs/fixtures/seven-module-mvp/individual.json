@@ -1,0 +1,11 @@
+{
+  "synthetic": true,
+  "subject": {
+    "subjectType": "INDIVIDUAL",
+    "name": "合成个人合作商B",
+    "address": "合成测试地址，不用于寄送",
+    "contactPhone": "13800000001"
+  },
+  "identityRelationship": "SELF",
+  "cooperationMode": "OFFLINE"
+}

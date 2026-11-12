@@ -1,0 +1,24 @@
+import '../src/common/config';
+import {test,before,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {Db} from '../src/common/db';
+import {CustomerController} from '../src/orders/customer';
+import {OfflineWorkspaceService} from '../src/offline-documents/workspace.service';
+import {offlineOrder,approvedOfflineArchive} from './offline-fixtures';
+let db:Db;
+before(()=>{db=new Db();});after(()=>db.$disconnect());
+test('customer bill detail and order workspace return the same real bill reason and service period',async()=>{
+ const f=await offlineOrder(db);await approvedOfflineArchive(db,f.order.id);
+ await db.order.update({where:{id:f.order.id},data:{status:'ACTIVE'}});
+ await db.bill.update({where:{id:f.bill.id},data:{description:'合成1元产品首期租金',dueDate:new Date('2026-10-25')}});
+ const deposit=await db.bill.create({data:{orderId:f.order.id,customerId:f.customer.id,type:'DEPOSIT',sequence:0,amount:100,status:'PENDING',dueDate:new Date('2026-10-25'),description:'合成履约押金'}});
+ await db.usageAccount.create({data:{orderId:f.order.id,customerId:f.customer.id,policyVersion:'USAGE_V2',startedOn:new Date('2026-11-01'),periods:{create:{orderId:f.order.id,sequence:1,startDate:new Date('2026-11-01'),endDate:new Date('2026-12-01'),effectiveEndDate:new Date('2026-12-01')}}}});
+ const actor={id:f.customer.id,role:'CUSTOMER'},controller=new CustomerController(db),req={customer:{id:f.customer.id}};
+ const detail:any=await controller.record('bills',f.bill.id,req),workspace:any=await new OfflineWorkspaceService(db).order(f.order.id,actor);
+ const row=workspace.billing.find((b:any)=>b.id===f.bill.id);
+ assert.equal(detail.type,'bills');assert.equal(detail.billType,'SUBSCRIPTION');assert.equal(detail.title,'首期租金');assert.equal(detail.description,'合成1元产品首期租金');
+ assert.deepEqual(detail.period,{sequence:1,startDate:'2026-11-01',endDate:'2026-12-01',basis:'ACTUAL'});assert.deepEqual(row.period,detail.period);assert.equal(row.description,detail.description);
+ const d:any=await controller.record('bills',deposit.id,req);assert.equal(d.title,'押金');assert.equal(d.billType,'DEPOSIT');assert.equal(d.period,null);
+ await assert.rejects(controller.record('bills',f.bill.id,{customer:{id:'foreign'}}),(e:any)=>e.getStatus()===404);
+ assert.equal((await db.bill.findUniqueOrThrow({where:{id:f.bill.id}})).paidAmount,0);
+});

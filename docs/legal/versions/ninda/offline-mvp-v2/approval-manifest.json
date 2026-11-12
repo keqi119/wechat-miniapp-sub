@@ -1,0 +1,49 @@
+{
+  "status": "USER_APPROVED_FORMAL_VERSION_PREPARED",
+  "approvalDateAsiaShanghai": "2026-10-30",
+  "approval": {
+    "source": "Current conversation explicit user confirmation",
+    "questionItemId": "[\"request_user_input_async\",\"call_5f5c98c9e779481f812d4e13a4563b52\",0]",
+    "userReplyExact": "确认两份正文及差异，制作并启用新版本",
+    "scope": [
+      "OFFLINE_RENTAL v2",
+      "OFFLINE_TERMINATION v2",
+      "clause-mapping"
+    ],
+    "authorizesProductionActivation": true
+  },
+  "documents": [
+    {
+      "name": "rental",
+      "id": "cmvuhgbc2000el501suej6v3h",
+      "type": "OFFLINE_RENTAL",
+      "version": 2,
+      "title": "汽车订阅三方租赁与平台服务合同",
+      "contentSha256": "a9c5d7512a2f7bc99550184059b37badcf2ca6ded78c5b85e65b94291160c376",
+      "apiContentHash": "85143f7c7682f57f6612fb121a57905810e760d48647f66d5c88dd2ac9f75025",
+      "sourceMarkdownSha256": "dee56d240e563d2564405281faf72a6494d9a3cb522177cc0f5733ea1664be54",
+      "formalMarkdownSha256": "23e2c0db833d3f144edf2a8993f6b1c7516b2d76bbe918ce5d19d82f39956a71",
+      "formalTemplateSha256": "a69fbccbaa87f5c4eba87b55c9b3f23d32ddb49a84b58562ed2067a78bf5fa24",
+      "bodySha256": "9c733e865a9e562adaa029911c6f3726248f3f58d590ec884faaca7a7cf28194",
+      "bodyUnchanged": true
+    },
+    {
+      "name": "termination",
+      "id": "cmvuhgcgh000gl501378x56fc",
+      "type": "OFFLINE_TERMINATION",
+      "version": 2,
+      "title": "汽车订阅三方终止与结算协议",
+      "contentSha256": "cb7b2c8cc363dce144a99391ed13fcb5759ca34d0f35017d8a85d38e617b0a30",
+      "apiContentHash": "b17292b6e49d77513b9f333857f1e85654a0a6401b2042522d8ad7ae3e267c19",
+      "sourceMarkdownSha256": "5e38cac8cfce0040af815cf337da336c440b68d1f2da88682de24c07c65bb47f",
+      "formalMarkdownSha256": "8fe7c56dc2409e70c58c38d6188b237f5a1714eac9213d0be57c61eff4d1f444",
+      "formalTemplateSha256": "a92c620149fa738c00fedfd8685647c76528d42d486e8d3d057269003d12c1c9",
+      "bodySha256": "8e2b23d2025fe2442b6c7af271978a0d9411191991f1ec6fa31764173bc77897",
+      "bodyUnchanged": true
+    }
+  ],
+  "mappingSha256": "66ca437e5d2f21a68b6cf342d31a2fab0ca2cacef347581024e2d545c5d001ea",
+  "businessTermsChangedFromApprovedDraft": false,
+  "requiredSignersChanged": false,
+  "productionActivationEvidence": "docs/evidence/ninda-contract-v2-activation.json"
+}

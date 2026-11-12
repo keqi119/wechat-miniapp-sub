@@ -1,0 +1,39 @@
+{
+  "status": "APPROVED",
+  "approvedAt": "2026-10-21T15:14:29.837Z",
+  "approvedBy": "宁达运营方（当前会话用户明确确认）",
+  "approvalQuestionId": "call_c250293fe91c41d8b4645d29d86cbb81",
+  "approvalStatement": "确认发布并开放单方授权书签署",
+  "documents": [
+    {
+      "type": "owner-authorization-letter",
+      "version": 1,
+      "title": "企业车主单方用印授权书",
+      "name": "宁达-企业车主单方用印授权书-v1",
+      "draftPath": "docs/legal/drafts/ninda/owner-authorization-letter-v1.md",
+      "reviewedText": "output/text/宁达-企业车主单方用印授权书-v1-待确认-20261021.txt",
+      "reviewedDraftSha256": "1d9a62ff6a38d9dedc500fbc34f95d66c72bce748b4ae7b251028e01f556bf19",
+      "reviewedTextSha256": "787edcf2268f8b4e9018c8be2c1d061de3fafa57d773cb5fd70e22b8e2707c57",
+      "formalPath": "docs/legal/versions/ninda/owner-authorization-letter-v1.md",
+      "formalText": "output/text/宁达-企业车主单方用印授权书-v1-正式版-20261021.txt",
+      "formalSha256": "8b18418f1ba4d410836355bcba6621f008776b32e1e22b7ffb19019b3cf968fa"
+    },
+    {
+      "type": "owner-auto-sign",
+      "version": 3,
+      "title": "企业车主用印授权说明",
+      "name": "宁达-企业车主用印授权说明-v3",
+      "draftPath": "docs/legal/drafts/ninda/owner-auto-sign-v3.md",
+      "reviewedText": "output/text/宁达-企业车主用印授权说明-v3-待确认-20261021.txt",
+      "reviewedDraftSha256": "a3b1f200c285504dc060a0031400a95bf39effbda29028f0aaa75ae5ca4c82f1",
+      "reviewedTextSha256": "a8fc962501a3b9a40a2ed998864c1d003be05594ba5bbd47f99ff530024e0b97",
+      "formalPath": "docs/legal/versions/ninda/owner-auto-sign-v3.md",
+      "formalText": "output/text/宁达-企业车主用印授权说明-v3-正式版-20261021.txt",
+      "formalSha256": "84725b010c8ffb33ddc132797cd008efbaaa8312c8f7a6a28b6ea81db5891bc4"
+    }
+  ],
+  "editorialChangesAfterApproval": [
+    "仅将待确认状态行改为正式版本状态行，正文保持获批文本"
+  ],
+  "scope": "发布单方授权书和配套说明，开放法人本人单方签署；不代签、不执行订单盖章、不授予渠道自动签权限"
+}

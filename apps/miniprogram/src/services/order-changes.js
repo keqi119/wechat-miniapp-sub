@@ -1,11 +1,11 @@
 const { money, date } = require('../utils/format');
 const { assignmentView, beijingTime } = require('./vehicle-assignments');
-const STATES = { DRAFT: '方案准备中', REVIEW_PENDING: '资金安排待复核', REVIEWED: '资金安排已复核，待发布', AWAITING_CONFIRMATION: '待客户确认延期方案', AWAITING_SIGNATURE: '补充协议待签署', AWAITING_FINANCE: '资金安排待核实', READY: '待后台核对生效', SWAP_RETURNED: '已还旧车，待交新车', APPLIED: '延期方案已生效', CANCELLED: '延期流程已取消', REJECTED: '客户已拒绝此方案' };
+const STATES = { DRAFT: '方案准备中', REVIEW_PENDING: '资金安排待复核', REVIEWED: '资金安排已复核，待发布', AWAITING_CONFIRMATION: '待客户确认延期方案', AWAITING_SIGNATURE: '补充协议待签署', AWAITING_ARCHIVE: '待纸质补充协议签署归档', AWAITING_FINANCE: '资金安排待核实', READY: '待后台核对生效', SWAP_RETURNED: '已还旧车，待交新车', APPLIED: '延期方案已生效', CANCELLED: '延期流程已取消', REJECTED: '客户已拒绝此方案' };
 const TERMINAL = ['APPLIED', 'CANCELLED', 'REJECTED'];
-const PUBLIC = ['AWAITING_CONFIRMATION', 'AWAITING_SIGNATURE', 'AWAITING_FINANCE', 'READY', 'SWAP_RETURNED', ...TERMINAL];
+const PUBLIC = ['AWAITING_CONFIRMATION', 'AWAITING_SIGNATURE', 'AWAITING_ARCHIVE', 'AWAITING_FINANCE', 'READY', 'SWAP_RETURNED', ...TERMINAL];
 const FINANCE = { PENDING: '待处理', PROCESSING: '处理中，待核实', SUCCESS: '已完成', SUCCEEDED: '已完成', REFUNDED: '已退款', FAILED: '失败，待人工处理', CLOSED: '已关闭', PUBLISHED: '待支付', PAID: '已支付', PARTIALLY_PAID: '部分支付', VOID: '已作废', REQUESTED: '待复核', APPROVED: '已复核' };
-function createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, enterSigning }) {
-  const keys = new Map(), running = new Set();
+function createOrderChangesApi({ call, identifier, error, idempotencyKey, getContext, sessionKey, canUseSigning, enterSigning }) {
+  const keys = new Map(), running = new Set(), pending = new Map();
   const invalid = () => { throw error('变更方案数据不完整或状态未知，请刷新或联系客服核对。', 'RESPONSE'); };
   const text = value => typeof value === 'string' ? value : '';
   const amount = value => { if (!Number.isSafeInteger(value) || value < 0) invalid(); return value; };
@@ -21,13 +21,16 @@ function createOrderChangesApi({ call, identifier, error, idempotencyKey, getCon
     if (startDate >= endDate) invalid();
     return { sequence: row.sequence, startDate, endDate, dueDate, periodText: date(startDate) + '—' + date(endDate) + '（末日不含）', dueDateText: date(dueDate) };
   };
-  function documentView(row, swap) {
+  function documentView(row, swap, offline, electronic) {
+    if(offline||electronic) return row && typeof row.id==='string' && row.id && row.type===(electronic?'ELECTRONIC_V31_VEHICLE_SWAP':'OFFLINE_ORDER_AMENDMENT') && Number.isInteger(row.version) && row.version>0 && /^[a-f0-9]{64}$/i.test(row.bodyHash) && /^[a-f0-9]{64}$/i.test(row.templateHash) && typeof row.content==='string' && row.content.trim() && (electronic||!/\{\{|\}\}|待确认|待填写|待补齐/.test(row.content)) ? {id:row.id,type:row.type,version:row.version,hash:row.bodyHash,bodyHash:row.bodyHash,templateHash:row.templateHash,content:row.content} : null;
     return row && typeof row.id === 'string' && row.id && row.type === (swap ? 'vehicle-change-amendment' : 'delivery-delay-amendment') && Number.isInteger(row.version) && row.version > 0 && /^[a-f0-9]{64}$/i.test(row.hash) && typeof row.content === 'string' && row.content.trim() && !/\{\{|\}\}|待确认|待填写|待补齐/.test(row.content)
       ? { id: row.id, type: row.type, version: row.version, hash: row.hash, content: row.content } : null;
   }
   function view(value, id) {
     if (!value || typeof value.id !== 'string' || !value.id || (id && value.id !== id) || typeof value.orderId !== 'string' || !['DELIVERY_DELAY', 'VEHICLE_CHANGE'].includes(value.kind) || !Object.prototype.hasOwnProperty.call(STATES, value.status) || !Number.isInteger(value.revision) || value.revision < 0) invalid();
     const swap = value.kind === 'VEHICLE_CHANGE';
+    const executionMode=value.contract?.executionMode ?? 'ESIGN';if(!['OFFLINE','ESIGN','ELECTRONIC'].includes(executionMode))invalid();const offline=executionMode==='OFFLINE',electronic=executionMode==='ELECTRONIC';
+    if(offline && (!value.quote || value.contract?.kind!=='AMENDMENT' || value.contract.delayQuoteId!==value.quote.id))invalid();
     let quote = null;
     if (value.quote && PUBLIC.includes(value.status)) {
       const q = value.quote;
@@ -38,14 +41,16 @@ function createOrderChangesApi({ call, identifier, error, idempotencyKey, getCon
         for (const key of ['amount', 'originalAmount', 'netPaidAmount', 'carryAmount', 'chargeAmount', 'refundAmount']) { p[key] = amount(row[key]); p[key + 'Text'] = money(p[key]); }
         return p;
       });
-      if (periods.some((row, index) => row.sequence !== index + 1 || (index && row.startDate !== periods[index - 1].endDate)) || periods[0].startDate !== newStartDate || new Date(periods[periods.length - 1].endDate + 'T00:00:00Z').getTime() - Date.parse(newEndDate + 'T00:00:00Z') !== 86400000) invalid();
-      quote = { id: q.id, revision: q.revision, commercialHash: q.commercialHash, newStartDate, newEndDate, newStartDateText: date(newStartDate), newEndDateText: date(newEndDate) + '（含当日）', months: q.months, periods, reason: text(q.reason), settlementExplanation: text(q.settlementExplanation), handoverArrangement: text(q.handoverArrangement), cancellationTerms: text(q.cancellationTerms), confirmedAt: q.confirmedAt || null, document: documentView(q.document, swap), ...deadline(q.expiresAt, value.status === 'AWAITING_CONFIRMATION') };
+      const firstSequence=q.serviceStageScope?.firstPeriodSequence??1;
+      if(!Number.isInteger(firstSequence)||firstSequence<1||q.serviceStageScope&&(q.serviceStageScope.months!==q.months||q.periods.some((row,index)=>row.stageSequence!==index+1)))invalid();
+      if (periods.some((row, index) => row.sequence !== index + firstSequence || (index && row.startDate !== periods[index - 1].endDate)) || periods[0].startDate !== newStartDate || new Date(periods[periods.length - 1].endDate + 'T00:00:00Z').getTime() - Date.parse(newEndDate + 'T00:00:00Z') !== 86400000) invalid();
+      quote = { id: q.id, revision: q.revision, commercialHash: q.commercialHash, newStartDate, newEndDate, newStartDateText: date(newStartDate), newEndDateText: date(newEndDate) + '（含当日）', months: q.months, periods, reason: text(q.reason), settlementExplanation: text(q.settlementExplanation), handoverArrangement: text(q.handoverArrangement), cancellationTerms: text(q.cancellationTerms), confirmedAt: q.confirmedAt || null, document: documentView(q.document, swap, offline, electronic), ...deadline(q.expiresAt, value.status === 'AWAITING_CONFIRMATION') };
       if (swap) {
         const isRecovery = q.financeSourceQuoteId != null || q.recoveryFromQuoteId != null;
         if (isRecovery && (![q.financeSourceQuoteId, q.recoveryFromQuoteId].every(v => typeof v === 'string' && v.trim() && v !== q.id) || (q.previousQuoteId != null && (typeof q.previousQuoteId !== 'string' || !q.previousQuoteId.trim())))) invalid();
         Object.assign(quote, { isRecovery, financeSourceQuoteId: isRecovery ? q.financeSourceQuoteId : null, recoveryFromQuoteId: isRecovery ? q.recoveryFromQuoteId : null, previousQuoteId: text(q.previousQuoteId) });
         for (const key of ['newMonthlyFeeAmount', 'depositAmount', 'depositChargeAmount', 'depositRefundAmount', 'handoverFeeAmount']) { quote[key] = amount(q[key]); quote[key + 'Text'] = money(q[key]); }
-        Object.assign(quote, { plannedReturnAt: q.plannedReturnAt, plannedDeliveryAt: q.plannedDeliveryAt, plannedReturnAtText: beijingTime(q.plannedReturnAt), plannedDeliveryAtText: beijingTime(q.plannedDeliveryAt), oldVehicleIdentification: text(q.oldVehicleIdentification), targetVehicleIdentification: text(q.targetVehicleIdentification), financialGate: q.financialGate, financialGateText: q.financialGate === 'BEFORE_RETURN' ? '旧车交还前核清本次应退、押金调整、交接费用及交付所在期应收；后续月份按到期日主动付款。' : '资金门槛待核对，暂不可确认', handoverFeeBasis: text(q.handoverFeeBasis), depositBasis: text(q.depositBasis), insuranceResponsibility: text(q.insuranceResponsibility), downtimeArrangement: text(q.downtimeArrangement) });
+        Object.assign(quote, { plannedReturnAt: q.plannedReturnAt, plannedDeliveryAt: q.plannedDeliveryAt, plannedReturnAtText: beijingTime(q.plannedReturnAt), plannedDeliveryAtText: beijingTime(q.plannedDeliveryAt), oldVehicleIdentification: text(q.oldVehicleIdentification), targetVehicleIdentification: text(q.targetVehicleIdentification), financialGate: q.financialGate, financialGateText: electronic&&q.financialGate==='BEFORE_DELIVERY'?'按旧车实际收回和新车实际交付事实核算差价、停租扣减及押金，新车交付前核清本次到期款项。':q.financialGate === 'BEFORE_RETURN' ? '旧车交还前核清本次应退、押金调整、交接费用及交付所在期应收；后续月份按到期日主动付款。' : '资金门槛待核对，暂不可确认', handoverFeeBasis: text(q.handoverFeeBasis), depositBasis: text(q.depositBasis), insuranceResponsibility: text(q.insuranceResponsibility), downtimeArrangement: text(q.downtimeArrangement) });
       }
     }
     const finance = value.finance;
@@ -58,15 +63,15 @@ function createOrderChangesApi({ call, identifier, error, idempotencyKey, getCon
     const refunds = finance.refunds.map(row => { if (typeof row.id !== 'string') invalid(); return { id: row.id, amount: amount(row.amount), amountText: money(row.amount), status: text(row.status), statusText: FINANCE[row.status] || '待人工核对' }; });
     const adjustments = (finance.adjustments || []).map(row => { if (typeof row.id !== 'string' || !['DEPOSIT_ADJUSTMENT', 'SWAP_HANDOVER_FEE'].includes(row.type)) invalid(); return { id: row.id, type: row.type, title: row.type === 'DEPOSIT_ADJUSTMENT' ? '押金调整账单' : '换车交接费用', amount: amount(row.amount), amountText: money(row.amount), paidAmount: amount(row.paidAmount), paidAmountText: money(row.paidAmount), statusText: FINANCE[row.status] || '待人工核对', dueDateText: date(day(row.dueDate)) }; });
     const c = value.contract;
-    const contract = c ? { id: text(c.id), status: text(c.status), sourceFileId: text(c.sourceFileId), signedFileId: text(c.signedFileId), statusText: c.status === 'SIGNED' && c.signedFileId ? '双方签署完成，已归档' : c.status === 'SIGNED' ? '归档待核实' : c.status === 'PENDING' ? '签署结果确认中' : '补充协议待完成' } : null;
+    const contract = c ? { executionMode, offlineArchiveId:text(c.offlineArchiveId), id: text(c.id), status: text(c.status), sourceFileId: text(c.sourceFileId), signedFileId: text(c.signedFileId), statusText: offline ? '纸质补充协议：以归档核验结果为准' : c.status === 'SIGNED' && c.signedFileId ? '签署完成，已归档' : c.status === 'SIGNED' ? '归档待核实' : c.status === 'PENDING' ? '签署结果确认中' : '补充协议待完成' } : null;
     const currentAssignment = swap ? assignmentView(value.currentAssignment, invalid) : null;
     const originalAssignment = swap ? assignmentView(value.originalAssignment, invalid) : null;
     let targetVehicle = null;
     if (swap && value.targetVehicle) { if (typeof value.targetVehicle.id !== 'string' || typeof value.targetVehicle.title !== 'string') invalid(); targetVehicle = { id: value.targetVehicle.id, title: value.targetVehicle.title, plateNumber: text(value.targetVehicle.plateNumber), vin: text(value.targetVehicle.vin) }; }
     const handover = row => { if (!row) return null; if (typeof row.id !== 'string' || !['SWAP_RETURN', 'SWAP_DELIVERY'].includes(row.type) || typeof row.vehicleId !== 'string') invalid(); const completed = row.status === 'COMPLETED'; return { id: row.id, type: row.type, label: row.type === 'SWAP_RETURN' ? '旧车交还' : '新车交付', completed, actionText: completed ? '查看已完成交接及归档记录' : row.type === 'SWAP_RETURN' ? '核对旧车交还事实与签署' : '核对新车交付事实与签署', vehicleId: row.vehicleId, assignmentId: row.assignmentId || null, status: row.status, statusText: { PUBLISHED: '待事实确认', CUSTOMER_CONFIRMED: '事实已确认', OBJECTION_SUBMITTED: '异议待处理', COMPLETED: '物理交接已完成', SUPERSEDED: '已有修订版本', DRAFT: '运营准备中' }[row.status] || '状态待核实', signatureStatus: row.signatureStatus, actualAtText: beijingTime(row.actualAt), readingKm: amount(row.readingKm) }; };
-    const complete = Boolean(quote?.document && [quote.reason, quote.settlementExplanation, quote.handoverArrangement, quote.cancellationTerms].every(v => v.trim()) && quote.periods.every(p => p.calculationBasis.trim()) && (!swap || (targetVehicle && quote.financialGate === 'BEFORE_RETURN' && quote.plannedReturnAtText !== '待核对' && quote.plannedDeliveryAtText !== '待核对' && [quote.oldVehicleIdentification, quote.targetVehicleIdentification, quote.handoverFeeBasis, quote.depositBasis, quote.insuranceResponsibility, quote.downtimeArrangement].every(v => v.trim()))));
+    const complete = Boolean(quote?.document && [quote.reason, quote.settlementExplanation, quote.handoverArrangement, quote.cancellationTerms].every(v => v.trim()) && quote.periods.every(p => p.calculationBasis.trim()) && (!swap || (targetVehicle && quote.financialGate === (electronic?'BEFORE_DELIVERY':'BEFORE_RETURN') && quote.plannedReturnAtText !== '待核对' && quote.plannedDeliveryAtText !== '待核对' && [quote.oldVehicleIdentification, quote.targetVehicleIdentification, quote.handoverFeeBasis, quote.depositBasis, quote.insuranceResponsibility, quote.downtimeArrangement].every(v => v.trim()))));
     const statusText = swap ? { AWAITING_CONFIRMATION: '待客户确认换车方案', READY: '待两侧交接及后台核对', APPLIED: '换车已实际完成并生效', CANCELLED: '换车流程已取消' }[value.status] || STATES[value.status] : STATES[value.status];
-    return { id: value.id, orderId: value.orderId, kind: value.kind, isSwap: swap, status: value.status, revision: value.revision, title: swap ? '换车补充方案' : '延期交车补充方案', statusText, reason: text(value.reason), subtitle: quote ? quote.newStartDateText + '起 · 保持' + quote.months + '个月' : '正式方案尚待发布', quote, contract, currentAssignment, originalAssignment, targetVehicle, returnHandover: handover(value.returnHandover), deliveryHandover: handover(value.deliveryHandover), actualCompletedAtText: value.actualCompletedAt ? beijingTime(value.actualCompletedAt) : '', recordedAtText: value.recordedAt ? beijingTime(value.recordedAt) : '', finance: { obligations, refunds, adjustments, depositRefundAmountText: finance.depositRefundAmount == null ? '' : money(amount(finance.depositRefundAmount)), blockers: finance.blockers.filter(v => typeof v === 'string') }, blockers: value.blockers.filter(v => typeof v === 'string'), capabilityNote: text(value.capabilityNote), canConfirm: complete && quote.confirmationDeadlineValid && !quote.confirmationExpired && value.status === 'AWAITING_CONFIRMATION' && value.canConfirm === true, canReject: value.status === 'AWAITING_CONFIRMATION' && value.canReject === true, canSign: complete && value.status === 'AWAITING_SIGNATURE' && value.canSign === true, canSync: value.canSync === true && !['CANCELLED', 'REJECTED'].includes(value.status) };
+    return { factSettlementId:electronic&&typeof value.factSettlement?.id==='string'?value.factSettlement.id:null, executionMode, isOffline:offline, isElectronic:electronic, id: value.id, orderId: value.orderId, kind: value.kind, isSwap: swap, status: value.status, revision: value.revision, title: swap ? '换车补充方案' : '延期交车补充方案', statusText, reason: text(value.reason), subtitle: quote ? quote.newStartDateText + '起 · 保持' + quote.months + '个月' : '正式方案尚待发布', quote, contract, currentAssignment, originalAssignment, targetVehicle, returnHandover: handover(value.returnHandover), deliveryHandover: handover(value.deliveryHandover), actualCompletedAtText: value.actualCompletedAt ? beijingTime(value.actualCompletedAt) : '', recordedAtText: value.recordedAt ? beijingTime(value.recordedAt) : '', finance: { obligations, refunds, adjustments, depositRefundAmountText: finance.depositRefundAmount == null ? '' : money(amount(finance.depositRefundAmount)), blockers: finance.blockers.filter(v => typeof v === 'string') }, blockers: value.blockers.filter(v => typeof v === 'string'), capabilityNote: text(value.capabilityNote), canConfirm: complete && quote.confirmationDeadlineValid && !quote.confirmationExpired && value.status === 'AWAITING_CONFIRMATION' && value.canConfirm === true, canReject: value.status === 'AWAITING_CONFIRMATION' && value.canReject === true, canSign: !offline && !electronic && complete && value.status === 'AWAITING_SIGNATURE' && value.canSign === true, canSync: !offline && !electronic && value.canSync === true && !['CANCELLED', 'REJECTED'].includes(value.status) };
   }
   function summary(value) {
     if (!value || typeof value.id !== 'string' || !value.id || typeof value.orderId !== 'string' || !['DELIVERY_DELAY', 'VEHICLE_CHANGE'].includes(value.kind) || !Object.prototype.hasOwnProperty.call(STATES, value.status) || !Number.isInteger(value.revision) || value.revision < 0) invalid();
@@ -78,7 +83,7 @@ function createOrderChangesApi({ call, identifier, error, idempotencyKey, getCon
     }
     return { id: value.id, orderId: value.orderId, kind: value.kind, status: value.status, revision: value.revision, reason: text(value.reason), createdAt: text(value.createdAt), title: value.kind === 'VEHICLE_CHANGE' ? '换车补充方案' : '延期交车补充方案', statusText: quoteSummary?.confirmationExpired ? '客户确认期限已过，待新报价' : value.kind === 'VEHICLE_CHANGE' ? ({ AWAITING_CONFIRMATION: '待客户确认换车方案', READY: '待两侧交接及后台核对', APPLIED: '换车已实际完成并生效', CANCELLED: '换车流程已取消' }[value.status] || STATES[value.status]) : STATES[value.status], subtitle: quoteSummary ? (value.kind === 'VEHICLE_CHANGE' ? quoteSummary.targetVehicleTitle + ' · 原期限至' + date(quoteSummary.newEndDate) + '（含当日）' : date(quoteSummary.newStartDate) + '起 · 保持' + quoteSummary.months + '个月') : '正式方案尚待发布', quoteSummary };
   }
-  async function getOrderChange(id) { return view(await call('GET', '/customer/order-changes/' + identifier(id)), id); }
+  async function getOrderChange(id) { const token = sessionKey(), customerId = getContext().customer?.id; const result = view(await call('GET', '/customer/order-changes/' + identifier(id)), id); const allowed = result.isOffline || result.isElectronic ? false : await canUseSigning(); if (!token || token !== sessionKey() || customerId !== getContext().customer?.id) throw error('登录会话已变化，请重新进入本人记录。', 'SESSION_CHANGED'); const frozen=pending.get(id);if(frozen&&result.revision!==frozen.body.revision)pending.delete(id);return allowed ? result : { ...result, historyOnly: !result.canConfirm && !result.canReject, canSign: false, canSync: false }; }
   async function getOrderChanges(params = {}) { if (params.kind && !['DELIVERY_DELAY', 'VEHICLE_CHANGE'].includes(params.kind)) throw error('变更类型无效。', 'VALIDATION'); const result = await call('GET', '/customer/order-changes', { page: params.page || 1, pageSize: params.pageSize || 50, ...(params.kind ? { kind: params.kind } : {}) }); if (!Array.isArray(result?.items) || !Number.isInteger(result.total) || result.total < 0) invalid(); return { total: result.total, page: result.page, pageSize: result.pageSize, items: result.items.map(summary) }; }
   async function act(id, action, payload = {}) {
     if (!Number.isInteger(payload.revision) || payload.revision < 1 || (action === 'confirm' && (payload.read !== true || !payload.commercialHash)) || (action === 'reject' && (!text(payload.reason).trim() || payload.reason.trim().length > 500))) throw error('请完整阅读当前方案，确认版本并填写必要意见。', 'VALIDATION');
@@ -86,15 +91,20 @@ function createOrderChangesApi({ call, identifier, error, idempotencyKey, getCon
     if (running.has(busyKey)) throw error('当前操作正在提交，请等待结果。', 'CHANGE_BUSY');
     running.add(busyKey);
     try {
+      const frozen=pending.get(id),token=sessionKey(),customerId=getContext().customer?.id;
+      if(frozen&&(frozen.token!==token||frozen.customerId!==customerId))pending.delete(id);
       const current = await getOrderChange(id);
       if (current.revision !== payload.revision || (action === 'confirm' && current.quote?.commercialHash !== payload.commercialHash)) throw error('方案版本已改变，请刷新后重新阅读。', 'CHANGE_STALE');
       const capability = { confirm: 'canConfirm', reject: 'canReject', sign: 'canSign', sync: 'canSync' }[action];
       if (!capability || !current[capability]) throw error('当前变更流程不可执行此操作，请刷新或联系人工。', 'CHANGE_UNAVAILABLE');
       const body = { revision: current.revision, ...(action === 'confirm' ? { commercialHash: current.quote.commercialHash } : {}), ...(action === 'reject' ? { reason: payload.reason.trim() } : {}) };
+      const old=pending.get(id);if(old&&(old.action!==action||JSON.stringify(old.body)!==JSON.stringify(body)))throw error('上次提交结果未知，请先按原内容核对，不能更换意见。','CHANGE_UNKNOWN');
       const key = JSON.stringify([getContext().customer?.id, id, action, body]); if (!keys.has(key)) keys.set(key, idempotencyKey('order-change'));
       if (action === 'sign') return enterSigning('order-change', id, { ...body, idempotencyKey: keys.get(key) });
-      const result = await call('POST', '/customer/order-changes/' + identifier(id) + '/' + action, { ...body, idempotencyKey: keys.get(key) });
-      const mapped = view(result, id); keys.delete(key); return mapped;
+      pending.set(id,{action,body,token,customerId});
+      try { const result = await call('POST', '/customer/order-changes/' + identifier(id) + '/' + action, { ...body, idempotencyKey: keys.get(key) });
+      if(token!==sessionKey()||customerId!==getContext().customer?.id)throw error('登录会话已变化，请重新进入本人记录。','SESSION_CHANGED');
+      const mapped=view(result,id);pending.delete(id);keys.delete(key);return mapped; } catch(e){if(e.statusCode>=400&&e.statusCode<500||e.code==='SESSION_CHANGED')pending.delete(id);throw e;}
     } finally { running.delete(busyKey); }
   }
   async function queryOrderChangeSignature(id) {
@@ -102,6 +112,6 @@ function createOrderChangesApi({ call, identifier, error, idempotencyKey, getCon
     const result = current.canSync ? await act(id, 'sync', { revision: current.revision }) : current;
     return { status: result.contract?.status === 'SIGNED' && result.contract.signedFileId ? 'SIGNED' : result.contract?.status === 'REJECTED' ? 'REJECTED' : 'PENDING', changeStatus: result.status };
   }
-  return { getOrderChange, getOrderChanges, confirmOrderChange: (id, payload) => act(id, 'confirm', payload), rejectOrderChange: (id, payload) => act(id, 'reject', payload), signOrderChange: (id, payload) => act(id, 'sign', payload), syncOrderChange: (id, payload) => act(id, 'sync', payload), queryOrderChangeSignature, clearChangeKeys: () => keys.clear() };
+  return { getOrderChange, getOrderChanges, confirmOrderChange: (id, payload) => act(id, 'confirm', payload), rejectOrderChange: (id, payload) => act(id, 'reject', payload), signOrderChange: (id, payload) => act(id, 'sign', payload), syncOrderChange: (id, payload) => act(id, 'sync', payload), queryOrderChangeSignature, clearChangeKeys: () => {keys.clear();pending.clear();} };
 }
 module.exports = { createOrderChangesApi };

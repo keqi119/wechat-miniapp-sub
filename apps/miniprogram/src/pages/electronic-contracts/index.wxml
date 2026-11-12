@@ -1,0 +1,23 @@
+<view class="page bottom-space">
+  <view class="eyebrow">合同与签署</view><view class="title">电子合同</view>
+  <view wx:if="{{loading}}" class="empty">正在核对合同与本次版本…</view>
+  <view wx:elif="{{error}}" class="empty"><view>{{error}}</view><button class="secondary" bindtap="reload">重新读取本人记录</button><button class="text-button" bindtap="openIdentity">登录 / 个人资料</button></view>
+  <block wx:else>
+    <view wx:if="{{identity && !identity.verified}}" class="card"><view class="section-title">本人实名状态</view><view>{{identity.verified ? '渠道实名已核实' : identity.blocker.message || '签署与线上交接须本人完成法大大实名核验'}}</view><view class="muted">资料审核通过后，仍需您本人完成签署渠道实名核验。</view><button class="secondary" bindtap="openIdentity">核对实名与单独同意说明</button></view>
+    <view wx:if="{{workspaceError}}" class="notice">当前办理条件暂未核实：{{workspaceError}}。已有合同原文与历史证据仍可查阅；请重试或联系运营。</view>
+    <view wx:if="{{!channelEnabled}}" class="notice">当前签署入口未开放。请由运营与发布负责人核对电子合同及实名渠道配置；已有原文、各方事实与历史归档仍可查阅。</view>
+    <view wx:if="{{readiness.length}}" class="card"><view class="section-title">本份协议办理条件</view><view wx:for="{{readiness}}" wx:key="field" class="notice">{{item.reason}} · {{item.responsibleRole === 'CUSTOMER' ? '请本人办理' : '请联系运营或对应企业经办人补齐'}}</view><view class="muted">请由对应本人或运营补齐当前资料，再刷新；历史签署事实仍可查阅。</view></view>
+    <view wx:if="{{!items.length}}" class="empty">本页暂无电子合同。主合同须由运营核对来源并准备发起。</view>
+    <button wx:for="{{items}}" wx:key="id" class="record-card" data-id="{{item.id}}" bindtap="select" disabled="{{busy}}"><view class="row between"><view class="section-title">{{item.title}}</view><text class="tag">{{item.statusText}}</text></view><view class="muted">{{item.contractLabel}}</view></button>
+    <view class="pagination"><button class="secondary" bindtap="previous" disabled="{{busy || page === 1}}">上一页</button><text>{{page}} 页 / 共 {{total}} 份</text><button class="secondary" bindtap="next" disabled="{{busy || !hasNext}}">下一页</button></view>
+    <view wx:if="{{task}}" class="card"><view class="section-title">{{task.title}}</view><view class="tag">{{task.statusText}}</view><view>{{task.contractLabel}}</view><view class="signer-slots"><view wx:for="{{task.parties}}" wx:key="role" class="signer-slot {{item.signed ? 'signed' : 'pending'}}"><text class="signer-check">{{item.signed ? '✓' : '○'}}</text><view>{{item.role === 'CUSTOMER' ? '客户' : item.role === 'OWNER' ? '出租方' : '宁达'}}</view><view class="small muted">{{item.signed ? '已签署' : '待签署'}}</view></view></view>
+      <button class="text-button" bindtap="toggleTechnical">{{showTechnical ? '收起版本核对信息' : '查看版本核对信息'}}</button><view wx:if="{{showTechnical}}" class="muted source-hash">任务 {{task.id}} · 修订 {{task.revision}} · 模板 {{task.archive.templateId}} / {{task.archive.templateVersion}} · 原文摘要 {{task.sourceSha256}} · 处理信息 {{task.lastErrorCode}} {{task.stopStatus}} {{task.evidenceReviewStatus}}</view>
+      <view wx:if="{{task.lastErrorCode || task.stopStatus || task.evidenceReviewStatus}}" class="notice">当前合同有待核对事项，请联系运营核对原交易证据与处理进度。</view>
+      <button class="secondary" bindtap="openSource" disabled="{{busy}}">阅读本版本完整原文 PDF</button><button wx:if="{{task.finalFileAvailable}}" class="secondary" bindtap="openFinal" disabled="{{busy}}">{{task.finalLabel}}</button>
+      <block wx:if="{{canSign}}"><checkbox-group bindchange="accept"><label class="consent-row"><checkbox value="sign" checked="{{accepted}}" disabled="{{busy || !sourceRead}}" color="#231815"/><text>我已完整阅读本版本原文，核对合同各方、车辆、期限与金额，愿以客户本人身份签署。</text></label></checkbox-group><button class="primary" bindtap="sign" disabled="{{busy || !sourceRead || !accepted}}" loading="{{busy}}">本人签署本份协议</button></block>
+      <view wx:else class="notice">{{signHelp}}</view>
+      <button class="secondary" bindtap="sync" disabled="{{busy}}">状态刷新</button>
+    </view>
+    <view wx:if="{{message}}" class="notice" role="alert">{{message}}</view><button class="secondary" bindtap="reload" disabled="{{busy}}">刷新保存的进度</button><button class="text-button" bindtap="openOrder">返回原订单</button>
+  </block>
+</view>

@@ -55,3 +55,10 @@ test('a later signer cannot leapfrog the first; stale certificate checks and una
   task.parties[2].status='PENDING';task.parties[0].certificate.checkedAt='2026-10-31T07:00:00Z';assert.equal(nextSigningAction(task,esignNow).kind,'BLOCKED');
   task.businessApproved=false;assert.deepEqual(nextSigningAction(task,esignNow),{kind:'BLOCKED',code:'ELECTRONIC_BUSINESS_APPROVAL_REQUIRED'});
 });
+test('cooperation must remain manual even after historical document acceptance',()=>{
+ const task=electronicTask();task.kind='COOPERATION';task.context.kind='COOPERATION';task.parties=task.parties.filter(p=>p.role!=='CUSTOMER');
+ for(const p of task.parties)p.autoAuthority!.documentKinds=['COOPERATION'];
+ assert.deepEqual(nextSigningAction(task,esignNow),{kind:'BLOCKED',code:'ELECTRONIC_MANUAL_REQUIRED'});
+ (task.parties[0] as any).documentAccepted=true;
+ assert.deepEqual(nextSigningAction(task,esignNow),{kind:'BLOCKED',code:'ELECTRONIC_MANUAL_REQUIRED'});
+});

@@ -1,0 +1,13 @@
+import {useEffect,useRef,useState} from 'react';
+import {api} from './core';
+import {Command,Facts,rows,type Row} from './domain-ui';
+import {ErrorNotice} from './ui';
+import {partnerCapabilityGroups} from './partner-operations';
+const actionNames:Record<string,string>={read:'读取资料',write:'经办及提交',review:'独立复核',disable:'立即停用',record:'登记实际付款'};
+export function StaffPartnerAccess({staff,after}:{staff:Row;after:()=>void}){
+ const[people,setPeople]=useState<Row[]>([]),[error,setError]=useState<unknown>();const newPerson=useRef(crypto.randomUUID());
+ useEffect(()=>{if(api.session?.user.role!=='ADMIN'||staff.staffPersonId)return;let active=true;api.request('/admin/users?pageSize=100').then(data=>{if(active)setPeople(rows(data).filter(p=>p.staffPersonId));}).catch(e=>{if(active)setError(e);});return()=>{active=false;};},[staff.id,staff.staffPersonId]);
+ if(api.session?.user.role!=='ADMIN')return null;
+ const initial=Object.fromEntries(partnerCapabilityGroups.map(g=>[g.prefix,(staff.partnerCapabilities||[]).filter((c:string)=>g.capabilities.includes(c))]));
+ return <section className="domain-section"><h3>合作业务能力与实际人员归属</h3><p className="muted">按具体资源授予经办和复核；同一实际人员的多个账号不能互相复核。权限变更立即撤销该账号旧会话。</p><Facts items={[["实际人员归属",staff.staffPersonId?'已由管理员核实，映射不可改写':'尚未核实，不能参与独立复核'],["已授合作能力数",(staff.partnerCapabilities||[]).length]]}/>{staff.role==='FIELD'?<p>现场账号不授予合作业务能力。</p>:<Command label="配置合作业务能力" path={`/admin/users/${staff.id}/partner-capabilities`} revision={staff.revision} initial={initial} fields={[...partnerCapabilityGroups.map(g=>({key:g.prefix,label:g.label,kind:'multi' as const,choices:g.capabilities.map(c=>({value:c,label:actionNames[c.split('.').at(-1)!]}))})),{key:'reason',label:'授权或撤销原因',kind:'textarea',required:true}]} build={v=>({capabilities:partnerCapabilityGroups.flatMap(g=>Array.isArray(v[g.prefix])?v[g.prefix] as string[]:[]),reason:v.reason})} after={after} note="勾选为完整能力集合，取消全部勾选即撤销。ADMIN和历史FINANCE账号也没有自动合作授权。"/>}{!staff.staffPersonId?<><Command label="核实并绑定实际人员" path={`/admin/users/${staff.id}/staff-person`} revision={staff.revision} fields={[{key:'person',label:'实际人员归属',kind:'select',required:true,choices:[{value:'NEW',label:'新实际人员（本次核实后建立稳定标识）'},...Array.from(new Map(people.map(p=>[p.staffPersonId,{value:p.staffPersonId,label:`与 ${p.name||p.username} 为同一实际人员`}])).values())]},{key:'verified',label:'管理员已核实账号实际使用人',kind:'check',required:true},{key:'reason',label:'核实依据与原因',kind:'textarea',required:true}]} build={v=>({staffPersonId:v.person==='NEW'?newPerson.current:v.person,reason:v.reason})} after={after} note="通过人员归属核实建立系统内稳定标识，无需采集身份证。已有账号属于同一人时选择该人员，不能另建标识规避自审。"/>{error?<ErrorNotice error={error}/>:null}</>:null}</section>;
+}

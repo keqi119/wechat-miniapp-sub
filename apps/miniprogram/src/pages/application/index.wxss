@@ -8,7 +8,7 @@
 .intent-card {
   border: 1rpx solid #d0d4c6;
   padding: 30rpx;
-  background: #fbfaf7;
+  background: #ffffff;
   margin-bottom: 32rpx;
 }
 .intent-card .section-title {
@@ -49,8 +49,8 @@
   line-height: 1.7;
 }
 .review-line > text {
-  color: #b44919;
-  font-size: 23rpx;
+  color: #715300;
+  font-size: 24rpx;
 }
 .acceptance {
   display: flex;
@@ -79,13 +79,13 @@
 }
 .submit-caption {
   text-align: center;
-  font-size: 21rpx;
+  font-size: 24rpx;
   color: #737a6a;
   padding-top: 14rpx;
   line-height: 1.6;
 }
 .submitted-card {
-  border-left: 4rpx solid #b44919;
+  border-left: 4rpx solid #715300;
   padding: 24rpx;
   background: #e9ecdf;
 }
@@ -95,3 +95,6 @@
 .application-page {
   padding-bottom: 260rpx;
 }
+
+/* Bright native 2026-11-02 */
+.intent-card{border-color:#e1e1de;border-radius:24rpx;background:#ffffff}.contact-section{padding:24rpx 0}.review-line{border-color:#e9e7e3;font-size:26rpx}.submit-caption{color:#65615c}.form-error{border-radius:12rpx}.application-page{padding-bottom:calc(280rpx + env(safe-area-inset-bottom))}

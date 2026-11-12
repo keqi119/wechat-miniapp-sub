@@ -1,6 +1,7 @@
 import {resolveDelayTemplate} from '../contract/delay-template';
 import {lockOrder} from '../order-changes/context';
 import {requireOwnerContractCurrent} from './contract-state';
+import {assertNewEsignAllowed} from '../offline-documents/mode';
 import {randomUUID} from 'node:crypto';
 import {Db} from '../common/db';
 import {ensure} from '../common/errors';
@@ -12,13 +13,16 @@ import {ContractPdfRendererService} from '../contract/contract-pdf-renderer.serv
 import {createOwnerContractPdfSigningSlots} from '../contract/contract-pdf-render-model';
 import {approvedTemplate,commercialSnapshot,resolveSubscriptionTemplate} from '../contract/contract-template';
 import {lessorIdentityHash} from './lessor';
+import {ownerAuthorizationDelegate} from './rules';
 const termLabels:Record<string,string>={vehicleIdentification:'车辆身份',permittedUse:'驾驶人及用途',conditionDisclosure:'车况披露',customerAddress:'客户联系地址',mileageCarryRule:'里程周期及结转',excessMileageCalculation:'超里程计算',usageCosts:'使用费用',insuranceDetails:'保险保障及限制',maintenanceRule:'保养维修',serviceCoverage:'服务范围',handoverArrangement:'交还车安排',earlyTerminationRule:'提前终止费用',depositRefundRule:'押金退款规则',otherFees:'其他费用'};
 export class OwnerContractPreparation {
  constructor(private db:Db,private config:FadadaSettings,private writer:ContractPdfArtifactWriterService,private renderer=new ContractPdfRendererService()){}
  async prepare(actorId:string,contractId:string){
+  assertNewEsignAllowed();
   ensure(process.env.OWNER_CONTRACTS_ENABLED==='true',503,'OWNER_CONTRACTS_DISABLED','实际车主合同尚未开放');
   const actor=await this.db.adminUser.findUnique({where:{id:actorId}});ensure(actor?.active&&['ADMIN','OPERATIONS'].includes(actor.role),403,'FORBIDDEN','仅运营可准备合同');
   const resource=await this.db.contract.findUnique({where:{id:contractId},include:{order:{include:{customer:true}},delayQuote:{include:{change:true}}}});ensure(resource&&['SUBSCRIPTION','AMENDMENT'].includes(resource.kind),409,'OWNER_CONTRACT_KIND','签署业务类型不匹配');
+  assertNewEsignAllowed({executionMode:(resource as any).executionMode,contractMode:(resource.order as any).contractMode});
   const snapshot=resource.order.finalPlanSnapshot as any,lessor=snapshot.lessorSnapshot,consent=snapshot.ownerDataConsent;
   ensure(lessor&&consent?.ownerId===lessor.ownerId&&consent.customerId===resource.customerId&&consent.lessorHash===lessorIdentityHash(lessor)&&consent.notice?.contentHash===lessor.sharingNotice?.contentHash,409,'OWNER_SHARING_CONSENT','本单客户尚未确认向实际出租方提供合同资料');
   const existing=await this.db.ownerSigningTask.findUnique({where:{kind_resourceId_documentHash:{kind:resource.kind,resourceId:contractId,documentHash:resource.documentHash}}});if(existing){await this.writer.readVerified(existing.sourceFileId,existing.sourceSha256);return this.rebindUnissued(actorId,existing,resource);}
@@ -39,7 +43,7 @@ export class OwnerContractPreparation {
    const file=await this.writer.persistPdf(rendered.buffer,{customerId:resource.customerId,name:contractId+'-owner-source.pdf',purpose:'contract'});
    const task=await this.db.serial(async tx=>{
     await lockOrder(tx,resource.orderId);const current=await tx.contract.findUniqueOrThrow({where:{id:contractId},include:{order:true,delayQuote:{include:{change:true}}}});requireOwnerContractCurrent(current);ensure(current.status==='DRAFT'&&!current.providerTaskId&&current.signingLeaseUntil?.getTime()===lease.getTime()&&current.documentHash===resource.documentHash,409,'SIGNATURE_STATE','合同版本或准备状态已变化');
-    const t=await tx.ownerSigningTask.create({data:{ownerId:owner.id,customerId:resource.customerId,kind:resource.kind,resourceId:contractId,documentHash:resource.documentHash,sourceFileId:file.id,sourceSha256:file.sha256,ownerSealId:seal.id,providerContractId:randomUUID().replaceAll('-',''),snapshot:{vehicleId:resource.order.vehicleId,monthlyFeeAmount:snapshot.monthlyFeeAmount,depositAmount:snapshot.depositAmount,months:snapshot.months,template:{id:legal.id,version:legal.version,hash:hash(legal.content)},lessor:{ownerId:owner.id,name:lessor.name,creditCode:lessor.creditCode,providerCustomerId:company.providerCustomerId!,providerSignatureId:seal.providerSignatureId,certificateSerialNo:company.certSerialNo!,sealImageHash:seal.imageHash},slotCoordinates:JSON.parse(JSON.stringify(rendered.slotCoordinates))},parties:{create:[{role:'OWNER',providerCustomerId:company.providerCustomerId!,providerSignatureId:seal.providerSignatureId,transactionId:randomUUID().replaceAll('-','')},{role:'CUSTOMER',providerCustomerId:account.providerCustomerId!,transactionId:randomUUID().replaceAll('-','')}]}}});
+    const t=await tx.ownerSigningTask.create({data:{ownerId:owner.id,customerId:resource.customerId,kind:resource.kind,resourceId:contractId,documentHash:resource.documentHash,sourceFileId:file.id,sourceSha256:file.sha256,ownerSealId:seal.id,providerContractId:randomUUID().replaceAll('-',''),snapshot:{vehicleId:resource.order.vehicleId,monthlyFeeAmount:snapshot.monthlyFeeAmount,depositAmount:snapshot.depositAmount,months:snapshot.months,delegate:ownerAuthorizationDelegate(),documentKind:amendment?'AMENDMENT':'SUBSCRIPTION_WITH_FEES',template:{id:legal.id,type:legal.type,version:legal.version,hash:hash(legal.content)},lessor:{ownerId:owner.id,name:lessor.name,creditCode:lessor.creditCode,providerCustomerId:company.providerCustomerId!,providerSignatureId:seal.providerSignatureId,certificateSerialNo:company.certSerialNo!,sealImageHash:seal.imageHash},slotCoordinates:JSON.parse(JSON.stringify(rendered.slotCoordinates))},parties:{create:[{role:'OWNER',providerCustomerId:company.providerCustomerId!,providerSignatureId:seal.providerSignatureId,transactionId:randomUUID().replaceAll('-','')},{role:'CUSTOMER',providerCustomerId:account.providerCustomerId!,transactionId:randomUUID().replaceAll('-','')}]}}});
     await tx.contract.update({where:{id:contractId},data:{body,sourceFileId:file.id,providerTaskId:t.id,documentId:legal.id,templateVersion:legal.version,signingLeaseUntil:null}});await audit(tx,actorId,'OWNER_CONTRACT_PREPARED','contracts',contractId,{taskId:t.id,sourceHash:file.sha256,ownerId:owner.id});return t;
    });return this.view(task);
   }finally{await this.db.contract.updateMany({where:{id:contractId,signingLeaseUntil:lease},data:{signingLeaseUntil:null}});}

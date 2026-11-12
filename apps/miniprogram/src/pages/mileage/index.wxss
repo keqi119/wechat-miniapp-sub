@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid #e1e0d9;
+  border-bottom: 1rpx solid #e9e7e3;
   gap: 20rpx;
   font-size: 26rpx;
 }

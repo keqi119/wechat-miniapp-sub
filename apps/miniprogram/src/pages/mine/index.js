@@ -1,15 +1,17 @@
 const services = require('../../services/index');
 const { load, go } = require('../../utils/page');
+const { navigation } = require('../../utils/tab-navigation');
 Page({
-  openLogin() { require('../../utils/page').go('/pages/settings/index'); },
+  openLogin() { go('/pages/profile/index'); },
   data: {
     loading: true,
     error: '',
+    authenticated: false,
     profile: {},
     application: null,
     links: [
       { type: 'orders', title: '我的订阅与订单' },
-      { type: 'orderchanges', title: '延期交车方案' },
+      { type: 'orderchanges', title: '订阅变更方案' },
       { type: 'contracts', title: '合同文件' },
       { type: 'bills', title: '账单' },
       { type: 'payments', title: '支付记录' },
@@ -21,14 +23,32 @@ Page({
     ],
   },
   onShow() {
-    this.reload();
+    navigation.onShow(this, 3);
+    return this.reload();
   },
-  reload() {
-    return load(this, async () => {
+  onHide() { navigation.onHide(this); },
+  onUnload() {
+    navigation.onHide(this);
+    this._disposed = true;
+    this._loadRevision = (this._loadRevision || 0) + 1;
+  },
+  async reload() {
+    if (this._disposed) return null;
+    const authenticated = services.getContext().authenticated;
+    const pending = load(this, async () => {
+      if (!authenticated) return { authenticated: false, profile: {}, application: null };
       const context = await services.refreshContext();
+      if (!context.authenticated) return { authenticated: false, profile: {}, application: null };
       const dashboard = await services.getDashboard();
-      return { profile: context.profile || {}, application: dashboard.application || null };
+      return { authenticated: true, profile: context.profile || {}, application: dashboard.application || null };
     });
+    const revision = this._loadRevision;
+    this.setData({ authenticated });
+    const result = await pending;
+    if (!this._disposed && this._loadRevision === revision && !services.getContext().authenticated) {
+      this.setData({ authenticated: false, profile: {}, application: null });
+    }
+    return result;
   },
   open(e) {
     go(e.currentTarget.dataset.url);

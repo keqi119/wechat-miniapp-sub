@@ -1,3 +1,5 @@
+import {publishLegacyPlanFixture} from './legacy-esign-mode';
+import {seedTrustedCustomerProfile} from './customer-profile-fixture';
 import {listenForHttpTests} from './http-listener';
 import { seedUsageLegal } from './usage-fixtures';
 import '../src/common/config';
@@ -17,10 +19,12 @@ async function req(path: string, body?: any, identity = 'ADMIN') {
 }
 async function fixture() {
   const id=randomUUID(), c=await db.customer.create({data:{mobile:id,name:'合成信用测试'}});
+  await seedTrustedCustomerProfile(db,c.id);
   await db.customerSession.create({data:{id:tokenHash(id),customerId:c.id,expiresAt:new Date(Date.now()+3600000)}});
   for(const type of ['terms','privacy']){const d=await db.legalDocument.findFirstOrThrow({where:{type,status:'PUBLISHED'},orderBy:{version:'desc'}});await db.customerConsent.create({data:{customerId:c.id,documentId:d.id,type,version:d.version,source:'TEST'}});}
   const v=await db.vehicle.create({data:{brand:'测试',model:'T',title:'测试车辆',year:2026,city:'上海',mileageKm:12000,status:'PUBLISHED'}});
   const p=await db.subscriptionPlan.create({data:{vehicleId:v.id,name:'测试',months:12,monthlyFeeAmount:519900,mileagePerMonthKm:1500,excessMileagePriceAmount:150,energyDescription:'自费',benefits:[],conditions:'测试',active:true}});
+  await publishLegacyPlanFixture(db,p);
   const a=await db.application.create({data:{customerId:c.id,vehicleId:v.id,subscriptionPlanId:p.id,profile:{},consents:[],idempotencyKey:id,requestHash:id,status:'IN_REVIEW'}});
   return {id:a.id,token:id,customerId:c.id};
 }
@@ -32,7 +36,7 @@ async function verify(f:any,band='GE750',extra:any={}) {
 async function plan(f:any,extra:any={},identity='ADMIN') {
   const credit=(await req(`/admin/applications/${f.id}/credit-review`)).data;
   const a=await db.application.findUniqueOrThrow({where:{id:f.id}});
-  return req(`/admin/applications/${f.id}/final-plan`,{creditVerificationId:credit.verification?.id||'unverified-test-id',revision:a.revision,commercialTerms:terms,monthlyFeeAmount:519900,months:12,mileagePerMonthKm:1500,excessMileagePriceAmount:150,energyDescription:'自费',benefits:[],conditions:'测试',startDate:'2026-11-01',firstDueDate:'2026-11-01',...extra},identity);
+  return req(`/admin/applications/${f.id}/final-plan`,{idempotencyKey:randomUUID(),creditVerificationId:credit.verification?.id||'unverified-test-id',revision:a.revision,commercialTerms:terms,monthlyFeeAmount:519900,months:12,mileagePerMonthKm:1500,excessMileagePriceAmount:150,energyDescription:'自费',benefits:[],conditions:'测试',startDate:'2026-11-01',firstDueDate:'2026-11-01',...extra},identity);
 }
 before(async()=>{
   assert.ok(process.env.TEST_DATABASE_URL?.includes('_test')); process.env.NODE_ENV='test';process.env.ADMIN_ORIGIN=origin;
@@ -120,18 +124,18 @@ test('concurrent consent replay and withdrawal versus verification preserve one 
   assert.equal(results[1].status,201);assert.ok([201,409].includes(results[0].status));
   assert.equal((await plan(f)).status,409);assert.equal((await req(`/admin/applications/${f.id}/credit-review`)).data.canFinalize,false);
 });
-test('finance/support can read financial amounts but cannot retrieve credit details through specialized or ordinary resources',async()=>{
+test('finance/support read safe order amounts while application and credit workspaces remain restricted',async()=>{
   const f=await fixture();await consent(f);await verify(f,'B700_749');const p=(await plan(f)).data.finalPlan;
   const confirmed=await req(`/customer/applications/${f.id}/confirm`,{revision:p.revision,commercialHash:p.commercialHash},f.token);assert.equal(confirmed.status,201);
   for(const role of ['FINANCE','SUPPORT']){
     assert.equal((await req(`/admin/applications/${f.id}/credit-review`,undefined,role)).status,403);
-    const detail=await req(`/admin/applications/${f.id}`,undefined,role);assert.equal(detail.status,200);assert.equal(detail.data.finalPlan.depositAmount,519900);
+    const detail=await req(`/admin/applications/${f.id}`,undefined,role);assert.equal(detail.status,403);
     const order=await req(`/admin/orders/${confirmed.data.id}`,undefined,role);assert.equal(order.status,200);assert.equal(order.data.finalPlanSnapshot.depositAmount,519900);
-    const apps=await req(`/admin/applications?keyword=${f.id}`,undefined,role),orders=await req(`/admin/orders?keyword=${confirmed.data.id}`,undefined,role);
+    const apps=await req(`/admin/applications?keyword=${f.id}`,undefined,role),orders=await req(`/admin/orders?keyword=${confirmed.data.id}`,undefined,role);assert.equal(apps.status,403);assert.equal(orders.status,200);
     for(const response of [detail,order,apps,orders])for(const key of ['creditBand','creditVerificationId','creditRevision','creditRuleVersion'])assert.ok(!JSON.stringify(response.data).includes('"'+key+'"'),role+' must not receive '+key);
   }
   for(const role of ['ADMIN','OPERATIONS'])assert.equal((await req(`/admin/applications/${f.id}/credit-review`,undefined,role)).data.verification.band,'B700_749');
-  assert.equal((await req(`/customer/applications/${f.id}/credit-review`,undefined,f.token)).data.verification.band,'B700_749');
+  const customerCredit=(await req(`/customer/applications/${f.id}/credit-review`,undefined,f.token)).data;assert.equal(customerCredit.verification.current,true);assert.ok(customerCredit.verification.verifiedAt);assert.equal(customerCredit.verification.band,undefined);
 });
 
 test('scoped one-fen price preserves actual credit band, creates thirteen exact bills and never edits public plan',async()=>{
@@ -154,9 +158,9 @@ test('scoped one-fen price preserves actual credit band, creates thirteen exact 
    delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;assert.equal((await req(`/customer/applications/${f.id}/confirm`,confirmation,f.token)).data.id,order.data.id);
    const bills=await db.bill.findMany({where:{orderId:order.data.id}});assert.equal(bills.length,13);assert.ok(bills.every(b=>b.amount===1));
    assert.equal((await db.subscriptionPlan.findUniqueOrThrow({where:{id:application.subscriptionPlanId}})).monthlyFeeAmount,519900);
-   assert.equal((order.data.finalPlanSnapshot as any).acceptancePricing.scope.applicationId,f.id);
+   const persisted=await db.order.findUniqueOrThrow({where:{id:order.data.id}});assert.equal((persisted.finalPlanSnapshot as any).acceptancePricing.scope.applicationId,f.id);assert.equal(order.data.finalPlanSnapshot,undefined);
    for(const role of ['FINANCE','SUPPORT'])for(const path of [`/admin/applications/${f.id}`,`/admin/orders/${order.data.id}`]){
-    const response=await req(path,undefined,role);assert.equal(response.status,200);
+    const response=await req(path,undefined,role);assert.equal(response.status,path.includes('/applications/')?403:200);
     assert.ok(!JSON.stringify(response.data).includes('standardDepositAmount'),role+' must not infer the private credit tier from acceptance metadata');
    }
   }
@@ -181,5 +185,31 @@ test('one-fen scope never bypasses missing, low, changed or withdrawn credit aut
    assert.equal((await plan(f,special)).status,409);
    assert.equal(await db.order.count({where:{applicationId:f.id}}),0);
   }
+ }finally{if(saved===undefined)delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;else process.env.ORDER_ACCEPTANCE_SCOPE_JSON=saved;}
+});
+
+test('one-yuan HTTP plan and confirmation create twelve 100-cent rents and one 100-cent deposit with real credit guards',async()=>{
+ const saved=process.env.ORDER_ACCEPTANCE_SCOPE_JSON;
+ try{
+  const f=await fixture(),application=await db.application.findUniqueOrThrow({where:{id:f.id}});
+  const scope={applicationId:f.id,customerId:f.customerId,vehicleId:application.vehicleId,startDate:'2026-11-01',firstDueDate:'2026-11-01',reference:'synthetic-yuan-test',pricingMode:'V2_ONE_YUAN'};
+  const special={pricingMode:'V2_ONE_YUAN',monthlyFeeAmount:100,depositAmount:100};
+  process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify(scope);
+  assert.equal((await plan(f,special)).status,409);
+  await consent(f);await verify(f,'GE750');
+  assert.equal((await plan(f,special,'OPERATIONS')).status,403);
+  const created=await plan(f,special);assert.equal(created.status,201,JSON.stringify(created.data));
+  const final=created.data.finalPlan;assert.equal(final.pricingMode,'V2_ONE_YUAN');assert.equal(final.depositAmount,100);assert.equal(final.creditBand,'GE750');
+  const visible=(await req(`/customer/applications/${f.id}`,undefined,f.token)).data.finalPlan;
+  assert.equal(visible.pricingMode,'V2_ONE_YUAN');assert.match(visible.pricingDescription,/12期.*1\.00.*12\.00/);
+  const confirmation={revision:final.revision,commercialHash:final.commercialHash};
+  process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify({...scope,pricingMode:'V1_ONE_FEN'});
+  assert.equal((await req(`/customer/applications/${f.id}/confirm`,confirmation,f.token)).status,409);
+  process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify(scope);
+  const order=await req(`/customer/applications/${f.id}/confirm`,confirmation,f.token);assert.equal(order.status,201,JSON.stringify(order.data));
+  const bills=await db.bill.findMany({where:{orderId:order.data.id}});assert.equal(bills.length,13);assert.ok(bills.every(b=>b.amount===100));
+  delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;
+  assert.equal((await req(`/customer/applications/${f.id}/confirm`,confirmation,f.token)).data.id,order.data.id);
+  assert.equal((await db.subscriptionPlan.findUniqueOrThrow({where:{id:application.subscriptionPlanId}})).monthlyFeeAmount,519900);
  }finally{if(saved===undefined)delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;else process.env.ORDER_ACCEPTANCE_SCOPE_JSON=saved;}
 });

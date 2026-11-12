@@ -22,6 +22,7 @@ FROM runtime-base AS runtime
 WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3101 NODE_OPTIONS=--max-old-space-size=256
 ENV FADADA_CJK_FONT_PATH=/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
+ENV CONTRACT_CJK_FONT_PATH=/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/apps/api/node_modules /app/apps/api/node_modules
 COPY --from=build /app/apps/api/dist /app/apps/api/dist

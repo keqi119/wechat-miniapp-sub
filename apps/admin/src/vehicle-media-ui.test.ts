@@ -1,0 +1,110 @@
+import test,{before,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {createServer,type Server} from 'node:http';
+import {existsSync,mkdirSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import {build} from 'vite';
+import {chromium,expect,type Browser,type Page} from '@playwright/test';
+import {conditionFixture} from './vehicle-publication.test-support.ts';
+let browser:Browser,server:Server,origin:string;
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jZQAAAABJRU5ErkJggg==','base64');
+before(async()=>{
+ const imports=[['VehiclePhotos','vehicle-photos'],['VehicleInspections','vehicle-inspections'],['GoodsInspectionSelection','goods-inspection-selection']].map(([name,file])=>existsSync(fileURLToPath(new URL(file+'.tsx',import.meta.url)))?`import {${name}} from '/src/${file}';`:`const ${name}=()=>React.createElement('p',null,'等待实现');`).join('');
+ const entry=`import React from 'react';import {createRoot} from 'react-dom/client';import {api} from '/src/core';import {CommandBoundary} from '/src/domain-ui';${imports}import '/src/style.css';function Test(){const [role,setRole]=React.useState('OPERATIONS'),[vehicleId,setVehicle]=React.useState('vehicle-1'),[disabled,setDisabled]=React.useState(false);window.changeRole=setRole;window.changeVehicle=setVehicle;window.disable=()=>setDisabled(true);React.useMemo(()=>api.setSession({user:{id:'staff',username:'staff',role,permissions:['*']},csrfToken:'synthetic'}),[role]);const[record,setRecord]=React.useState({id:'goods-1',vehicleId:'vehicle-1',revision:3,status:'DRAFT',inspectionSelections:[],inspectionSnapshots:[]});const mode=new URLSearchParams(location.search).get('mode');return React.createElement(CommandBoundary,{disabled},mode==='goods'?React.createElement(GoodsInspectionSelection,{record,onUpdated:setRecord}):React.createElement(mode==='inspections'?VehicleInspections:VehiclePhotos,{vehicleId}));}createRoot(document.getElementById('root')).render(React.createElement(React.StrictMode,null,React.createElement(Test)));`;
+ const built=await build({configFile:false,root:fileURLToPath(new URL('..',import.meta.url)),logLevel:'silent',define:{'import.meta.env.VITE_API_BASE_URL':JSON.stringify('/api'),'process.env.NODE_ENV':JSON.stringify('development')},plugins:[{name:'media-test',resolveId:id=>id==='virtual:media'?id:undefined,load:id=>id==='virtual:media'?entry:undefined}],build:{write:false,minify:false,rolldownOptions:{input:'virtual:media'}}});
+ const out=(Array.isArray(built)?built[0]:built) as {output:{type:string;code?:string;source?:string}[]},script=out.output.find(x=>x.type==='chunk')!.code!,style=out.output.filter(x=>x.type==='asset').map(x=>x.source||'').join('\n');
+ server=createServer((req,res)=>{res.setHeader('Content-Type',req.url==='/entry.js'?'text/javascript':'text/html');res.end(req.url==='/entry.js'?script:`<html><meta charset="UTF-8"><style>${style}</style><div id="root"></div><script type="module" src="/entry.js"></script></html>`);});await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));origin=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
+ try{browser=await chromium.launch({headless:true});}catch{browser=await chromium.launch({channel:'chrome',headless:true});}
+});
+after(async()=>{await browser?.close();if(server)await new Promise<void>(r=>server.close(()=>r()));});
+async function fixture(mode='photos'){
+ const page=await browser.newPage();page.setDefaultTimeout(2500);
+ const state={readStatus:200,filesReadStatus:200,failReadback:false,failUploadAt:0,uploads:[] as string[],patches:[] as Record<string,any>[],privateReads:0,rev:9,files:[] as any[],cover:null as string|null,reports:[{id:'report-1',vehicleId:'vehicle-1',revision:2,title:'机构报告一',provider:'测试机构',inspectedAt:'2026-11-03',description:'原报告文字',imageFileIds:[],images:[]}],goodsRevision:3};
+ await page.route('**/api/**',async route=>{const req=route.request(),path=new URL(req.url()).pathname;
+  const gallery=()=>({vehicleId:'vehicle-1',vehicleRevision:state.rev,coverFileId:state.cover,mediaFileIds:state.files.map(x=>x.id),items:state.files});
+  if(/\/(photos|inspection-files)\/file-/.test(path)||/\/admin\/files\/file-/.test(path)){state.privateReads++;return route.fulfill({contentType:'image/png',body:png});}
+  if(req.method()==='GET'){const status=path.endsWith('/inspection-files')?state.filesReadStatus:state.readStatus;return route.fulfill({status,json:status!==200?{error:{message:'读取失败'}}:path.endsWith('/condition-assessment')?conditionFixture('vehicle-1',state.rev):path.endsWith('/photos')?gallery():{vehicleId:'vehicle-1',items:path.endsWith('/inspections')?state.reports:state.files}});}
+  if(path.endsWith('/photos')&&req.method()==='POST'||path.endsWith('/inspection-files')){state.uploads.push(req.postData()!);if(state.failUploadAt===state.uploads.length)return route.fulfill({status:503,json:{error:{message:'暂时失败'}}});const file={id:'file-'+(state.files.length+1),name:'照片'+(state.files.length+1)+'.png',mimeType:'image/png',size:png.length,sha256:'sha',url:(path.endsWith('/photos')?'/api/admin/files/':'/api/admin/vehicles/vehicle-1/inspection-files/')+'file-'+(state.files.length+1)};state.files.push(file);state.rev++;if(!state.cover)state.cover=file.id;if(state.failReadback){if(path.endsWith('/inspection-files'))state.filesReadStatus=503;else state.readStatus=503;}return route.fulfill({json:path.endsWith('/photos')?gallery():file});}
+  const body=req.postDataJSON();state.patches.push(body);
+  if(path.includes('/goods/'))return route.fulfill({json:{id:'goods-1',vehicleId:'vehicle-1',revision:++state.goodsRevision,status:'DRAFT',inspectionSelections:body.inspectionSelections,inspectionSnapshots:body.inspectionSelections.map((x:any)=>({sourceId:x.id,sourceRevision:x.revision,title:'机构报告一',description:'原报告文字',images:[]}))}});
+  if(path.endsWith('/photos')){state.files=body.mediaFileIds.map((id:string)=>state.files.find(x=>x.id===id));state.cover=body.coverFileId;state.rev++;return route.fulfill({json:gallery()});}
+  const report={...state.reports[0],...body,id:path.endsWith('/inspections')?'report-2':'report-1',revision:body.revision+1,images:state.files};if(path.endsWith('/inspections'))state.reports.push(report);else state.reports[0]=report;return route.fulfill({json:report});
+ });await page.goto(origin+'?mode='+mode);return{page,state};
+}
+const files=(count=2)=>Array.from({length:count},(_,i)=>({name:`photo-${i}.png`,mimeType:'image/png',buffer:png}));
+const multipart=(body:string,key:string)=>body.match(new RegExp(`name="${key}"\\r\\n\\r\\n([^\\r]+)`))?.[1];
+test('batch photos preserve partial success and retry unknown file with identical key and revision',async()=>{const{page,state}=await fixture();try{state.failUploadAt=2;await page.getByLabel('选择车辆照片').setInputFiles(files());await expect(page.getByRole('button',{name:'按原请求重试'})).toBeVisible();assert.equal(state.files.length,1);assert.equal(multipart(state.uploads[0],'revision'),'9');assert.equal(multipart(state.uploads[1],'revision'),'10');await page.getByRole('button',{name:'按原请求重试'}).click();await expect(page.getByText('已完成 2 / 2')).toBeVisible();assert.equal(multipart(state.uploads[1],'idempotencyKey'),multipart(state.uploads[2],'idempotencyKey'));assert.equal(multipart(state.uploads[1],'revision'),multipart(state.uploads[2],'revision'));await expect(page.getByRole('img').first()).toBeVisible();assert.ok(state.privateReads>0);}finally{await page.close();}});
+test('confirmed photo success retries GET only when reconciliation fails',async()=>{const{page,state}=await fixture();try{state.failReadback=true;await page.getByLabel('选择车辆照片').setInputFiles(files(1));await expect(page.getByRole('button',{name:'重新读取结果'})).toBeVisible();state.readStatus=200;await page.getByRole('button',{name:'重新读取结果'}).click();await expect(page.getByText('已完成 1 / 1')).toBeVisible();assert.equal(state.uploads.length,1);}finally{await page.close();}});
+test('photo cover, order and removal submit explicit complete gallery without deleting files',async()=>{const{page,state}=await fixture();try{await page.getByLabel('选择车辆照片').setInputFiles(files());await expect(page.getByText('已完成 2 / 2')).toBeVisible();await page.getByRole('button',{name:'设为封面 照片2.png'}).click();await expect.poll(()=>state.patches.length).toBe(1);assert.equal(state.patches[0].coverFileId,'file-2');await page.getByRole('button',{name:'上移 照片2.png'}).click();await expect.poll(()=>state.patches.length).toBe(2);assert.deepEqual(state.patches[1].mediaFileIds,['file-2','file-1']);await page.getByRole('button',{name:'移除 照片1.png'}).click();await expect.poll(()=>state.patches.length).toBe(3);assert.deepEqual(state.patches[2].mediaFileIds,['file-2']);}finally{await page.close();}});
+test('private reports support explicit editing and never mutate goods implicitly',async()=>{const{page,state}=await fixture('inspections');try{await expect(page.getByText('原报告文字',{exact:true})).toBeVisible();await page.getByRole('button',{name:'编辑 机构报告一'}).click();await page.getByLabel('文字描述').fill('修订后的报告');await page.getByRole('button',{name:'保存查验记录',exact:true}).click();await expect(page.getByText('修订后的报告',{exact:true})).toBeVisible();assert.equal(state.patches[0].revision,2);assert.ok(state.patches[0].idempotencyKey);assert.equal(state.patches.length,1);await page.evaluate(()=>{(window as any).changeRole('FINANCE');});await expect(page.getByText('修订后的报告',{exact:true})).toHaveCount(0);await expect(page.getByText('当前岗位无权查看车况查验资料。')).toBeVisible();}finally{await page.close();}});
+test('goods selections freeze only on explicit save and clearing sends an empty array',async()=>{const{page,state}=await fixture('goods');try{await page.getByLabel('选择 机构报告一').check();assert.equal(state.patches.length,0);await page.getByRole('button',{name:'保存查验展示',exact:true}).click();await expect.poll(()=>state.patches.length).toBe(1);assert.deepEqual(state.patches[0].inspectionSelections,[{id:'report-1',revision:2}]);assert.equal(state.patches[0].revision,3);await expect(page.getByText('查验展示已保存。')).toBeVisible();await page.getByLabel('选择 机构报告一').uncheck();await page.getByRole('button',{name:'保存查验展示',exact:true}).click();await expect.poll(()=>state.patches.length).toBe(2);assert.deepEqual(state.patches[1].inspectionSelections,[]);assert.equal(state.patches[1].revision,4);}finally{await page.close();}});
+test('403 clears private reports while transient failure retains same-scope data and disables editing',async()=>{const{page,state}=await fixture('inspections');try{await expect(page.getByText('原报告文字',{exact:true})).toBeVisible();state.readStatus=503;await page.getByRole('button',{name:'刷新查验记录'}).click();await expect(page.getByText('原报告文字',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'编辑 机构报告一'})).toBeDisabled();state.readStatus=403;await page.getByRole('button',{name:'刷新查验记录'}).click();await expect(page.getByText('原报告文字',{exact:true})).toHaveCount(0);}finally{await page.close();}});
+test('expired authentication clears private content even before parent rerenders',async()=>{const{page,state}=await fixture('inspections');try{await expect(page.getByText('原报告文字',{exact:true})).toBeVisible();state.readStatus=401;await page.getByRole('button',{name:'刷新查验记录'}).click();await expect(page.getByText('原报告文字',{exact:true})).toHaveCount(0);await expect(page.getByRole('alert')).toContainText('访问权限已失效');}finally{await page.close();}});
+test('inspection batch images retain pending key and new report uses explicitly selected private images',async()=>{const{page,state}=await fixture('inspections');try{await page.getByRole('button',{name:'新增查验记录'}).click();await page.getByLabel('查验标题').fill('新报告');state.failUploadAt=1;await expect(page.getByLabel('选择查验图片')).toBeEnabled();await page.getByLabel('选择查验图片').setInputFiles(files(1));await expect(page.getByRole('button',{name:'按原请求重试图片'})).toBeVisible();await expect(page.getByRole('button',{name:'保存查验记录',exact:true})).toBeDisabled();await page.getByRole('button',{name:'按原请求重试图片'}).click();await expect(page.getByText('查验图片已完成 1 / 1')).toBeVisible();await page.getByRole('button',{name:'保存查验记录',exact:true}).click();await expect(page.getByRole('heading',{name:'新报告',exact:true})).toBeVisible();assert.deepEqual(state.patches[0].imageFileIds,['file-1']);assert.equal(state.patches[0].revision,0);assert.equal(multipart(state.uploads[0],'idempotencyKey'),multipart(state.uploads[1],'idempotencyKey'));}finally{await page.close();}});
+test('source refresh preserves frozen goods content until explicitly saved again',async()=>{const{page,state}=await fixture('goods');try{await page.getByLabel('选择 机构报告一').check();await page.getByRole('button',{name:'保存查验展示',exact:true}).click();await expect(page.getByText('查验展示已保存。')).toBeVisible();state.reports[0].description='仅来源新文字';state.reports[0].revision=3;await page.getByRole('button',{name:'刷新可选查验'}).click();await expect(page.getByText(/来源已更新/)).toBeVisible();await page.locator('summary').click();await expect(page.getByText('原报告文字',{exact:true})).toBeVisible();assert.equal(state.patches.length,1);await page.getByRole('button',{name:'保存查验展示',exact:true}).click();await expect.poll(()=>state.patches.length).toBe(2);assert.deepEqual(state.patches[1].inspectionSelections,[{id:'report-1',revision:3}]);}finally{await page.close();}});
+test('photo uploads enforce type, count and parent read-only boundary',async()=>{const{page,state}=await fixture();try{await page.getByLabel('选择车辆照片').setInputFiles({name:'bad.pdf',mimeType:'application/pdf',buffer:Buffer.from('pdf')});await expect(page.getByRole('alert')).toContainText('JPEG');await page.getByLabel('选择车辆照片').setInputFiles(files(21));await expect(page.getByRole('alert')).toContainText('20');await page.evaluate(()=>{(window as any).disable();});await expect(page.getByLabel('选择车辆照片',{exact:true})).toBeDisabled();await dropPhotos(page);await expect(page.getByRole('button',{name:'上传车辆照片',exact:true})).toHaveAttribute('aria-disabled','true');assert.equal(state.uploads.length,0);}finally{await page.close();}});
+test('private image metadata denial clears the whole inspection editor and report content',async()=>{const{page,state}=await fixture('inspections');try{await expect(page.getByText('原报告文字',{exact:true})).toBeVisible();state.filesReadStatus=403;await page.getByRole('button',{name:'编辑 机构报告一'}).click();await expect(page.getByText('原报告文字',{exact:true})).toHaveCount(0);await expect(page.getByRole('alert')).toContainText('访问权限已失效');assert.equal(state.patches.length,0);}finally{await page.close();}});
+
+async function dropPhotos(page:Page,count=1){
+ const dataTransfer=await page.evaluateHandle(({base64,count})=>{const transfer=new DataTransfer();for(let i=0;i<count;i++)transfer.items.add(new File([Uint8Array.from(atob(base64),c=>c.charCodeAt(0))],`drag-${i}.png`,{type:'image/png'}));return transfer;},{base64:png.toString('base64'),count});
+ try{await page.getByRole('region',{name:'车辆照片',exact:true}).dispatchEvent('dragenter',{dataTransfer});await page.getByRole('region',{name:'车辆照片',exact:true}).dispatchEvent('drop',{dataTransfer});}finally{await dataTransfer.dispose();}
+}
+test('photo card supports drag auto-upload and click selection without a separate upload form',async()=>{
+ const{page,state}=await fixture();try{
+  await expect(page.getByRole('button',{name:'上传车辆照片',exact:true})).toHaveAttribute('aria-disabled','false');
+  await expect(page.getByRole('button',{name:'开始上传',exact:true})).toHaveCount(0);
+  await expect(page.getByLabel('选择车辆照片',{exact:true})).toBeHidden();
+  await page.setViewportSize({width:1440,height:900});
+  const reports=fileURLToPath(new URL('../../../../reports/',import.meta.url));mkdirSync(reports,{recursive:true});await page.screenshot({path:reports+'vehicle-photo-empty.png'});
+  await dropPhotos(page,2);await expect(page.getByText('已完成 2 / 2',{exact:true})).toBeVisible();assert.equal(state.uploads.length,2);
+  await expect(page.getByRole('img')).toHaveCount(2);
+  const picker=page.waitForEvent('filechooser');await page.getByRole('button',{name:'上传车辆照片',exact:true}).focus();await page.keyboard.press('Enter');await(await picker).setFiles(files(1));
+  await expect.poll(()=>state.files.length).toBe(3);await expect(page.getByText('已完成 1 / 1',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'查看原图 照片1.png',exact:true}).click();await expect(page.getByRole('dialog',{name:'原图 照片1.png'})).toBeVisible();await page.getByRole('button',{name:'关闭原图'}).click();
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:reports+'vehicle-photo-filled.png'});
+  await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ }finally{await page.close();}
+});
+test('pending photo upload cannot be replaced by another drop',async()=>{
+ const{page,state}=await fixture();try{state.failUploadAt=1;await expect(page.getByLabel('选择车辆照片',{exact:true})).toBeEnabled();await dropPhotos(page);await expect(page.getByRole('button',{name:'按原请求重试'})).toBeVisible();await dropPhotos(page,2);assert.equal(state.uploads.length,1);await page.getByRole('button',{name:'按原请求重试'}).click();await expect(page.getByText('已完成 1 / 1',{exact:true})).toBeVisible();assert.equal(state.files.length,1);assert.equal(multipart(state.uploads[0],'idempotencyKey'),multipart(state.uploads[1],'idempotencyKey'));}finally{await page.close();}
+});
+
+async function dropInspectionImages(page:Page,count=1){
+ const dataTransfer=await page.evaluateHandle(({base64,count})=>{const transfer=new DataTransfer();for(let i=0;i<count;i++)transfer.items.add(new File([Uint8Array.from(atob(base64),c=>c.charCodeAt(0))],`report-${i}.png`,{type:'image/png'}));return transfer;},{base64:png.toString('base64'),count});
+ try{await page.getByRole('region',{name:'查验图片',exact:true}).dispatchEvent('dragenter',{dataTransfer});await page.getByRole('region',{name:'查验图片',exact:true}).dispatchEvent('drop',{dataTransfer});}finally{await dataTransfer.dispose();}
+}
+test('inspection card auto-uploads dropped images and places fields beside pictures on desktop',async()=>{
+ const{page,state}=await fixture('inspections');try{
+  await page.setViewportSize({width:1440,height:900});await page.getByRole('button',{name:'新增查验记录'}).click();
+  await expect(page.getByLabel('选择查验图片')).toBeEnabled();await expect(page.getByLabel('选择查验图片')).toBeHidden();
+  await expect(page.getByRole('button',{name:'上传查验图片',exact:true})).toHaveCount(0);
+  await page.getByLabel('查验标题').fill('拖拽登记报告');await dropInspectionImages(page,2);
+  await expect(page.getByText('查验图片已完成 2 / 2',{exact:true})).toBeVisible();assert.equal(state.uploads.length,2);
+  const card=page.getByRole('region',{name:'查验图片',exact:true});await expect(card.getByRole('checkbox',{checked:true})).toHaveCount(2);
+  const field=await page.getByLabel('查验标题').boundingBox(),pictures=await card.boundingBox();assert(field&&pictures&&field.x+field.width<=pictures.x);
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  const reports=fileURLToPath(new URL('../../../../reports/',import.meta.url));mkdirSync(reports,{recursive:true});await page.screenshot({path:reports+'vehicle-inspection-desktop.png',fullPage:true});
+  const picker=page.waitForEvent('filechooser');await page.getByRole('button',{name:'添加查验图片',exact:true}).focus();await page.keyboard.press('Enter');await(await picker).setFiles(files(1));
+  await expect(page.getByText('查验图片已完成 1 / 1',{exact:true})).toBeVisible();assert.equal(state.files.length,3);
+  await card.getByRole('checkbox').nth(1).uncheck();await page.getByRole('button',{name:'保存查验记录',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'拖拽登记报告',exact:true})).toBeVisible();assert.deepEqual(state.patches[0].imageFileIds,['file-1','file-3']);
+  await page.getByRole('button',{name:'编辑 拖拽登记报告',exact:true}).click();await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:reports+'vehicle-inspection-mobile.png',fullPage:true});
+ }finally{await page.close();}
+});
+test('inspection upload preserves pending drop and reconciles accepted upload without another POST',async()=>{
+ const{page,state}=await fixture('inspections');try{
+  await page.getByRole('button',{name:'新增查验记录'}).click();await expect(page.getByLabel('选择查验图片')).toBeEnabled();state.failUploadAt=1;await dropInspectionImages(page);
+  await expect(page.getByRole('button',{name:'按原请求重试图片'})).toBeVisible();await dropInspectionImages(page,2);assert.equal(state.uploads.length,1);
+  state.failReadback=true;await page.getByRole('button',{name:'按原请求重试图片'}).click();await expect(page.getByRole('button',{name:'重新读取图片结果'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'保存查验记录',exact:true})).toBeDisabled();state.filesReadStatus=200;await page.getByRole('button',{name:'重新读取图片结果'}).click();
+  await expect(page.getByText('查验图片已完成 1 / 1',{exact:true})).toBeVisible();assert.equal(state.uploads.length,2);assert.equal(multipart(state.uploads[0],'idempotencyKey'),multipart(state.uploads[1],'idempotencyKey'));
+ }finally{await page.close();}
+});
+test('inspection drag upload validates type and count and respects parent read-only state',async()=>{
+ const{page,state}=await fixture('inspections');try{
+  await page.getByRole('button',{name:'新增查验记录'}).click();await expect(page.getByLabel('选择查验图片')).toBeEnabled();
+  await page.getByLabel('选择查验图片').setInputFiles({name:'bad.pdf',mimeType:'application/pdf',buffer:Buffer.from('pdf')});await expect(page.getByRole('alert')).toContainText('JPEG');
+  await dropInspectionImages(page,21);await expect(page.getByRole('alert')).toContainText('20');assert.equal(state.uploads.length,0);
+  await page.evaluate(()=>{(window as any).disable();});await expect(page.getByLabel('选择查验图片')).toBeDisabled();await dropInspectionImages(page);assert.equal(state.uploads.length,0);
+ }finally{await page.close();}
+});

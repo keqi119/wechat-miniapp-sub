@@ -1,0 +1,15 @@
+import {z} from 'zod';
+import {key,text} from '../common/data';
+import type {Prisma} from '@prisma/client';
+export type EntitlementTx=Prisma.TransactionClient;
+export type EntitlementActor={id:string;role:string;authVersion?:number};
+export type EntitlementRow={id:string;orderId:string;customerId:string;title:string;description:string;status:string;kind:string;sourceKey:string|null;productVersionId:string|null;benefitVersionId:string|null;sourceSnapshot:unknown;sourceHash:string|null;unit:string|null;totalQuantity:number|null;revision:number;activatedAt:Date|null;expiredAt:Date|null;createdAt:Date};
+export type EntitlementBalances={totalQuantity:number|null;reservedQuantity:number|null;usedQuantity:number|null;availableQuantity:number|null;expiredQuantity:number|null;pendingServiceCount:number};
+export type EntitlementView=EntitlementBalances&{id:string;orderId:string;customerId:string;title:string;description:string;status:string;kind:'DESCRIPTION'|'COUNT';unit:string|null;revision:number;benefitVersionId:string|null;provider:string;conditions:string;validity:'ORDER';activatedAt:Date|null;expiredAt:Date|null};
+export const commandInput=z.object({revision:z.number().int().nonnegative(),serviceRequestId:text,idempotencyKey:key}).strict();
+export const reserveInput=commandInput.extend({quantity:z.number().int().positive().max(100000)}).strict();
+export const consumeInput=commandInput.extend({reservationId:text}).strict();
+export const releaseInput=consumeInput.extend({reason:text}).strict();
+export const reverseInput=commandInput.extend({entryId:text,quantity:z.number().int().positive().max(100000),reason:text}).strict();
+export type EntitlementReservationFact={id?:string;status:string;quantity:number};
+export type EntitlementLedgerFact={type:string;quantity:number};

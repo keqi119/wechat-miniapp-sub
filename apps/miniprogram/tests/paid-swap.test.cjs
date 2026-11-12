@@ -2,11 +2,12 @@ const { test } = require('node:test'), assert = require('node:assert/strict');
 const { createApi } = require('../src/services/api'), config = require('../src/config');
 const { account, assignment } = require('./fixtures/b2.cjs');
 const { terms, product, purchase, paidAccount, input } = require('./fixtures/paid-swap.cjs');
+const { renderPage } = require('./helpers/wxml-view.cjs');
 function setup(extra = {}) {
   let current = extra.account || paidAccount(), row = extra.purchase || purchase(), failure = null;
   const calls = [], navigations = [], storage = new Map([[config.storageKey, { token: 'synthetic', customer: { id: 'c1' }, expiresAt: '2099-01-01T00:00:00Z' }]]);
   const wx = { getStorageSync: k => storage.get(k), setStorageSync: (k, v) => storage.set(k, v), removeStorageSync: k => storage.delete(k), showToast() {}, setNavigationBarTitle() {}, showModal: v => v.success({ confirm: true }), navigateTo: v => { navigations.push(v.url); v.success?.({}); }, requestPayment() { throw Error('No automatic native payment'); } };
-  const request = v => { calls.push(v); const route = v.url.split('/api')[1]; if (extra.intercept?.(route, v)) return; if (failure && v.method === 'POST') return v.success({ statusCode: failure, data: { error: { code: 'SYNTHETIC', message: '合成失败' } } }); let data;
+  const request = v => { calls.push(v); const route = new URL(v.url).pathname.replace(/^\/api/, ''); if (extra.intercept?.(route, v)) return; if (failure && v.method === 'POST') return v.success({ statusCode: failure, data: { error: { code: 'SYNTHETIC', message: '合成失败' } } }); let data;
     if (route.endsWith('/swap-account')) data = current;
     else if (route.endsWith('/swap-credits')) data = { purchase: row, bill: row.bill };
     else if (route === '/customer/swap-credit-purchases/sp1') data = row;
@@ -19,6 +20,34 @@ function setup(extra = {}) {
   return { api: createApi(config, request, wx), wx, calls, navigations, storage, setAccount: v => current = v, setPurchase: v => row = v, fail: v => failure = v };
 }
 function page(env) { global.wx = env.wx; let definition; global.Page = v => definition = v; const servicePath = require.resolve('../src/services/index'); require.cache[servicePath] = { id: servicePath, filename: servicePath, loaded: true, exports: env.api }; delete require.cache[require.resolve('../src/pages/records/index')]; require('../src/pages/records/index'); const p = { ...definition, data: structuredClone(definition.data), setData(v) { Object.assign(this.data, v); } }; p.onLoad({ type: 'entitlements', orderId: 'o1' }); return p; }
+
+const termTerms={...terms,version:'SWAP_CREDIT_V2',templateContent:'额外换车单次 {{extraFeeYuan}} 元',templateHash:'c'.repeat(64),content:'合成完整购买说明：额外换车单次623.45元。'};
+const termProduct={...product,id:'SWAP_CREDIT_TERM_1',policyVersion:'SWAP_TERM_V2',pricingHash:'d'.repeat(64),amount:62345};
+const termPurchase=(extra={})=>purchase({policyVersion:'SWAP_TERM_V2',pricingHash:termProduct.pricingHash,amount:62345,terms:termTerms,bill:{...purchase().bill,amount:62345},...extra});
+const termAccount=(extra={})=>paidAccount({policyVersion:'SWAP_TERM_V2',cycle:undefined,term:{startDate:'2026-09-16',endDate:'2028-09-16',includedCount:3,remaining:2,reserved:1,consumed:1,available:1},product:termProduct,purchaseTerms:termTerms,...extra});
+const termInput=()=>({...input(),productId:termProduct.id,termsVersion:termTerms.version,pricingHash:termProduct.pricingHash});
+
+test('TERM account retains entitlement and scoped ordinals when OFFLINE server capabilities are closed',async()=>{
+ const account=termAccount({contractMode:'OFFLINE',canRequest:false,canPurchase:false,reservations:[{id:'tr',changeId:'vc1',source:'FREE',scope:'TERM',termSequence:2,status:'RESERVED'}],ledger:[{id:'tl',type:'CONSUME',source:'FREE',scope:'TERM',termSequence:1,changeId:'vc1',recordedAt:'2026-10-16T01:00:00Z'}]});
+ const env=setup({account}),value=await env.api.getSwapAccount('o1');assert.equal(value.policyVersion,'SWAP_TERM_V2');assert.equal(value.term.includedCount,3);assert.equal(value.cycle,undefined);assert.equal(value.reservations[0].termSequence,2);assert.equal(value.canRequest,false);assert.equal(value.canPurchase,false);
+ const p=page(env);await p.reload();const html=renderPage('records',p.data);assert.match(html,/合同期赠送/);assert.match(html,/3 次/);assert.match(html,/不按年度清零/);assert.doesNotMatch(html,/12个月周期|第 2 周期|创建.*普通账单/);await p.requestSwap();await p.buySwapCredit();assert.equal(env.calls.some(v=>v.method==='POST'),false);
+});
+test('TERM rejects unknown policy, balance violations, mixed cycle scope and impossible free ordinals',async()=>{
+ const good=termAccount(),env=setup();for(const patch of [{policyVersion:'UNKNOWN'},{policyVersion:undefined},{term:undefined},{term:{...good.term,remaining:3}},{term:{...good.term,available:2}},{term:{...good.term,reserved:3}},{term:{...good.term,includedCount:2147483648}},{cycle:account().cycle},{reservations:[{id:'r',changeId:'c',source:'FREE',scope:'TERM',termSequence:0,status:'RESERVED'}]},{ledger:[{id:'l',type:'GRANT',source:'PAID',scope:'TERM',termSequence:1,recordedAt:'2026-10-16T01:00:00Z'}]}]){env.setAccount({...good,...patch});await assert.rejects(env.api.getSwapAccount('o1'),{code:'RESPONSE'});}
+ env.setAccount(termAccount({term:{...good.term,includedCount:0,remaining:0,reserved:0,consumed:0,available:0}}));assert.equal((await env.api.getSwapAccount('o1')).term.includedCount,0);
+});
+test('TERM create sends the frozen pricing hash and returns the exact dynamic ordinary bill',async()=>{
+ const env=setup({account:termAccount(),purchase:termPurchase()}),result=await env.api.createSwapCredit('o1',termInput()),body=env.calls.find(v=>v.method==='POST').data;assert.equal(body.productId,'SWAP_CREDIT_TERM_1');assert.equal(body.pricingHash,termProduct.pricingHash);assert.equal(body.amount,undefined);assert.equal(result.purchase.amount,62345);assert.equal(result.bill.amount,62345);assert.equal(result.purchase.terms.templateContent,termTerms.templateContent);
+ const p=page(env);await p.reload();p.onSwapPurchaseAccepted({detail:{value:['swap-purchase']}});await p.buySwapCredit();assert.equal(p.data.swapPurchase.bill.amount,62345);const html=renderPage('records',p.data);assert.match(html,/623.45/);assert.doesNotMatch(html,/固定800元|创建800元/);
+});
+test('TERM rejects forged price fields, missing template evidence and readback amounts that differ from accepted product',async()=>{
+ const env=setup({account:termAccount(),purchase:termPurchase()});for(const payload of [{...termInput(),pricingHash:undefined},{...termInput(),pricingHash:'bad'},{...termInput(),pricingHash:'e'.repeat(64)},{...termInput(),amount:1}])await assert.rejects(env.api.createSwapCredit('o1',payload));assert.equal(env.calls.some(v=>v.method==='POST'),false);
+ for(const patch of [{policyVersion:undefined},{pricingHash:undefined},{amount:2147483648},{terms:{...termTerms,version:'SWAP_CREDIT_V1'}},{terms:{...termTerms,templateContent:undefined}},{terms:{...termTerms,templateHash:'bad'}},{bill:{...termPurchase().bill,amount:80000}}]){env.setPurchase(termPurchase(patch));await assert.rejects(env.api.getSwapCreditPurchase('o1','sp1'),{code:'RESPONSE'});}
+ env.setPurchase(termPurchase({amount:62346,bill:{...termPurchase().bill,amount:62346}}));await assert.rejects(env.api.createSwapCredit('o1',termInput()),{code:'RESPONSE'});
+});
+test('TERM unknown retries keep one key while a changed frozen price uses another key without overwriting amount',async()=>{
+ const env=setup({account:termAccount(),purchase:termPurchase()});env.fail(503);await assert.rejects(env.api.createSwapCredit('o1',termInput()));await assert.rejects(env.api.createSwapCredit('o1',termInput()));env.setAccount(termAccount({product:{...termProduct,amount:65000,pricingHash:'e'.repeat(64)}}));await assert.rejects(env.api.createSwapCredit('o1',{...termInput(),pricingHash:'e'.repeat(64)}));const posts=env.calls.filter(v=>v.method==='POST');assert.equal(posts.length,3);assert.equal(posts[0].data.idempotencyKey,posts[1].data.idempotencyKey);assert.notEqual(posts[1].data.idempotencyKey,posts[2].data.idempotencyKey);
+});
 test('paid swap account preserves five authoritative counts and nullable paid cycle/change ledger without inventing free cycles', async () => {
   const env = setup({ account: paidAccount({ paidAvailable: 2, paidReserved: 1, paidConsumed: 3, paidFrozen: 1, paidExpired: 2, reservations: [{ id: 'r1', changeId: 'vc1', source: 'PAID', cycleSequence: null, status: 'RESERVED' }], ledger: ['GRANT','FREEZE','EXPIRE','REFUND'].map((type, i) => ({ id: 'l' + i, type, source: 'PAID', cycleSequence: null, changeId: null, purchaseId: 'sp1', recordedAt: '2026-10-16T01:00:00Z' })) }) }); const result = await env.api.getSwapAccount('o1'); assert.equal(result.paidAvailable, 2); assert.equal(result.paidFrozen, 1); assert.equal(result.reservations[0].cycleSequence, null); assert.equal(result.ledger[0].changeId, null); assert.match(result.ledger[1].typeText, /冻结/); assert.equal(result.canPurchase, true);
 });
@@ -38,7 +67,7 @@ test('safe purchase projection rejects wrong order, amount or unknown status and
   const env = setup(); for (const row of [purchase({ orderId: 'other' }), purchase({ amount: 1 }), purchase({ quantity: 2 }), purchase({ status: 'MAGIC' }), purchase({ billId: 'wrong' })]) { env.setPurchase(row); await assert.rejects(env.api.getSwapCreditPurchase('o1', 'sp1'), { code: 'RESPONSE' }); } env.setPurchase(purchase({ openid: 'must-strip', prepayId: 'must-strip', paymentParams: { paySign: 'must-strip' }, customerId: 'must-strip' })); const result = await env.api.getSwapCreditPurchase('o1', 'sp1'); assert.equal(JSON.stringify(result).includes('must-strip'), false);
 });
 test('pending purchase queries only its existing payment then re-reads server purchase; unknown stays pending with no local grant', async () => {
-  const env = setup({ purchase: purchase({ paymentId: 'pay1' }) }); const result = await env.api.querySwapCreditPurchase('o1', 'sp1'); assert.equal(result.status, 'PENDING_PAYMENT'); assert.deepEqual(env.calls.map(v => v.url.split('/api')[1]), ['/customer/swap-credit-purchases/sp1','/customer/payments/pay1','/customer/swap-credit-purchases/sp1']); assert.equal(env.calls.some(v => v.method === 'POST'), false);
+  const env = setup({ purchase: purchase({ paymentId: 'pay1' }) }); const result = await env.api.querySwapCreditPurchase('o1', 'sp1'); assert.equal(result.status, 'PENDING_PAYMENT'); assert.deepEqual(env.calls.map(v => new URL(v.url).pathname.replace(/^\/api/, '')), ['/customer/swap-credit-purchases/sp1','/customer/payments/pay1','/customer/swap-credit-purchases/sp1']); assert.equal(env.calls.some(v => v.method === 'POST'), false);
 });
 test('only authoritative purchase ACTIVE and account counts after payment query indicate a credited paid source', async () => {
   const env = setup({ purchase: purchase({ paymentId: 'pay1' }), afterQuery: purchase({ status: 'ACTIVE', creditId: 'cr1', paymentId: 'pay1', paidAt: '2026-10-16T03:00:00Z', canPay: false, canClose: false, bill: { ...purchase().bill, paidAmount: 80000, status: 'PAID' } }) }); const result = await env.api.querySwapCreditPurchase('o1', 'sp1'); assert.equal(result.status, 'ACTIVE'); assert.equal((await env.api.getSwapAccount('o1')).paidAvailable, 1);
@@ -67,3 +96,9 @@ test('historical rejected or failed refund rows do not contradict a restored or 
 test('a paid source reserved by a change is labeled occupied rather than generally available', async () => { const env = setup({ purchase: purchase({ status: 'ACTIVE', creditId: 'cr1', reservedChangeId: 'vc1', canPay: false, canClose: false, bill: { ...purchase().bill, status: 'PAID', paidAmount: 80000 } }) }); const row = await env.api.getSwapCreditPurchase('o1', 'sp1'); assert.match(row.statusText, /预占.*不可另用/); });
 test('a close retry that reads trusted VOID returns the original closed purchase without another POST', async () => { const env = setup({ purchase: purchase({ status: 'VOID', canClose: false, canPay: false, bill: { ...purchase().bill, status: 'VOID' } }) }); const row = await env.api.closeSwapCreditPurchase('o1', 'sp1'); assert.equal(row.status, 'VOID'); assert.equal(env.calls.some(v => v.method === 'POST'), false); });
 module.exports = { terms, product, purchase, paidAccount, input, setup, page, assignment };
+
+
+test('new target model purchase reader preserves its own source and does not demand old legal hash',async()=>{
+ const row=purchase({sku:'SWAP_CREDIT_ADDON_1',policyVersion:'SWAP_ADDON_V1',pricingHash:'c'.repeat(64),productId:'newprod',versionId:'v3',quoteId:'q1',sourceHash:'d'.repeat(64),targetModelDefinitionId:'model-target',targetBrand:'合成目标品牌',amount:91234,terms:{version:'SWAP_CREDIT_ADDON_V1',hash:'e'.repeat(64),content:'完整目标换车说明'},bill:{...purchase().bill,amount:91234}});
+ const env=setup({purchase:row});const view=await env.api.getSwapCreditPurchase('o1','sp1');assert.equal(view.targetModelDefinitionId,'model-target');assert.equal(view.sku,'SWAP_CREDIT_ADDON_1');assert.match(view.scopeText,/合成目标品牌/);assert.equal(view.terms.hash,'e'.repeat(64));assert.equal(view.amount,91234);
+});

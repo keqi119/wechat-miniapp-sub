@@ -1,3 +1,4 @@
+import './legacy-esign-mode';
 import '../src/common/config';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ import {OwnerAuthorizationService} from '../src/owner-signing/authorization';
 import {ownerAuthorityFixture} from './owner-authority-fixtures';
 let db:Db,service:OwnerAuthorizationService,f:any,grant:any,authorized=false,queryFails=false,certSerial:string;
 const error=(code:string)=>(e:any)=>e.getResponse?.().error?.code===code;
-const provider:any={createAuthorizationUrl:(i:any)=>({url:'https://textapi17.fadada.com/api2/before_authsign.api?transaction_id='+i.transactionId}),queryAuthorization:async()=>{if(queryFails)throw Error('Synthetic failure');return{authorized};},queryCertificate:async()=>({bound:true,serialNo:certSerial}),createRevocationUrl:()=>({url:'https://textapi17.fadada.com/api2/cancel_extsign_auto_page.api'})};
+const provider:any={assertAvailable:()=>{},createAuthorizationUrl:(i:any)=>({url:'https://textapi17.fadada.com/api2/before_authsign.api?transaction_id='+i.transactionId}),queryAuthorization:async()=>{if(queryFails)throw Error('Synthetic failure');return{authorized};},queryCertificate:async()=>({bound:true,serialNo:certSerial}),createRevocationUrl:()=>({url:'https://textapi17.fadada.com/api2/cancel_extsign_auto_page.api'})};
 before(async()=>{assert.ok(new URL(process.env.TEST_DATABASE_URL!).pathname.endsWith('_test'));db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});process.env.OWNER_AUTO_SIGNING_ENABLED='true';f=await ownerAuthorityFixture(db);certSerial=(await db.ownerESignAccount.findUniqueOrThrow({where:{ownerId:f.owner.id}})).certSerialNo!;service=new OwnerAuthorizationService(db,new OwnerService(db),provider);});
 after(async()=>{delete process.env.OWNER_AUTO_SIGNING_ENABLED;await db?.$disconnect();});
 test('creating a scoped grant does not authorize or enable it; replay retains original provider identifiers',async()=>{

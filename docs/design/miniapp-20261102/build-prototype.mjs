@@ -1,0 +1,11 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const dir=path.dirname(fileURLToPath(import.meta.url));
+const template=await fs.readFile(path.join(dir,'miniapp-style-directions.template.html'),'utf8');
+const data='data:image/webp;base64,'+(await fs.readFile(path.join(dir,'assets/et5-design-example.webp'))).toString('base64');
+const built=template.replace('__CAR_DATA_URI__',data);
+if(built.includes('__CAR_DATA_URI__')||!template.includes('__CAR_DATA_URI__'))throw new Error('Invalid photo marker');
+if(Buffer.byteLength(built)>1_000_000)throw new Error('Inline preview exceeds size limit');
+await fs.writeFile(path.join(dir,'miniapp-style-directions.html'),built);
+console.log(JSON.stringify({output:'miniapp-style-directions.html',bytes:Buffer.byteLength(built)}));

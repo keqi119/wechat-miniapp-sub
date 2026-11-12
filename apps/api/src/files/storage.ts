@@ -3,6 +3,7 @@ import {promises as fs} from 'node:fs';
 import {resolve,sep} from 'node:path';
 import {projectRoot} from '../common/config';
 import {ensure} from '../common/errors';
+import {readableFileName,uploadedFileName} from './filename';
 const root=resolve(process.env.UPLOAD_DIR||resolve(projectRoot,'var/uploads'));
 export function validMime(buffer:Buffer,mime:string){
  if(mime==='image/jpeg')return buffer[0]===0xff&&buffer[1]===0xd8&&buffer[2]===0xff;
@@ -13,9 +14,9 @@ export function validMime(buffer:Buffer,mime:string){
 export async function saveFile(file:Express.Multer.File){
  const sha256=createHash('sha256').update(file.buffer).digest('hex'),storagePath=resolve(root,sha256.slice(0,2),sha256);
  await fs.mkdir(resolve(root,sha256.slice(0,2)),{recursive:true});await fs.writeFile(storagePath,file.buffer,{flag:'w',mode:0o600});
- return{name:file.originalname.replace(/[\r\n\\/]/g,'_').slice(0,200),mimeType:file.mimetype,size:file.size,sha256,storagePath};
+ return{name:uploadedFileName(file.originalname),mimeType:file.mimetype,size:file.size,sha256,storagePath};
 }
 export function streamFile(file:any,response:any){
  ensure(resolve(file.storagePath).startsWith(root+sep),500,'STORAGE_PATH','文件存储异常');
- response.setHeader('Content-Type',file.mimeType);response.setHeader('X-Content-Type-Options','nosniff');response.setHeader('Cache-Control','private, no-store');response.setHeader('Content-Disposition',`inline; filename*=UTF-8''${encodeURIComponent(file.name)}`);return response.sendFile(file.storagePath);
+ response.setHeader('Content-Type',file.mimeType);response.setHeader('X-Content-Type-Options','nosniff');response.setHeader('Cache-Control','private, no-store');response.setHeader('Content-Disposition',`inline; filename*=UTF-8''${encodeURIComponent(readableFileName(file.name))}`);return response.sendFile(file.storagePath);
 }

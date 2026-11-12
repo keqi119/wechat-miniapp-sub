@@ -1,0 +1,23 @@
+{
+  "status": "APPROVED_FOR_SPECIFIED_VIRTUAL_ACCEPTANCE",
+  "recordedAt": "2026-11-08T23:19:05Z",
+  "questionId": "call_7672e814c1a94ae097b1f3f7d5238dcc",
+  "userAnswer": "批准用于本次测试",
+  "scope": "新增测试说明及排版，仅用于指定虚拟车辆、指定当事人及本次测试订单。",
+  "notice": "仅用于实名、电子签、支付与归档验证，不形成真实车辆租赁或交付义务",
+  "wrapperVersion": "NINDA_INITIAL_VIRTUAL_WRAPPER_V1",
+  "wrapperHash": "8a6f363defd78d1e83d2b6e3b0f8ae2e8695e5c56dccd39cb72c5846d6ff6f4c",
+  "noticeHash": "d753eb35b9745125d9956fb9681f43044d754c0cbf290ab8830a744abf288f5d",
+  "frozenReviewDirectory": "docs/legal/drafts/ninda/launch-20261109-virtual-acceptance/review-v1",
+  "documents": [
+    { "file": "01.pdf", "pageCount": 11, "sha256": "fe42978354b9ef8d2deb969fbed833af1cd87112033e1ede2fc2a5f552ff0bad" },
+    { "file": "02-main.pdf", "pageCount": 17, "sha256": "02210d6bf76d9b76421b27c742c954f592c8101a23cfa07e93456dd37e29bc1b" },
+    { "file": "02-grant.pdf", "pageCount": 12, "sha256": "1f8f1ff6438fcd1f244c0063643c940ad0f0d04a911994de8df8593da3ae3e8f" }
+  ],
+  "hashesIndependentlyRechecked": true,
+  "originalFrozenReviewArtifactsUnchanged": true,
+  "sampleData": "合成示例；不作为真实身份、授权、签名、付款或交付的证明。",
+  "actualIdentityAndSignature": "由对应本人及有权企业人员完成；模板批准不替代实名、签署同意、印章授权或真实渠道结果。",
+  "virtualEnterpriseSigningPolicy": "MANUAL_ONLY",
+  "liveActivationStatus": "NOT_DEPLOYED_NOT_STARTED"
+}

@@ -1,0 +1,13 @@
+<view class="main-tabs" role="navigation" aria-label="小程序主导航">
+  <view class="main-tabs-items">
+    <button wx:for="{{items}}" wx:key="path" wx:for-index="tabIndex"
+      class="main-tab {{selected === tabIndex ? 'is-selected' : ''}}"
+      data-index="{{tabIndex}}" bindtap="onTap" hover-class="none"
+      aria-label="{{item.text}}{{selected === tabIndex ? '，当前页面' : ''}}">
+      <view wx:for="{{ripples}}" wx:key="id" wx:for-item="wave" wx:for-index="waveIndex"
+        wx:if="{{wave.index === tabIndex}}" class="main-tab-ripple" style="{{wave.style}}" aria-hidden="true" />
+      <image class="main-tab-icon" src="/assets/{{item.icon}}{{selected === tabIndex ? '-active' : ''}}.png" mode="aspectFit" aria-hidden="true" />
+      <text class="main-tab-label">{{item.text}}</text>
+    </button>
+  </view>
+</view>

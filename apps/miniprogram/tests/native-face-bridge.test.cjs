@@ -1,15 +1,17 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {createNativeSigningApi}=require('../src/services/native-signing');
-const config={mode:'MINIAPP_WEBVIEW',enabled:true,signProviderConfigured:true,providerHosts:['textapi17.fadada.com','realnameverify16.fadada.com'],returnUrl:'https://mini-api.subauto.keybox.cloud/api/public/esign-return',faceBridgeConfigured:true,faceBridgeProtocol:'FADADA_H5_CURRENT_FLOW_V1'};
+const config={mode: 'MINIAPP_WEBVIEW', newOrderContractMode: 'ESIGN', newEsignRequestsEnabled: true,enabled:true,signProviderConfigured:true,providerHosts:['textapi17.fadada.com','realnameverify16.fadada.com'],returnUrl:'https://api.evsub.ndacar.com/api/public/esign-return',faceBridgeConfigured:true,faceBridgeKinds:['identity'],faceBridgeProtocol:'FADADA_H5_CURRENT_FLOW_V1'};
 const initial='https://realnameverify16.fadada.com/fddAuthenticationService/v1/api/synsAuthentication.action?transaction_no=synthetic&sign=opaque';
 const callback='https://realnameverify.fadada.com/fddAuthenticationService/app/index.html?opaque=face%2Bresult#/result';
 const normalized=callback.replace('realnameverify.fadada.com','realnameverify16.fadada.com');
 const appId='wx0123456789abcdef',path='pages/face/index';
+const privacy={id:'privacy',type:'privacy',version:1,content:'synthetic current privacy'};
+const identity={name:'合成客户',idCardNo:'110101199001010000',consent:{accepted:true,documentId:'privacy',version:1}};
 const options=()=>Object.fromEntries(Object.entries({bizToken:'synthetic-token',miniProgramAppId:appId,miniProgramPath:path,miniProgramCallBackUrl:callback}).map(([k,v])=>[k,encodeURIComponent(v)]));
 function setup(){let customerId='person',token='session',cfg={...config},rejectJump=false,waitJump=null;const calls=[],navigations=[],storage=new Map();
- const api=createNativeSigningApi({call:async(method,p)=>{calls.push({method,p});return p==='/public/signing-config'?cfg:{url:initial,status:'PENDING'};},native:async(method,args)=>{navigations.push({method,args});if(method==='navigateToMiniProgram'){if(waitJump)await waitJump;if(rejectJump)throw Error('synthetic cancellation');}},identifier:encodeURIComponent,error:(message,code)=>Object.assign(new Error(message),{code}),getContext:()=>({authenticated:!!token,customer:{id:customerId}}),sessionKey:()=>token,getSignStatus:async()=>({status:'PENDING'}),platform:{setStorageSync:(k,v)=>storage.set(k,v),getStorageSync:k=>storage.get(k),removeStorageSync:k=>storage.delete(k)},pendingKey:'pending'});
- const parent={kind:'owner-identity',id:'enterprise:new',url:initial};
- return{api,parent,calls,navigations,storage,config:v=>cfg=v,rotate:()=>token='rotated',reject:v=>rejectJump=v,wait:v=>waitJump=v,start:()=>api.startOwnerSigning('owner-identity','enterprise',null,{accepted:true})};
+ const api=createNativeSigningApi({call:async(method,p)=>{calls.push({method,p});return (p==='/public/signing-config'||p==='/public/identity-config')?cfg:p==='/public/legal/privacy'?privacy:{url:initial,status:'PENDING'};},native:async(method,args)=>{navigations.push({method,args});if(method==='navigateToMiniProgram'){if(waitJump)await waitJump;if(rejectJump)throw Error('synthetic cancellation');}},identifier:encodeURIComponent,error:(message,code)=>Object.assign(new Error(message),{code}),getContext:()=>({authenticated:!!token,customer:{id:customerId}}),sessionKey:()=>token,getSignStatus:async()=>({status:'PENDING'}),platform:{setStorageSync:(k,v)=>storage.set(k,v),getStorageSync:k=>storage.get(k),removeStorageSync:k=>storage.delete(k)},pendingKey:'pending'});
+ const parent={kind:'identity',id:'person',url:initial};
+ return{api,parent,calls,navigations,storage,config:v=>cfg=v,rotate:()=>token='rotated',reject:v=>rejectJump=v,wait:v=>waitJump=v,start:()=>api.startESignVerification(identity)};
 }
 test('face bridge requires a loaded current provider page, and returns to that flow without declaring verified',async()=>{
  const e=setup();assert.throws(()=>e.api.prepareFaceBridge(options(),e.parent));await e.start();assert.throws(()=>e.api.prepareFaceBridge(options(),e.parent));
@@ -20,7 +22,7 @@ test('face bridge requires a loaded current provider page, and returns to that f
  const result=e.api.completeFaceBridge(handle.bridgeId,{scene:1038,referrerInfo:{appId,extraData:{faceResult:'SIGNED'}}},e.parent);
  assert.equal(result.reloadUrl,normalized);assert.equal(result.status,undefined);assert.equal(e.api.reloadSigningPage(e.parent.kind,e.parent.id,result.reloadUrl),normalized);
  assert.equal(e.api.getSigningTask(e.parent.kind,e.parent.id).status,'PENDING');assert.throws(()=>e.api.completeFaceBridge(handle.bridgeId,{scene:1038,referrerInfo:{appId}},e.parent));
- assert.equal(e.calls.filter(x=>x.method==='POST').length,1);assert.ok(!JSON.stringify([...e.storage]).includes('synthetic-token'));
+ assert.equal(e.calls.filter(x=>x.method==='POST').length,2);assert.ok(!JSON.stringify([...e.storage]).includes('synthetic-token'));
 });
 test('unrelated pages, disabled bridge, unsafe callbacks and malformed dynamic parameters cannot jump',async()=>{
  const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);
@@ -34,7 +36,7 @@ test('unrelated pages, disabled bridge, unsafe callbacks and malformed dynamic p
 });
 test('session changes, expiry, another active flow, logout and revoked task invalidate face handles',async()=>{
  for(const change of ['session','expiry','other','logout','forgotten']){const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const h=e.api.prepareFaceBridge(options(),e.parent);const now=Date.now;
-  try{if(change==='session')e.rotate();if(change==='expiry')Date.now=()=>now()+11*60*1000;if(change==='other')await e.api.startOwnerSigning('owner-identity','another',null,{});if(change==='logout')e.api.clearSigningState();if(change==='forgotten')e.api.forgetSigningTask(e.parent.kind,e.parent.id);
+  try{if(change==='session')e.rotate();if(change==='expiry')Date.now=()=>now()+11*60*1000;if(change==='other')await e.api.startESignVerification(identity);if(change==='logout')e.api.clearSigningState();if(change==='forgotten')e.api.forgetSigningTask(e.parent.kind,e.parent.id);
    await assert.rejects(e.api.startFaceBridge(h.bridgeId,e.parent));assert.throws(()=>e.api.completeFaceBridge(h.bridgeId,{scene:1038,referrerInfo:{appId}},e.parent));
   }finally{Date.now=now;}
  }
@@ -58,21 +60,21 @@ function middlePage(e){
 }
 test('middle page waits for a user click and genuine return, then reloads only its original parent',async()=>{
  const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const p=middlePage(e);
- p.setEntry({scene:1038,referrerInfo:{appId,extraData:{faceResult:'success'}}});p.page.onLoad(options());p.page.onShow();assert.equal(p.page.data.ready,true);assert.equal(p.actions.length,0);assert.equal(e.navigations.length,1);
- await p.page.startFace();p.page.onShow();assert.equal(p.actions.length,0);p.page.onHide();e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId}});p.page.onShow();assert.equal(p.parent.data.url,normalized);assert.deepEqual(p.actions,['back']);
+ p.setEntry({scene:1038,referrerInfo:{appId,extraData:{faceResult:'success'}}});p.page.onLoad(options());await p.page.onShow();assert.equal(p.page.data.ready,true);assert.equal(p.actions.length,0);assert.equal(e.navigations.length,1);
+ await p.page.startFace();await p.page.onShow();assert.equal(p.actions.length,0);p.page.onHide();e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId}});await p.page.onShow();assert.equal(p.parent.data.url,normalized);assert.deepEqual(p.actions,['back']);
  assert.ok(!JSON.stringify(p.page.data).includes('synthetic-token'));assert.equal(p.page.data.ready,false);
 });
 test('middle page rejects direct entry, mismatched parent, and a failed native jump without status changes',async()=>{
  const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);
  const direct=middlePage(e);direct.stack.shift();direct.page.onLoad(options());assert.equal(direct.page.data.ready,false);
- const p=middlePage(e);p.page.onLoad(options());e.reject(true);await p.page.startFace();assert.equal(p.page.data.busy,false);assert.ok(p.page.data.error);p.page.onHide();p.page.onShow();assert.equal(p.actions.length,0);
- e.reject(false);await p.page.startFace();p.page.onHide();p.setEntry({scene:1038,referrerInfo:{appId}});p.stack[0]={...p.parent};p.page.onShow();assert.equal(p.actions.length,0);assert.equal(p.page.data.ready,false);
+ const p=middlePage(e);p.page.onLoad(options());e.reject(true);await p.page.startFace();assert.equal(p.page.data.busy,false);assert.ok(p.page.data.error);p.page.onHide();await p.page.onShow();assert.equal(p.actions.length,0);
+ e.reject(false);await p.page.startFace();p.page.onHide();p.setEntry({scene:1038,referrerInfo:{appId}});p.stack[0]={...p.parent};await p.page.onShow();assert.equal(p.actions.length,0);assert.equal(p.page.data.ready,false);
  assert.equal(e.api.getSigningTask(e.parent.kind,e.parent.id).status,'PENDING');
 });
 test('stale app entry and delayed native cancellation cannot consume a face return',async()=>{
  const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const p=middlePage(e);
  p.setEntry({scene:1038,referrerInfo:{appId}});p.page.onLoad(options());
- let cancel;e.wait(new Promise((_,reject)=>cancel=reject));const attempt=p.page.startFace();p.page.onHide();p.page.onShow();
+ let cancel;e.wait(new Promise((_,reject)=>cancel=reject));const attempt=p.page.startFace();await new Promise(setImmediate);p.page.onHide();await p.page.onShow();
  assert.equal(p.actions.length,0);assert.equal(p.parent.data.url,initial);cancel(Error('cancelled'));await attempt;
  assert.equal(p.actions.length,0);assert.equal(p.page.data.ready,true);
 });
@@ -94,11 +96,20 @@ test('same callback remounts web-view, and deferred remount rejects changed sess
 
 test('fresh return arriving before native success is queued, then consumed once after success',async()=>{
  const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const p=middlePage(e);p.page.onLoad(options());
- let resolve;e.wait(new Promise(done=>resolve=done));const attempt=p.page.startFace();p.page.onHide();e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId}});p.page.onShow();assert.equal(p.actions.length,0);
- resolve();await attempt;assert.deepEqual(p.actions,['back']);assert.equal(p.parent.data.url,normalized);p.page.onShow();assert.deepEqual(p.actions,['back']);
+ let resolve;e.wait(new Promise(done=>resolve=done));const attempt=p.page.startFace();await new Promise(setImmediate);p.page.onHide();e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId}});await p.page.onShow();assert.equal(p.actions.length,0);
+ resolve();await attempt;assert.deepEqual(p.actions,['back']);assert.equal(p.parent.data.url,normalized);await p.page.onShow();assert.deepEqual(p.actions,['back']);
 });
 test('App.onShow passes the fresh event before asynchronous status recovery',async()=>{
  const fs=require('node:fs'),vm=require('node:vm');let app;const calls=[];
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/app.js'),'utf8'),{App:v=>app=v,require:()=>({observeSigningAppShow:e=>calls.push(e),getContext:()=>({authenticated:false})})});
  const entry={scene:1038,referrerInfo:{appId}};await app.onShow(entry);assert.equal(calls[0],entry);
+});
+
+for(const capability of [{...config,enabled:false,newOrderContractMode:'OFFLINE',newEsignRequestsEnabled:false},{}])test('a historical face return cannot reload its provider callback after capability is closed or malformed',async()=>{
+ const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const p=middlePage(e);p.page.onLoad(options());await p.page.startFace();p.page.onHide();e.config(capability);e.api.observeSigningAppShow({scene:1038,referrerInfo:{appId}});await await p.page.onShow();
+ assert.deepEqual(p.actions,[]);assert.equal(p.parent.data.url,initial);assert.equal(p.page.data.ready,false);assert.equal(e.api.getSigningTask('identity','person').url,'');
+});
+
+test('a prepared face handle cannot bypass a newly disabled face capability',async()=>{
+ const e=setup();await e.start();e.api.markSigningWebLoaded(e.parent.kind,e.parent.id,e.parent.url);const h=e.api.prepareFaceBridge(options(),e.parent);e.config({...config,faceBridgeConfigured:false});await assert.rejects(e.api.startFaceBridge(h.bridgeId,e.parent));assert.equal(e.navigations.some(v=>v.method==='navigateToMiniProgram'),false);
 });

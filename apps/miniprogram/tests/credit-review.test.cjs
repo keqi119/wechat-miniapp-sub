@@ -64,7 +64,7 @@ test('all five operator bands show only ranges and server deposit rule; low/unve
 });
 test('application defaults separate credit acceptance off and opens the credit explanation, never credit uploads', async () => {
   const env = setup(); const p = page(env); await p.refresh(); assert.equal(p.data.creditAccepted, false); assert.equal(p.data.creditReview.status, 'CONSENT_REQUIRED');
-  await p.acceptCreditConsent(); assert.equal(env.calls.some(call => call.method === 'POST'), false); p.openCreditExplanation(); assert.equal(env.navigations.at(-1), '/pages/legal/index?type=credit-verification'); assert.equal(p.chooseCreditScreenshot, undefined);
+  await p.acceptCreditConsent(); assert.equal(env.calls.some(call => call.method === 'POST'), false); p.openCreditExplanation(); assert.match(env.navigations.at(-1), /^\/pages\/legal\/index\?preview=/); assert.equal(p.chooseCreditScreenshot, undefined);
 });
 test('application consent and withdrawal refresh both application and credit state, clearing old final plan acceptance', async () => {
   const env = setup(); const p = page(env); await p.refresh(); p.setData({ creditAccepted: true, planRead: true }); await p.acceptCreditConsent(); assert.equal(p.data.creditReview.consent.status, 'ACCEPTED'); assert.equal(p.data.creditAccepted, false); assert.equal(p.data.planRead, false);
@@ -79,9 +79,9 @@ test('credit failure is isolated from application readback and cannot authorize 
 test('credit legal page uses the dedicated published type instead of falling back to account terms', async () => {
   const env = setup(); const p = page(env, 'legal', { type: 'credit-verification' }); await p.reload(); assert.equal(p.type, 'credit-verification'); assert.equal(p.data.title, document.title); assert.equal(p.data.sections[0].text, document.content);
 });
-test('final confirmation is blocked when credit readback fails or its immutable verification snapshot differs', async () => {
+test('final confirmation is blocked when credit readback fails or its public verification revision differs', async () => {
   for(const state of [null, verified('LT650', null), verified(), verified('UNVERIFIABLE', null)]) {
-    const env=setup();const p=page(env);p.setData({application:{id:'a1',status:'AWAITING_CONFIRMATION',finalPlan:{complete:true,revision:1,commercialHash:'hash',creditVerificationId:'cv-old',creditRuleVersion:'ZHIMA_MANUAL_V1',creditBand:'GE750',creditRevision:3}},creditReview:state,planRead:true});await p.confirmPlan();assert.equal(env.calls.some(call=>call.method==='POST'),false);
+    const env=setup();const p=page(env);p.setData({application:{id:'a1',status:'AWAITING_CONFIRMATION',finalPlan:{complete:true,revision:1,commercialHash:'hash',creditRuleVersion:'ZHIMA_MANUAL_V1',creditRevision:2}},creditReview:state,planRead:true});await p.confirmPlan();assert.equal(env.calls.some(call=>call.method==='POST'),false);
   }
 });
 test('consent requirements do not turn a manual decline or withdrawal into general login consent', async () => {

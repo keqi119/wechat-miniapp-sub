@@ -1,3 +1,5 @@
+import {buildFadadaMsgDigest} from '../src/esign/fadada/fadada-digest';
+import './legacy-esign-mode';
 import '../src/common/config';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,10 +9,11 @@ import {OwnerService} from '../src/owner-signing/owner.service';
 import {OwnerIdentityService} from '../src/owner-signing/identity';
 import {hash} from '../src/common/data';
 let db:Db,owners:OwnerService,identity:OwnerIdentityService,owner:any,actor:any,customer:any,other:any,docs:any[];
+let queries=0;
 let calls:string[]=[],verified=false,managerMobile='',certBound=true,verificationThrows=false;
 const suffix=randomUUID().replaceAll('-','').slice(0,10),png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jF4kAAAAASUVORK5CYII=';
-const config:any={enabled:true,accountRegisterEnabled:true,realNameVerifyEnabled:true,identityEncryptionKey:Buffer.alloc(32,7).toString('base64')};
-const api:any={registerEnterprise:async()=>{calls.push('register');return{customerId:'Owner'+suffix};},createVerification:async()=>{calls.push('verify');if(verificationThrows)throw Error('synthetic timeout');return{customerId:'Owner'+suffix,serialNo:'Flow'+suffix,url:'https://realnameverify16.fadada.com/test'};},queryEnterprise:async()=>({verified,customerId:'Owner'+suffix,serialNo:'Flow'+suffix,manager:verified?{name:'Synthetic manager',mobile:managerMobile,identityNo:'syntheticSensitiveId',type:'1'}:undefined}),queryCertificate:async()=>({bound:certBound,serialNo:'Cert'+suffix}),querySeals:async()=>[{customerId:'Owner'+suffix,signatureId:'Seal'+suffix,imageBase64:png,imageType:'image/png',imageHash:hash(png)}]};
+const config:any={appId:'synthetic-legacy-app',appSecret:'synthetic-legacy-callback-secret',enabled:true,accountRegisterEnabled:true,realNameVerifyEnabled:true,identityEncryptionKey:Buffer.alloc(32,7).toString('base64')};
+const api:any={registerEnterprise:async()=>{calls.push('register');return{customerId:'Owner'+suffix};},createVerification:async()=>{calls.push('verify');if(verificationThrows)throw Error('synthetic timeout');return{customerId:'Owner'+suffix,serialNo:'Flow'+suffix,url:'https://realnameverify16.fadada.com/test'};},queryEnterprise:async(input:any)=>{queries++;return{verified,customerId:'Owner'+suffix,serialNo:input.serialNo,manager:verified?{name:'Synthetic manager',mobile:managerMobile,identityNo:'syntheticSensitiveId',type:'1'}:undefined};},queryCertificate:async()=>({bound:certBound,serialNo:'Cert'+suffix}),querySeals:async()=>[{customerId:'Owner'+suffix,signatureId:'Seal'+suffix,imageBase64:png,imageType:'image/png',imageHash:hash(png)}]};
 const error=(code:string)=>(e:any)=>e.getResponse?.().error?.code===code;
 before(async()=>{
  assert.ok(new URL(process.env.TEST_DATABASE_URL!).pathname.endsWith('_test'));process.env.DATABASE_URL=process.env.TEST_DATABASE_URL;db=new Db();process.env.OWNER_ONBOARDING_ENABLED='true';
@@ -50,6 +53,19 @@ test('a contradictory refresh invalidates previous signing readiness',async()=>{
  certBound=true;await identity.refresh(customer.id,owner.id);const seal=await db.ownerSeal.findFirstOrThrow({where:{ownerId:owner.id}});await identity.selectSeal(customer.id,owner.id,seal.id);
  managerMobile=other.mobile;await assert.rejects(identity.refresh(customer.id,owner.id),error('OWNER_MANAGER_MISMATCH'));assert.equal((await owners.memberDetail(customer.id,owner.id)).readyForSigning,false);managerMobile=customer.mobile;
 });
+test('legacy callback paused after lookup cannot reserve a replacement serial and current callback still works',async()=>{
+ certBound=true;verified=true;managerMobile=customer.mobile;await identity.refresh(customer.id,owner.id);
+ const transaction_id='Flow'+suffix,timestamp='20261109120000',payload={transaction_id,timestamp,msg_digest:buildFadadaMsgDigest({...config,timestamp,explicitSortString:transaction_id})};
+ let reached!:()=>void,release!:()=>void;const lookedUp=new Promise<void>(r=>reached=r),resume=new Promise<void>(r=>release=r),delegate=db.ownerESignAccount;
+ const pausedDb=new Proxy(db,{get(target,key){if(key==='ownerESignAccount')return new Proxy(delegate,{get(model,method){if(method==='findUnique')return async(args:any)=>{const result=await model.findUnique(args);if(args.where.verificationTransactionNo===transaction_id){reached();await resume;}return result;};const value=Reflect.get(model,method);return typeof value==='function'?value.bind(model):value;}});const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
+ const callback=new OwnerIdentityService(pausedDb,owners,config,api).callback(payload).then(value=>({value,error:null as any}),error=>({value:null,error}));
+ try{await lookedUp;const replacement='Replacement'+suffix;await db.ownerESignAccount.update({where:{ownerId:owner.id},data:{verificationTransactionNo:replacement}});
+ const before=await db.ownerESignAccount.findUniqueOrThrow({where:{ownerId:owner.id}}),beforeQueries=queries,audits=await db.auditLog.count({where:{resourceId:owner.id}});
+ release();const outcome=await callback;assert.ok(outcome.error,'old legacy callback must reject after serial replacement');assert.equal(outcome.error.getResponse?.().error?.code,'OWNER_CALLBACK_CHANGED');assert.deepEqual(await db.ownerESignAccount.findUniqueOrThrow({where:{ownerId:owner.id}}),before);assert.equal(queries,beforeQueries);assert.equal(await db.auditLog.count({where:{resourceId:owner.id}}),audits);
+ const current={transaction_id:replacement,timestamp,msg_digest:buildFadadaMsgDigest({...config,timestamp,explicitSortString:replacement})};assert.deepEqual(await identity.callback(current),{accepted:true});assert.equal(queries,beforeQueries+1);await identity.refresh(customer.id,owner.id);assert.equal(queries,beforeQueries+2);
+ }finally{release();await callback;}
+});
+
 test('unknown start result cannot create a new chargeable verification attempt on retry',async()=>{
  await db.ownerESignAccount.update({where:{ownerId:owner.id},data:{realNameStatus:'VERIFY_UNKNOWN',verificationTransactionNo:null,verificationUrlCiphertext:null}});
  const before=calls.length;await assert.rejects(identity.start(customer.id,owner.id,{accepted:true,consents:docs.map(d=>({documentId:d.id,version:d.version}))}),error('OWNER_VERIFY_UNKNOWN'));assert.equal(calls.length,before);

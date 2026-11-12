@@ -1,0 +1,42 @@
+{
+  "status": "APPROVED",
+  "approvedAt": "2026-10-21T09:23:08.515Z",
+  "approvedBy": "宁达运营方（当前会话用户明确确认）",
+  "approvalQuestionId": "call_e61abe34cff54e1caaee78d178d0d0eb",
+  "approvalStatement": "确认发布三份文案并开放授权办理",
+  "scope": [
+    "owner-auto-sign",
+    "owner-rental-contract",
+    "owner-data-sharing"
+  ],
+  "executionScope": "仅发布文本及开放本人渠道授权办理；订单签署与自动盖章继续关闭。",
+  "editorialChangesAfterApproval": [
+    "仅更新草稿状态行，正文保持获批文本"
+  ],
+  "documents": [
+    {
+      "type": "owner-auto-sign",
+      "version": 1,
+      "sourcePath": "docs/legal/drafts/ninda/owner-auto-sign-v1.md",
+      "formalPath": "docs/legal/versions/ninda/owner-auto-sign-v1.md",
+      "reviewedDraftSha256": "3bed435778b16f91b1c2eb0ea4a170a63a2001e13c2b59295a136fdfac96d94b",
+      "formalSha256": "09ec7a117d9317559df5195f81d22308f699c553b2dd2c29e2b747b5d31d3b7d"
+    },
+    {
+      "type": "owner-rental-contract",
+      "version": 2,
+      "sourcePath": "docs/legal/drafts/ninda/owner-rental-contract-v2.md",
+      "formalPath": "docs/legal/versions/ninda/owner-rental-contract-v2.md",
+      "reviewedDraftSha256": "86377c89c30dc104e82861c67bc92efdfe035af160b925d68ae55751fc683234",
+      "formalSha256": "e7c0540f97cd16edfb98112399cab48061441bfa5cf2700b8d67d5814828e143"
+    },
+    {
+      "type": "owner-data-sharing",
+      "version": 1,
+      "sourcePath": "docs/legal/drafts/ninda/owner-data-sharing-v1.md",
+      "formalPath": "docs/legal/versions/ninda/owner-data-sharing-v1.md",
+      "reviewedDraftSha256": "db4a995c0e6c2849be4e0ecfef52acd1624fc1c1c0a1f3803a454e28b3f07512",
+      "formalSha256": "ea4e536c8d454af8b27978b285e18c09bfb092aa4b7bc150f403df33a2fce517"
+    }
+  ]
+}

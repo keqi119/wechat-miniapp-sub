@@ -1,3 +1,5 @@
+import {publishLegacyPlanFixture} from './legacy-esign-mode';
+import {seedTrustedCustomerProfile} from './customer-profile-fixture';
 import '../src/common/config';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,10 +30,12 @@ async function request(path: string, body?: any, token?: string) {
 }
 async function fixture() {
   const token = randomUUID(), c = await db.customer.create({ data: { mobile: token, name: '合成测试' } });
+  await seedTrustedCustomerProfile(db,c.id);
   await db.customerSession.create({ data: { id: tokenHash(token), customerId: c.id, expiresAt: new Date(Date.now() + 3600000) } });
   for(const doc of docs.filter(d => ['privacy','terms'].includes(d.type))) await db.customerConsent.create({data:{customerId:c.id,documentId:doc.id,type:doc.type,version:doc.version,source:'TEST'}});
   const v = await db.vehicle.create({ data: { brand: '测试', model: 'T', title: '合成车辆', year: 2026, city: '上海', mileageKm: 1, status: 'PUBLISHED' } });
   const p = await db.subscriptionPlan.create({ data: { vehicleId: v.id, name: '合成套餐', months: 12, monthlyFeeAmount: 100, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '自费', benefits: [], conditions: '测试', active: true } });
+  await publishLegacyPlanFixture(db,p);
   return { token, customerId: c.id, body: { vehicleId: v.id, subscriptionPlanId: p.id, profile: { name: '合成测试' } as any, consents: docs.filter(d => d.type === 'application').map(d => ({ documentId: d.id, version: d.version })), idempotencyKey: randomUUID() } };
 }
 const manual = { source: 'MANUAL', name: '测试交接点', address: '上海测试路100号入口' };

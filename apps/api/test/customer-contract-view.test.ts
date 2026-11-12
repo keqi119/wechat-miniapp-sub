@@ -1,0 +1,87 @@
+import './legacy-esign-mode';
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {CustomerController,recordView} from '../src/orders/customer';
+const at=new Date('2026-10-25T16:01:00Z'),hash='a'.repeat(64),sourceHash='b'.repeat(64),signedHash='c'.repeat(64);
+function fixture(owner=true){
+ const customer={id:'customer',name:'合成客户',mobile:'13900000000',profile:{},drivingYears:2};
+ const terms:any={monthlyFeeAmount:1,depositAmount:0,months:1,startDate:'2028-01-31',commercialTerms:{vehicleIdentification:'冻结车辆'},...(owner?{lessorSnapshot:{ownerId:'owner',name:'冻结出租方',providerCustomerId:'SECRET_OWNER'}}:{})};
+ const order:any={id:'order',customerId:'customer',status:'AWAITING_SIGNATURE',createdAt:at,finalPlanSnapshot:terms,vehicle:{title:'当前车型不可冒充冻结车辆'}};
+ const contract:any={id:'contract',orderId:'order',customerId:'customer',kind:'SUBSCRIPTION',status:'PENDING',providerTaskId:'task',documentHash:hash,sourceFileId:'source',signedFileId:null,createdAt:at,updatedAt:at,templateVersion:3,body:'SECRET_BODY',order};
+ const parties:any[]=[{taskId:'task',role:'CUSTOMER',providerCustomerId:'SECRET_CUSTOMER',status:'PENDING',attemptedAt:null,verifiedAt:null,queryEvidenceHash:null},{taskId:'task',role:'OWNER',providerCustomerId:'SECRET_OWNER',providerSignatureId:'SECRET_SEAL',status:'PENDING',attemptedAt:null,verifiedAt:null,queryEvidenceHash:null}];
+ const task:any={id:'task',ownerId:'owner',customerId:'customer',resourceId:'contract',kind:'SUBSCRIPTION',documentHash:hash,sourceFileId:'source',sourceSha256:sourceHash,status:'READY',snapshot:{lessor:{ownerId:'owner',providerCustomerId:'SECRET_OWNER',providerSignatureId:'SECRET_SEAL'}},parties,reviewedAt:at,reviewedBy:'reviewer',uploadedAt:at,signedFileId:null,signedPdfHash:null};
+ const legacy:any={id:'task',customerId:'customer',resourceId:'contract',kind:'SUBSCRIPTION',documentHash:hash,sourceFileId:'source',sourcePdfHash:sourceHash,status:'PENDING',uploadedAt:at,customerSignedAt:null,platformSignedAt:null,signedFileId:null,signedPdfHash:null};
+ const files:any[]=[{id:'source',customerId:'customer',sha256:sourceHash,purpose:'contract',mimeType:'application/pdf'},{id:'signed',customerId:'customer',sha256:signedHash,purpose:'contract',mimeType:'application/pdf'}];
+ const calls:any[]=[];let ownerTask:any=task,legacyTask:any=legacy;
+ const findContract=(args:any)=>{calls.push(['contract',args]);assert.equal(args.where.customerId,'customer');return (!args.where.id||args.where.id==='contract')&&(!args.where.orderId||args.where.orderId==='order')?contract:null;};
+ const db:any={customer:{findUnique:async()=>customer},eSignAccount:{findUnique:async()=>null},contract:{findFirst:async(args:any)=>findContract(args),findMany:async(args:any)=>{const item=findContract(args);return item?[item]:[];},count:async()=>1},order:{findFirst:async(args:any)=>{assert.equal(args.where.customerId,'customer');return order;}},ownerSigningTask:{findFirst:async(args:any)=>{calls.push(['owner',args]);assert.equal(args.where.customerId,'customer');assert.equal(args.where.resourceId,'contract');return ownerTask;}},fadadaTask:{findFirst:async(args:any)=>{calls.push(['platform',args]);assert.equal(args.where.customerId,'customer');assert.equal(args.where.resourceId,'contract');return legacyTask;}},storedFile:{findFirst:async(args:any)=>{calls.push(['file',args]);assert.equal(args.where.customerId,'customer');return files.find(f=>f.id===args.where.id)||null;}},vehicle:{findMany:async()=>[]},application:{findFirst:async()=>null},customerConsent:{findMany:async()=>[]}};
+ return{controller:new CustomerController(db),db,customer,order,terms,contract,task,parties,legacy,files,calls,request:{customer},missingOwner:()=>{ownerTask=null;},missingLegacy:()=>{legacyTask=null;}};
+}
+const detail=async(f:ReturnType<typeof fixture>)=>{const record:any=await f.controller.record('contracts','contract',f.request);assert.ok(record.contractDetail,'safe contractDetail must replace generic contract payload');return record.contractDetail;};
+const verified=(p:any,status='SIGNED')=>Object.assign(p,{status,attemptedAt:at,verifiedAt:at,queryEvidenceHash:hash});
+
+test('pending overall with verified customer signature waits for owner and never offers another signature',async()=>{
+ const f=fixture();verified(f.parties[0]);const d=await detail(f);assert.equal(d.phase,'WAITING_OWNER');assert.equal(d.canSign,false);assert.equal(d.canQuery,true);assert.equal(d.primaryAction.id,'query');assert.equal(d.parties[0].status,'SIGNED');assert.match(d.guidance.description,/车主|出租方/);
+});
+test('unknown customer attempt is query-only until trusted absent result permits original transaction',async()=>{
+ const f=fixture();Object.assign(f.parties[0],{status:'UNKNOWN',attemptedAt:at});let d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.equal(d.canSign,false);assert.equal(d.primaryAction.id,'query');verified(f.parties[0],'PENDING');d=await detail(f);assert.equal(d.phase,'READY_TO_SIGN');assert.equal(d.canSign,true);assert.equal(d.primaryAction.id,'sign');
+});
+test('preparation, PDF review and reviewed signature stages are distinct',async()=>{
+ const f=fixture();f.contract.status='DRAFT';f.contract.providerTaskId=null;f.contract.sourceFileId=null;f.missingOwner();let d=await detail(f);assert.equal(d.phase,'PREPARING');assert.equal(d.canSign,false);assert.deepEqual(d.documents,[]);
+ const ready=fixture();ready.contract.status='DRAFT';ready.task.status='PREPARED';ready.task.uploadedAt=null;ready.task.reviewedAt=null;ready.task.reviewedBy=null;d=await detail(ready);assert.equal(d.phase,'REVIEWING');assert.equal(d.canSign,false);ready.task.reviewedAt=at;ready.task.reviewedBy='reviewer';d=await detail(ready);assert.equal(d.phase,'READY_TO_SIGN');assert.equal(d.canSign,true);
+});
+test('both verified signatures need matching signed PDF before archive can be displayed',async()=>{
+ const f=fixture();f.parties.forEach(p=>verified(p));let d=await detail(f);assert.equal(d.phase,'ARCHIVING');assert.equal(d.canSign,false);assert.equal(d.documents.length,1);
+ f.task.status='ARCHIVED';f.task.archivedAt=at;f.task.ownerDispatchAt=at;f.task.signedFileId='signed';f.task.signedPdfHash=signedHash;f.contract.status='SIGNED';f.contract.signedFileId='signed';d=await detail(f);assert.equal(d.phase,'ARCHIVED');assert.equal(d.canQuery,false);assert.deepEqual(d.documents.map((x:any)=>x.kind),['SOURCE','SIGNED']);assert.ok(d.progress.every((p:any)=>p.state==='DONE'));
+ f.files[1].sha256=sourceHash;d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.equal(d.canSign,false);assert.ok(!d.documents.some((x:any)=>x.kind==='SIGNED'));
+});
+for(const state of ['REJECTED','EXPIRED','CANCELLED'])test(`terminal ${state} is deterministic and never signs`,async()=>{const f=fixture();f.contract.status=state;f.task.status=state;const d=await detail(f);assert.equal(d.phase,state);assert.equal(d.canSign,false);assert.equal(d.primaryAction,null);assert.ok(d.progress.some((p:any)=>p.state==='STOPPED'));});
+test('untrusted signed status and unknown task state fail closed',async()=>{const f=fixture();f.parties[0].status='SIGNED';let d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.equal(d.canSign,false);f.task.status='FUTURE_STATE';d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.equal(d.canSign,false);});
+test('missing OWNER task cannot load or sign through legacy platform fallback',async()=>{const f=fixture();f.missingOwner();const d=await detail(f);assert.equal(d.canSign,false);assert.equal(d.canQuery,false);assert.deepEqual(d.documents,[]);assert.equal(f.calls.filter(([name])=>name==='platform').length,0);});
+test('foreign task, hash, source file, party and order bindings hide documents and capabilities',async()=>{
+ for(const mutate of [(f:any)=>f.task.customerId='foreign',(f:any)=>f.task.resourceId='foreign',(f:any)=>f.task.documentHash='d'.repeat(64),(f:any)=>f.task.sourceFileId='foreign',(f:any)=>f.task.ownerId='foreign',(f:any)=>f.parties[0].taskId='foreign',(f:any)=>f.parties[1].providerCustomerId='foreign',(f:any)=>f.files[0].customerId='foreign',(f:any)=>f.files[0].sha256='d'.repeat(64),(f:any)=>f.contract.order.customerId='foreign']){const f=fixture();mutate(f);const d=await detail(f);assert.equal(d.canSign,false);assert.equal(d.canQuery,false);assert.deepEqual(d.documents,[]);}
+});
+test('contract projection preserves frozen one-fen and zero amounts, Beijing time and no raw private fields',async()=>{
+ const f=fixture();const result:any=await f.controller.record('contracts','contract',f.request),d=await detail(f);assert.equal(d.version,1);assert.equal(d.vehicle.title,'冻结车辆');assert.equal(d.lessor.name,'冻结出租方');assert.deepEqual(d.summaryRows.map((r:any)=>r.value),['¥0.01','¥0.00','1 个月','2028-01-31 至 2028-02-28']);assert.equal(d.createdAtText,'2026-10-26 00:01（北京时间）');assert.equal(d.templateVersion,3);assert.doesNotMatch(JSON.stringify(result),/SECRET_|provider|Snapshot|sourceSha256|documentHash|creditCode|mobile/);
+ f.order.finalPlanSnapshot={};const unavailable=await detail(f);assert.equal(unavailable.vehicle.title,'未提供');assert.equal(unavailable.lessor.name,'未提供');assert.equal(unavailable.summaryRows[0].value,'未提供');
+});
+test('list and home use the same verified signature phase without provider side effects',async()=>{
+ const f=fixture();verified(f.parties[0]);const list:any=await f.controller.records('contracts',{},f.request);assert.equal(list.items[0].statusText,'等待车主签署');assert.equal(list.items[0].contractDetail.phase,'WAITING_OWNER');assert.deepEqual(list.items[0].actions,[]);const home:any=await f.controller.home(f.request);assert.match(home.nextAction.title,/等待车主签署/);assert.doesNotMatch(JSON.stringify(home),/SECRET_/);
+});
+test('legacy platform contracts preserve trusted progress and amendment uses its existing change entry',async()=>{
+ const f=fixture(false);f.legacy.customerSignedAt=at;let d=await detail(f);assert.equal(d.phase,'WAITING_OWNER');assert.equal(d.parties[1].role,'PLATFORM');assert.equal(d.canSign,false);f.legacy.platformSignedAt=at;d=await detail(f);assert.equal(d.phase,'ARCHIVING');
+ const amendment=fixture();amendment.contract.kind='AMENDMENT';amendment.task.kind='AMENDMENT';amendment.contract.delayQuote={change:{id:'change',orderId:'order',customerId:'customer'}};const record:any=await amendment.controller.record('contracts','contract',amendment.request);assert.equal(record.contractDetail.canSign,false);assert.equal(record.contractDetail.primaryAction,null);assert.ok(record.actions.some((a:any)=>a.id==='change'));
+});
+test('generic contract fallback never grants unverified sign or exposes raw snapshots',()=>{const result:any=recordView('contracts',{id:'unloaded',status:'PENDING',createdAt:at,body:'SECRET_BODY',sourceFileId:'foreign',providerTaskId:'SECRET_TASK'});assert.deepEqual(result.actions,[]);assert.deepEqual(result.documents,[]);assert.doesNotMatch(JSON.stringify(result),/SECRET_|foreign/);});
+
+test('legacy platform status query cannot expose a path that auto dispatches sealing',async()=>{const f=fixture(false);f.legacy.customerSignedAt=at;const d=await detail(f);assert.equal(d.phase,'WAITING_OWNER');assert.equal(d.canQuery,false);assert.equal(d.primaryAction,null);});
+test('owner signed before an unsigned customer is inconsistent and cannot reopen customer signing',async()=>{const f=fixture();verified(f.parties[1]);const d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.equal(d.canSign,false);});
+test('unknown owner attempt remains query-only after customer signed',async()=>{const f=fixture();verified(f.parties[0]);Object.assign(f.parties[1],{status:'UNKNOWN',attemptedAt:at});const d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.equal(d.canSign,false);assert.equal(d.primaryAction.id,'query');});
+test('legacy archived contract uses both trusted platform timestamps and matching archived PDF',async()=>{const f=fixture(false);Object.assign(f.legacy,{status:'SIGNED',customerSignedAt:at,platformSignedAt:at,signedFileId:'signed',signedPdfHash:signedHash});Object.assign(f.contract,{status:'SIGNED',signedFileId:'signed'});const d=await detail(f);assert.equal(d.phase,'ARCHIVED');assert.deepEqual(d.documents.map((file:any)=>file.kind),['SOURCE','SIGNED']);assert.equal(d.canQuery,false);assert.equal(d.canSign,false);});
+test('an archived task with a missing contract archive pointer fails closed',async()=>{const f=fixture();f.parties.forEach(p=>verified(p));Object.assign(f.task,{status:'ARCHIVED',archivedAt:at,ownerDispatchAt:at,signedFileId:'signed',signedPdfHash:signedHash});f.contract.status='SIGNED';const d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.equal(d.canSign,false);assert.ok(!d.documents.some((file:any)=>file.kind==='SIGNED'));});
+test('archive requires original upload and full PDF review evidence',async()=>{for(const field of ['uploadedAt','reviewedAt','reviewedBy']){const f=fixture();f.parties.forEach(p=>verified(p));Object.assign(f.task,{status:'ARCHIVED',archivedAt:at,ownerDispatchAt:at,signedFileId:'signed',signedPdfHash:signedHash,[field]:null});Object.assign(f.contract,{status:'SIGNED',signedFileId:'signed'});const d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.ok(!d.documents.some((file:any)=>file.kind==='SIGNED'));}});
+test('owner unknown or rejected never regresses the completed customer progress step',async()=>{const f=fixture();verified(f.parties[0]);Object.assign(f.parties[1],{status:'UNKNOWN',attemptedAt:at});let d=await detail(f);assert.equal(d.progress.find((step:any)=>step.id==='customer').state,'DONE');assert.equal(d.progress.find((step:any)=>step.id==='owner').state,'CURRENT');verified(f.parties[1],'REJECTED');d=await detail(f);assert.equal(d.phase,'REJECTED');assert.equal(d.progress.find((step:any)=>step.id==='customer').state,'DONE');assert.equal(d.progress.find((step:any)=>step.id==='owner').state,'STOPPED');});
+
+test('legacy reviewed pre-task DTO preserves first signature through the miniapp validator',async()=>{
+ const f=fixture(false);f.contract.status='DRAFT';f.contract.providerTaskId=null;
+ f.db.eSignApproval={findFirst:async(args:any)=>{assert.equal(args.where.customerId,'customer');assert.equal(args.where.resourceId,'contract');return{resourceId:'contract',customerId:'customer',kind:'SUBSCRIPTION',documentHash:hash,sourceFileId:'source',sourcePdfHash:sourceHash,status:'APPROVED',requesterId:'requester',approverId:'reviewer',approvedAt:at,expiresAt:new Date('2099-01-01')};}};
+ const record:any=await f.controller.record('contracts','contract',f.request);assert.equal(record.contractDetail.phase,'READY_TO_SIGN');assert.equal(record.contractDetail.canSign,true);
+ const {contractOverview}=require('../../miniprogram/src/utils/customer-contract.js');const page=contractOverview(record,'contract');assert.equal(page.available,true);assert.equal(page.canSign,true);assert.equal(page.primaryAction.id,'sign');assert.equal(page.parties[0].status,'PENDING');assert.equal(page.parties[1].status,'PENDING');
+ f.contract.status='PENDING';const unknown:any=await f.controller.record('contracts','contract',f.request);assert.equal(unknown.contractDetail.phase,'VERIFYING');assert.equal(contractOverview(unknown,'contract').canSign,false);
+});
+
+test('vehicle-change amendment highlights its frozen target vehicle and never the live vehicle',async()=>{
+ const f=fixture();f.contract.kind='AMENDMENT';f.task.kind='AMENDMENT';f.contract.delayQuote={snapshot:{targetVehicleIdentification:'补充协议冻结目标车',depositAmount:1,months:1,newStartDate:'2028-01-31',newEndDate:'2028-02-28',periods:[{amount:1}]},change:{id:'change',kind:'VEHICLE_CHANGE',orderId:'order',customerId:'customer'}};
+ let d=await detail(f);assert.equal(d.vehicle.title,'补充协议冻结目标车');assert.equal(d.summaryRows[1].value,'¥0.01');assert.equal(d.summaryRows[3].value,'2028-01-31 至 2028-02-28');assert.equal(d.canSign,false);
+ delete f.contract.delayQuote.snapshot.targetVehicleIdentification;d=await detail(f);assert.equal(d.vehicle.title,'未提供');
+});
+test('missing source binding never sends a null filter to a required task file column',async()=>{for(const owner of [true,false]){const f=fixture(owner);f.contract.sourceFileId=null;f.db.ownerSigningTask.findFirst=f.db.fadadaTask.findFirst=async()=>{throw Error('unbound source must not query a task');};const d=await detail(f);assert.equal(d.phase,'VERIFYING');assert.equal(d.canSign,false);assert.deepEqual(d.documents,[]);}});
+
+test('closing new electronic requests hides historical sign actions without rewriting phase, parties or source evidence',async()=>{
+ const before={mode:process.env.NEW_ORDER_CONTRACT_MODE,total:process.env.ESIGN_NEW_REQUESTS_ENABLED};
+ try{for(const [mode,total]of [['OFFLINE','true'],['ESIGN','false']]){
+  process.env.NEW_ORDER_CONTRACT_MODE=mode;process.env.ESIGN_NEW_REQUESTS_ENABLED=total;
+  const f=fixture();const record:any=await f.controller.record('contracts','contract',f.request),d=record.contractDetail;
+  assert.equal(d.phase,'READY_TO_SIGN');assert.equal(d.canSign,false);assert.equal(d.primaryAction,null);assert.ok(!record.actions.some((a:any)=>a.id==='sign'));assert.deepEqual(d.documents.map((d:any)=>d.id),['source']);assert.equal(d.parties[0].status,'PENDING');assert.doesNotMatch(d.guidance.description,/由您本人完成签署/);assert.match(d.guidance.description,/关闭/);
+ }}finally{for(const[key,value]of Object.entries({NEW_ORDER_CONTRACT_MODE:before.mode,ESIGN_NEW_REQUESTS_ENABLED:before.total}))if(value===undefined)delete process.env[key];else process.env[key]=value;}
+});

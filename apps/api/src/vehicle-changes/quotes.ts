@@ -8,12 +8,21 @@ import {dateOnly} from '../billing/rules';
 import {day,shanghaiDay} from '../usage/rules';
 import {currentAssignment} from './assignments';
 import {reserveCredit,releaseCredits} from './credits';
+import {requireVehicleUnrestricted} from '../vehicles/operational-restrictions';
+import {electronicSwapQuoteInput,offlineSwapQuoteInput} from './offline-pricing-input';
+import {createOfflineSwapQuote} from './offline-quote';
 const date=z.string().refine(v=>{try{dateOnly(v);return true;}catch{return false;}});
-export const swapQuoteDto=z.object({revision:z.number().int().nonnegative(),idempotencyKey:key,targetVehicleId:text,plannedReturnAt:z.string().datetime({offset:true}),plannedDeliveryAt:z.string().datetime({offset:true}),newMonthlyFeeAmount:money.positive(),depositAmount:money,periods:z.array(z.object({sequence:z.number().int().positive(),amount:money,dueDate:date,calculationBasis:text}).strict()).min(1).max(120),handoverFeeAmount:money,handoverFeeBasis:text,depositBasis:text,insuranceResponsibility:text,downtimeArrangement:text,settlementExplanation:text,handoverArrangement:text,cancellationTerms:text,reason:text,expiresAt:z.string().datetime({offset:true}),externalCompensationRequired:z.boolean()}).strict();
+export const legacySwapQuoteDto=z.object({revision:z.number().int().nonnegative(),idempotencyKey:key,targetVehicleId:text,plannedReturnAt:z.string().datetime({offset:true}),plannedDeliveryAt:z.string().datetime({offset:true}),newMonthlyFeeAmount:money.positive(),depositAmount:money,periods:z.array(z.object({sequence:z.number().int().positive(),amount:money,dueDate:date,calculationBasis:text}).strict()).min(1).max(120),handoverFeeAmount:money,handoverFeeBasis:text,depositBasis:text,insuranceResponsibility:text,downtimeArrangement:text,settlementExplanation:text,handoverArrangement:text,cancellationTerms:text,reason:text,expiresAt:z.string().datetime({offset:true}),externalCompensationRequired:z.boolean()}).strict();
+export const swapQuoteDto=z.union([legacySwapQuoteDto,offlineSwapQuoteInput,electronicSwapQuoteInput]);
 export const vehicleIdentity=(v:any)=>`${v.title}；VIN：${v.vin||'未登记'}；车牌：${v.plateNumber||'未登记'}；车况：${v.conditionDisclosure||'未披露'}`;
 export async function releaseHold(tx:any,changeId:string){const holds=await tx.vehicleHold.findMany({where:{changeId,status:'HELD'}});for(const h of holds){await tx.vehicle.updateMany({where:{id:h.vehicleId,holdId:h.id},data:{holdId:null}});await tx.vehicleHold.update({where:{id:h.id},data:{status:'RELEASED',releasedAt:new Date()}});}await releaseCredits(tx,changeId);}
 export async function swapQuote(tx:any,change:any,input:any,actor:any){
+ if([2,3].includes(input.pricingVersion))return createOfflineSwapQuote(tx,change,input,actor);
+ const pricingOrder=await tx.order.findUniqueOrThrow({where:{id:change.orderId}});
+ ensure(!['OFFLINE','ELECTRONIC'].includes(pricingOrder.contractMode),409,'OFFLINE_SWAP_PRICING_REQUIRED','新线下换车报价须选择明确商品并使用服务端自动计价');
  ensure(!input.externalCompensationRequired,409,'MANUAL_FINANCE_REQUIRED','额外赔付须人工财务处理，不能记作已核清');
+ await tx.$queryRaw`SELECT id FROM "Vehicle" WHERE id=${input.targetVehicleId} FOR UPDATE`;
+ await requireVehicleUnrestricted(tx,input.targetVehicleId,'ALLOCATION');
  const active=change.activeQuoteId?await tx.delayQuote.findUnique({where:{id:change.activeQuoteId},include:{contract:true}}):null;
  if((['AWAITING_FINANCE','SWAP_RETURNED'].includes(change.status)&&active?.contract?.status==='SIGNED')||(active?.snapshot.financeSourceQuoteId&&['DRAFT','REVIEW_PENDING','REVIEWED'].includes(change.status)))return recoverSwapQuote(tx,change,active,input,actor);
  const reopen=change.status==='AWAITING_SIGNATURE'&&(['REJECTED','EXPIRED'].includes(active?.contract?.status)||(active?.contract?.status==='DRAFT'&&!active.contract.providerTaskId&&!active.contract.signingLeaseUntil));
@@ -38,6 +47,6 @@ export async function swapQuote(tx:any,change:any,input:any,actor:any){
  const revision=((await tx.delayQuote.aggregate({where:{changeId:change.id},_max:{revision:true}}))._max.revision||0)+1;
  await releaseHold(tx,change.id);if(active)await tx.delayQuote.update({where:{id:active.id},data:{status:'SUPERSEDED'}});
  const quote=await tx.delayQuote.create({data:{changeId:change.id,revision,commercialHash:hash({priorTermsHash:change.priorTermsHash,snapshot}),snapshot,fundsSnapshot:funds.rows,createdBy:actor.id}});
- const hold=await tx.vehicleHold.create({data:{vehicleId:target.id,orderId:order.id,changeId:change.id,quoteId:quote.id,expiresAt:expires}});await tx.vehicle.update({where:{id:target.id},data:{holdId:hold.id}});await reserveCredit(tx,order,account,change.id,delivered);
+ const hold=await tx.vehicleHold.create({data:{vehicleId:target.id,orderId:order.id,changeId:change.id,quoteId:quote.id,expiresAt:expires}});await tx.vehicle.update({where:{id:target.id},data:{holdId:hold.id}});await reserveCredit(tx,order,account,change.id,delivered,target.id);
  await tx.orderChange.update({where:{id:change.id},data:{activeQuoteId:quote.id,targetVehicleId:target.id,status:'REVIEW_PENDING'}});
 }

@@ -1,0 +1,119 @@
+{
+  "date": "2026-11-04",
+  "title": "宁达车辆订阅业务流程与合同起草说明",
+  "document": "D:\\wechat-miniapp-sub\\docs\\legal\\reviews\\ninda\\20261104-business-flow\\宁达车辆订阅业务流程与合同起草说明_20261104.docx",
+  "exportDirectory": "D:\\工作资料\\宁达订阅\\合同\\contarct_review\\宁达业务流程与法务起草说明_20261104",
+  "originalPackage": "D:\\工作资料\\宁达订阅\\合同\\contarct_review\\宁达电子签法务审阅包_20261102.zip",
+  "originalSha256": "5cc284d37d2405da96c0503eca13d6215c6efbc521757d2bdbfc2295380bc244",
+  "legalApproval": false,
+  "templateActivation": false,
+  "purpose": "回应法务意见，说明业务事实、合同分类及待确认条款；非对外签署正文",
+  "sources": [
+    {
+      "path": "docs/superpowers/specs/2026-11-02-ninda-electronic-signing-relaunch-design.md",
+      "sha256": "1a8666fcdb1f7556acf6c06736af397b1bf518d5c14258639600203b0b3cc878"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-28-partner-simple-cooperation-design.md",
+      "sha256": "306ad290ab282d2547095403efb53fd68bab85af5e225184db6f8d8005d6db5b"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261031/usage-policy-v2.md",
+      "sha256": "78a9843f72bbf2c09dad7a96b8bd9553a0e5514c4e5b7c625c6b63ea3aad657e"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261031/swap-credit-v2.md",
+      "sha256": "2c44d8d4fef88cccc3765c2fc4add8ea1413df176edd14c2c399914107a053a7"
+    },
+    {
+      "path": "apps/api/src/applications/final-plan-defaults.ts",
+      "sha256": "1492cce2489c4926258b85bc300f3ae5727f47ff6ab0ea5b0f1113ba9b61d212"
+    },
+    {
+      "path": "apps/api/src/applications/commercial-terms.ts",
+      "sha256": "cd83c4b5d48542fed12b8f3a2a37bd9890abf1e331b62db79d1e93e03c9eecb4"
+    },
+    {
+      "path": "apps/api/src/order-changes/quotes.ts",
+      "sha256": "4c3bbd09ca1e475de9916a727b3b54609567fb1df2bb504f2170a06736b54d9a"
+    },
+    {
+      "path": "apps/api/src/order-renewals/cancellation-policy.ts",
+      "sha256": "d2bfc93f74b815ea1e27d4ff07cb490ff0350a6dfb39222fcb16fdab7205df9f"
+    },
+    {
+      "path": "apps/api/src/partners/simple-revenue.ts",
+      "sha256": "bb0f3cc44aee416df6a13f1e00335a7a63bd0dc8f847cdd9278d7b43d310f2f8"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/cooperation-amendment.md",
+      "sha256": "1accde64e3825c16b7633aa2c6cc124ff0f34f0522dc625348cef6c6897ec228"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/cooperation-termination.md",
+      "sha256": "0c719d9555b8d9756b6362a26cc8620dc2f4832fdaba7723672e227a67bb22e0"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/cooperation.md",
+      "sha256": "00112cc9739be23004a73bd88581c271227e8594f61a7f15b2db0faf6a3ce247"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/enterprise-auto-authorization.md",
+      "sha256": "9dceb80d555f0d9393ef72f74d29d699b09b88c510325be4eb88dce4fa0ce463"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/identity-notice.md",
+      "sha256": "cc88a15c5b99f3e99ed72057efdcc4eed10c1ef72178e819bc1ee8428bb92d80"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/online-handover-terms.md",
+      "sha256": "9e6a84606ec6788ab6a802c00ffadfc4b7c7e7c5c88d18f977793e777967ecc1"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/order-amendment.md",
+      "sha256": "d1a08c5840f9b4b2b19cc65dba76af6de13a533829f98c610e75500bde5d77c7"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/README.md",
+      "sha256": "db2b25f283a4d5a668b0f8b76341a65b8c1426bb381a3ff45ba7178826deb059"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/renewal-cancellation.md",
+      "sha256": "05f109f75358c84fdcce1f1e5da09d431b2a76e7858ccde3f5cb7788feb6a668"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/return-settlement.md",
+      "sha256": "ed247d155a2b7f60b3a22cf45abe7cf75a078305b143666e465a30e54e13497f"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/subscription.md",
+      "sha256": "085d65c9f222805a37b00bfc0dd8f0038b8a6d9992493546a66a52f13c273eba"
+    },
+    {
+      "path": "docs/legal/drafts/ninda/launch-20261102-electronic/termination.md",
+      "sha256": "5e5f0079b92e73e7ef0cffcfa22093085dac6621c698298c9db05b2d5f332e1c"
+    }
+  ],
+  "webSources": [
+    "https://www.cac.gov.cn/2020-06/01/c_15925617772683192.htm",
+    "https://shca.miit.gov.cn/xxgk/flfg/gjfl/art/2020/art_6c628dbd51254637b385f3d7f46aa58d.html"
+  ],
+  "verification": {
+    "status": "PREPARED_FOR_LEGAL_REVIEW",
+    "date": "2026-11-04",
+    "document": "D:\\工作资料\\宁达订阅\\合同\\contarct_review\\宁达业务流程与法务起草说明_20261104\\宁达车辆订阅业务流程与合同起草说明_20261104.docx",
+    "zip": "D:\\工作资料\\宁达订阅\\合同\\contarct_review\\宁达业务流程与法务起草说明_20261104.zip",
+    "pages": 10,
+    "zipBytes": 50998,
+    "zipSha256": "5b9489512adced859db1ef0e95f1cd083df4b0b415c2878cd57fd9b12e6906ba",
+    "originalUnchanged": true,
+    "sourceHashesUnchanged": true,
+    "visualReview": "All 10 pages inspected; no clipping, missing glyphs or overflow.",
+    "documentTextVerified": true,
+    "zipCrcAndContentsVerified": true,
+    "legalApproval": false,
+    "templatesActivated": false,
+    "codeChanged": false,
+    "deployed": false
+  }
+}

@@ -109,7 +109,7 @@ export function App(){
  async function sync(){if(!record)return;const request=active.current;const result=await run<SigningRecord>('sync',()=>api.request(`${recordPath(record)}/sync`,signingPayload(record)));if(result&&request===active.current){setRecord(result);setRead(false);setNote('已从服务端查询最新状态。');void list();}}
  const closeAccount=useCallback(()=>setAccountOpen(false),[]),closeLegal=useCallback(()=>setLegal(null),[]);
  function back(){active.current++;setRecord(null);setError('');setNote('');setRead(false);setBusy('');history.replaceState(null,'',location.pathname);void list();}
- return <div className="app"><header className="topbar"><a className="brand" href="/miniapp-sign/" aria-label="纯电主义签约中心"><span className="brand-mark" aria-hidden="true">C</span><span>纯电主义<small>CHUNDIAN · SIGNING</small></span></a>{session&&<button className="logout" disabled={!!busy} onClick={()=>void logout()}>退出登录</button>}</header>
+ return <div className="app"><header className="topbar"><a className="brand" href="/miniapp-sign/" aria-label="宁达汽车签约中心"><span className="brand-mark" aria-hidden="true"></span><span>宁达汽车<small>NINDA CAR · SIGNING</small></span></a>{session&&<button className="logout" disabled={!!busy} onClick={()=>void logout()}>退出登录</button>}</header>
   <main className="main">{phase==='loading'?<section className="state-card" role="status"><span className="loading-mark"/><h1>正在连接签约服务</h1><p>请稍候</p></section>:phase==='failed'?<section className="state-card"><h1>暂时无法打开签约中心</h1><Notice>{error}</Notice><button className="primary" onClick={()=>void boot()}>重新连接</button></section>:!config?.enabled?<section className="state-card"><span className="section-kicker">签约中心</span><h1>签约入口暂未开放</h1><p className="muted">请返回小程序查看业务进度，或稍后重试。</p><button className="secondary" onClick={()=>void boot()}>重新查询</button></section>:<>
    {returning&&<section className="return-card"><div className="section-kicker">签署后查询</div><h2>返回这里，核对真实进度。</h2><p>外部页面返回不代表已完成签署。{session?'请选择对应记录并查询签署状态。':'请先登录，再查询本人签署记录。'}</p><p className="return-instruction">回小程序：我的 → 业务记录，刷新查看最新状态。</p></section>}
    {!session?<Login documents={documents} busy={busy} error={error} onLogin={login} onRequest={sms} onLegal={setLegal}/>:<>
@@ -121,7 +121,7 @@ export function App(){
     </>}
    </>}
   </>}
-  </main><footer className="footer"><p>上海晓浪网络科技有限公司</p><div><button className="inline-link" onClick={()=>setLegal('terms')}>服务协议</button><span>·</span><button className="inline-link" onClick={()=>setLegal('privacy')}>隐私政策</button></div><p>返回小程序「我的 → 业务记录」刷新进度</p></footer>
+  </main><footer className="footer"><p>上海宁达信息科技有限公司</p><div><button className="inline-link" onClick={()=>setLegal('terms')}>服务协议</button><span>·</span><button className="inline-link" onClick={()=>setLegal('privacy')}>隐私政策</button></div><p>返回小程序「我的 → 业务记录」刷新进度</p></footer>
   {accountOpen&&session&&!legal&&<Account readiness={readiness} busy={busy} error={error} note={note} privacy={documents.find(d=>d.type==='privacy')} onAction={accountAction} onLegal={()=>setLegal('privacy')} close={closeAccount}/>}
   {legal&&<LegalText documents={documents} type={legal} onClose={closeLegal}/>}
  </div>;

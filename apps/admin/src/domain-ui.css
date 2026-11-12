@@ -1,0 +1,31 @@
+.domain-command,.domain-version,.domain-section{margin:16px 0;padding:20px;background:#fff;border:1px solid #f0f0f0;border-radius:8px;min-width:0}
+.domain-command h3,.domain-version h3{margin:0 0 12px}.domain-command .form-footer{position:static;background:transparent;padding:16px 0 0}.domain-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.domain-field{display:flex;flex-direction:column;gap:8px;min-width:0}.domain-field.wide{grid-column:1/-1}.domain-field>label{font-size:13px;font-weight:700}.domain-field input:not([type=checkbox]),.domain-field select,.domain-field textarea,.domain-search input,.domain-owner select{width:100%;min-width:0;border:1px solid #f0f0f0;border-radius:8px;background:#fff;padding:10px;font:inherit;color:#172033}.domain-field small,.domain-field .muted{font-size:12px;line-height:1.6;color:#595959}.domain-options{display:flex;flex-wrap:wrap;gap:12px}.domain-options label,.domain-check{display:flex;align-items:center;gap:7px;font-size:13px}.domain-options input,.domain-check input{accent-color:#1677ff;width:17px;height:17px}.domain-repeat fieldset{border:1px solid #f0f0f0;border-radius:8px;margin:0 0 14px;padding:16px}.domain-repeat legend{font-size:12px;color:#595959}.domain-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:14px 0}.domain-facts>div{min-width:0}.domain-facts dt{font-size:12px;color:#595959;margin-bottom:6px}.domain-facts dd{margin:0;font-size:14px;overflow-wrap:anywhere}.domain-success{color:#48613a;font-size:13px}.domain-list{overflow:hidden}.domain-search{display:block;max-width:420px;margin:18px;font-size:12px}.domain-search input{margin-top:7px}.domain-files>div{display:flex;gap:12px;align-items:center;margin-top:8px}.domain-files a,.domain-version a{overflow-wrap:anywhere}.domain-version .button,.domain-command .button{white-space:normal}.domain-section>h2{font-size:18px}.domain-section>p{color:#595959;line-height:1.7}.domain-order{list-style:none;padding:0}.domain-order li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}.domain-owner{max-width:460px;margin:15px 0}.domain-owner label{display:block;font-size:13px;margin-bottom:8px}.domain-version summary{cursor:pointer;font-weight:700}.domain-version .table-scroll{max-width:100%}
+@media(max-width:600px){.domain-form-grid,.domain-facts{grid-template-columns:1fr}.domain-command,.domain-version,.domain-section{padding:15px;margin:12px 0}.domain-field.wide{grid-column:auto}.domain-repeat fieldset{padding:12px}.domain-files>div{align-items:flex-start;flex-direction:column}.domain-command .form-footer{display:flex;flex-wrap:wrap;gap:8px}.domain-command .form-footer button{flex:1;min-height:42px}.domain-options{flex-direction:column;gap:12px}}
+
+.domain-selector,.domain-source,.domain-account{padding:18px;margin:16px 0}.domain-selector select,.domain-source input,.domain-version select{max-width:100%;min-height:40px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;padding:8px;color:#172033;font:inherit}.domain-selector label{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.domain-account>summary{cursor:pointer;font-weight:700}.domain-order{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}.domain-order>span{flex:1;min-width:100px;overflow-wrap:anywhere}
+
+/* Module drawers use the same shell as vehicle details; versions remain readable sections. */
+.domain-detail-actions{display:contents}
+.domain-detail-workspace .detail-tab-panel{padding:28px}
+.domain-detail-workspace .detail-command{padding-inline:28px}
+.domain-detail-workspace .domain-version,.domain-detail-workspace .domain-section{margin:24px 0 0;padding:24px 0 0;border:0;border-top:1px solid #f0f0f0;border-radius:0;background:transparent}
+.domain-detail-workspace .domain-version h3,.domain-detail-workspace .domain-version h4{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.domain-detail-workspace .domain-command{display:inline-block;vertical-align:top;margin:8px 8px 0 0;padding:0;border:0;border-radius:0;background:transparent}
+.domain-detail-workspace .detail-command .domain-command{margin:0}
+.domain-detail-workspace .domain-command:has(>form){display:block;margin:20px 0;width:100%}
+.domain-detail-workspace .domain-active-command{padding-top:24px!important;border-top:1px solid #f0f0f0!important}
+.domain-detail-workspace .domain-command form>h3{margin-bottom:18px;font-size:16px}
+.domain-detail-workspace .domain-command form>.muted{margin-bottom:18px}
+.domain-detail-workspace .domain-command .form-footer{margin-top:20px}
+.domain-detail-workspace .domain-facts{gap:20px 24px;margin:16px 0 24px}
+.domain-detail-workspace .domain-facts dd{line-height:1.8}
+.domain-detail-workspace .domain-version .domain-version{padding-top:16px;margin-top:20px}
+.domain-detail-workspace .detail-tab-panel>h3:not(:first-child){margin-top:28px}
+.domain-detail-workspace .domain-links{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:600px){.domain-detail-workspace .detail-command{padding-inline:16px}.domain-detail-workspace .detail-tab-panel{padding:20px 16px}.domain-detail-workspace .domain-facts{gap:16px}.domain-detail-workspace .domain-version,.domain-detail-workspace .domain-section{margin-top:20px;padding-top:20px}}
+
+/* Insurance opts into the same long-form footer and spacing as vehicle forms. */
+.domain-workspace-form{min-width:0}
+.domain-workspace-form>h3{margin:0 0 18px;font-size:16px}
+.domain-workspace-form>.form-footer{position:sticky;bottom:0;z-index:3;background:#ffffff;padding:16px 0 max(16px,env(safe-area-inset-bottom));box-shadow:0 -10px 15px #ffffff;margin-top:24px}
+.domain-command .domain-workspace-form>.form-footer{position:sticky;background:#ffffff;padding:16px 0 max(16px,env(safe-area-inset-bottom));margin-top:24px}

@@ -1,0 +1,4 @@
+.renewal-quote .renewal-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 22px;margin:20px 0;padding:16px 0;border-top:1px solid var(--border,#f0f0f0);border-bottom:1px solid var(--border,#f0f0f0)}
+.renewal-summary>div:first-child{grid-column:span 2}.renewal-summary dt{font-size:12px;color:var(--muted,#595959);margin-bottom:6px}.renewal-summary dd{margin:0;font-size:16px;font-weight:600;line-height:1.45;color:var(--text,#172033)}
+.renewal-quote details{margin-top:12px}.renewal-quote summary{cursor:pointer;font-size:13px;font-weight:600}.renewal-quote .table-scroll{margin-top:10px}.renewal-quote .prose-text{max-height:420px;overflow:auto;margin-top:12px;padding:12px;background:#fff;font-size:13px;line-height:1.7}
+@media(max-width:700px){.renewal-quote .renewal-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.renewal-summary dd{font-size:15px}}

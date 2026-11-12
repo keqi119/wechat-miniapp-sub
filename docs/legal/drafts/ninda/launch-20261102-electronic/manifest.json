@@ -1,0 +1,112 @@
+{
+  "status": "DRAFT_PENDING_USER_REVIEW",
+  "createdOn": "2026-11-02",
+  "documents": [
+    {
+      "file": "subscription",
+      "type": "ELECTRONIC_SUBSCRIPTION",
+      "title": "汽车订阅三方租赁与平台服务合同",
+      "sha256": "e23199cb0fbd53e56409f24df30d77a8dd519d40cbd08010390206eed4a7880f",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ]
+    },
+    {
+      "file": "order-amendment",
+      "type": "ELECTRONIC_ORDER_AMENDMENT",
+      "title": "车辆订阅补充协议",
+      "sha256": "34b3e9eec4ad13fdb1bdfbbaa13d325d8f6535563b8ae1a2ce65a3498af69fcd",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ]
+    },
+    {
+      "file": "termination",
+      "type": "ELECTRONIC_TERMINATION",
+      "title": "汽车订阅三方终止与结算协议",
+      "sha256": "f49b21b2f7e00a374e5498bff779b128a434a890f938f4dacdc621fc75bf3adb",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ]
+    },
+    {
+      "file": "renewal-cancellation",
+      "type": "ELECTRONIC_RENEWAL_CANCELLATION",
+      "title": "未开始续订取消协议",
+      "sha256": "93928774ea3636f2bcfbb2c783c193ba65bc99a74efe0b90da9d789ccebf783b",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ]
+    },
+    {
+      "file": "return-settlement",
+      "type": "ELECTRONIC_RETURN_SETTLEMENT",
+      "title": "车辆归还及费用结算确认协议",
+      "sha256": "ecb922a1da013b3a3ad8d878f5b4f01e948d694ae7ad4664130635bace4b2af4",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ]
+    },
+    {
+      "file": "cooperation",
+      "type": "ELECTRONIC_COOPERATION",
+      "title": "车辆订阅合作与运营服务协议",
+      "sha256": "8396294a47520091e4a4d5336552e9c17f4ee33aadc6c2d06da493709088e42f",
+      "requiredSigners": [
+        "OWNER",
+        "PLATFORM"
+      ]
+    },
+    {
+      "file": "cooperation-amendment",
+      "type": "ELECTRONIC_COOPERATION_AMENDMENT",
+      "title": "车辆订阅合作补充协议",
+      "sha256": "0b845e2627721b0d4691a596b91d3cf7f9efc70f980c759a39d0bf22688ee57d",
+      "requiredSigners": [
+        "OWNER",
+        "PLATFORM"
+      ]
+    },
+    {
+      "file": "cooperation-termination",
+      "type": "ELECTRONIC_COOPERATION_TERMINATION",
+      "title": "车辆订阅合作终止协议",
+      "sha256": "f747a9fb4d81ded21c4671a840e95f5c4bb9bbf44b927ceae38b61f6af86d94c",
+      "requiredSigners": [
+        "OWNER",
+        "PLATFORM"
+      ]
+    },
+    {
+      "file": "enterprise-auto-authorization",
+      "type": "ELECTRONIC_AUTO_AUTHORIZATION",
+      "title": "企业电子用印业务授权说明",
+      "sha256": "8f73e64530e0df7a2faee28c334e0d07aaf4d66b7f54487511526377983fe5ed",
+      "requiredSigners": null
+    },
+    {
+      "file": "identity-notice",
+      "type": "ELECTRONIC_IDENTITY_NOTICE",
+      "title": "实名认证及电子签服务告知",
+      "sha256": "16fd0b217494b3f3340cf9532527ee8a91f039454348f89969c3f8c7b9018fd6",
+      "requiredSigners": null
+    },
+    {
+      "file": "online-handover-terms",
+      "type": "ONLINE_HANDOVER_TERMS",
+      "title": "车辆线上交接约定（实名版）",
+      "sha256": "8385a8e63f19bb48d07f3a7a9f7bb41f6f32200dec257d41c3150da24255f690",
+      "requiredSigners": null
+    }
+  ]
+}

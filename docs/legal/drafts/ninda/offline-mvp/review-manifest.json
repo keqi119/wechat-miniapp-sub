@@ -1,0 +1,203 @@
+{
+  "status": "DRAFT_PENDING_USER_REVIEW",
+  "checkedAt": "2026-10-27T12:58:01.709Z",
+  "platformLegalEntity": "上海宁达信息科技有限公司",
+  "contactEmail": "like@ndacar.com",
+  "scope": "Draft text and API shape only; no database, provider, legal publication or real signing actions.",
+  "reviewReadmeSha256": "ef8ceef2693b2a1a5ad2221bcc79f6e438b022ed6110c598e9acdd98f7bcddf2",
+  "templates": [
+    {
+      "slug": "owner-cooperation",
+      "archiveKind": "OWNER_COOPERATION",
+      "subjectType": "OWNER",
+      "type": "OFFLINE_OWNER_COOPERATION",
+      "requiredSigners": [
+        "OWNER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "ownerName",
+        "platformName"
+      ],
+      "markdownSha256": "80dfd748cef62f9f0dfe9115f85699c75b9bee0a4196cc81b2a7c83eb19d428f",
+      "jsonSha256": "b7b7272bf099db473e0672dda27b810144c3233e324920a962ab5b6ca91e93a8",
+      "legalContentSha256": "7be9b717dea08baf5dc6d26d01d9e6916b685237bb92a7133938b3ea7cae7a2d",
+      "bodySha256": "ed44fd665e3ca7671cd237ebaaddc87dc64edc6ba1177829316d4393ced5f967",
+      "printModelCheck": "PASS",
+      "approvalStatus": "DRAFT_PENDING_USER_REVIEW"
+    },
+    {
+      "slug": "rental",
+      "archiveKind": "RENTAL",
+      "subjectType": "ORDER",
+      "type": "OFFLINE_RENTAL",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "customerName",
+        "ownerName",
+        "platformName"
+      ],
+      "markdownSha256": "8577ce24f6f87b28379b272a83065ab5f58d1114f9d57c0f1001652e000f812f",
+      "jsonSha256": "e5a3c044a68f383240a3ef3057999ff04e6bfb00010031f2467dc985c6bd6f9d",
+      "legalContentSha256": "ce3eb8fc85ef9d4bc1175411dbd12d53eb4cd3516532c440afe362f10e650e73",
+      "bodySha256": "2d0684ee8ef47341d9e3d90d3d839a37f08a004f9b8ae8e8dce89534797df1db",
+      "printModelCheck": "PASS",
+      "approvalStatus": "DRAFT_PENDING_USER_REVIEW"
+    },
+    {
+      "slug": "delivery-receipt",
+      "archiveKind": "DELIVERY_RECEIPT",
+      "subjectType": "HANDOVER",
+      "type": "OFFLINE_DELIVERY_RECEIPT",
+      "requiredSigners": [
+        "CUSTOMER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "customerName",
+        "platformName"
+      ],
+      "markdownSha256": "6c9c1e6d439a8fe226b7d74c4523f8c00140ac20d5862903832c4486e7daf8f3",
+      "jsonSha256": "0ce52cc8732f3b828e63a6edab401a092767f200bc313a39d89e92a099f18b07",
+      "legalContentSha256": "1f727e4041c56697d9d43de2195b32916944a066ae77b23ed6b872adadb536a1",
+      "bodySha256": "11b774ee8ee662125cde76d54a36cf5c9457c369bf6fe850486b2ebdfcd36e3a",
+      "printModelCheck": "PASS",
+      "approvalStatus": "DRAFT_PENDING_USER_REVIEW"
+    },
+    {
+      "slug": "return-receipt",
+      "archiveKind": "RETURN_RECEIPT",
+      "subjectType": "HANDOVER",
+      "type": "OFFLINE_RETURN_RECEIPT",
+      "requiredSigners": [
+        "CUSTOMER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "customerName",
+        "platformName"
+      ],
+      "markdownSha256": "c9f0a5865ca926fb125b672a55d644fc6f86c0b9e8a7a5adc261448ca865d274",
+      "jsonSha256": "ab5ad53cceeb5ede61a260267d16d9fe5a0be937fa706f9b9140fb0996b0f14c",
+      "legalContentSha256": "7923ebc8cce05913b69c56e51d1537b68bedf8dd99454c73dafc00c78f44a875",
+      "bodySha256": "d1df6bb851eeb8f2572346617b7466e6653886513a2e3a8001f3521eb4e5a5cb",
+      "printModelCheck": "PASS",
+      "approvalStatus": "DRAFT_PENDING_USER_REVIEW"
+    },
+    {
+      "slug": "termination",
+      "archiveKind": "TERMINATION",
+      "subjectType": "ORDER",
+      "type": "OFFLINE_TERMINATION",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "customerName",
+        "ownerName",
+        "platformName"
+      ],
+      "markdownSha256": "90c269dbd69b89346f86be8876bcce82228048557c4ab758df86be6f751c020c",
+      "jsonSha256": "711fd74e531d85bf18db18e2285c60bdd78ea7b537096290c23ea1f25855027f",
+      "legalContentSha256": "6a5c353f2197a35bb74a879ad8d22a1b367b08880c9d21c081c1c873ef045b74",
+      "bodySha256": "4753f2044607a4263bd7b4d4cdacfa3c6a2740e5fb3e481dc6c8a913df66fde9",
+      "printModelCheck": "PASS",
+      "approvalStatus": "DRAFT_PENDING_USER_REVIEW"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "apps/api/src/offline-documents/print.ts",
+      "sha256": "9d91a14016f06a84254bcc1a8279ca1c088b358771027f91df8a978189a9a620"
+    },
+    {
+      "path": "apps/api/src/offline-documents/context.ts",
+      "sha256": "0d5dd71f3d8b1e0964e6f523c60cde7761b5ccd07377ba5434cc402580c1d2eb"
+    },
+    {
+      "path": "apps/api/src/offline-documents/archive.service.ts",
+      "sha256": "3ac5baa27f04e8476dd95a736ca377ca90878424550a8655b07334f01566fd2a"
+    },
+    {
+      "path": "apps/api/src/offline-documents/schemas.ts",
+      "sha256": "e9bf71c6c35cc69c2f19d1a745e98451be610fb940ae7ceff10b8d42e82f1c68"
+    },
+    {
+      "path": "apps/api/src/operations/admin.ts",
+      "sha256": "aae092eb1ed94528e5ec18e40b7c090f5c62b115d5855380ee835e58ae4222de"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-26-ninda-offline-contract-mvp-design.md",
+      "sha256": "be3e79fd30f324b72c9ee3d2aaa5e16d5afd5d5362c0e85f75b2175cb4fbcbbd"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-27-ninda-seven-module-mvp-design.md",
+      "sha256": "f70594b79699bf1fb99903519b9ec0a01aa2daee8172ec6b0673297b4279f0c8"
+    },
+    {
+      "path": "docs/legal/versions/ninda/owner-rental-contract-v2.md",
+      "sha256": "e7c0540f97cd16edfb98112399cab48061441bfa5cf2700b8d67d5814828e143"
+    },
+    {
+      "path": "docs/legal/versions/ninda/owner-handover-v1.md",
+      "sha256": "c9b939a7f1bb279b2e37a5fc8214615d671f6e585274d6a1c451e1f8f3a6ec9d"
+    },
+    {
+      "path": "docs/legal/versions/ninda/usage-policy-v1.md",
+      "sha256": "ca90c9cfca32489f3f9c68b1917e3189759b4b3f55abc3c981a90ac445f75179"
+    },
+    {
+      "path": "docs/legal/versions/ninda/owner-authorization-letter-v1.md",
+      "sha256": "8b18418f1ba4d410836355bcba6621f008776b32e1e22b7ffb19019b3cf968fa"
+    },
+    {
+      "path": "docs/legal/versions/ninda/README.md",
+      "sha256": "3a105465e808d6384d0d7c241f8ee0955cd78faa667d7f5b11bfc7a6f33094e5"
+    }
+  ],
+  "validation": {
+    "supportedVariableAllowlist": [
+      "customerName",
+      "ownerName",
+      "lessorName",
+      "platformName",
+      "platformLegalEntityName",
+      "contractNumber",
+      "monthlyFee",
+      "deposit",
+      "termMonths",
+      "startDate",
+      "vehicleIdentification"
+    ],
+    "templatesValidated": 5,
+    "actualPrintModel": "apps/api/dist/offline-documents/print.js",
+    "actualPrintModelSha256": "fb24546f29d2fd35619784940ad9bfe9034f4909e43b33ea7cfef61535c55ab8",
+    "unresolvedPlaceholders": 0,
+    "missingSigners": 0,
+    "draftPayloadsOmitApprovalMetadata": true,
+    "syntheticInputOnlyInMemory": true,
+    "pdfLayoutReviewed": false,
+    "formalApproval": false,
+    "productionVersionsChecked": false
+  },
+  "currentLimitations": [
+    "Cooperation print has scope IDs and period but no commercial revenue appendix.",
+    "Handover print signature boxes currently use context requiredSigners, not template-expanded archive requiredSigners.",
+    "Handover print does not automatically output every operational fact, evidence or objection.",
+    "Termination print carries existing commercial context, not a final termination or settlement statement."
+  ],
+  "published": false,
+  "realTransactionsPerformed": false,
+  "packIntegrityCheckedAt": "2026-10-27T12:59:26.274Z"
+}

@@ -1,0 +1,32 @@
+import {createHash} from 'node:crypto';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {buildV31Document} from '../../apps/api/src/contract-terms/render-model';
+import {renderElectronicDocument} from '../../apps/api/src/electronic-documents/print';
+import {hash} from '../../apps/api/src/common/data';
+import {canonicalHash} from '../../apps/api/src/customers/types';
+import {VIRTUAL_NOTICE,VIRTUAL_NOTICE_HASH} from '../../apps/api/src/virtual-acceptance/scope';
+import {VIRTUAL_WRAPPER_HASH,VIRTUAL_WRAPPER_VERSION} from '../../apps/api/src/virtual-acceptance/wrapper';
+const root=resolve(__dirname,'../..'),templates=root+'/docs/legal/versions/ninda/v31-initial-20261108',output=root+'/docs/legal/drafts/ninda/launch-20261109-virtual-acceptance';
+mkdirSync(output,{recursive:true});
+Object.assign(process.env,{CONTRACT_CJK_FONT_FACE:'MicrosoftYaHei',CONTRACT_CJK_BOLD_FONT_PATH:'C:/Windows/Fonts/msyhbd.ttc',CONTRACT_CJK_BOLD_FONT_FACE:'MicrosoftYaHei-Bold'});
+const owner='上海晓浪网络科技有限公司',platform='上海宁达信息科技有限公司',customer='合成验收客户（非真实个人）';
+const partiesText=`客户：${customer}；出租方：${owner}；平台：${platform}。企业名称用于选定测试角色展示，其证件编号、经办人、账号及服务联系资料均为本地合成资料，不表示真实实名或权限已核验。客户与出租方经办、平台经办使用三个不同合成账号。`;
+const vehicle='唯一虚拟验收车辆 SYNTHETIC-VIRTUAL-CAR；无真实车辆、VIN及车牌；登记权属、实际车况、出租权利限制、车辆保险与交接事实均不适用；不得据此办理真实交付。虚拟登记所有人标签：'+owner+'（仅为测试角色，不是权属证明）。';
+const product='唯一合成测试产品 SYNTHETIC-PRODUCT-v1：12期，每期100分（1.00元），合计1200分（12.00元）；固定押金100分（1.00元），首次支付租金与押金合计200分（2.00元）。基础费100分/月，里程费0分/月；BaaS不适用；不提供真实用车里程或换车权益。';
+const fixed=readFileSync(templates+'/01.json','utf8');
+const values:Record<string,string>={'product.minimumTermMonths':'12','document.references':'合成样张 SAMPLE-VIRTUAL-01；合成范围 SAMPLE-VIRTUAL-SCOPE；本地合成日期2026-11-09，仅为流程参考，不是实际交付承诺。','parties.details':partiesText,'subscription.conditions':product,'vehicle.disclosures':vehicle,'delivery.plan':'不适用：没有真实交付地点、联系人或交付日期。合成报价参考日2026-11-09仅用于样张；实际测试以新报价冻结日期为准。','insurance.facts':'不适用：本次没有真实车辆，不提供或伪造保单、投保安排或车辆保障。','partiesAndAccount.details':partiesText+' 收款账户：不适用（测试不产生合作分润或对公结算义务）；不形成出租方收款或分润义务，未提供且未核验真实银行账户。','cooperation.vehicles':'仅限合成测试参考期2026-11-09至2027-11-09。'+vehicle,'cooperation.revenue':'不适用（测试不产生合作分润或对公结算义务）；没有真实租赁收入分润或向出租方付款义务。正文比例字段填写0仅为不适用展示，不是实际分润约定。','cooperation.partnerRateBps':'0','cooperation.products':product+'；唯一固定三方模板SAMPLE-TEMPLATE-01 v1，系统内容摘要 '+hash(fixed),'cooperation.minimumTerms':'12个月（仅测试参数，不形成真实租赁期限义务）'};
+for(const key of Object.keys(values))values[key]=values[key].replace(/[。；]+$/u,'');
+async function main(){const manifest:any[]=[];let mainScope:any;
+ for(const id of ['01','02-main','02-grant']){
+  const content=readFileSync(`${templates}/${id}.json`,'utf8'),envelope=JSON.parse(content),template={title:envelope.nodes[0].runs.map((r:any)=>r.text).join(''),type:`ELECTRONIC_V31_${envelope.kind}`,version:1,status:'PUBLISHED',confirmedBy:'SYNTHETIC-IN-MEMORY-ONLY',confirmedAt:new Date('2026-11-09T00:00:00Z'),content};
+  const v31Snapshot={values,fixedTemplates:id.startsWith('02')?[{id:'SAMPLE-TEMPLATE-01',version:1,content:fixed,hash:hash(fixed)}]:undefined,grantReference:id==='02-grant'?{agreementNumber:'SAMPLE-VIRTUAL-02',agreementHash:mainScope.hash,attachmentOne:mainScope.nodes}:undefined};
+  const model=buildV31Document({kind:envelope.kind},v31Snapshot,template);
+  if(id==='02-main')mainScope={hash:canonicalHash(model.sections),nodes:model.sections.filter(n=>(n.loc>='P067'&&n.loc<='P073')||n.loc==='COOPERATION_EXCEPTIONS')};
+  const parties=model.roles.map(role=>({role,partyId:'SAMPLE-'+role,subjectType:role==='CUSTOMER'?'INDIVIDUAL':'ENTERPRISE',name:role==='OWNER'?owner:role==='PLATFORM'?platform:customer,...(role==='CUSTOMER'?{identityNumber:'110101199001010000',phone:'13900000000'}:{creditCode:'SYN000000000000000'})}));
+  const virtualAcceptance={schema:'NINDA_VIRTUAL_ACCEPTANCE_V1' as const,scopeId:'SAMPLE-VIRTUAL-SCOPE',configurationHash:canonicalHash(values),ownerId:'SAMPLE-OWNER',customerId:'SAMPLE-CUSTOMER',platformId:'SAMPLE-PLATFORM',templateHash:hash(content),noticeHash:VIRTUAL_NOTICE_HASH,wrapperHash:VIRTUAL_WRAPPER_HASH};
+  const result=await renderElectronicDocument({kind:envelope.kind,number:'SAMPLE-VIRTUAL-'+id,version:1,businessHash:canonicalHash(values),template,parties,sections:[],variables:{},v31Snapshot,virtualAcceptance},'C:/Windows/Fonts/msyh.ttc');
+  writeFileSync(`${output}/${id}.pdf`,result.buffer);manifest.push({id,sampleOnly:true,notApprovedForSigning:true,sha256:createHash('sha256').update(result.buffer).digest('hex'),pageCount:result.pageCount,positions:result.positions,templateSha256:createHash('sha256').update(content).digest('hex'),templateContentHash:hash(content),wrapperVersion:VIRTUAL_WRAPPER_VERSION,wrapperHash:VIRTUAL_WRAPPER_HASH,notice:VIRTUAL_NOTICE,virtualAcceptance});
+ }
+ writeFileSync(output+'/samples-manifest.json',JSON.stringify(manifest,null,2)+'\n');console.log(manifest.map(m=>({id:m.id,pageCount:m.pageCount,sha256:m.sha256})));
+}main();

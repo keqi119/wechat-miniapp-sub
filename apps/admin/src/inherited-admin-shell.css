@@ -1,0 +1,57 @@
+/* subscription-Saas db4b48c5: protected-shell.module.css and providers.tsx. */
+.inherited-admin-theme { color: #172033; }
+.inherited-admin-shell.ant-layout {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.inherited-admin-shell .inherited-admin-sider { height: 100%; overflow: hidden; }
+.inherited-admin-shell .inherited-admin-sider .ant-layout-sider-children { height: 100%; }
+.inherited-admin-shell .inherited-admin-sider-inner { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.inherited-admin-shell .inherited-admin-brand { flex: none; padding: 20px 18px; color: #fff; font-weight: 700; white-space: nowrap; }
+.inherited-admin-shell .inherited-admin-menu-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.inherited-admin-shell .inherited-admin-menu-scroll::-webkit-scrollbar { display: none; }
+.inherited-admin-shell .inherited-admin-right { height: 100%; min-width: 0; overflow: hidden; }
+.inherited-admin-shell .inherited-admin-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.inherited-admin-shell .inherited-admin-heading { min-width: 0; }
+.inherited-admin-shell .inherited-admin-title.ant-typography { margin: 0; white-space: nowrap; }
+.inherited-admin-shell .inherited-admin-account { flex: none; line-height: 1.5; }
+.inherited-admin-shell .inherited-admin-username { max-width: 180px; }
+.inherited-admin-shell .inherited-admin-mobile-toggle { display: none; }
+.inherited-admin-shell .inherited-admin-content.main-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.inherited-admin-shell .inherited-admin-shade { position: fixed; inset: 0; z-index: 40; padding: 0; border: 0; border-radius: 0; background: rgb(0 0 0 / 35%); }
+@media (max-width: 991.98px) {
+  .inherited-admin-shell .inherited-admin-sider { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 50; }
+  .inherited-admin-shell .inherited-admin-mobile-toggle { display: inline-flex; }
+}
+@media (max-width: 768px) {
+  .inherited-admin-shell .inherited-admin-header { padding: 0 16px; }
+  .inherited-admin-shell .inherited-admin-content.main-content { padding: 16px; }
+}
+@media (max-width: 575px) {
+  .inherited-admin-shell .inherited-admin-header { gap: 8px; }
+  .inherited-admin-shell .inherited-admin-heading { flex: 1; }
+  .inherited-admin-shell .inherited-admin-heading .ant-space-item:last-child { min-width: 0; }
+  .inherited-admin-shell .inherited-admin-title.ant-typography { font-size: 16px; overflow: hidden; text-overflow: ellipsis; }
+  .inherited-admin-shell .inherited-admin-username { max-width: 64px; }
+  .inherited-admin-shell .inherited-admin-logout-label { display: none; }
+}

@@ -10,13 +10,13 @@ const version = process.argv[3];
 if (!['preview', 'upload'].includes(mode) || (mode === 'upload' && !/^\d+\.\d+\.\d+(?:[-.][a-zA-Z0-9.-]+)?$/.test(version || ''))) throw new Error('Usage: node scripts/miniapp-ci.mjs preview | upload <version>');
 const verified = verifyMiniappPackage({project:process.argv[4],expectedManifestSha:process.argv[5],expectedConfigSha:process.argv[6]});
 const {projectPath,config} = verified;
-if (config.appid !== 'wxa7089edf4a34a7f5' || config.setting?.urlCheck !== true) throw new Error('AppID or URL checking differs from approved production configuration');
+if (config.appid !== 'wxb5115e5a5f70f1b1' || config.setting?.urlCheck !== true) throw new Error('AppID or URL checking differs from approved production configuration');
 if (!env.WECHAT_UPLOAD_PRIVATE_KEY_PATH) throw new Error('Missing private upload key path');
 const ci = ciRequire('miniprogram-ci');
 const project = new ci.Project({ appid: config.appid, type: 'miniProgram', projectPath, privateKeyPath: resolve(env.WECHAT_UPLOAD_PRIVATE_KEY_PATH), ignores: ['node_modules/**/*'] });
 mkdirSync('.runtime/miniapp-ci', {recursive:true});
 try {
-  const common = { project, desc: '纯电主义独立平台：生产API联调验收版本', setting:{useProjectConfig:true}, robot:1, threads:2, onProgressUpdate:()=>{} };
+  const common = { project, desc: '宁达汽车独立平台：生产API联调验收版本', setting:{useProjectConfig:true}, robot:1, threads:2, onProgressUpdate:()=>{} };
   const result = mode === 'upload'
     ? await ci.upload({...common,version})
     : await ci.preview({...common,qrcodeFormat:'image',qrcodeOutputDest:resolve('.runtime/miniapp-ci/preview.png')});

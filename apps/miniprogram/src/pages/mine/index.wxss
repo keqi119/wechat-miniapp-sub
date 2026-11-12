@@ -28,7 +28,7 @@
   justify-content: space-between;
   text-align: left;
   padding: 28rpx 0;
-  border-bottom: 1rpx solid #e1e0d9;
+  border-bottom: 1rpx solid #e9e7e3;
   font-size: 30rpx;
   line-height: 1.5;
 }
@@ -39,6 +39,7 @@
   font-size: 24rpx;
   margin-top: 8rpx;
 }
+.identity-entry{min-height:104rpx;box-sizing:border-box}.identity-arrow{flex-shrink:0;font-size:32rpx}
 
 .page {
   padding-bottom: calc(64rpx + env(safe-area-inset-bottom));
@@ -55,3 +56,6 @@
   margin-top: 0;
   margin-bottom: 0;
 }
+
+/* Bright native 2026-11-02 */
+.identity{gap:24rpx;margin-top:24rpx;background:#ffffff}.profile-mark{width:96rpx;height:96rpx;border-radius:48rpx;background:#fcc900;color:#231815;font-size:36rpx;flex-shrink:0}.identity-text .section-title{font-size:36rpx;overflow-wrap:anywhere}.menu-row{width:100%;gap:20rpx;min-height:104rpx;padding:26rpx 0;border-color:#e9e7e3}.menu-row>text:first-child,.menu-row>view{min-width:0}.card:not(.identity){padding-top:8rpx;padding-bottom:8rpx}.notice{background:#f0f0ed;border-left:0;color:#65615c;font-size:24rpx}

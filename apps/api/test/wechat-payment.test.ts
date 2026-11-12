@@ -53,3 +53,29 @@ test('query checks provider payment ID, refund validates total and remains proce
   assert.equal((await gateway.refund({ refundId: 'refund1', paymentId: 'pay1', amount: 40, totalAmount: 100, reason: '用户退订' })).status, 'PROCESSING');
   await assert.rejects(gateway.refund({ refundId: 'refund1', paymentId: 'pay1', amount: 101, totalAmount: 100, reason: 'bad' }));
 });
+
+test('refund acceptance and native abnormal are distinct; only query missing refund authorizes recovery',async()=>{
+ const responseBody={out_refund_no:'refund9b',out_trade_no:'pay9b',refund_id:'provider9b',status:'ABNORMAL',create_time:new Date(now-60000).toISOString(),amount:{refund:40,total:100,currency:'CNY'}};
+ const gateway=new WechatPaymentGateway(settings,async()=>{const r=signed(responseBody);return new Response(r.text,{headers:r.headers});},()=>now);
+ const result:any=await gateway.queryRefund('refund9b');
+ assert.equal(result.nativeStatus,'ABNORMAL');assert.equal(result.acceptedAt,responseBody.create_time);assert.equal(result.evidenceSource,'QUERY');
+ const missing=new WechatPaymentGateway(settings,async()=>{const r=signed({code:'RESOURCE_NOT_EXISTS'});return new Response(r.text,{status:404,headers:r.headers});},()=>now);
+ await assert.rejects(missing.queryRefund('refund9b'),(e:any)=>e.getResponse().error.code==='REFUND_NOT_FOUND');
+ await assert.rejects(missing.refund({refundId:'refund9b',paymentId:'pay9b',amount:40,totalAmount:100,reason:'test'}),(e:any)=>e.getResponse().error.code==='REFUND_ORIGINAL_ORDER_NOT_FOUND');
+});
+
+test('native SUCCESS to merchant or unknown destination is not customer receipt and callback time is not acceptance',async()=>{
+ const base:any={out_refund_no:'refund9b',out_trade_no:'pay9b',refund_id:'provider9b',status:'SUCCESS',success_time:new Date(now-5000).toISOString(),create_time:new Date(now-60000).toISOString(),amount:{refund:40,total:100,currency:'CNY'},channel:'ORIGINAL',user_received_account:'商户基本账户商户结算银行账户'};
+ let body=base;const gateway=new WechatPaymentGateway(settings,async()=>{const r=signed(body);return new Response(r.text,{headers:r.headers});},()=>now);
+ const merchant:any=await gateway.queryRefund('refund9b');assert.equal(merchant.status,'PROCESSING');assert.equal(merchant.receiptDestination,'MERCHANT');assert.equal(merchant.nativeStatus,'SUCCESS');
+ body={...base,user_received_account:undefined};assert.equal((await gateway.queryRefund('refund9b') as any).receiptDestination,'UNKNOWN');
+ body={...base,user_received_account:'招商银行信用卡'};assert.equal((await gateway.queryRefund('refund9b')).status,'SUCCEEDED');
+ const nonce='012345678901',cipher=createCipheriv('aes-256-gcm',Buffer.from(settings.apiV3Key),nonce);cipher.setAAD(Buffer.from('refund'));
+ const data={...body,status:undefined,refund_status:'SUCCESS',mchid:settings.merchantId,create_time:undefined};const encrypted=Buffer.concat([cipher.update(JSON.stringify(data)),cipher.final(),cipher.getAuthTag()]);
+ const r=signed({id:'notify9b',event_type:'REFUND.SUCCESS',create_time:new Date(now).toISOString(),resource:{algorithm:'AEAD_AES_256_GCM',nonce,associated_data:'refund',ciphertext:encrypted.toString('base64')}});const callback:any=gateway.decodeNotification(r.text,r.headers);assert.equal(callback.acceptedAt,undefined);assert.equal(callback.evidenceSource,'CALLBACK');
+});
+
+test('signed customer-account rejection remains distinct from generic provider errors',async()=>{
+ const gateway=new WechatPaymentGateway(settings,async()=>{const r=signed({code:'USER_ACCOUNT_ABNORMAL'});return new Response(r.text,{status:400,headers:r.headers});},()=>now);
+ await assert.rejects(gateway.refund({refundId:'refund9b',paymentId:'pay9b',amount:40,totalAmount:100,reason:'test'}),(e:any)=>e.getResponse().error.code==='REFUND_USER_ACCOUNT_ABNORMAL');
+});

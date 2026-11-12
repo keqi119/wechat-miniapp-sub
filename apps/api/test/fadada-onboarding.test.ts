@@ -1,3 +1,4 @@
+import './legacy-esign-mode';
 import '../src/common/config';
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,7 +35,8 @@ test('generic provider success does not verify real name; explicit query and ful
   await service.verify(customer.id,{name:'Synthetic identity',idCardNo:'110101199001010000'});
   assert.equal((await service.refresh(customer.id)).readyForSigning,false);assert.equal(certQueries,0);
   const account=await db.eSignAccount.findUniqueOrThrow({where:{customerId:customer.id}});assert.equal(account.identityCiphertext?.includes('110101'),false);
-  realNameStatus='2';assert.equal((await service.refresh(customer.id)).readyForSigning,true);assert.equal(certQueries,2);
+  realNameStatus='2';assert.equal((await service.refresh(customer.id)).readyForSigning,false);assert.equal(certQueries,1);assert.equal(certReady,false,'read-only recovery must not apply for a new certificate');
+  certReady=true;assert.equal((await service.refresh(customer.id)).readyForSigning,true);assert.equal(certQueries,2);
   expiredCert=true;assert.equal((await service.refresh(customer.id)).readyForSigning,false);expiredCert=false;
 });
 test('identity callback is signature-bound, requires provider query, and replay is durable',async()=>{

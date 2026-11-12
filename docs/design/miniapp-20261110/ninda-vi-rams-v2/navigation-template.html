@@ -1,0 +1,185 @@
+<style>
+/* Review-only product surface. Fixed light theme follows the approved app direction. */
+#nd-ui-review { width:100%; color-scheme:light; }
+#nd-ui-review .nd-device { --nd-scale:1; --nd-yellow:#fcc900; --nd-ink:#231815; --nd-muted:#65615c; --nd-page:#f5f6f7; --nd-surface:#fff; --nd-line:#e1e1de; --nd-control-line:#cccac7; width:100%; max-width:430px; margin:auto; background:var(--nd-page); color:var(--nd-ink); font:15px/1.6 -apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; overflow:hidden; position:relative; isolation:isolate; }
+#nd-ui-review .nd-device *, #nd-ui-review .nd-device *::before, #nd-ui-review .nd-device *::after { box-sizing:border-box; }
+#nd-ui-review .nd-status { height:28px; padding:4px 20px 0; background:#fff; display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:600; }
+#nd-ui-review .nd-system-symbols { letter-spacing:2px; }
+#nd-ui-review .nd-navigation { height:48px; background:#fff; border-bottom:1px solid #ecebea; display:flex; align-items:center; justify-content:center; position:relative; font-size:17px; font-weight:600; }
+#nd-ui-review .nd-back { position:absolute; left:8px; top:2px; width:44px; height:44px; border:0; padding:0; border-radius:0; background:transparent; font:32px/44px sans-serif; color:var(--nd-ink); }
+#nd-ui-review .nd-capsule { position:absolute; right:12px; height:28px; border:1px solid #e8e8e7; border-radius:18px; padding:1px 9px; display:flex; align-items:center; gap:9px; font-size:15px; line-height:1; }
+#nd-ui-review .nd-capsule b { font-size:18px; border-right:1px solid #ddd; padding-right:9px; letter-spacing:1px; }
+#nd-ui-review .nd-content { height:660px; overflow:hidden; position:relative; }
+#nd-ui-review .nd-screen[hidden], #nd-ui-review [hidden] { display:none!important; }
+#nd-ui-review .nd-screen { position:absolute; inset:0; width:100%; overflow:auto; overflow-x:hidden; scrollbar-width:none; background:var(--nd-page); font-size:calc(15px * var(--nd-scale)); line-height:1.6; }
+#nd-ui-review .nd-screen::-webkit-scrollbar { display:none; }
+#nd-ui-review .nd-screen button { margin:0; border:0; border-radius:0; padding:0; background:transparent; color:inherit; font:inherit; text-align:inherit; cursor:inherit; }
+#nd-ui-review .nd-screen .nd-pressable-block { width:100%; }
+#nd-ui-review .nd-screen wx-image, #nd-ui-review .nd-screen .nd-image { display:block; overflow:hidden; }
+#nd-ui-review .nd-screen wx-image img, #nd-ui-review .nd-screen .nd-image img { width:100%; height:100%; display:block; }
+#nd-ui-review .nd-screen wx-input, #nd-ui-review .nd-screen wx-textarea { display:block; }
+#nd-ui-review .nd-screen input, #nd-ui-review .nd-screen textarea { width:100%; min-width:0; height:100%; border:0; padding:0; border-radius:0; background:transparent; font:inherit; color:inherit; resize:none; }
+#nd-ui-review .nd-screen wx-scroll-view { display:block; overflow:auto; scrollbar-width:none; }
+#nd-ui-review .nd-screen wx-checkbox-group { display:block; }
+#nd-ui-review .nd-screen .nd-profile-mark img { width:24px; height:24px; display:block; }
+#nd-ui-review .nd-screen .nd-page { padding-bottom:24px!important; }
+#nd-ui-review .nd-screen .nd-primary, #nd-ui-review .nd-screen .nd-secondary { min-height:44px; }
+#nd-ui-review .nd-tabbar { background:#fff; height:88px; border-top:1px solid #e1e1de; padding:8px 8px 22px; position:relative; }
+#nd-ui-review .nd-tab-items { position:relative; height:57px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
+#nd-ui-review .nd-tab-indicator { position:absolute; top:0; left:7px; height:57px; width:calc((100% - 56px) / 4); border-radius:12px; background:#fcc900; transform:translateX(0); z-index:0; pointer-events:none; }
+#nd-ui-review .nd-tab { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; margin:0 7px; padding:5px 0; border:0; border-radius:12px; background:transparent; color:#65615c; font:400 11px/1.5 -apple-system,BlinkMacSystemFont,'Microsoft YaHei',sans-serif; position:relative; z-index:1; overflow:hidden; }
+#nd-ui-review .nd-tab img { width:24px; height:24px; display:block; }
+#nd-ui-review .nd-tab img, #nd-ui-review .nd-tab-label { position:relative; z-index:1; }
+#nd-ui-review .nd-ripple { position:absolute; border-radius:50%; background:rgba(35,24,21,.10); pointer-events:none; z-index:0; }
+#nd-ui-review .nd-tab[aria-selected="true"] { color:#231815; font-weight:600; }
+#nd-ui-review .nd-home-indicator { position:absolute; bottom:6px; left:calc(50% - 55px); width:110px; height:4px; border-radius:3px; background:#231815; }
+#nd-ui-review .nd-detail-bottom { position:relative; height:24px; background:var(--nd-page); }
+#nd-ui-review .nd-toast { position:absolute; left:24px; right:24px; bottom:110px; z-index:5; padding:12px 16px; background:#231815; color:#fff; border-radius:10px; font-size:13px; text-align:center; pointer-events:none; }
+#nd-ui-review .nd-announcement { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+@media(max-width:360px) { #nd-ui-review .nd-capsule { right:8px; padding:1px 7px; gap:7px; } }
+/*__PAGE_STYLES__*/
+</style>
+<div id="nd-ui-review" class="viz-dotted-background">
+  <div class="nd-device">
+    <div class="nd-status" aria-hidden="true"><span>9:41</span><span class="nd-system-symbols">▂▃▅ ◔ ▰</span></div>
+    <header class="nd-navigation">
+      <button type="button" class="nd-back cursor-interaction" aria-label="返回" hidden>‹</button>
+      <span class="nd-nav-title">宁达汽车</span>
+      <span class="nd-capsule" aria-hidden="true"><b>···</b>◉</span>
+    </header>
+    <main class="nd-content">
+      <!--__PAGE_MARKUP__-->
+    </main>
+    <nav class="nd-tabbar" aria-label="小程序主导航">
+      <div class="nd-tab-items" role="tablist" aria-label="页面">
+        <div class="nd-tab-indicator" aria-hidden="true"></div>
+        <button type="button" id="nd-tab-home" class="nd-tab cursor-interaction" role="tab" aria-selected="true" aria-controls="nd-screen-home" data-destination="home"><img data-asset="home-active.png" alt=""><span class="nd-tab-label">首页</span></button>
+        <button type="button" id="nd-tab-catalog" class="nd-tab cursor-interaction" role="tab" aria-selected="false" aria-controls="nd-screen-catalog" data-destination="catalog"><img data-asset="car.png" alt=""><span class="nd-tab-label">选车</span></button>
+        <button type="button" id="nd-tab-use" class="nd-tab cursor-interaction" role="tab" aria-selected="false" aria-controls="nd-screen-use" data-destination="use"><img data-asset="key.png" alt=""><span class="nd-tab-label">用车</span></button>
+        <button type="button" id="nd-tab-mine" class="nd-tab cursor-interaction" role="tab" aria-selected="false" aria-controls="nd-screen-mine" data-destination="mine"><img data-asset="person.png" alt=""><span class="nd-tab-label">我的</span></button>
+      </div>
+      <div class="nd-home-indicator" aria-hidden="true"></div>
+    </nav>
+    <div class="nd-detail-bottom" hidden><div class="nd-home-indicator" aria-hidden="true"></div></div>
+    <div class="nd-toast" role="status" hidden>视觉样稿，不发起真实业务操作</div>
+    <div class="nd-announcement" aria-live="polite"></div>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('nd-ui-review');
+  const assets = /*__ASSET_DATA__*/;
+  const device = root.querySelector('.nd-device');
+  const content = root.querySelector('.nd-content');
+  const pages = [...root.querySelectorAll('.nd-screen')];
+  const tabs = [...root.querySelectorAll('.nd-tab')];
+  const indicator = root.querySelector('.nd-tab-indicator');
+  const mainPages = ['home','catalog','use','mine'];
+  const icons = ['home','car','key','person'];
+  const titles = {home:'宁达汽车',catalog:'选车',use:'用车',mine:'我的',profile:'个人资料',payments:'支付记录',bill:'账单详情'};
+  let current = 'home', parent = 'home', toastTimer, transitionId = 0;
+  let pageAnimations = [];
+  const positions = {};
+  root.querySelectorAll('[data-asset]').forEach(img => { img.src = assets[img.dataset.asset]; });
+  function moveIndicator(index) {
+    const item = tabs[index];
+    if (!item || !item.offsetWidth) return;
+    indicator.style.width = item.offsetWidth + 'px';
+    indicator.style.transform = 'translateX(' + (item.offsetLeft - 7) + 'px)';
+  }
+  function select(name, force = false, persist = true) {
+    if (!titles[name] || name === current && !force) return;
+    const previous = current;
+    const oldPanel = pages.find(page => page.dataset.screen === previous);
+    const newPanel = pages.find(page => page.dataset.screen === name);
+    positions[current] = oldPanel.scrollTop;
+    if (!force && mainPages.includes(current)) parent = current;
+    const ownTransition = ++transitionId;
+    pageAnimations.forEach(animation => animation.cancel());
+    pageAnimations = [];
+    current = name;
+    const mainIndex = mainPages.indexOf(name);
+    const tabIndex = mainIndex >= 0 ? mainIndex : mainPages.indexOf(parent);
+    pages.forEach(page => {
+      const active = page.dataset.screen === name;
+      page.hidden = !active; page.inert = !active;
+      page.setAttribute('aria-hidden',String(!active));
+    });
+    root.querySelector('.nd-nav-title').textContent = titles[name];
+    root.querySelector('.nd-back').hidden = mainIndex >= 0;
+    root.querySelector('.nd-tabbar').hidden = mainIndex < 0;
+    root.querySelector('.nd-detail-bottom').hidden = mainIndex >= 0;
+    content.style.height = mainIndex >= 0 ? '660px' : '724px';
+    tabs.forEach((tab, index) => {
+      tab.setAttribute('aria-selected', String(index === tabIndex));
+      tab.querySelector('img').src = assets[icons[index] + (index === tabIndex ? '-active' : '') + '.png'];
+    });
+    moveIndicator(tabIndex);
+    newPanel.scrollTop = positions[name] || 0;
+    if (!force && mainIndex >= 0 && mainPages.includes(previous) && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const direction = mainIndex > mainPages.indexOf(previous) ? 1 : -1;
+      const timing = {duration:220,easing:'cubic-bezier(.2,.65,.25,1)'};
+      oldPanel.hidden = false;
+      pageAnimations = [
+        oldPanel.animate([{transform:'translateX(0)'},{transform:'translateX(' + (-direction * 100) + '%)'}],timing),
+        newPanel.animate([{transform:'translateX(' + (direction * 100) + '%)'},{transform:'translateX(0)'}],timing)
+      ];
+      Promise.all(pageAnimations.map(animation => animation.finished)).then(() => {
+        if (ownTransition === transitionId) oldPanel.hidden = true;
+      }).catch(() => {});
+    }
+    root.querySelector('.nd-announcement').textContent = titles[name];
+    if (persist && window.openai?.setWidgetState) window.openai.setWidgetState({modelContent:{screen:name},privateContent:{parent}}).catch(() => {});
+  }
+  function ripple(button, event) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    button.querySelectorAll('.nd-ripple').forEach(node => node.remove());
+    const rect = button.getBoundingClientRect();
+    const x = event?.clientX ? event.clientX - rect.left : rect.width / 2;
+    const y = event?.clientY ? event.clientY - rect.top : rect.height / 2;
+    const diameter = Math.hypot(Math.max(x, rect.width - x), Math.max(y, rect.height - y)) * 2;
+    const wave = document.createElement('span');
+    wave.className = 'nd-ripple'; wave.setAttribute('aria-hidden','true');
+    Object.assign(wave.style,{width:diameter+'px',height:diameter+'px',left:(x-diameter/2)+'px',top:(y-diameter/2)+'px'});
+    button.append(wave);
+    const feedback = wave.animate([{transform:'scale(0)',opacity:1},{transform:'scale(1)',opacity:0}],{duration:180,easing:'cubic-bezier(.2,.7,.2,1)'});
+    feedback.onfinish = () => wave.remove();
+  }
+  function notifyPreview() {
+    const toast = root.querySelector('.nd-toast');
+    clearTimeout(toastTimer); toast.hidden = false;
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 1800);
+  }
+  root.addEventListener('click', event => {
+    const tab = event.target.closest('.nd-tab');
+    if (tab) { ripple(tab,event); select(tab.dataset.destination); return; }
+    if (event.target.closest('.nd-back')) { select(parent); return; }
+    const target = event.target.closest('[data-handler]');
+    if (!target) return;
+    const handler = target.dataset.handler;
+    const routes = {openCatalog:'catalog',openBill:'bill',openMine:'mine'};
+    let destination = routes[handler];
+    if (target.dataset.url === '/pages/profile/index') destination = 'profile';
+    if (target.dataset.type === 'payments') destination = 'payments';
+    if (target.dataset.type === 'bills') destination = 'bill';
+    if (destination) select(destination); else notifyPreview();
+  });
+  root.querySelector('.nd-tab-items').addEventListener('keydown', event => {
+    const currentIndex = tabs.indexOf(document.activeElement);
+    if (currentIndex < 0 || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+    event.preventDefault();
+    const index = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : (currentIndex + (event.key === 'ArrowRight' ? 1 : 3)) % 4;
+    tabs[index].focus(); ripple(tabs[index]); select(mainPages[index]);
+  });
+  function resize() { device.style.setProperty('--nd-scale',device.clientWidth / 390); moveIndicator(Math.max(0,mainPages.indexOf(current))); }
+  new ResizeObserver(resize).observe(device);
+  const saved = window.openai?.widgetState;
+  if (saved?.privateContent?.parent && mainPages.includes(saved.privateContent.parent)) parent = saved.privateContent.parent;
+  select(saved?.modelContent?.screen || 'home',true,false);
+  addEventListener('openai:set_globals', event => {
+    const state = event.detail?.globals?.widgetState;
+    if (state?.privateContent?.parent && mainPages.includes(state.privateContent.parent)) parent = state.privateContent.parent;
+    if (state?.modelContent?.screen && state.modelContent.screen !== current) select(state.modelContent.screen,true,false);
+  });
+})();
+</script>

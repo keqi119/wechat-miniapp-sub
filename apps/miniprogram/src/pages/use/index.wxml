@@ -1,36 +1,30 @@
-<view class="page bottom-space">
+<view class="page bottom-space main-tab-page {{mainTabMotion}}">
   
-  <view class="eyebrow">YOUR DRIVE / 用车</view><view class="title">每段路，都有照应。</view>
+  <view class="eyebrow">用车服务</view><view class="title use-title">我的订阅</view>
   <view wx:if="{{loading}}" class="empty">正在读取用车信息…</view>
   <view wx:elif="{{error}}" class="empty"
     ><view>{{error}}</view><button wx:if="{{authRequired}}" class="primary" bindtap="openLogin">登录账户</button><button class="secondary" bindtap="reload">重新加载</button></view
   >
   <block wx:else>
-    <view wx:if="{{todos.length}}" class="notice"
-      ><view class="section-title">接下来要做</view
-      ><view wx:for="{{todos}}" wx:key="title" class="todo"
-        ><view>{{item.title}}</view><view class="muted">{{item.description}}</view
-        ><button wx:if="{{item.url}}" class="text-button" data-url="{{item.url}}" bindtap="open"
-          >查看详情 →</button
-        ></view
-      ></view
-    >
     <view wx:if="{{subscription}}" class="card current-car"
       ><view class="row between"
-        ><text class="eyebrow">当前订阅</text><text class="tag">{{subscription.statusText || '订阅状态待核对'}}</text></view
+        ><text class="eyebrow">订阅车辆</text><text class="tag">{{subscription.statusText || '订阅状态待核对'}}</text></view
       ><view class="vehicle-name">{{subscription.vehicleName}}</view
-      ><view class="muted">{{subscription.planTitle}}</view><view class="divider" /><view
-        class="grid-2"
+      ><view class="muted">{{subscription.planTitle}}</view>
+      <view wx:if="{{subscription.vehicleStageText}}" class="vehicle-stage muted">{{subscription.vehicleStageText}}</view>
+      <view class="divider" /><view class="grid-2 subscription-metrics"
         ><view
-          ><view class="label">套餐月费</view
+          ><view class="label">订阅月费</view
           ><view class="price">{{subscription.monthlyFeeText}}</view></view
         ><view
-          ><view class="label">最近确认里程</view
+          ><view class="label">每月套餐里程</view
           ><view>{{subscription.mileageText || '待确认'}}</view></view
         ></view
-      ><button class="text-button" data-url="/pages/records/index?type=orders" bindtap="open"
-        >查看订阅详情 →</button
-      ><button wx:if="{{subscription.deliveryDelayChangeId}}" class="secondary" bindtap="openDeliveryDelay">查看本订阅延期交车方案</button><button wx:if="{{subscription.activeChangeId && !subscription.deliveryDelayChangeId}}" class="secondary" bindtap="openVehicleChange">查看本订阅换车进度</button><button class="text-button" bindtap="openSwapAccount">免费换车次数与申请 →</button></view
+      >
+      <view wx:if="{{nextStep}}" class="next-step"><view class="next-step-label">接下来</view><view>{{nextStep}}</view></view>
+      <button class="primary order-action" bindtap="openSubscription">查看本订单</button>
+      <button wx:if="{{subscription.deliveryDelayChangeId}}" class="text-button" bindtap="openDeliveryDelay">查看延期交车方案 →</button>
+      <button wx:if="{{showDrivingServices && subscription.activeChangeId && !subscription.deliveryDelayChangeId}}" class="text-button" bindtap="openVehicleChange">查看换车进度 →</button></view
     >
     <view wx:elif="{{application}}" class="card"
       ><view class="tag">{{application.statusText}}</view
@@ -46,6 +40,15 @@
         >查看可订阅车辆</button
       ></view
     >
+    <view wx:if="{{todos.length}}" class="notice"
+      ><view class="section-title">待办记录</view
+      ><view wx:for="{{todos}}" wx:key="title" class="todo"
+        ><view>{{item.title}}</view><view class="muted">{{item.description}}</view
+        ><button wx:if="{{item.url}}" class="text-button" data-url="{{item.url}}" bindtap="open"
+          >查看详情 →</button
+        ></view
+      ></view
+    >
     <view wx:if="{{bill}}" class="card"
       ><view class="row between"
         ><view class="section-title">{{bill.title}}</view
@@ -55,7 +58,8 @@
         >应付日期 {{subscription.nextDueDate}}</view
       ><button class="secondary" bindtap="openBill">查看账单</button></view
     >
-    <block wx:if="{{subscription}}"
+    <view wx:if="{{subscription}}" class="addon-entry-group"><view class="section-title">订阅加购</view><view class="grid-2"><button class="addon-entry" data-kind="MILEAGE_PACK" bindtap="openAddon"><view class="addon-entry-name">里程包 <text>→</text></view><view class="muted">1000 / 1500 / 2000 km</view><view class="addon-entry-note">本计费月有效 · 不结转</view></button><button class="addon-entry" data-kind="SWAP_CREDIT" bindtap="openAddon"><view class="addon-entry-name">换车权益 <text>→</text></view><view class="muted">按目标换入车型定价</view><view class="addon-entry-note">1 次权益 · 升级差价另计</view></button></view></view>
+    <block wx:if="{{showDrivingServices}}"
       ><view class="section-title section-gap">用车服务</view
       ><view class="grid-2"
         ><button class="service-tile" data-url="/pages/service/index?type=rescue" bindtap="open"
@@ -71,13 +75,15 @@
           ><text class="tile-number">04</text><text>车辆交接</text
           ><text class="muted">核对证据与确认</text></button
         ></view
-      ><view class="card"
+      ><button class="text-button" bindtap="openSwapAccount">换车次数与申请 →</button></block>
+      <view wx:if="{{subscription}}" class="card records-card"
+        ><button class="menu-row" data-url="/pages/records/index?type=contracts" bindtap="open"
+          ><text>合同记录</text><text>→</text></button
         ><button class="menu-row" data-url="/pages/records/index?type=entitlements" bindtap="open"
           ><text>权益、里程包与月结算</text><text>→</text></button
         ><button class="menu-row" data-url="/pages/records/index?type=services" bindtap="open"
           ><text>服务记录</text><text>→</text></button
         ></view
-      ></block
-    >
+      >
   </block>
 </view>

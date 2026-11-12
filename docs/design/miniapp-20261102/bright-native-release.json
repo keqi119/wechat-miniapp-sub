@@ -1,0 +1,48 @@
+{
+  "version": "1.2.2",
+  "design": "明朗原生",
+  "status": "EXPERIENCE_SET",
+  "uploadedAtUtc": "2026-11-01T17:31:55.561Z",
+  "changes": [
+    "白色导航与卡片、浅灰背景、黄黑主按钮",
+    "选车列表长介绍两行摘要，车辆详情保留全文",
+    "同车多产品费用分项、超里程单价、换车费用和权益",
+    "已完成交接呈现只读记录，人工审核资料文案与现行规则一致",
+    "常用表单、账单、订单及安全区布局统一"
+  ],
+  "verification": {
+    "testsPassed": 525,
+    "layoutCases": 32,
+    "layoutWidths": [
+      320,
+      390,
+      430
+    ],
+    "layoutChecksPassed": 96,
+    "independentReviewIssues": 0,
+    "nativeSimulator": {
+      "SDKVersion": "3.17.5",
+      "pages": 4,
+      "exceptions": 0,
+      "publicApiHealthy": true,
+      "customerPageState": "Anonymous login prompt"
+    }
+  },
+  "frozen": {
+    "project": "D:\\wechat-miniapp-sub\\.runtime\\releases\\ninda-20261102-bright-native-v2\\miniprogram",
+    "sourceManifestSha256": "e12c79f2f28c12d9eb0d1d686a95c15ad6dfcb5320990f7161dfccb00e2cba70",
+    "manifestSha256": "ad08875bdde8fd39a8633ae28e75e0f7fb0b67d67482beae2d7ceb841524c4dd",
+    "configSha256": "ac9c22120fa71133d88c2f064d2467061b4717b297933ee9c588c39429865b34",
+    "files": 112,
+    "uploadedBytes": 706194
+  },
+  "experienceVersionSet": true,
+  "submittedForProductionReview": false,
+  "productionReleased": false,
+  "remaining": {
+    "authenticatedPhysicalDeviceAcceptance": "PENDING_USER_TEST"
+  },
+  "receipt": ".runtime/ninda/bright-native-20261102/miniapp-v2/upload/receipt.json",
+  "experienceConfirmationSource": "USER_CONFIRMATION",
+  "experienceConfirmedAtUtc": "2026-11-01T17:42:14.635Z"
+}

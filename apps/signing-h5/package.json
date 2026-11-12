@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build",
+    "dev:owner": "vite --mode owner --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build && vite build --mode owner",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/*.test.ts",
+    "test": "node --experimental-strip-types --test src/*.test.ts src/owner/*.test.ts",
     "qa": "node scripts/qa-browser.mjs"
   },
-  "dependencies": { "react": "19.3.1", "react-dom": "19.3.1" },
+  "dependencies": { "pdfjs-dist": "6.5.438", "react": "19.3.1", "react-dom": "19.3.1" },
   "devDependencies": {
     "@playwright/test": "1.64.1",
     "@types/node": "22.19.15",

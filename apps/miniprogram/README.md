@@ -1,4 +1,4 @@
-# 纯电主义真实微信小程序
+# 宁达汽车真实微信小程序
 
 Node >=22；依赖由仓库根目录 `pnpm install` 统一安装。
 
@@ -11,7 +11,9 @@ Node >=22；依赖由仓库根目录 `pnpm install` 统一安装。
 
 原 15 页面、4 Tab、12 PNG 和原页面 WXSS 保留；新增电子签署承载页。账户页提供微信手机号授权和短信登录，短信登录同时取得 wx.login 凭证以绑定当前小程序 OpenID。客户请求携带 Bearer，公开目录与协议匿名读取。附件通过 wx.uploadFile 上传后提交 fileId；私密文档通过鉴权下载读取。
 
-支付 native 返回后查询服务端；应用再次显示会恢复未完成支付查询。签署 WebView/供应商小程序返回后查询服务端状态；URL 必须匹配已核验并注册的 signingHosts。当前 allowlist 为空，需完成供应商账号与微信业务域名核验后配置。不能用猜测域名放行。
+生产小程序 AppID 为 `wxb5115e5a5f70f1b1`，API 为 `https://api.evsub.ndacar.com`。API 配置保存服务端所需的 AppSecret，上传工具仅从私有配置读取上传密钥路径；两类密钥均不得进入小程序包。
+
+支付 native 返回后查询服务端；应用再次显示会恢复未完成支付查询。签署 WebView/供应商小程序返回后查询服务端状态；原生配置只接受 `https://api.evsub.ndacar.com/api/public/esign-return` 回跳，保留现有法大大账号专属域名 `textapi17.fadada.com`、`realnameverify16.fadada.com`。宁达小程序账号须单独完成这三个业务域名及 API 的 request/uploadFile/downloadFile 合法域名配置；旧账号的域名验证不能作为新账号已配置的证据。服务端开关及当前流程校验继续控制实名、签署和刷脸入口。
 
 `evidence/page-comparison` 保存原 15 页的 30 张离线对照截图及报告。复现：运行 `node apps/miniprogram/scripts/compare-pages.cjs` 后，在另一终端运行 `python apps/miniprogram/scripts/capture-pages.py`（需 Playwright 和 Edge）。这是以合成展示模型驱动实际 wcc 模板的浏览器排版核验，无真实 API、微信、支付或签署能力声明。
 

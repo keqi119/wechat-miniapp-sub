@@ -15,7 +15,7 @@ export function verifyMiniappPackage({workspace=process.cwd(),project,expectedMa
  if(expectedManifestSha&&manifestSha256!==expectedManifestSha.toLowerCase())throw Error('Frozen manifest hash mismatch');
  if(expectedConfigSha&&configSha256!==expectedConfigSha.toLowerCase())throw Error('Frozen config hash mismatch');
  const manifest=JSON.parse(manifestBytes),config=JSON.parse(configBytes);
- if(config.appid!=='wxa7089edf4a34a7f5'||config.compileType!=='miniprogram'||config.miniprogramRoot!=='src/'||config.setting?.urlCheck!==true||config.packOptions?.include?.length||config.packOptions?.ignore?.length)throw Error('Unexpected miniapp configuration');
+ if(config.appid!=='wxb5115e5a5f70f1b1'||config.compileType!=='miniprogram'||config.miniprogramRoot!=='src/'||config.setting?.urlCheck!==true||config.packOptions?.include?.length||config.packOptions?.ignore?.length)throw Error('Unexpected miniapp configuration');
  if(!Array.isArray(manifest.files)||!manifest.files.length)throw Error('Source manifest missing');
  const expected=new Map();
  for(const file of manifest.files){

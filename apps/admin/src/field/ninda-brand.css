@@ -1,0 +1,9 @@
+/* Same original logo and brand palette as the operations console. */
+body{background:#f6f4ee;color:#231815}button{color:#35291b;border-color:#d9cfbd}button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline-color:#b98900}a{color:#785700}
+.field-mark{position:relative;overflow:hidden;width:46px;height:46px;border-radius:9px;background:#f9be00;flex-shrink:0}.field-mark img{position:absolute;width:118px;height:177px;max-width:none;left:-36px;top:-56px}
+.field-brand strong{color:#231815}.field-brand small{color:#77664b}.field-header{border-bottom:3px solid #f9be00;padding-bottom:20px}.field-header>div:last-child{flex-shrink:0}.link{color:#7b5a00}
+.primary{background:#f9be00;border-color:#e1aa00;color:#231815;font-weight:750}.primary:hover:not(:disabled){background:#e7af00}
+.card,.task-card{border-color:#e3d9c7;box-shadow:0 4px 16px #4f39100a}.login>.field-brand{background:#f9be00;padding:18px;border-radius:15px;margin-bottom:24px}.login{padding-top:35px}
+.muted,.eyebrow,.task-card small,.field-footer,dt{color:#7d6e56}input,textarea{background:#fffdf6;border-color:#d5cab4;color:#35281c}.type-tag{background:#ffefb4;color:#684b16}.phase,.task-open{color:#795700}.assignment-note,.check{background:#fff7dc}.check input{accent-color:#231815}
+.upload-button{background:#fff5d0;border-color:#b79848;color:#6e5014}.pdf-icon{background:#f1ecdd;color:#82704d}.field-actions{background:#f6f4eeee}.evidence-grid article{border-color:#e5dcc7}
+@media(max-width:380px){.field-brand{gap:7px}.field-brand strong{font-size:16px}.field-mark{width:40px;height:40px}.field-mark img{left:-39px;top:-59px}}

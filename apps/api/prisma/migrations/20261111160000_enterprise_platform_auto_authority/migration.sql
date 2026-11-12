@@ -1,0 +1,22 @@
+CREATE TABLE "OwnerPlatformAuthority" (
+ "authorityId" TEXT NOT NULL PRIMARY KEY,
+ "identitySnapshot" JSONB NOT NULL,
+ "signedFileId" TEXT,
+ "signedSha256" TEXT,
+ "signedAt" TIMESTAMP(3),
+ "signatureEvidence" JSONB,
+ "providerEvidenceHash" TEXT,
+ "scopeReviewedBy" TEXT,
+ "scopeReviewedAt" TIMESTAMP(3),
+ "scopeReviewHash" TEXT,
+ "pausedAt" TIMESTAMP(3),
+ "revokeReason" TEXT,
+ "processingToken" TEXT,
+ "processingUntil" TIMESTAMP(3),
+ "lastErrorCode" TEXT,
+ "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ "updatedAt" TIMESTAMP(3) NOT NULL,
+ CONSTRAINT "OwnerPlatformAuthority_authorityId_fkey" FOREIGN KEY ("authorityId") REFERENCES "OwnerAutoAuthority"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+ CONSTRAINT "OwnerPlatformAuthority_signedFileId_signedSha256_fkey" FOREIGN KEY ("signedFileId","signedSha256") REFERENCES "StoredFile"("id","sha256") ON DELETE RESTRICT ON UPDATE RESTRICT,
+ CONSTRAINT "OwnerPlatformAuthority_file_pair_check" CHECK (("signedFileId" IS NULL) = ("signedSha256" IS NULL))
+);

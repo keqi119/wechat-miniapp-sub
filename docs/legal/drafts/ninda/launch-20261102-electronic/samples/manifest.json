@@ -1,0 +1,289 @@
+[
+  {
+    "file": "subscription.pdf",
+    "pages": 6,
+    "sha256": "d6d443c897e55d77e26e879f434f2044d3594e340074bacc1bd1b5c397c5aa9b",
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 220.81
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 438.98
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 697.46
+        }
+      ]
+    }
+  },
+  {
+    "file": "delivery-delay.pdf",
+    "pages": 3,
+    "sha256": "f071a9e943c143b4a216d23f8b0f7ad9a25daaab308ce779fcdfbcf42d1e8c2e",
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 220.81
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 438.98
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 697.46
+        }
+      ]
+    }
+  },
+  {
+    "file": "vehicle-upgrade.pdf",
+    "pages": 3,
+    "sha256": "9ea1800ec1e3850dee7d9993d8b6278837d2362bf3a18c7cbf2bc854b859f7b6",
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 220.81
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 438.98
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 697.46
+        }
+      ]
+    }
+  },
+  {
+    "file": "renewal.pdf",
+    "pages": 3,
+    "sha256": "f5ed99b3dbb399eda67169c8e09f551fed328a5d24034fd157937d2b6ee2b625",
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 220.81
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 438.98
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 697.46
+        }
+      ]
+    }
+  },
+  {
+    "file": "pre-delivery-cancellation.pdf",
+    "pages": 3,
+    "sha256": "b5cf996714c1e29d78554964acfd9432ddfdd248be1690ca416f763f8895039a",
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 220.81
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 438.98
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 697.46
+        }
+      ]
+    }
+  },
+  {
+    "file": "early-termination.pdf",
+    "pages": 3,
+    "sha256": "024de638680ef12e3a9ded36e7665dc968480e5aee36c9d75620c7cbee84d9a7",
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 220.81
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 438.98
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 697.46
+        }
+      ]
+    }
+  },
+  {
+    "file": "renewal-cancellation.pdf",
+    "pages": 2,
+    "sha256": "0152927da414981e2e1e675b678ae209c2bf6676e33f256c390250b020cc60b1",
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 1,
+          "x": 607.82,
+          "y": 220.81
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 1,
+          "x": 607.82,
+          "y": 438.98
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 1,
+          "x": 607.82,
+          "y": 697.46
+        }
+      ]
+    }
+  },
+  {
+    "file": "return-settlement.pdf",
+    "pages": 3,
+    "sha256": "8c1534c7d0da0b035cf90bef158da510ed50d2260b88d38e0d5755dd775c9eab",
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 220.81
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 438.98
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 697.46
+        }
+      ]
+    }
+  },
+  {
+    "file": "cooperation.pdf",
+    "pages": 3,
+    "sha256": "8ffda05d60e87d7ba81617a419c43d2d7c997410dba72b99e7d7314fb6bb83a1",
+    "positions": {
+      "OWNER": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 261.11
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 2,
+          "x": 607.82,
+          "y": 519.59
+        }
+      ]
+    }
+  },
+  {
+    "file": "cooperation-amendment.pdf",
+    "pages": 2,
+    "sha256": "a3a1791197017a27b43638a9ec453eff848b62bcb33e6e8a70dd04a4dac25256",
+    "positions": {
+      "OWNER": [
+        {
+          "pagenum": 1,
+          "x": 607.82,
+          "y": 261.11
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 1,
+          "x": 607.82,
+          "y": 519.59
+        }
+      ]
+    }
+  },
+  {
+    "file": "cooperation-termination.pdf",
+    "pages": 2,
+    "sha256": "672e1c89bdabdb90ca593b6e972f5362cc0f9c1b945141471f990330f077d9cc",
+    "positions": {
+      "OWNER": [
+        {
+          "pagenum": 1,
+          "x": 607.82,
+          "y": 261.11
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 1,
+          "x": 607.82,
+          "y": 519.59
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,396 @@
+﻿规则,文书位置,当前实现,需补充或调整,代码来源
+三个月下限与独立期限字段必须贯通所有校验层,"00 P013
+01 P012
+01 T1R3C2",产品、首次报价、电子准备、续期源、服务段校验、小程序续期解析及API契约仍含12个月约束，单改前端无效。,在新版本规则下贯通>=3及minimumTermMonths/actual months分离；不修改历史产品/验收测试特定12期授权或已签订单含义。,"apps/api/src/products/types.ts / 8
+apps/api/src/applications/applications.ts / 36
+apps/api/src/order-service-stages/source.ts / 79
+apps/miniprogram/src/services/order-renewals.js / 23
+docs/api-contract.md / 71"
+首期付款安排不能成为后续独立付款日锚点,"00 P014
+00 P015
+00 P016
+01 P013
+01 P014
+01 P018
+01 T1R6C2",当前firstDueDate用于全单billSchedule，startDate另定服务月；单段日号恢复正确，续期重取阶段起日日号。,V3.1首期及押金交付前，后续期付日=服务月开始日，首次actual日号跨续期保持；不得新增paymentDay。止日统一不含边界与上海00:00。,"apps/api/src/applications/applications.ts / 153
+apps/api/src/usage/rules.ts / 19
+apps/api/src/order-renewals/context.ts / 74
+apps/api/src/order-service-stages/source.ts / 29
+apps/miniprogram/src/services/api.js / 25"
+三日/七日是发起退款时限，到账另外留证,"00 P020
+00 P021
+00 P022
+01 P022
+01 P056",默认报价退款文案存在“交还查验后7日出具并发起”和“保留款事项结清后3日”的旧口径，终止资料refundDueOn仍为人工日期；当前模板不能自动带入为V3.1统一时限。,完成还车且无争议结算确认后7工作日发起无争议押金/未履行租金退款；交付前取消、未开始续期取消在取消生效且无争议金额确认后3工作日发起。3日适用范围是本包拟定口径，待审采用，不宣称已还原旧规则。建事件与工作日计算/到期提醒，保留受理和结果凭证；内审/分润回收不能无限延后无争议确认。,"apps/api/src/applications/final-plan-defaults.ts / 32
+apps/api/src/applications/final-plan-defaults.ts / 33
+apps/api/src/offline-documents/termination.ts / 11
+apps/api/src/offline-documents/termination.ts / 15
+apps/api/src/offline-documents/termination.ts / 78"
+个人提前退租补偿一个月、上限剩余租金，例外分开,"00 P017
+01 P062
+01 P063",默认商业条款已含提前15日、1个月且上限剩余租金；终止明细仍主要人工确认，不能由模板文本等同已算费用。,保留15日尽量通知且未满不另罚；按当期含税月费和剩余租金取较小值，不足月按实际服务月日数；不重复加同一损失。已用租金与独立车损/超里程分列。未交付、经营方违约、法定解除、未开始续期取消不直接套补偿；新口径待审采用。,"apps/api/src/applications/final-plan-defaults.ts / 32
+apps/api/src/offline-documents/termination.ts / 7
+apps/api/src/offline-documents/termination.ts / 98"
+同商同价/升级与原押金沿用,"00 P009
+00 T1R3C2
+01 P048
+01 P049
+01 P050
+01 P051
+01 P052",换车自动计价及来源已有同商/不降级限制，但仍允许指定新押金并生成补退；产品赠送与目标车型另购权益有独立来源。旧车已收新车未交的间隔需按真实占用处理。,V3.1通道固定原押金金额、归属和返还关系；需变主体或押金的另行有效业务路径，不能套本协议。升级各期按原服务月/实际新车交付日计算到分；同月不重发里程，未交付不消耗预占。,"apps/api/src/vehicle-changes/offline-quote-preview.ts / 25
+apps/api/src/vehicle-changes/offline-quote-preview.ts / 62
+apps/api/src/vehicle-changes/offline-quote-preview.ts / 65
+apps/api/src/vehicle-changes/offline-quote-preview.ts / 74
+apps/api/src/vehicle-changes/offline-pricing-input.ts / 27
+apps/api/src/addon-products/policy.ts / 27"
+新版保险维护已简化，合同应复用真实登记而不伪造保险保证,"00 P007
+00 P008
+00 T2R5C2
+01 P036
+01 P040
+01 P083",实际保险页为基础登记+原件+版本历史；保障要求管理停用；REGISTERED不是逐条保障审定。上架双险检查与交付只检查至少一可用保单存在差异。,保单三项识别映射实际版本；非营运登记/投保依据一次核验；交付核验合同要求的实际有效险单。保险赔付按事实/保单处理，不以拒赔直接推客户全责，不再增加旧保险适配保证。,"apps/admin/src/insurance.tsx / 7
+apps/admin/src/insurance.tsx / 8
+apps/api/src/insurance/registration-facts.ts / 11
+apps/api/src/insurance/coverage.ts / 47
+apps/api/src/vehicles/publish-readiness.ts / 72
+apps/api/src/orders/business-gates.ts / 102"
+资格资料变化与已签主体连续性,"00 T2R1C2
+00 P018
+01 P008
+01 P030
+01 P046",11月6日已增加分类证件内容hash比较、sameCustomerConfirmed本单核对和不可变确认记录。当前资格有效不改变原签约主体，资料重传不必机械重复审核。,复用新连续性能力；签前主体变化阻断重核，签后同人更新证件独立留证；不把风控状态直接视为已生效合同失效或停掉必要安全服务。无需新增每份合同准驾字段。,"apps/api/src/customers/profile.ts / 64
+apps/api/src/customers/qualification-profile.ts / 27
+apps/api/src/customers/order-qualification.ts / 43
+apps/api/src/customers/order-qualification.ts / 74
+apps/admin/src/order-qualification.tsx / 27
+docs/api-contract.md / 720"
+线上交接不另签，但实名、查验确认与实际交付仍分开,"01 P026
+01 P027
+01 P089
+01 P090
+01 P091",ONLINE_RECORD已有证据冻结/本人阅读确认/更正/完成审计；仅新OFFLINE订单启用，该分支要求人工资格而非法大大实名，非OFFLINE完成仍要求独立签署。,沿用线上事实记录并扩展至本版电子订单；独立校验法大大实名、实际现场经手权限和真实交接，不增交接合同。不能靠客户静默、普通点击或技术状态推定费用认可。,"apps/api/src/operations/online-handover.ts / 30
+apps/api/src/operations/online-handover.ts / 49
+apps/api/src/operations/online-handover.ts / 77
+apps/api/src/operations/workflows.ts / 89
+apps/api/src/operations/handover-records.ts / 65"
+待签快照不可变与渠道结果约束,"00 P018
+00 P029
+00 P030
+01 P009
+01 P071
+01 P073",电子源PDF、商业hash、主体、签后文件与归档已有一致性约束；现通用渲染不认识V3.1中文【自动带入】标记，仅识别{{变量}}。withdraw方法仅本地标记WITHDRAWN。,建立版本化V3.1渲染模型和字段白名单，关键缺值阻断并检查残留【待填写/自动带入】；未来事实合法空白与签章控件单独分类。条件变化新一致版本，渠道已受理/部分签/结果未知要实查或按供应商撤销结果处理，原件保留。,"apps/api/src/offline-documents/print.ts / 36
+apps/api/src/electronic-documents/print.ts / 33
+apps/api/src/electronic-documents/service.ts / 91
+apps/api/src/electronic-documents/subscription.ts / 23"
+当前挂载页面与API基础能力分开列示,"00 P003
+00 P024
+00 P032
+01 P003",产品、商品、附加产品、保单登记、客户本单资格页面真实挂载；ContractCenter显示线下合同档案，OrderContractPanel仅OFFLINE挂载；三方电子API存在不等于V3.1客户/后台入口已办通。历史plans/coverage-requirements入口停用。,实施从实际App/订单工作台接入；不要修改未挂载旧组件后宣称页面完成。统一方案/小程序日期、最短期限、退出与退款文案；原样Mock副本不改。,"apps/admin/src/App.tsx / 114
+apps/admin/src/App.tsx / 117
+apps/admin/src/ui.tsx / 68
+apps/admin/src/order-workspace.tsx / 76
+apps/admin/src/contract-center.tsx / 22
+apps/miniprogram/src/pages/application-detail/index.wxml / 83"
+敏感信息告知与联系人复用不互相替代,"00 P031
+01 P066
+01 P067
+01 P094
+01 P096
+01 P097
+01 P098",客户证件私有渲染、合作商数据共享notice/hash及地图地点单独告知已有机制，模板通用正文不能据此认定所有实际接收方告知完成。,复用真实已确认联系人；实际实名/保险/支付等处理者名称、目的、类别、期限及依法需要的单独同意按处理时留证。邮箱选填与不逐单抄准驾不降低身份/资格核验；报告及普通API不输出密钥和不必要PII。,"apps/api/src/electronic-documents/prepare.ts / 63
+apps/api/src/owner-signing/lessor.ts / 50
+apps/api/src/applications/handover-location.ts / 26
+apps/api/src/applications/handover-location.ts / 40"
+金额、权限、版本和真实资金结果保留原有控制,"00 T2R9C2
+00 P022
+01 P019
+01 P023
+01 P056",整数分、产品来源hash、财务收退事实、RBAC/CAS/幂等、异常到账核账及普通账单退款后净收重算已有结构，不能为了少填字段移除。,报价/分摊/超里程/补偿到分；收付只采可信成功记录，发起退款不等于到账；字段/快照更新继续CAS、同内容幂等和客户归属校验；任何真实交易/签章验收另获主控明确范围。,"apps/api/src/billing/rules.ts / 1
+apps/api/src/products/snapshot.ts / 24
+apps/api/src/insurance/registrations.ts / 78
+apps/api/src/customers/order-qualification.ts / 71
+apps/api/src/offline-documents/termination.ts / 78
+docs/api-contract.md / 711"
+当前可达入口与后端能力分开评价,"P003
+00 P003
+00 P024",PC只挂SimplePartnersPage，合作财务旧路由是提示页；合同中心是纸档。H5 OwnerApp只挂SimpleWorkspace；旧Enterprise、AuthorityPanel、OfflineWorkspace及PartnerSettlements未挂载。旧印章路由退役，保障要求管理已停用。,仅在现有合作商详情、合同中心、产品工作台、车辆档案和财务入口补最小可达办理；H5新增有权签署区需独立身份，不能启用旧全能工作台或复活保障要求管理。API和schema存在只能称可复用来源。,"apps/admin/src/App.tsx / 114
+apps/admin/src/App.tsx / 117
+apps/admin/src/partners.tsx / 15
+apps/admin/src/modules/navigation.ts / 6
+apps/signing-h5/src/owner/App.tsx / 9
+apps/signing-h5/src/owner/SimpleWorkspace.tsx / 10"
+V3.1授权为新边界，不能继承11月2日宽范围,"P021
+P081
+P082
+P083
+P085
+00 T3R4C2",现授权结构支持所有电子文书种类及可空合作/车辆范围；11月2日设计曾允许变更/终止/续订自动签。,本版附件三只允许已确定合作/车辆/产品/模板条件内01三方主合同V3.1；02及03/04/05/06逐份有效签署，任何例外另证具体授权。平台本企业用印和乙方授权分开；任一家不满足则两家企业均手签。,"apps/api/src/electronic-documents/authorization.ts / 9
+apps/api/src/electronic-documents/policy.ts / 32
+docs/superpowers/specs/2026-11-02-ninda-electronic-signing-relaunch-design.md / 27
+docs/superpowers/specs/2026-11-02-ninda-electronic-signing-relaunch-design.md / 101"
+合作默认时限已由用户确认，不增加逐单人工参数,"P036
+P037
+P040
+P041
+P042
+P044
+P073
+00 P025
+00 P026
+00 P027",真实合作默认未查库核实，模板说明明确这是拟定通用标准。,本轮用户已明确采用5/5/15工作日账期、2工作日补足且不得晚于客户退款、3工作日返还、10工作日开票，例外另约。发布一个规则版本、各合作引用；不再对该组时限重复确认。升级差价入分润、换车服务费平台、超里程默认出租方按V3.1真实适用条件固定；未另约不设准备金/托管/渠道费。,".runtime/ninda/contract-fields-v31-20261107/00_协议使用与自动填制说明_V3.1.txt / 60
+apps/api/src/partners/revenue-types.ts / 14
+apps/api/src/partners/simple-revenue.ts / 23"
+金额、归属、资金事实和版本不可混用,"P034
+P035
+P037
+P040
+P041
+P043",整数分、基点、原来源冻结比例及累计退款归零可复用，已付/结转和费用权利人尚无当前可达完整流程。,金额整数分；按成功收退和原比例算；租金/升级/服务费/超里程/押金分项；统计、应付、实际支付和客户到账分开。客户押金不得进入分润或抵销。所有写入保持服务端RBAC、公司/客户归属、版本冲突、事务幂等和真实凭据。,"apps/api/src/partners/simple-revenue.ts / 10
+apps/api/src/partners/simple-revenue.ts / 41
+apps/api/src/partners/revenue-types.ts / 28
+apps/api/src/partners/simple-agreements.ts / 20
+apps/api/src/auth/partner-route-access.ts / 6"
+两企业真实身份和渠道许可独立于API应用,"P005
+P069
+P080
+P081
+P086",身份解析已有宁达名称及独立provider账户/印章检查；未进行真实资料及渠道权限核验。,不取晓浪的主体档案、印章或授权人身份，不以应用凭据代替业务授权。复用法大大代码必须沿项目指定来源提交453da778dcfefd3727813179382490903644ef26；本审阅未读取旧库或旧工作树。之后真实认证/签章测试另由主控明确范围，本次不执行。,"apps/api/src/electronic-documents/identities.ts / 44
+apps/api/src/electronic-documents/authorization.ts / 19
+apps/api/src/electronic-documents/print.ts / 30
+docs/superpowers/specs/2026-10-16-miniapp-independent-platform-design.md / 152"
+最短产品期独立，跨商业务退出,"P019
+P020
+P072
+00 P013
+00 T1R4C2",产品schema仍months≥12且无独立下限；当前换车核对同出租方，但旧文本和入口提示不能留跨商绕行。,独立minimumTermMonths≥3，实际选择月数单独冻结；只开放同商同价/升级，原押金/期界/额度不重置；跨商不得改主体、抵转押金或倒签解除。,"apps/api/src/products/types.ts / 8
+apps/api/prisma/schema.prisma / 2378
+apps/api/src/vehicle-changes/offline-quote-preview.ts / 65"
+签署法律事实、渠道核验和系统归档是不同状态,"P009
+P049
+P062
+P085
+00 P018
+00 P030",DTO把verifiedAt当signedAt；本地withdraw直接置WITHDRAWN；合作启用由归档证明驱动。,生成件不可用未来事实覆盖；可靠签署时刻/本地核验/归档分别记录，不能把归档未完说成法律签署未发生。停止本地后续派发和渠道实际撤销分别核实，未知结果保留原交易查询，不重签冒险。 本地停止后晚核实完整有效签署，走独立证据保全：取得并验签最终文件、记录实际签署及归档、各方可取件；不调用afterArchive、不更新当前批准版本、不恢复派发或激活业务。当前API“撤回不可归档”要区分证据保全与业务推进。,"apps/api/src/electronic-documents/service.ts / 52
+apps/api/src/electronic-documents/service.ts / 91
+apps/api/src/electronic-documents/service.ts / 145
+apps/api/src/electronic-documents/cooperation.ts / 59
+apps/api/src/electronic-documents/integration.ts / 12
+docs/api/electronic-documents.md / 23"
+生成校验必须识别V3.1来源标记，并按具体业务选择模板,"00:P003
+00:P024
+00:P029
+03:P003
+04:P003
+05:P003
+06:P003",现换车和续期共选最新OFFLINE_ORDER_AMENDMENT，退出共用TERMINATION；换车/续期编译检查{{变量}}与待填写，通用打印主要检查{{}}，并不识别所有【自动带入】/【电子签署区】语义。直接上传V3.1正文不能视为已映射、已可签。,先将V3.1编译成固定场景、版本化字段契约；必要主体/价格/范围缺失阻断，本次27处来源标记全部有映射。电子签区只留供应商控件，不成为普通文本空格；futureFacts白名单明确可不在签前填。03/05不能争用‘最新通用模板’错配，04/06必须分场景。,"apps/api/src/vehicle-changes/offline-publish.ts / 23
+apps/api/src/vehicle-changes/offline-publish.ts / 45
+apps/api/src/order-renewals/offline-publish.ts / 17
+apps/api/src/offline-documents/print.ts / 36"
+业务分流：03同商换车、04从未交付、05同车续期、06已交付协商退出,"00:T1R3C2
+00:T1R4C2
+00:T1R5C2
+00:T1R6C2
+03:P008
+04:P008
+05:P008
+06:P008",同商/非降级守卫、交付前取消工作区、续期独立服务均存在；退出纸档仍共用TERMINATION。档案枚举只有OWNER_COOPERATION、RENTAL、ORDER_AMENDMENT、交接、TERMINATION、RENEWAL_CANCELLATION，没有合作关系变更/终止专用类型。,在原合同/阶段/实际交付事实级分类，非模板名称级分类。跨商不在本包办理，不能过户旧押金或改owner继续；正常到期只做事实结算；仅取消未来续期用05规则及其专用案。合作变更/终止及其他无模板场景只建待核个案、材料与范围，待另行批准专用文本后开放生成；不套04/06、不把停用合作商当作合同解除。,"apps/api/src/vehicle-changes/offline-quote-preview.ts / 25
+apps/api/src/vehicle-changes/offline-quote-preview.ts / 65
+apps/api/src/orders/cancellation-readiness.ts / 74
+apps/api/src/offline-documents/schemas.ts / 7
+apps/api/src/offline-documents/context.ts / 17"
+三个月产品下限与独立最短期限，原日号贯穿服务阶段,"00:P013
+00:P014
+00:P015
+00:P016
+03:P011
+05:P008
+05:P010
+05:P011",产品、续期预览及阶段读取均仍有>=12校验，只有months；每个stagePeriods按自己的startDate重新锚定，虽然同一阶段内短月恢复日号已正确。旧newEndDate仍表示包含的最后日。,版本化增加minimumTermMonths>=3与selectedMonths>=minimumTermMonths，首次实际起租anchorDay跨续期不变。1/31三个月至4/30边界，4/30续期下一界5/31；结束边界上海00:00且不计入本期。首期/押金交付前、新续期首期开始前支付，其后由服务月算法导出，绝不另设每月自定支付日。旧含末日数据在显示层按明确规则转换，已签旧规则不追溯。,"apps/api/src/products/types.ts / 8
+apps/api/src/order-renewals/context.ts / 70
+apps/api/src/order-service-stages/source.ts / 29
+apps/api/src/order-service-stages/source.ts / 79
+apps/api/src/usage/rules.ts / 9
+apps/api/src/vehicle-changes/offline-publish.ts / 34"
+03固定公式随真实日期结算，已签条件变化才形成变更,"03:P010
+03:P014
+03:P015
+03:P026",真实自然日差价计算已存在，采用整数分与逐期四舍五入；但guardSwapHandover实际日不等计划日即报错，现重报再走报价/归档。,固定原/新价格、差价公式、服务费；实际日期变化只生成结算版本/客户核对/应收退差额，不改变原文hash或默认重签。算法逐服务月：完整月为月费差额，不足月为差额×交付日含至止日不含天数÷本服务月天数，分期四舍五入到分后汇总。车型、月费、期限等条件变化另经明确同意及有效变更。,"apps/api/src/vehicle-changes/upgrade-pricing.ts / 59
+apps/api/src/vehicle-changes/upgrade-pricing.ts / 65
+apps/api/src/vehicle-changes/handovers.ts / 50
+apps/api/src/vehicle-changes/offline-quote-preview.ts / 39"
+03原押金不变、无车期间减免与双侧收车事实,"03:P008
+03:P012
+03:P018
+03:P024
+03:P028",当前报价可输入depositAmount、自动生成押金补退；noVehicleUsage已能用两侧实际交接证明完整无车月用量为零，但注释明确费用仍按逐单协议。双侧交接还受财务核清与同计划日门禁。,03原押金金额/用途/持有/返还关系只读沿用；改押金退出既定方案另行有效约定。旧车已收且新车未交、无可用替代车的真实间隔不收车辆占用租金；按原费率/服务月/原合同日内规则列减免。先记录实际接收，不因未结算/客户未点否认事实；合理因客户失约损失另凭证，不冒称间隔租金。延期不能自动延长原期满，经营方取消释放权益并退未发生费用。,"apps/api/src/vehicle-changes/offline-pricing-input.ts / 27
+apps/api/src/vehicle-changes/offline-quote-preview.ts / 74
+apps/api/src/vehicle-changes/segments.ts / 23
+apps/api/src/vehicle-changes/segments.ts / 38
+apps/api/src/vehicle-changes/handovers.ts / 52"
+换车权益预占/实际交付消耗及分车里程，续期只在新阶段发新赠送,"03:P016
+03:P022
+05:P020
+05:P021",换车报价reserveCredit、完成新车交付consumeCredit、双车UsageSegment合并已有实现；续期阶段启用新period及旧免费次数到期处理已有代码。,保留现实现及归属/并发门禁：报价仅预占、失败撤回释放，实际交付消耗一次；同月旧车/新车各取真实读数合并，不重发里程/赠送。续期新gift只在真实开始发，原gift不结转；已购次数/里程各自原有效期及价格不自动延长、清零、恢复，目标车型购买范围继续核对。读数缺失/异常先补证，不平均分摊。,"apps/api/src/vehicle-changes/offline-quote.ts / 24
+apps/api/src/vehicle-changes/handovers.ts / 95
+apps/api/src/vehicle-changes/segments.ts / 17
+apps/api/src/order-renewals/activation.ts / 39
+apps/api/src/order-renewals/activation.ts / 44
+apps/api/src/order-renewals/offline-publish.ts / 26"
+04常规全退已有，合法费用例外须显式结算依据且不生成未交付租金,"04:P010
+04:P011
+04:P014
+04:P015
+04:P016
+04:P018
+04:P019",已有签署核实、三方终止档案、资金核查和最终取消；最终业务守卫要求成功收款全部退清。原已签证据存在不能声明未签。当前手填费用未与最终取消全退守卫形成净结算链。,常规全退保持安全；有此前有效约定、已完成独立服务或可证明依法应由客户承担损失时，逐项核原因、费用、权利人及减损，争议不记确认债务，不能收未完成服务、可避免支出/营销提成或默认准备费。合法抵扣建立同债务及明确依据后再扩展净结算；不能仅改退款数字绕过原全退校验。从未交付不计租、不开一个月提前退租补偿、不为未来可能损伤保留押金。,"apps/api/src/offline-documents/cancellation.ts / 15
+apps/api/src/orders/cancellation-facts.ts / 35
+apps/api/src/offline-documents/termination.ts / 11
+apps/admin/src/order-offline.tsx / 70"
+05期前取消已有真实双方合意及全退链；补签归档不得迟延其效力和退款,"05:P014
+05:P015
+05:P016
+05:P017
+05:P028
+05:P031",cancellation-timing已要求客户与有权出租方真实同意时间早于上海起日、证据hash与核实时间；OPEN暂停新增激活/支付；全退、晚到款、不可覆写的完成快照均已实现。现SIGNED分支退款前调用cancellationSignatureReady，仍强制专用纸质取消协议归档；这是要调整的门禁，不是缺整个流程。,保留真实合意/权限/证据/来源核验、禁止倒签、全额原路退且无取消费、原期与原押金独立。按真实期前合意认定取消已生效；核实/补签/录入/退款跨起日仍不使新期开始。让已有充分原始合意证据可进入无争议退款办理，纸档补证/最终归档另跟踪，不成为3工作日期限无限延期原因；迟到真款独立全退不重开案、不冲旧债。系统COMPLETED只代表操作闭环，不等同法律生效日。 技术ACTIVE、自动建立的空usagePeriod或赠送额度不能推定实际新期履行。真实期前合意晚到时可建核验/纠正案，停新期未来计费，未付应收和未用赠送作废留痕，原始实收全退；真实里程/交接/消费保留并另核有效依据，不从本应全退新期款扣抵。纠正与激活/晚到款同锁幂等。,"apps/api/src/order-renewals/cancellation-policy.ts / 2
+apps/api/src/order-renewals/cancellation-timing.ts / 25
+apps/api/src/order-renewals/cancellation-state.ts / 4
+apps/api/src/order-renewals/cancellation-commands.ts / 65
+apps/api/src/order-renewals/cancellation-refunds.ts / 11
+apps/api/src/order-renewals/cancellation-refunds.ts / 47
+apps/admin/src/renewal-cancellation.tsx / 32
+apps/api/src/order-renewals/cancellation-facts.ts / 59
+apps/api/src/order-renewals/activation.ts / 39"
+未开始续期取消按05办理，不套04/06；测试纸档按已授权清单清理,"00:T1R5C2
+04:P008
+05:P014
+05:P016
+05:P017
+06:P008",已有OFFLINE_RENEWAL_CANCELLATION模板类型、RENEWAL_CANCELLATION档案、真实来源和三方纸档核验；V3.1提供05期前取消实体规则，没有独立取消附件。,以已签05及真实双方期前合意作为新案办理依据，不能套04从未交付整单取消或06已交付终止；常规期前取消不另强制签一份取消协议。确有实质变更需额外文书时另行审定，不能因缺该文书否定已有真实合意或延迟无争议退款。用户已确认旧纸档和相关测试业务可清理、不保留纸质能力；按具体dry-run清单重置，保留真实资金必要追溯及新流程真实签署/履约事实。,"apps/api/src/order-renewals/cancellation-paper.ts / 82
+apps/api/src/order-renewals/cancellation-paper.ts / 95
+apps/api/src/offline-documents/schemas.ts / 7
+apps/admin/src/renewal-cancellation.tsx / 58"
+三/七工作日均为发起退款期限，分争议、渠道受理和真实到账,"00:P020
+00:P021
+00:P022
+03:P018
+04:P020
+04:P021
+04:P022
+05:P015
+05:P029
+06:P025
+06:P026
+06:P027",有真实Payment/Refund来源、独立审批和结果核验；当前终止refundDueOn手填，默认合同文字七日与保留款三日来源还存在，未在所审流程找到统一V3.1工作日期限投影。,退款义务分别按权利人及实际控制资金建立：04和05期前取消为取消已生效+无争议金额确认后3工作日；03换车差额/无车减免为相应事实发生+无争议金额确认后7工作日，不等期满；06为实际还车+无争议结算确认后7工作日，覆盖押金余额及未履行租金。独立保存trigger/amountConfirmed/initiated/providerAccepted/succeeded/failed，审批、分润、发票及个别争议不推迟无争议起算。原路不可用核客户本人合法受领账户，错误账户/失败独立留证并补正。不得把合同期限称作统一法定期限。,"apps/api/src/offline-documents/termination.ts / 15
+apps/api/src/applications/final-plan-defaults.ts / 33
+apps/api/src/order-renewals/cancellation-refunds.ts / 14
+apps/api/src/order-renewals/cancellation-facts.ts / 136
+apps/api/src/orders/cancellation-readiness.ts / 43"
+06四种时间分辨但不逐单手填，归档/结算不延长租期,"06:P010
+06:P011
+06:P012
+06:P018
+06:P019",现表单只有人工effectiveAt及必要计划返还时间，没有自动推导四种时点；VehicleReceiptEvent已记录真实时间及更正链。实际收车会暂停后续未履约账单，正式还车及结单仍受证据/资金门禁。,三方有效签署证据给协议生效；正常合同终止及租金截止按有权实际接收、不得晚于原期满推导；实际接收事件保持独立。更早停租/真实签前合意按个案证据，而非把内部审批当合意。签字、收车、费用确认分别成立；客户未即时点、物品补配、争议及归档晚不否认已接收、不继续计占用费。,"apps/api/src/offline-documents/termination.ts / 8
+apps/admin/src/termination-details-model.ts / 9
+apps/api/src/offline-documents/vehicle-receipt.ts / 14
+apps/api/src/offline-documents/vehicle-receipt.ts / 22
+apps/api/src/usage/returns.ts / 57"
+末期/迟还的日内时长与拒收减免必须复用原合同明确规则,"01:P057
+03:P012
+06:P020
+06:P021",usage/returns以shanghaiDay将actualAt转为Date并截UsagePeriod；实际VehicleReceiptEvent仍有精确receivedAt，故事实来源可复用。默认商业文字提不足月按本服务月天数，但未见日内不足一天租金/占用费计算结构。换车升级差价03有其专门自然日公式，不应误用小时差价覆盖。,终止末期、迟还占用与依法依约停驶/拒收减免，按上海时区的真实服务月实际日数与日内真实时长比例核算，首尾不重复、每期按约四舍五入到分；首次当天非零时交付不自动改变已约正常整月费，末期清理未履行部分。客户可归责迟还才按有效约定核占用，扣同期已付；出租方拒收/平台过错且通知、停用、保全证据齐全的区间不转嫁客户。确需的独立损失凭证另核，不能重复收。,"apps/api/src/usage/returns.ts / 18
+apps/api/src/usage/returns.ts / 25
+apps/api/src/offline-documents/vehicle-receipt.ts / 64
+apps/api/src/applications/final-plan-defaults.ts / 32
+apps/api/src/vehicle-changes/upgrade-pricing.ts / 55"
+个人提前退租补偿已有文字，需结构化计算并按原因排除,"00:P017
+06:P014
+06:P015
+06:P016",final-plan-defaults已正确描述一个月且不超剩余租金、尽量提前15日、不追溯短租价及经营方违约/法定解除除外；当前终止金额人工录，不会自动落实上限。,"按有效价格、真实未履行时长、明确终止范围逐期求剩余租金，compensation=min(currentTaxInclusiveMonthlyFee, remainingUnperformedRent)，依法有效减免另列。不新增未满15日罚金，不同时收同一提前终止损失的剩余全租/押金没收。已用租金及有证独立车损/超里程分别核；从未交付、未开始续期、经营方违约、法定解除不可套本规则。","apps/api/src/applications/final-plan-defaults.ts / 32
+apps/api/src/offline-documents/termination.ts / 8
+apps/api/src/offline-documents/termination.ts / 11
+apps/admin/src/termination-details-model.ts / 14"
+法定或有效约定单方解除须有独立证据路径，不能被06三签卡住,"03:P029
+04:P012
+05:P017
+06:P008
+06:P016",已交付OFFLINE提前返还在usage/returns中只要returnedOn早于最大endDate就要求terminationReady三方档案；交付前已签纸单取消也要求三方TERMINATION。因此现协商纸档守卫不能代表全部合法退出依据。,保留协商06流程，另加受权人工核实的解除依据类型、通知到达、适用条款/事实及争议状态；法定/依约单方解除不以另外两方补签为行使前提。程序只核验已确认事实和权限，不自称作法律终局裁判；争议项单列，真实接收及无争议退款先处理。,"apps/api/src/usage/returns.ts / 55
+apps/api/src/offline-documents/cancellation.ts / 20
+apps/api/src/offline-documents/cancellation.ts / 30"
+未决事项只在真实发生后建案，必要保留与释放可执行,"00:P022
+00:T2R11C2
+04:P019
+05:P030
+06:P029
+06:P030
+06:P031",终止表单已有violationStatus、retainedDepositAmount/Handling、unresolvedMatters，且保留大于0要求文字含日期；尚不是金额、事项、原证、核查责任人、最迟释放日均有结构化约束的保留案件。当前最终结单要求押金余额退清，可保留该完成守卫。,仅已发生事故/损伤/违章、有具体证据及合理金额依据时建独立个案。记录必要暂留上限、事项、证据、责任尚未确定、核查单位/岗位、最迟释放日及合法依据/客户针对事项的明确同意；无争议先退，到期无有效扣抵/另约/有权机关措施即释放。释放后仍可依法追索；不得以未决延长租期，也不得首次签约预填。04从未交付无假想车损保留。,"apps/api/src/offline-documents/termination.ts / 9
+apps/api/src/offline-documents/termination.ts / 16
+apps/admin/src/termination-details-model.ts / 18
+apps/api/src/usage/returns.ts / 57"
+签后履约事实独立关联，事实发生不能触发改写签约正文,"00:P018
+00:P030
+03:P025
+03:P026
+04:P024
+04:P025
+05:P031
+06:P033
+06:P035",报价document.content/bodyHash、原归档pin、OrderTermsVersion、实际交接、收退款和取消完成快照已分层；TERMINATION的sourceFactHash包含delivery，当前生成后实际还车从计划状态变为RETURNED会导致assertTerminationPrintCurrent不匹配并要求重生成。,合同快照只冻结已知身份/商业条件、算法、已知事实；签署时间、实际交接/读数、通知、资金和核实结果另存事件及原始凭证，通过orderId/agreementId/businessId关联。正常新履约事实不得回写待签/已签文档或被误作已签条件变更；更正留旧记录/理由，条件真实变化才停止旧流程并形成新一致版本，已进入渠道的交易须按供应商真实结果处理。,"apps/api/src/vehicle-changes/offline-publish.ts / 47
+apps/api/src/order-renewals/offline-publish.ts / 34
+apps/api/src/vehicle-changes/handovers.ts / 97
+apps/api/src/offline-documents/termination.ts / 84
+apps/api/src/offline-documents/termination.ts / 90
+apps/api/src/offline-documents/vehicle-receipt.ts / 16
+apps/api/src/order-renewals/cancellation-commands.ts / 115"
+三方有效签署、企业权限、实名与事实确认分层,"00:P011
+00:P018
+00:P026
+00:P031
+03:P030
+04:P024
+04:P030
+05:P034
+06:P033
+06:P035",纸档三方签章页/authorityChecked、主体匹配和文件manifesthash可复用；历史同商换车电子签有三方文档与印章核验，续期走专用纸档。自动用印规则明确MAIN_CONTRACT_ONLY。当前纸签日期栏不满足V3.1电子签实际时间目标。,电子签需逐份明确agreementKind、三方任务、授权范围及完整PDF/hash，签前不填未来日期；本次父任务已独立核对供应商实际时间来源，接入时复用其核验结果并保存原始响应，不用receivedAt/归档日替代providerSignedAt。实名认证、登录、报价确认、交接确认、企业运营权限与可靠签署/用印授权分别存证。每方可得完整同一文本；03/05/04/06不自动继承主合同用印授权。,"apps/api/src/offline-documents/review.ts / 8
+apps/api/src/offline-documents/print.ts / 58
+apps/api/src/owner-signing/contract.ts / 31
+apps/api/src/owner-signing/rules.ts / 26
+apps/api/src/order-changes/signing.ts / 14"
+客户义务、平台责任边界和安全/法定义务不能因自动填制被删去,"00:P005
+00:P006
+00:P007
+00:P008
+03:P017
+03:P020
+03:P021
+03:P024
+03:P025
+03:P028
+04:P022
+04:P026
+04:P028
+04:P029
+05:P012
+05:P024
+05:P025
+05:P026
+05:P028
+06:P018
+06:P019
+06:P022
+06:P027
+06:P031
+06:P034",默认商业条款已有合法非营运、驾驶资格、交接车况、费用主动履行、保养和保险按实际责任等内容；报价/终止自由文本与旧模板尚不能保证V3.1责任段和具体重大条款提示逐份一致。,完整保留客户主动付款、有效驾驶资格、获准驾驶人、非营运合法自用、保管补能、检测保养、报险协助、完整归还、真实取证和无争议款履行；合理费用按因果/证据、正常磨损与既有损伤不归责、保险拒赔不自动推客户全责。平台仅其明确受理/协同/受托资金义务，不推定第三人保证/一般垫资；自身过错、安全维修、无争议退款与不可排除责任保留。相关例外用工单/事故/费用证据承载，不再添加每单免责或罚金参数。重大费用/权益/责任实际提示说明留记录，支付/退款不捆绑概括弃权。,"apps/api/src/applications/final-plan-defaults.ts / 22
+apps/api/src/applications/final-plan-defaults.ts / 23
+apps/api/src/applications/final-plan-defaults.ts / 28
+apps/api/src/applications/final-plan-defaults.ts / 29
+apps/api/src/vehicle-changes/offline-publish.ts / 37
+apps/api/src/offline-documents/termination.ts / 12"
+金额、资金所属、客户归属、权限、事务版本和幂等继续作为实施门禁,"00:P029
+03:P017
+04:P018
+05:P028
+06:P024",自动差价使用BigInt整数分；续期取消锁订单/账户/阶段/报价/资金，revision、previewHash、idempotency与角色校验已有实现；资金按可信实收/实退逐源读取。,新增映射及事件结算沿用原门禁，不允许浏览器金额覆盖服务器计算，不把审批/签署视为到账；按阶段/期间/权利人标识每行，押金独立不分润不自动当末租，跨主体扣抵须有合法或明确同意的同债务依据。保持逐动作RBAC、本人归属404、sourceHash与版本冲突、事务幂等、回调真实性及金额/主体核验；测试仅合成数据或后续明确授权隔离库，不连接旧业务库。,"apps/api/src/vehicle-changes/upgrade-pricing.ts / 38
+apps/api/src/order-renewals/cancellation-commands.ts / 17
+apps/api/src/order-renewals/cancellation-commands.ts / 25
+apps/api/src/order-renewals/cancellation-commands.ts / 46
+apps/api/src/order-renewals/cancellation-facts.ts / 136"

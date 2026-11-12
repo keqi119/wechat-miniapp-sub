@@ -1,0 +1,51 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {JourneyHarness} from './seven-module-journey-fixtures';
+import {activeSwapFixture} from './v31-swap-fixture';
+import {tokenHash} from '../src/auth/auth.service';
+import {v31FixtureContent} from './v31-cooperation-fixture';
+import {prepareElectronicDocument} from '../src/electronic-documents/prepare';
+import {ElectronicDocumentService} from '../src/electronic-documents/service';
+import {activateTermination06} from '../src/orders/termination';
+import {ownerMobileHash} from '../src/owner-h5/legal-representative';
+import {syntheticSigningTime,syntheticFinalVerification,sha} from './electronic-fixtures';
+import {createHash} from 'node:crypto';
+import PDFDocument from 'pdfkit';
+test('06 actual source proposal review confirmation and protected full manual document',async ctx=>{
+ ctx.mock.timers.enable({apis:['Date'],now:new Date('2026-11-13T04:00:00Z')});
+ const h=new JourneyHarness(),saved={...process.env};try{
+ await h.start();const {f,sub,parties,controller,photo}=await activeSwapFixture(h.db),token=randomUUID(),csrf=randomUUID();
+ await h.db.adminUser.update({where:{id:f.actor.id},data:{role:'ADMIN'}});f.actor.role='ADMIN';
+ await h.db.adminSession.create({data:{id:tokenHash(token),adminId:f.actor.id,authVersion:f.actor.authVersion,csrfToken:csrf,expiresAt:new Date(Date.now()+3600000)}});
+ const operator={id:f.actor.id,headers:{Origin:h.origin,Cookie:`admin_session=${token}`,'X-CSRF-Token':csrf}},ct=randomUUID();await h.db.customerSession.create({data:{id:tokenHash(ct),customerId:sub.customer.id,expiresAt:new Date(Date.now()+3600000)}});const customer={id:sub.customer.id,headers:{Authorization:`Bearer ${ct}`}};
+ const response=await fetch(h.base+`/api/admin/orders/${sub.order.id}/termination`,{headers:operator.headers});assert.equal(response.status,200);const source:any=await response.json();
+ await h.db.legalDocument.create({data:{type:'ELECTRONIC_V31_EARLY_TERMINATION',version:Math.floor(Math.random()*1000000000)+1,title:'合成06',content:v31FixtureContent('06'),status:'PUBLISHED',confirmedBy:f.actor.id,confirmedAt:new Date()}});
+ const evidence=await h.db.storedFile.create({data:{name:'合成终止原因凭据.pdf',storagePath:'synthetic',mimeType:'application/pdf',size:50,sha256:'b'.repeat(64),purpose:'evidence',adminId:f.actor.id}});
+ const input={revision:source.orderRevision,sourceHash:source.sourceHash,idempotencyKey:randomUUID(),reasonKind:'PERSONAL',reason:'客户个人用车需求变化',plannedReturnAt:'2026-11-14T04:00:00Z',returnPlace:'原交付点',evidenceFileIds:[evidence.id]};
+ const p=await h.post(`/admin/orders/${sub.order.id}/termination`,input,operator);assert.equal(p.kind,'AGREED06');assert.equal(p.effectiveAt,null);
+ const reviewSource=await h.get(`/admin/orders/${sub.order.id}/termination`,operator);assert.equal(reviewSource.reviewSource.proposal.reason,input.reason);assert.equal((await h.get(`/customer/orders/${sub.order.id}/termination`,customer)).reviewSource,null);
+ const r=await h.post(`/admin/terminations/${p.id}/review`,{revision:p.revision,idempotencyKey:randomUUID(),decision:'VERIFIED',note:'核对本单事实及来源'},operator);
+ const c=await h.post(`/customer/terminations/${p.id}/confirm`,{revision:r.revision,proposalHash:p.proposalHash,accepted:true,idempotencyKey:randomUUID()},customer);
+ const rendered:string[]=[],originalText=PDFDocument.prototype.text;let prepared:any;
+ PDFDocument.prototype.text=function(value:any,...args:any[]){rendered.push(String(value));return(originalText as any).call(this,value,...args);};
+ try{prepared=await h.db.serial(tx=>prepareElectronicDocument(tx,{kind:'EARLY_TERMINATION',resourceId:p.id,revision:c.revision,idempotencyKey:randomUUID()},f.actor.id,f.writer,{...f.options,resolveParties:async()=>parties}));}finally{PDFDocument.prototype.text=originalText;}
+ const full=rendered.join('').replace(/\s/g,''),fixed=JSON.parse(v31FixtureContent('06')).nodes.filter((n:any)=>n.type==='paragraph'&&Number(n.loc.slice(1))>=6&&Number(n.loc.slice(1))<=37&&n.loc!=='P036');
+ for(const node of fixed)assert.ok(full.includes(node.runs.map((r:any)=>r.text).join('').replace(/\s/g,'')),`complete06 fixed paragraph ${node.loc}`);
+ const task=await h.db.electronicSigningTask.findUniqueOrThrow({where:{id:prepared.taskId},include:{parties:true}});assert.deepEqual(task.parties.sort((a,b)=>a.sequence-b.sequence).map(p=>[p.role,p.mode]),[['CUSTOMER','MANUAL'],['OWNER','MANUAL'],['PLATFORM','MANUAL']]);
+ assert.equal(JSON.parse((await h.db.contract.findUniqueOrThrow({where:{id:task.contractId!}})).body!).format,'PRIVATE_ELECTRONIC_PDF');
+ const pdf=await fetch(h.base+`/api/customer/electronic-documents/${task.id}/files/source`,{headers:customer.headers});assert.equal(pdf.status,200);assert.match(pdf.headers.get('cache-control')??'',/no-store/);assert.equal(pdf.headers.get('content-type'),'application/pdf');assert.ok((await pdf.arrayBuffer()).byteLength>1000);
+ const foreign=await h.customer('foreign-termination');assert.equal((await fetch(h.base+`/api/customer/electronic-documents/${task.id}/files/source`,{headers:foreign.headers})).status,404);
+ assert.equal((await h.get(`/admin/orders/${sub.order.id}/termination`,operator)).case.effectiveAt,null);
+ for(const ownerId of [f.owner.id,f.platform.id]){const a=await h.db.ownerESignAccount.findUniqueOrThrow({where:{ownerId}}),manager=await h.db.customer.findUniqueOrThrow({where:{id:a.managerCustomerId!}}),serial='SYNTHETIC-'+randomUUID();await h.db.ownerLegalRepresentative.update({where:{ownerId},data:{mobileHash:ownerMobileHash(manager.mobile)}});await h.db.ownerMember.create({data:{ownerId,customerId:manager.id,status:'VERIFIED',verifiedAt:new Date(),verifiedSerialNo:serial}});await h.db.ownerESignAccount.update({where:{ownerId},data:{verifiedAt:new Date(),verificationTransactionNo:serial,consentSnapshot:{ownerId,customerId:manager.id,legalRevision:1,legalName:'合成法人',legalMobileHash:ownerMobileHash(manager.mobile),channel:'OWNER_LEGAL_H5'}}});}
+ let filings=0;const signer=new ElectronicDocumentService(h.db,{upload:async()=>({evidenceHash:sha('c')}),manualUrl:async()=>({url:'https://synthetic.invalid/manual'}),querySigner:async()=>({status:'SIGNED',...syntheticSigningTime(new Date()),evidenceHash:sha('b')}),fileContract:async()=>{filings++;throw new Error('synthetic filing delay');},queryFiling:async()=>({filed:true,evidenceHash:sha('d')}),downloadFinal:async()=>({bytes:Buffer.from('%PDF-1.7\nSynthetic06 signed final\n'+sha('f')+'\n%%EOF')}),verifyFinalFile:async(doc:any,bytes:Buffer)=>syntheticFinalVerification(doc,createHash('sha256').update(bytes).digest('hex'))} as any,f.writer,{resolveParties:async()=>parties,afterArchive:activateTermination06});
+ const admin={kind:'ADMIN' as const,id:f.actor.id};await signer.start(admin,task.id,{revision:task.revision,idempotencyKey:randomUUID()});
+ for(const role of ['CUSTOMER','OWNER','PLATFORM']){const current=await h.db.electronicSigningTask.findUniqueOrThrow({where:{id:task.id}}),ownerId=role==='OWNER'?f.owner.id:f.platform.id,actor=role==='CUSTOMER'?{kind:'CUSTOMER' as const,id:sub.customer.id}:{kind:'OWNER' as const,id:(await h.db.ownerESignAccount.findUniqueOrThrow({where:{ownerId}})).managerCustomerId!,ownerId};await signer.sign(actor,task.id,{revision:current.revision,sourceSha256:task.sourceSha256,accepted:true,idempotencyKey:randomUUID()});ctx.mock.timers.setTime(Date.now()+1000);await signer.sync(admin,task.id,{revision:(await h.db.electronicSigningTask.findUniqueOrThrow({where:{id:task.id}})).revision,idempotencyKey:randomUUID()});}
+ assert.equal(filings,1);const legal=await h.get(`/admin/orders/${sub.order.id}/termination`,operator);assert.ok(legal.case.effectiveAt);assert.equal(legal.case.archivedAt,null);assert.equal(legal.custody,null);assert.equal(legal.amounts,null);
+ const effectiveBefore=await h.db.terminationFact.findFirstOrThrow({where:{terminationId:p.id,kind:'EFFECTIVE'}});await h.db.storedFile.update({where:{id:evidence.id},data:{sha256:'e'.repeat(64)}});
+ const immutable=await h.db.electronicSigningTask.findUniqueOrThrow({where:{id:task.id},include:{parties:true}});await assert.rejects(h.db.serial(tx=>activateTermination06(tx,{...immutable,sourceFileId:'foreign-source'})));
+ await signer.sync(admin,task.id,{revision:(await h.db.electronicSigningTask.findUniqueOrThrow({where:{id:task.id}})).revision,idempotencyKey:randomUUID()});const archived=await h.get(`/admin/orders/${sub.order.id}/termination`,operator);assert.equal(archived.case.effectiveAt,legal.case.effectiveAt);assert.ok(archived.case.archivedAt);const filed=await h.db.terminationFact.findFirstOrThrow({where:{terminationId:p.id,kind:'ARCHIVED'}});assert.equal((filed.payload as any).sourceReview.code,'CANCELLATION_EVIDENCE_CHANGED');assert.deepEqual(await h.db.terminationFact.findFirstOrThrow({where:{terminationId:p.id,kind:'EFFECTIVE'}}),effectiveBefore);assert.equal(await h.db.terminationFact.count({where:{terminationId:p.id,kind:'EFFECTIVE'}}),1);assert.equal((await h.db.order.findUniqueOrThrow({where:{id:sub.order.id}})).status,'ACTIVE');
+ const currentOrder=await h.db.order.findUniqueOrThrow({where:{id:sub.order.id}}),returnRecord:any=await controller.handover({orderId:sub.order.id,type:'RETURN',actualAt:new Date().toISOString(),readingKm:250,fileIds:[photo.id],checklist:[{label:'conditionChecklist',value:'已生效06后的真实接收'}],revision:currentOrder.revision,idempotencyKey:randomUUID()},{admin:f.actor}),published:any=await controller.publishHandover(returnRecord.id,{admin:f.actor},{revision:returnRecord.revision,idempotencyKey:randomUUID()});const {VehicleReceiptController}=await import('../src/offline-documents/vehicle-receipt');await new VehicleReceiptController(h.db).received(returnRecord.id,{receivedAt:returnRecord.actualAt,readingKm:250,storageLocation:'实际收车点',evidenceFileIds:[photo.id],revision:0,handoverRevision:published.revision,manifestHash:published.manifestHash,idempotencyKey:randomUUID()},{admin:f.actor});assert.ok((await h.get(`/customer/orders/${sub.order.id}/termination`,customer)).settlementSource);
+ assert.equal(h.externalCalls+h.esignCalls+h.identityCalls,0);
+ }finally{await h.close();ctx.mock.timers.reset();for(const k of Object.keys(process.env))if(!(k in saved))delete process.env[k];Object.assign(process.env,saved);}
+});

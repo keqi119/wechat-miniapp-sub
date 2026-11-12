@@ -1,0 +1,51 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {electronicOwnerRoute} from '../src/owner-h5/electronic-access';
+import {portalPathPolicy} from '../src/owner-h5/access';
+test('fix1 technical switch is a current legal-session route and stays a denied readonly write',()=>{
+ const path='/owner-h5/owners/company/authorities/technical/switch';
+ assert.equal(electronicOwnerRoute('POST',path),true);
+ assert.equal(portalPathPolicy('POST',path),'DENY_WRITE');
+ assert.equal(electronicOwnerRoute('GET',path),false);
+});
+import {JourneyHarness} from './seven-module-journey-fixtures';
+import {ownerAuthorityFixture} from './owner-authority-fixtures';
+import {OwnerAuthorizationService} from '../src/owner-signing/authorization';
+import {ownerMobileHash} from '../src/owner-h5/legal-representative';
+import {ownerAuthorizationDelegate,ownerScopeHash} from '../src/owner-signing/rules';
+import {tokenHash} from '../src/auth/auth.service';
+import {randomInt,randomUUID,createHash} from 'node:crypto';
+test('fix1 actual technical switch HTTP retains requester/revision/scope guards and never switches business authority',async()=>{
+ const h=new JourneyHarness();await h.start();try{
+ Object.assign(process.env,{NEW_ORDER_CONTRACT_MODE:'ELECTRONIC',ESIGN_NEW_REQUESTS_ENABLED:'true',OWNER_AUTO_SIGNING_ENABLED:'true'});
+ const f=await ownerAuthorityFixture(h.db),mobile='138'+randomInt(10000000,99999999),mobileHash=ownerMobileHash(mobile);
+ await h.db.customer.update({where:{id:f.customer.id},data:{mobile}});
+ await h.db.ownerLegalRepresentative.create({data:{ownerId:f.owner.id,name:'合成开关本人',mobileHash,maskedMobile:'138****0000',evidenceHash:'a'.repeat(64),revision:1,createdBy:h.maker.id,updatedBy:h.maker.id}});
+ await h.db.ownerESignAccount.update({where:{ownerId:f.owner.id},data:{consentSnapshot:{channel:'OWNER_LEGAL_H5',customerId:f.customer.id,legalRevision:1,legalName:'合成开关本人',legalMobileHash:mobileHash}}});
+ const account=await h.db.ownerESignAccount.findUniqueOrThrow({where:{ownerId:f.owner.id}});
+ const scope={version:2,validFrom:new Date(Date.now()-3600000).toISOString(),validUntil:new Date(Date.now()+86400000).toISOString(),delegates:[ownerAuthorizationDelegate()],documentKinds:['SUBSCRIPTION_WITH_FEES']};
+ const record=await h.db.ownerAutoAuthority.create({data:{ownerId:f.owner.id,sealId:f.seal.id,providerCustomerId:account.providerCustomerId!,providerSignatureId:f.seal.providerSignatureId,certificateSerialNo:account.certSerialNo!,providerContractId:randomUUID(),providerTransactionId:randomUUID(),requestedBy:f.customer.id,idempotencyKey:randomUUID(),requestHash:'a'.repeat(64),scope,scopeHash:ownerScopeHash(scope),consentSnapshot:{},method:'PROVIDER_AUTO_GRANT',status:'AUTHORIZED',enabled:false}});
+ const raw=createHash('sha256').update(randomUUID()).digest('hex'),csrf=randomUUID();
+ await h.db.ownerH5Session.create({data:{id:tokenHash(raw),customerId:f.customer.id,csrfToken:csrf,expiresAt:new Date(Date.now()+3600000),identitySnapshot:{mode:'ELECTRONIC_LEGAL',owners:[{ownerId:f.owner.id,legalRevision:1,legalMobileHash:mobileHash}]}}});
+ const login={id:f.customer.id,headers:{Origin:h.origin,Cookie:`owner_h5_session=${raw}`,'X-CSRF-Token':csrf}},path=`/owner-h5/owners/${f.owner.id}/authorities/${record.id}/switch`;
+ let queries=0;const service=h.app.get(OwnerAuthorizationService),provider=(service as any).api;
+ provider.assertAvailable=()=>{};provider.queryAuthorization=async()=>{queries++;return{authorized:true};};provider.queryCertificate=async()=>({bound:true,serialNo:account.certSerialNo});
+ const input={enabled:true,revision:record.revision,scopeHash:record.scopeHash};
+ await h.reject(path,{...input,revision:record.revision+1},login,'OWNER_AUTH_CHANGED');
+ await h.reject(path,{...input,scopeHash:'b'.repeat(64)},login,'OWNER_SCOPE_CHANGED');
+ await h.db.ownerAutoAuthority.update({where:{id:record.id},data:{requestedBy:h.reviewer.id}});
+ await h.reject(path,input,login,'OWNER_SCOPE_CHANGED');assert.equal(queries,0);
+ await h.db.ownerAutoAuthority.update({where:{id:record.id},data:{requestedBy:f.customer.id}});
+ const businessBefore=await h.db.electronicAutoAuthority.count({where:{ownerId:f.owner.id}});
+ const enabled=await h.post(path,input,login);assert.equal(enabled.enabled,true);assert.equal(queries,1);
+ const paused=await h.post(path,{enabled:false,revision:enabled.revision,scopeHash:enabled.scopeHash},login);assert.equal(paused.enabled,false);assert.equal(queries,1);
+ assert.equal(await h.db.electronicAutoAuthority.count({where:{ownerId:f.owner.id}}),businessBefore);
+ const access=await h.db.partnerPortalAccess.create({data:{ownerId:f.owner.id,status:'ENABLED',mobileHash:'synthetic-viewer',maskedMobile:'139****0000',accessVersion:1,bindingMethod:'REVIEWED',reviewedBy:h.reviewer.id,reviewedAt:new Date()}});
+ const viewRaw=createHash('sha256').update(randomUUID()).digest('hex');
+ await h.db.partnerPortalSession.create({data:{id:tokenHash(viewRaw),mode:'PARTNER_READONLY',mobileHash:access.mobileHash!,maskedMobile:'139****0000',csrfToken:csrf,expiresAt:new Date(Date.now()+3600000),scopeSnapshot:[{ownerId:f.owner.id,accessId:access.id,accessVersion:1}],consentSnapshot:[]}});
+ await h.reject(path,{...input,revision:paused.revision},{...login,headers:{...login.headers,Cookie:`owner_h5_session=${viewRaw}`}},'PARTNER_READ_ONLY');
+ await h.db.ownerLegalRepresentative.update({where:{ownerId:f.owner.id},data:{revision:{increment:1}}});
+ assert.equal((await h.reject(path,{...input,revision:paused.revision},login)).status,401);
+ assert.equal(h.externalCalls+h.identityCalls+h.esignCalls,0);
+ }finally{await h.close();}
+});

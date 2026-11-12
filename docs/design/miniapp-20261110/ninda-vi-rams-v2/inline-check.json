@@ -1,0 +1,159 @@
+{
+  "scope": "Visual prototype; no WeChat device acceptance or production writes",
+  "layouts": [
+    {
+      "width": 288,
+      "page": "home",
+      "passed": true
+    },
+    {
+      "width": 288,
+      "page": "catalog",
+      "passed": true
+    },
+    {
+      "width": 288,
+      "page": "use",
+      "passed": true
+    },
+    {
+      "width": 288,
+      "page": "mine",
+      "passed": true
+    },
+    {
+      "width": 288,
+      "page": "profile",
+      "passed": true
+    },
+    {
+      "width": 288,
+      "page": "payments",
+      "passed": true
+    },
+    {
+      "width": 288,
+      "page": "bill",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "page": "home",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "page": "catalog",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "page": "use",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "page": "mine",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "page": "profile",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "page": "payments",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "page": "bill",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "page": "home",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "page": "catalog",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "page": "use",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "page": "mine",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "page": "profile",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "page": "payments",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "page": "bill",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "page": "home",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "page": "catalog",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "page": "use",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "page": "mine",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "page": "profile",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "page": "payments",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "page": "bill",
+      "passed": true
+    }
+  ],
+  "jsErrors": [],
+  "failedRequests": [],
+  "productExternalRequests": [],
+  "hostRuntimeScripts": [
+    "https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js",
+    "https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js",
+    "https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"
+  ],
+  "directions": "Right destination enters from right; left destination enters from left",
+  "sameTab": "Ripple only",
+  "rapidNavigation": "Only final selected destination remains visible",
+  "reducedMotion": "Instant navigation, no ripple",
+  "sourceFilesUnchanged": true,
+  "fragmentBytes": 920492
+}

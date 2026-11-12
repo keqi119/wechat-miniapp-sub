@@ -1,4 +1,5 @@
 import { Db } from '../common/db';
+import {assertNewEsignAllowed} from '../offline-documents/mode';
 import { ensure } from '../common/errors';
 export type SigningKind = 'SUBSCRIPTION' | 'HANDOVER' | 'AMENDMENT' | 'TECHNICAL_ACCEPTANCE';
 const leaseMs = 45_000;
@@ -10,6 +11,7 @@ async function persistedTask(tx: any, kind: SigningKind, item: any) {
   return task;
 }
 export async function claimSigning(tx: any, kind: SigningKind, item: any) {
+  assertNewEsignAllowed({executionMode:item.executionMode,contractMode:item.order?.contractMode});
   const f = fields(kind), now = new Date(), task = await persistedTask(tx, kind, item);
   ensure(!item.signingLeaseUntil || item.signingLeaseUntil <= now, 409, 'SIGNATURE_PREPARING', '签署任务正在准备，请稍后查询');
   const leaseUntil = new Date(now.getTime() + leaseMs);
@@ -44,6 +46,7 @@ export async function recoverSigning(db: Db, kind: SigningKind, id: string, cust
   const f = fields(kind);
   return db.serial(async tx => {
     let item = await (tx as any)[f.model].findFirst({ where: { id, ...(customerId ? { customerId } : {}) } }); ensure(item, 404, 'NOT_FOUND', '签署记录不存在');
+    ensure(item.executionMode!=='OFFLINE',409,'ESIGN_MODE_MISMATCH','线下资料不接受电子签状态同步');
     const task = await persistedTask(tx, kind, item);
     if (task && !item.providerTaskId && item[f.state] === 'PENDING') item = await (tx as any)[f.model].update({ where: { id }, data: { providerTaskId: task.id } });
     const pendingPreparation = item[f.state] === 'PENDING' && (!item.providerTaskId || (task && !task.uploadedAt));

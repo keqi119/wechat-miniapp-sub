@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const policy = () => require('../src/services/native-signing-policy');
-const config = { mode: 'MINIAPP_WEBVIEW', enabled: true, signProviderConfigured: true, providerHosts: ['textapi17.fadada.com', 'realnameverify16.fadada.com'], returnUrl: 'https://mini-api.subauto.keybox.cloud/api/public/esign-return' };
+const config = { mode: 'MINIAPP_WEBVIEW', newOrderContractMode: 'ESIGN', newEsignRequestsEnabled: true, enabled: true, signProviderConfigured: true, providerHosts: ['textapi17.fadada.com', 'realnameverify16.fadada.com'], returnUrl: 'https://api.evsub.ndacar.com/api/public/esign-return' };
 const bridge = () => ({ flowId: 'synthetic-flow', expiresAt: new Date(Date.now() + 300000).toISOString(), appId: 'wx0123456789abcdef', path: 'pages/face/index', callbackUrl: 'https://realnameverify16.fadada.com/current?opaque=synthetic' });
 const args = b => Object.fromEntries(Object.entries({ bizToken: 'synthetic-biz-token', miniProgramAppId: b.appId, miniProgramPath: b.path, miniProgramCallBackUrl: b.callbackUrl }).map(([key, value]) => [key, encodeURIComponent(value)]));
 test('native config accepts only explicit enabled mode, approved provider hosts and fixed return with no implicit H5 fallback', () => {

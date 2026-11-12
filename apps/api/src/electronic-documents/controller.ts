@@ -7,15 +7,23 @@ import {ESIGN_SETTINGS} from '../esign/esign.controller';
 import type {FadadaSettings} from '../esign/esign.settings';
 import {ElectronicDocumentService} from './service';
 import type {ElectronicActor} from './access';
-const query=z.object({orderId:z.string().min(1).max(100).optional()}).strict();
-const admin=(req:any):ElectronicActor=>({kind:'ADMIN',id:req.admin.id});
+const query=z.object({orderId:z.string().min(1).max(100).optional(),page:z.coerce.number().int().min(1).max(10000).optional(),pageSize:z.coerce.number().int().min(1).max(100).optional()}).strict();
+const listQuery=(raw:unknown)=>{const {orderId,...paging}=query.parse(raw);return{orderId,paging};};
+const admin=(req:any):ElectronicActor=>({kind:'ADMIN',id:req.admin.id,role:req.admin.role,authVersion:req.admin.authVersion});
 const customer=(req:any):ElectronicActor=>({kind:'CUSTOMER',id:req.customer.id});
 const owner=(req:any,ownerId:string):ElectronicActor=>{ensure(req.ownerH5Customer,403,'PARTNER_READ_ONLY','资料查看账号不能办理签署，请由登记本人登录签署入口');return{kind:'OWNER',id:req.ownerH5Customer.id,ownerId};};
 async function sendFile(service:ElectronicDocumentService,actor:ElectronicActor,id:string,variant:string,res:any){ensure(variant==='source'||variant==='signed',404,'NOT_FOUND','文件不存在');const file=await service.file(actor,id,variant);res.set({'Content-Type':'application/pdf','Content-Disposition':`inline; filename="contract.pdf"; filename*=UTF-8''${encodeURIComponent(file.name)}`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'});return res.send(file.bytes);}
 @Controller('admin/electronic-documents')
 export class ElectronicAdminController{
  constructor(@Inject(ElectronicDocumentService)private service:ElectronicDocumentService){}
- @Get()list(@Req()req:any,@Query()raw:unknown){return this.service.list(admin(req),query.parse(raw).orderId);}
+ @Get()list(@Req()req:any,@Query()raw:unknown){const q=listQuery(raw);return this.service.list(admin(req),q.orderId,q.paging);}
+ @Get('authorities/:ownerId')authorities(@Req()req:any,@Param('ownerId')id:string){return this.service.authorities(admin(req),id);}
+ @Post('authorities/:id/review')reviewAuthority(@Req()req:any,@Param('id')id:string,@Body()raw:unknown){return this.service.reviewAuthority(admin(req),id,raw);}
+ @Post('authorities/:id/switch')switchAuthority(@Req()req:any,@Param('id')id:string,@Body()raw:unknown){return this.service.switchAuthority(admin(req),id,raw);}
+ @Post('prepare')prepare(@Req()req:any,@Body()body:unknown){return this.service.prepare(admin(req),body);}
+ @Get('workspace/:orderId')workspace(@Req()req:any,@Param('orderId')id:string){return this.service.workspace(admin(req),id);}
+ @Get(':id/dependencies')dependencies(@Req()req:any,@Param('id')id:string){return this.service.dependencies(admin(req),id);}
+ @Get(':id/dependencies/:dependencyId')dependency(@Req()req:any,@Param('id')id:string,@Param('dependencyId')dependencyId:string){return this.service.dependency(admin(req),id,dependencyId);}
  @Get(':id')detail(@Req()req:any,@Param('id')id:string){return this.service.detail(admin(req),id);}
  @Get(':id/files/:variant')file(@Req()req:any,@Param('id')id:string,@Param('variant')variant:string,@Res()res:any){return sendFile(this.service,admin(req),id,variant,res);}
  @Post(':id/start')start(@Req()req:any,@Param('id')id:string,@Body()body:unknown){return this.service.start(admin(req),id,body);}
@@ -25,7 +33,10 @@ export class ElectronicAdminController{
 @Controller('customer/electronic-documents')
 export class ElectronicCustomerController{
  constructor(@Inject(ElectronicDocumentService)private service:ElectronicDocumentService,@Inject(Db)private db:Db){}
- @Get()list(@Req()req:any,@Query()raw:unknown){return this.service.list(customer(req),query.parse(raw).orderId);}
+ @Get()list(@Req()req:any,@Query()raw:unknown){const q=listQuery(raw);return this.service.list(customer(req),q.orderId,q.paging);}
+ @Get('workspace/:orderId')workspace(@Req()req:any,@Param('orderId')id:string){return this.service.workspace(customer(req),id);}
+ @Get(':id/dependencies')dependencies(@Req()req:any,@Param('id')id:string){return this.service.dependencies(customer(req),id);}
+ @Get(':id/dependencies/:dependencyId')dependency(@Req()req:any,@Param('id')id:string,@Param('dependencyId')dependencyId:string){return this.service.dependency(customer(req),id,dependencyId);}
  @Get(':id')detail(@Req()req:any,@Param('id')id:string){return this.service.detail(customer(req),id);}
  @Get(':id/files/:variant')file(@Req()req:any,@Param('id')id:string,@Param('variant')variant:string,@Res()res:any){return sendFile(this.service,customer(req),id,variant,res);}
  @Post(':id/sign')async sign(@Req()req:any,@Param('id')id:string,@Body()body:unknown){await requireCurrentConsents(this.db,req.customer.id,['terms','privacy']);return this.service.sign(customer(req),id,body);}
@@ -34,10 +45,18 @@ export class ElectronicCustomerController{
 @Controller('owner-h5/owners/:ownerId/electronic-documents')
 export class ElectronicOwnerController{
  constructor(@Inject(ElectronicDocumentService)private service:ElectronicDocumentService){}
- @Get()list(@Req()req:any,@Param('ownerId')ownerId:string,@Query()raw:unknown){return this.service.list(owner(req,ownerId),query.parse(raw).orderId);}
+ @Get()list(@Req()req:any,@Param('ownerId')ownerId:string,@Query()raw:unknown){const q=listQuery(raw);return this.service.list(owner(req,ownerId),q.orderId,q.paging);}
+ @Get('workspace/:orderId')workspace(@Req()req:any,@Param('ownerId')ownerId:string,@Param('orderId')id:string){return this.service.workspace(owner(req,ownerId),id);}
+ @Get(':id/dependencies')dependencies(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string){return this.service.dependencies(owner(req,ownerId),id);}
+ @Get(':id/dependencies/:dependencyId')dependency(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string,@Param('dependencyId')dependencyId:string){return this.service.dependency(owner(req,ownerId),id,dependencyId);}
  @Get(':id')detail(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string){return this.service.detail(owner(req,ownerId),id);}
  @Get(':id/files/:variant')file(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string,@Param('variant')variant:string,@Res()res:any){return sendFile(this.service,owner(req,ownerId),id,variant,res);}
  @Post(':id/sign')sign(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string,@Body()body:unknown){return this.service.sign(owner(req,ownerId),id,body);}
+ @Post(':id/revoke-grant')revokeGrant(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string,@Body()body:unknown){return this.service.revokeGrant(owner(req,ownerId),id,body);}
+ @Get('authorities/list')authorities(@Req()req:any,@Param('ownerId')ownerId:string){return this.service.authorities(owner(req,ownerId),ownerId);}
+ @Post('authorities/confirm')confirmAuthority(@Req()req:any,@Param('ownerId')ownerId:string,@Body()raw:unknown){return this.service.confirmAuthority(owner(req,ownerId),raw);}
+ @Post('authorities/:id/switch')switchAuthority(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string,@Body()raw:unknown){return this.service.switchAuthority(owner(req,ownerId),id,raw);}
+ @Post(':id/accept')accept(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string,@Body()body:unknown){return this.service.acceptCooperation(owner(req,ownerId),id,body);}
  @Post(':id/sync')sync(@Req()req:any,@Param('ownerId')ownerId:string,@Param('id')id:string,@Body()body:unknown){return this.service.sync(owner(req,ownerId),id,body);}
 }
 @Controller('callbacks')

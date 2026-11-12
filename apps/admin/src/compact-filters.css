@@ -1,0 +1,28 @@
+/* List filters share one compact row; editing forms keep their own labels. */
+.resource-list-toolbar .insurance-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;min-width:0}
+.resource-list-toolbar .insurance-filters form{display:flex;gap:6px;flex:1 1 240px;min-width:200px;margin:0}
+.resource-list-toolbar .insurance-filters form input{width:100%;min-width:0;flex:1}
+.resource-list-toolbar .insurance-filters input,.resource-list-toolbar .insurance-filters select{height:32px;padding:4px 10px;line-height:22px;font-size:13px;border-radius:6px;color:#243247}
+.resource-list-toolbar .insurance-filters select{width:112px;min-width:0;flex:none;max-width:100%}
+.resource-list-toolbar .insurance-filters select[aria-label="车辆"]{width:150px}
+.resource-list-toolbar .insurance-filters .button,.resource-list-toolbar .asset-toolbar.is-compact-filters .button{min-height:32px;height:32px;padding:4px 11px;white-space:nowrap;font-size:13px;flex:none}
+.resource-list-toolbar .insurance-filters select.is-placeholder,.resource-list-toolbar .asset-toolbar.is-compact-filters select.is-placeholder,.resource-list-toolbar .status-filter select.is-placeholder{color:#98a2b3}
+.resource-list-toolbar .insurance-filters option,.resource-list-toolbar .asset-toolbar.is-compact-filters option,.resource-list-toolbar .status-filter option{color:#243247}
+.resource-list-toolbar .asset-toolbar.is-compact-filters{justify-content:flex-start;gap:8px;align-items:center}
+.resource-list-toolbar .asset-toolbar.is-compact-filters>form:not(.baas-list-filter-form){flex:0 1 380px;min-width:200px;max-width:100%;margin:0}
+.resource-list-toolbar .asset-toolbar.is-compact-filters input{height:32px;min-width:0;padding:4px 10px;font-size:13px}
+.resource-list-toolbar .asset-toolbar.is-compact-filters label{margin:0}
+.resource-list-toolbar .asset-toolbar.is-compact-filters select{height:32px;padding:4px 10px;min-width:118px;font-size:13px}
+.resource-list-toolbar .product-warehouse-toolbar{width:100%;min-width:0;justify-content:flex-start;gap:8px;align-items:center}
+.resource-list-toolbar .product-warehouse-toolbar .domain-search{flex:1 1 200px;min-width:160px;max-width:320px}
+.resource-list-toolbar .product-warehouse-toolbar .domain-search input{width:100%;max-width:none;margin:0;height:32px;padding:4px 10px;font-size:13px}
+.resource-list-toolbar .product-warehouse-toolbar [role="tab"]{padding:6px 10px}
+.resource-list-toolbar .product-warehouse-toolbar>.button{height:32px;min-height:32px;padding:4px 10px;font-size:13px}
+@media(max-width:700px){
+ .resource-list-toolbar .insurance-filters form,.resource-list-toolbar .asset-toolbar.is-compact-filters>form:not(.baas-list-filter-form){flex:1 1 100%;width:100%;min-width:0}
+ .resource-list-toolbar .insurance-filters select,.resource-list-toolbar .insurance-filters select[aria-label="车辆"]{flex:1 1 calc(50% - 8px);width:calc(50% - 8px);min-width:0}
+ .resource-list-toolbar .insurance-filters input,.resource-list-toolbar .insurance-filters select,.resource-list-toolbar .insurance-filters .button,.resource-list-toolbar .asset-toolbar.is-compact-filters input,.resource-list-toolbar .asset-toolbar.is-compact-filters select,.resource-list-toolbar .asset-toolbar.is-compact-filters .button{height:38px;min-height:38px}
+ .resource-list-toolbar .product-warehouse-toolbar [role="tablist"]{width:100%;min-width:0}
+ .resource-list-toolbar .product-warehouse-toolbar .domain-search{min-width:0;max-width:none;flex:1}
+ .resource-list-toolbar .product-warehouse-toolbar .domain-search input,.resource-list-toolbar .product-warehouse-toolbar>.button{height:38px;min-height:38px}
+}

@@ -1,0 +1,23 @@
+<view class="page bottom-space">
+ <view class="eyebrow">合同与协议</view><view class="title">{{view.title || '协议方案'}}</view>
+ <view wx:if="{{loading}}" class="empty">正在读取本单方案…</view>
+ <view wx:if="{{error}}" class="notice" role="alert">{{error}}</view>
+ <block wx:if="{{view}}">
+  <view class="card"><view class="row between"><view class="section-title">本次协商方案</view><text class="tag">{{view.statusText}}</text></view>
+   <block wx:if="{{view.case}}"><view class="field"><view class="label">协商原因</view><view>{{view.case.reason}}</view></view>
+    <block wx:if="{{view.kind === 'cancellation04'}}"><view class="field"><view class="label">本方案应退净额</view><view class="price">{{view.netRefundText}}</view></view><view wx:for="{{view.costs}}" wx:key="index" class="field"><view>{{item.description}} · {{item.amountText}}</view><view class="muted">{{item.agreement}}</view></view></block>
+    <block wx:else><view class="field"><view class="label">计划还车时间</view><view>{{view.plannedReturnAtText}}</view></view><view class="field"><view class="label">还车地点</view><view>{{view.case.returnPlace}}</view></view></block>
+   </block><view wx:else class="muted">运营尚未提交本单协商方案。</view>
+  </view>
+  <view wx:for="{{view.blockers}}" wx:key="index" class="notice">{{item}}</view>
+  <view wx:if="{{view.canConfirm}}" class="card"><checkbox-group bindchange="accept"><label class="consent-row"><checkbox value="plan" checked="{{accepted}}" disabled="{{busy}}" color="#231815"/><text>我已核对上述协商事项，同意本版本方案，并将在电子协议中确认完整约定。</text></label></checkbox-group><button class="primary" bindtap="submit" disabled="{{busy || !accepted}}" loading="{{busy}}">确认本版本方案</button></view>
+  <block wx:if="{{view.settlement}}">
+   <view class="card"><view class="row between"><view class="section-title">实际还车结算</view><text class="tag">{{view.settlement.statusText}}</text></view><view class="field">实际收车：{{view.settlement.actualReceiptAtText}}</view><view class="field">计租截止：{{view.settlement.stopAtText}}</view><view class="field">未使用期间租金：{{view.settlement.remainingRentText}}</view><view class="field">约定补偿：{{view.settlement.compensationText}}</view><view class="field">押金余额：{{view.settlement.depositText}}</view><view wx:if="{{view.settlement.occupancy}}" class="field">占用费用 {{view.settlement.occupancy.amountText}} · 争议金额 {{view.settlement.occupancy.disputedText}}<view>{{view.settlement.occupancy.basis}}</view></view><view class="muted">以上为本次事实及金额核对，最终收退款另由财务核清。</view></view>
+   <view class="card"><view class="section-title">逐期金额与实收</view><view wx:for="{{view.settlement.periods}}" wx:key="sequence" class="field">第 {{item.sequence}} 期 · {{item.dates}}<view>{{item.amountText}}</view></view><view wx:for="{{view.settlement.payments}}" wx:key="id" class="field">实收 {{item.amountText}}</view></view>
+   <view wx:if="{{view.settlement.history.length}}" class="card"><view class="section-title">已留存意见</view><view wx:for="{{view.settlement.history}}" wx:key="id" class="field">{{item.decision === 'CONFIRM' ? '确认' : '异议'}} · {{item.at}}<view>{{item.reason}}</view></view></view>
+   <view wx:if="{{showAmountForm}}" class="card"><checkbox-group wx:if="{{view.settlement.canConfirm}}" bindchange="amountAccept"><label class="consent-row"><checkbox value="amount" checked="{{amountAccepted}}" disabled="{{busy}}" color="#231815"/><text>我已核对本次实际还车及结算金额。</text></label></checkbox-group><textarea value="{{amountReason}}" bindinput="amountReason" placeholder="请填写核对结果或异议说明" maxlength="2000" disabled="{{busy}}"/><button wx:if="{{view.settlement.canConfirm}}" class="primary" data-decision="CONFIRM" bindtap="respondAmount" disabled="{{busy || !amountAccepted || !amountReason}}">确认本版金额</button><button class="secondary" data-decision="OBJECT" bindtap="respondAmount" disabled="{{busy || !amountReason}}">提交金额异议</button></view><button wx:else class="text-button" bindtap="openAmountForm">对本次结算提出异议</button>
+  </block>
+  <button wx:if="{{view.case.contractId}}" class="secondary" bindtap="openContracts">查看合同与协议</button>
+ </block>
+ <view wx:if="{{message}}" class="notice">{{message}}</view><button class="text-button" bindtap="reload" disabled="{{busy}}">状态刷新</button>
+</view>

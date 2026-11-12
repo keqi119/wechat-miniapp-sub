@@ -1,0 +1,122 @@
+[
+  {
+    "id": "03",
+    "sampleOnly": true,
+    "file": "03.pdf",
+    "sha256": "427b4dfa629b71a3e8ed7a90cdebd8c57a44128d2d1dc4f7204ba802e45eb5fd",
+    "pageCount": 6,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  },
+  {
+    "id": "04",
+    "sampleOnly": true,
+    "file": "04.pdf",
+    "sha256": "99c157062ec775750bec8cc5931166dd11c61ce337a2314fff6832503603f065",
+    "pageCount": 4,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  },
+  {
+    "id": "05",
+    "sampleOnly": true,
+    "file": "05.pdf",
+    "sha256": "50a0b281eb00fc9c2df69af926f3f1c3ede129d0b1df4a06df762dafab7dfb19",
+    "pageCount": 4,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  },
+  {
+    "id": "06",
+    "sampleOnly": true,
+    "file": "06.pdf",
+    "sha256": "501f87a8878d634faf0f6ad2ce900c2a30eee7be8ad524ab89f06a9920156d6a",
+    "pageCount": 4,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  }
+]

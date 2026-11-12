@@ -7,11 +7,14 @@ import { mobile, audit } from '../common/data';
 import { passwordHash, passwordMatches, token, tokenHash } from './auth.service';
 import { acceptConsents, consentInput } from './consents';
 import { permissions } from './access';
+import {getPartnerCapabilities} from '../partners/capabilities';
+import {partnerNavigationPermissions} from './partner-route-access';
+import {staffPassword} from './password-policy';
 @Controller()
 export class AuthController {
   private failures = new Map<string, { count: number; until: number }>();
   constructor(@Inject(Db) private db: Db, @Inject(IdentityGateway) private identity: IdentityGateway) {}
-  private user(user: any) { return { id: user.id, name: user.name, username: user.username, role: user.role, permissions: permissions(user.role) }; }
+  private user(user: any) { return { id: user.id, name: user.name, username: user.username, role: user.role, staffPersonId:user.staffPersonId||null,partnerCapabilities:getPartnerCapabilities(user),permissions:[...permissions(user.role).filter(value=>!['partners','partner-revenue-rules','partner-settlements'].includes(value.split('.')[0])),...partnerNavigationPermissions(user)] }; }
   @Post('admin/auth/login') async adminLogin(@Body() body: any, @Req() request: any, @Res({ passthrough: true }) response: any) {
     const input = z.object({ username: z.string().min(1).max(100), password: z.string().min(1).max(256) }).parse(body);
     const throttleKey = `${request.ip}:${input.username}`; const attempts = this.failures.get(throttleKey);
@@ -20,24 +23,28 @@ export class AuthController {
     if (!user || !user.active || !passwordMatches(input.password, user.passwordHash)) { this.failures.set(throttleKey, { count: (attempts?.count || 0) + 1, until: Date.now() + 15 * 60_000 }); ensure(false, 401, 'INVALID_CREDENTIALS', '账号或密码无效'); }
     this.failures.delete(throttleKey);
     const raw = token(); const csrfToken = token(); const expiresAt = new Date(Date.now() + 8 * 3600_000);
-    await this.db.adminSession.create({ data: { id: tokenHash(raw), adminId: user.id, csrfToken, expiresAt } });
+    await this.db.serial(async tx => {
+      const current = await tx.adminUser.findUnique({ where: { id: user.id } });
+      ensure(current?.active && current.authVersion === user.authVersion && current.passwordHash === user.passwordHash, 401, 'INVALID_CREDENTIALS', '账号状态已变化，请重新登录');
+      await tx.adminSession.create({ data: { id: tokenHash(raw), adminId: current.id, authVersion: current.authVersion, csrfToken, expiresAt } });
+      await audit(tx, current.id, 'LOGIN', 'users', current.id);
+    });
     response.cookie('admin_session', raw, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/api/admin', expires: expiresAt });
-    await audit(this.db, user.id, 'LOGIN', 'users', user.id);
     return { user: this.user(user), csrfToken };
   }
   @Get('admin/auth/me') adminMe(@Req() request: any) { return { user: this.user(request.admin), csrfToken: request.session.csrfToken }; }
   @Post('admin/auth/password') async changePassword(@Body()body:any,@Req()request:any,@Res({passthrough:true})response:any) {
-    const input=z.object({currentPassword:z.string().min(1).max(256),newPassword:z.string().min(16).max(256)}).strict().parse(body);
+    const input=z.object({currentPassword:z.string().min(1).max(256),newPassword:staffPassword}).strict().parse(body);
     ensure(input.currentPassword!==input.newPassword,400,'PASSWORD_UNCHANGED','新密码不能与原密码相同');
     await this.db.serial(async tx=>{
       const user=await tx.adminUser.findUnique({where:{id:request.admin.id}});
-      ensure(user?.active&&passwordMatches(input.currentPassword,user.passwordHash),403,'PASSWORD_INVALID','当前密码无效');
-      await tx.adminUser.update({where:{id:user.id},data:{passwordHash:passwordHash(input.newPassword)}});
+      ensure(user?.active&&user.authVersion===request.admin.authVersion&&passwordMatches(input.currentPassword,user.passwordHash),403,'PASSWORD_INVALID','当前密码无效');
+      await tx.adminUser.update({where:{id:user.id},data:{passwordHash:passwordHash(input.newPassword),revision:{increment:1},authVersion:{increment:1}}});
       await tx.adminSession.deleteMany({where:{adminId:user.id}});await audit(tx,user.id,'PASSWORD_CHANGED','users',user.id);
     });
     response.clearCookie('admin_session',{path:'/api/admin'});return{success:true,loginRequired:true};
   }
-  @Post('admin/auth/logout') async adminLogout(@Req() request: any, @Res({ passthrough: true }) response: any) { await this.db.adminSession.delete({ where: { id: request.session.id } }); response.clearCookie('admin_session', { path: '/api/admin' }); return { success: true }; }
+  @Post('admin/auth/logout') async adminLogout(@Req() request: any, @Res({ passthrough: true }) response: any) { await this.db.adminSession.deleteMany({ where: { id: request.session.id } }); response.clearCookie('admin_session', { path: '/api/admin' }); return { success: true }; }
   private async login(identity: { mobile: string; openId?: string }, consents: {documentId:string;version:number}[]) {
     mobile.parse(identity.mobile);
     return this.db.serial(async tx => {

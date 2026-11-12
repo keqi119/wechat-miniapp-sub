@@ -1,3 +1,5 @@
+import './legacy-esign-mode';
+import {seedTrustedCustomerProfile} from './customer-profile-fixture';
 import { projectRoot } from '../src/common/config';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,12 +9,13 @@ import { resolve } from 'node:path';
 import PDFDocument from 'pdfkit';
 import { createApp } from '../src/app';
 import { Db } from '../src/common/db';
+import {publishBillAutomatically} from '../src/billing/auto-publication';
 import { passwordHash, tokenHash } from '../src/auth/auth.service';
 import { seedUsageLegal } from './usage-fixtures';
 import { listenForHttpTests } from './http-listener';
 import type { ESignGateway, PaymentGateway } from '../src/common/gateways';
 
-// HTTP-to-database journey. Only external provider responses and initial actors/legal
+// HTTP-to-database journey with the real timed publication entry. Only external provider responses and initial actors/legal
 // fixtures are simulated; no order, payment, contract or handover status is patched.
 let db: Db, app: any, base: string, customerToken: string, otherToken: string;
 const origin = 'http://localhost:3100', csrf = randomUUID();
@@ -25,6 +28,7 @@ const midnight = new Date(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Sha
 const deliveryAt = new Date(midnight.getTime() - 2 * 86400000 + 10 * 3600000);
 const returnAt = new Date(deliveryAt.getTime() + 86400000);
 const startDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(deliveryAt);
+const publicationAt=new Date(new Date(`${startDate}T00:00:00+08:00`).getTime()-3*86400000);
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 
 async function syntheticPdf(customerId: string) {
@@ -71,6 +75,7 @@ async function ok(path: string, body?: unknown, actor?: string) { const r = awai
 async function expectStatus(path: string, status: number, body?: unknown, actor?: string) { const r = await request(path, body, actor); assert.equal(r.status, status, `${path}: ${JSON.stringify(r.data)}`); return r.data; }
 
 before(async () => {
+  process.env.NEW_ORDER_CONTRACT_MODE='ESIGN';process.env.ESIGN_NEW_REQUESTS_ENABLED='true';
   const url = new URL(process.env.TEST_DATABASE_URL || '');
   assert.ok(['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) && url.pathname === '/chundian_test', 'local isolated chundian_test database required');
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL; process.env.ADMIN_ORIGIN = origin;
@@ -90,6 +95,7 @@ before(async () => {
   }
   for (const who of ['customer', 'other']) {
     const c = await db.customer.create({ data: { mobile: randomUUID(), openId: randomUUID(), name: '合成验收客户' } });
+    await seedTrustedCustomerProfile(db,c.id,{drivingYears:3});
     const token = randomUUID(); await db.customerSession.create({ data: { id: tokenHash(token), customerId: c.id, expiresAt: new Date(Date.now() + 3600000) } });
     if (who === 'customer') customerToken = token; else otherToken = token;
   }
@@ -101,14 +107,18 @@ test('one HTTP order reaches completed only after archived signatures, exact pay
   const consents = ['terms', 'privacy'].map(t => ({ documentId: legal[t].id, version: legal[t].version }));
   await ok('/customer/consents', { consents }, 'customer');
   const vehicle = await ok('/admin/vehicles', { brand: '合成', model: 'EV', title: '本地闭环测试车', year: 2026, city: '上海', mileageKm: 118000, conditionDisclosure: '本地合成车辆，无真实交付。' });
-  const plan = await ok('/admin/plans', { vehicleId: vehicle.id, name: '合成12个月', months: 12, monthlyFeeAmount: 1, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '合成自行充电', benefits: [], conditions: '仅合成测试方案' });
-  await ok(`/admin/plans/${plan.id}/activate`, {}); await ok(`/admin/vehicles/${vehicle.id}/publish`, {});
+  const product = await ok('/admin/products', { revision:0,idempotencyKey:randomUUID(),vehicleIds:[vehicle.id],modelDefinitionIds:[],items:[{kind:'BASE_SUBSCRIPTION'}],name: '合成12个月', months: 12, monthlyFeeAmount: 1, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '合成自行充电', conditions: '仅合成测试方案' });
+  await ok(`/admin/products/${product.productId}/publish`,{revision:product.revision,idempotencyKey:randomUUID(),versionId:product.id});
+  const goods = await ok('/admin/goods',{revision:0,idempotencyKey:randomUUID(),vehicleId:vehicle.id,productVersionId:product.id,visible:true,recommended:false,sortOrder:0});
+  const published = await ok(`/admin/goods/${goods.id}/publish`,{revision:goods.revision,idempotencyKey:randomUUID()});
+  const plan=await db.subscriptionPlan.findUniqueOrThrow({where:{id:published.subscriptionPlanId}});assert.equal(plan.vehicleId,vehicle.id);assert.equal(plan.productVersionId,product.id);assert.equal(plan.active,true);
+  await ok(`/admin/vehicles/${vehicle.id}/publish`, {});
   const application = await ok('/customer/applications', { vehicleId: vehicle.id, subscriptionPlanId: plan.id, profile: { name: '合成验收客户', drivingYears: 3 }, consents: [{ documentId: legal.application.id, version: legal.application.version }], idempotencyKey: randomUUID() }, 'customer');
   await ok(`/admin/applications/${application.id}/review`, { decision: 'IN_REVIEW', note: '合成资料核对' });
   const consent = await ok(`/customer/applications/${application.id}/credit-consent`, { documentId: legal['credit-verification'].id, version: legal['credit-verification'].version, decision: 'ACCEPT', idempotencyKey: randomUUID() }, 'customer');
   const credit = await ok(`/admin/applications/${application.id}/credit-verifications`, { consentId: consent.consent.id, creditRevision: consent.creditRevision, band: 'B700_749', customerPresented: true, idempotencyKey: randomUUID() });
   const commercialTerms = Object.fromEntries(['vehicleIdentification', 'permittedUse', 'conditionDisclosure', 'customerAddress', 'mileageCarryRule', 'excessMileageCalculation', 'usageCosts', 'insuranceDetails', 'maintenanceRule', 'serviceCoverage', 'handoverArrangement', 'earlyTerminationRule', 'depositRefundRule', 'otherFees'].map(key => [key, '本地合成明确条款：' + key]));
-  const proposal = await ok(`/admin/applications/${application.id}/final-plan`, { revision: application.revision, creditVerificationId: credit.verification.id, commercialTerms, monthlyFeeAmount: 1, depositAmount: 1, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '合成自行充电', benefits: [], conditions: '仅合成测试', startDate, firstDueDate: startDate });
+  const proposal = await ok(`/admin/applications/${application.id}/final-plan`, { idempotencyKey:'lifecycle-final-plan-v1', revision: application.revision, creditVerificationId: credit.verification.id, commercialTerms, monthlyFeeAmount: 1, depositAmount: 1, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '合成自行充电', benefits: [], conditions: '仅合成测试', startDate, firstDueDate: startDate });
   const confirmation = { revision: proposal.finalPlan.revision, commercialHash: proposal.finalPlan.commercialHash };
   const order = await ok(`/customer/applications/${application.id}/confirm`, confirmation, 'customer');
   assert.equal((await ok(`/customer/applications/${application.id}/confirm`, confirmation, 'customer')).id, order.id);
@@ -116,6 +126,8 @@ test('one HTTP order reaches completed only after archived signatures, exact pay
   assert.equal(await state(), 'AWAITING_SIGNATURE');
   await expectStatus(`/customer/records/orders/${order.id}`, 404, undefined, 'other');
   const contract = await db.contract.findFirstOrThrow({ where: { orderId: order.id } });
+  const unsignedBill=await db.bill.findFirstOrThrow({where:{orderId:order.id,type:'SUBSCRIPTION',sequence:1}});
+  await assert.rejects(publishBillAutomatically(db,unsignedBill.id,publicationAt),(error:any)=>error.getResponse?.().error?.code==='SIGNATURE_ARCHIVE_REQUIRED');
   async function sign(kind: 'contracts' | 'handovers', id: string) {
     const task = await ok(`/customer/${kind}/${id}/sign`, {}, 'customer');
     assert.equal((await ok(`/customer/${kind}/${id}/sign-status`, undefined, 'customer')).status, 'PENDING');
@@ -129,7 +141,9 @@ test('one HTTP order reaches completed only after archived signatures, exact pay
   assert.equal(bills.length, 13); assert.ok(bills.every(b => b.amount === 1));
   const deposit = bills.find(b => b.type === 'DEPOSIT')!, rent = bills.find(b => b.type === 'SUBSCRIPTION' && b.sequence === 1)!;
   async function pay(id: string) {
-    await ok(`/admin/bills/${id}/publish`, {});
+    const manual=await expectStatus(`/admin/bills/${id}/publish`,409,{});assert.equal(manual.error.code,'BILL_AUTO_PUBLICATION_MANAGED');
+    await assert.rejects(publishBillAutomatically(db,id,new Date(publicationAt.getTime()-1)),(error:any)=>error.getResponse?.().error?.code==='BILL_AUTO_PUBLICATION_NOT_DUE');
+    assert.equal((await publishBillAutomatically(db,id,publicationAt)).published,true);
     const payload = { idempotencyKey: randomUUID() }, p = await ok(`/customer/bills/${id}/pay`, payload, 'customer');
     assert.equal((await ok(`/customer/bills/${id}/pay`, payload, 'customer')).paymentId, p.paymentId);
     assert.equal((await ok(`/customer/payments/${p.paymentId}`, undefined, 'customer')).status, 'PENDING');
@@ -148,7 +162,7 @@ test('one HTTP order reaches completed only after archived signatures, exact pay
     await expectStatus(`/customer/handovers/${h.id}/confirm`, 400, { manifestHash: h.manifestHash, readFileIds: [], idempotencyKey: randomUUID() }, 'customer');
     await ok(`/customer/handovers/${h.id}/confirm`, { manifestHash: h.manifestHash, readFileIds: [evidence.id], idempotencyKey: randomUUID() }, 'customer');
     await expectStatus(`/admin/handovers/${h.id}/complete`, 409, {});
-    await sign('handovers', h.id); await ok(`/admin/handovers/${h.id}/complete`, {}); await expectStatus(`/admin/handovers/${h.id}/complete`, 409, {});
+    await sign('handovers', h.id); await ok(`/admin/handovers/${h.id}/complete`, {}); const repeated=await ok(`/admin/handovers/${h.id}/complete`, {});assert.equal(repeated.id,h.id);assert.equal(repeated.status,'COMPLETED');
     return h;
   }
   await handover('DELIVERY', deliveryAt, 118000); assert.equal(await state(), 'ACTIVE');

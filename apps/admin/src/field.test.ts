@@ -19,3 +19,5 @@ test('unsupported camera file formats and oversized files have actionable errors
  assert.throws(()=>validateFile({type:'image/jpeg',size:10*1024*1024+1}),/10/);
  assert.doesNotThrow(()=>validateFile({type:'image/png',size:100}));
 });
+
+test('online customer confirmation waits only for actual backend completion, legacy paper stays explicit',()=>{assert.equal(phase({status:'ASSIGNED',contractMode:'OFFLINE',handover:{status:'CUSTOMER_CONFIRMED',confirmationMode:'ONLINE_RECORD',executionMode:'OFFLINE'}}),'客户已确认 · 等待后台完成交接');});

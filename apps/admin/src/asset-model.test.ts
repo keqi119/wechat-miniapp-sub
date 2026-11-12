@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {assetAccess,assetCents,assetProfilePayload,baasDraftPayload,baasActions,baasGeneratePayload,confirmCostPayload,manualPaymentPayload,type AssetProfile,type BaasContract,type CostPreview,type CostPlan} from './asset-model.ts';
+const profile:AssetProfile={vehicleId:'v',vehicle:{id:'v',title:'合成车'},vehicleRevision:4,registered:true,revision:2,batteryOwnership:'BAAS',firstRegistrationDate:null,notes:''};
+const draft={provider:'供应商',contractNumber:'B-1',batteryPackage:'75kWh',rentalYuan:'123.45',paymentDayOfMonth:'31',graceDays:'0',effectiveFrom:'2026-01-15',effectiveTo:'2026-12-31',billingCycle:'MONTHLY',invoiceRequired:false,taxIncluded:'unknown'};
+const contract={id:'b',vehicleId:'v',revision:3,status:'ACTIVE',provider:'合成出租方',batteryPackage:'75kWh',effectiveFrom:'2026-01-15',effectiveTo:'2026-12-31',billingCycle:'MONTHLY',rentalAmount:12345,paymentDayOfMonth:31,files:[{id:'f',mimeType:'application/pdf',state:'ACTIVE'}],registrationReadiness:{ready:true,checks:[],missingFields:[],signedPdfFiles:[{id:'f',name:'signed.pdf',sha256:'a'.repeat(64)}]}} as unknown as BaasContract;
+const plan={id:'p',vehicleId:'v',revision:1,status:'SCHEDULED',sourceKind:'BAAS',amount:12345,costPeriod:'2026-01'} as CostPlan;
+const preview={contractId:'b',sourceId:'b',revision:3,assetRevision:2,algorithmVersion:'BAAS_V1',request:{sourceKind:'BAAS',fromPeriod:'2026-01',toPeriod:'2026-02'},rows:[{costPeriod:'2026-01',periodStart:'2026-01-01',periodEnd:'2026-01-31',dueDate:'2026-01-31',amount:12345,warningIds:['2026-01:OUTSIDE_CONTRACT_START'],existingPlan:null}],totalAmount:12345,totalCreatedAmount:12345,createCount:1,existingCount:0,warningIds:['2026-01:OUTSIDE_CONTRACT_START'],previewHash:'a'.repeat(64)} as CostPreview;
+test('asset UI requires both explicit resource permission and allowed role',()=>{
+ assert.deepEqual(assetAccess('baas-contracts','FINANCE',['baas-contracts.read','baas-contracts.write']),{read:true,write:false});assert.deepEqual(assetAccess('asset-costs','OPERATIONS',['*']),{read:false,write:false});assert.deepEqual(assetAccess('vehicle-assets','SUPPORT',['*']),{read:false,write:false});assert.deepEqual(assetAccess('asset-cost-plans','OPERATIONS',['asset-cost-plans.read']),{read:true,write:false});assert.equal(assetAccess('asset-costs','FINANCE',[]).write,false);
+});
+test('asset money is entered as yuan and converted without floating point or implicit rounding',()=>{
+ assert.equal(assetCents('123.45'),12345);assert.equal(assetCents('0.01'),1);assert.equal(assetCents('21474836.47'),2147483647);for(const input of ['',0,'1.234','-1','1e3','21474836.48','Infinity'])assert.throws(()=>assetCents(input));
+});
+test('asset profile carries both revisions and preserves date-only values and deliberate clearing',()=>{
+ assert.deepEqual(assetProfilePayload({batteryOwnership:'OWNED',firstRegistrationDate:'2026-02-28',notes:'记录'},profile),{revision:2,vehicleRevision:4,batteryOwnership:'OWNED',firstRegistrationDate:'2026-02-28',notes:'记录'});assert.equal(assetProfilePayload({batteryOwnership:'UNKNOWN',firstRegistrationDate:'',notes:''},profile).firstRegistrationDate,null);assert.throws(()=>assetProfilePayload({batteryOwnership:'BAAS',firstRegistrationDate:'2026-02-30'},profile));
+});
+test('BAAS draft sends positive cycle rental cents and distinct vehicle/asset versions',()=>{
+ const result=baasDraftPayload(draft,undefined,profile);assert.equal(result.rentalAmount,12345);assert.equal(result.revision,0);assert.equal(result.vehicleRevision,4);assert.equal(result.assetRevision,2);assert.equal(result.vehicleId,'v');assert.equal(result.effectiveFrom,'2026-01-15');assert.equal(result.taxIncluded,null);assert.equal('status'in result,false);assert.equal('rentalYuan'in result,false);
+ assert.throws(()=>baasDraftPayload({...draft,rentalYuan:'0'},undefined,profile));assert.throws(()=>baasDraftPayload({...draft,paymentDayOfMonth:'1.5'},undefined,profile));assert.throws(()=>baasDraftPayload(draft,contract,profile));assert.throws(()=>baasDraftPayload(draft,undefined,undefined));
+});
+test('BAAS commands reflect state and activation requires a real dedicated attachment',()=>{
+ assert.deepEqual(baasActions({...contract,status:'DRAFT',files:[]}),['archive']);assert.deepEqual(baasActions({...contract,status:'DRAFT'}),['activate','archive']);assert.deepEqual(baasActions(contract),['suspend','terminate']);assert.deepEqual(baasActions({...contract,status:'SUSPENDED'}),['resume','terminate']);assert.deepEqual(baasActions({...contract,status:'TERMINATED'}),['archive']);assert.deepEqual(baasActions({...contract,status:'ARCHIVED'}),[]);
+});
+test('cost plan generation requires a matching fresh preview and every warning, not client amounts',()=>{
+ const range={fromPeriod:'2026-01',toPeriod:'2026-02'},body=baasGeneratePayload(contract,preview,range,preview.warningIds);assert.deepEqual(body,{revision:3,...range,previewHash:'a'.repeat(64),acknowledgedWarningIds:preview.warningIds});assert.throws(()=>baasGeneratePayload(contract,preview,range,[]));assert.throws(()=>baasGeneratePayload({...contract,revision:4},preview,range,preview.warningIds));assert.throws(()=>baasGeneratePayload(contract,preview,{...range,toPeriod:'2026-03'},preview.warningIds));assert.throws(()=>baasGeneratePayload(contract,{...preview,sourceId:'other'},range,preview.warningIds));assert.throws(()=>baasGeneratePayload(contract,{...preview,previewHash:'unknown'},range,preview.warningIds));
+});
+test('cost confirmation submits selected SCHEDULED versions only and rejects duplicate or invalid money facts',()=>{
+ assert.deepEqual(confirmCostPayload([plan]),{plans:[{id:'p',revision:1}]});assert.throws(()=>confirmCostPayload([]));assert.throws(()=>confirmCostPayload([plan,plan]));assert.throws(()=>confirmCostPayload([{...plan,status:'CONFIRMED'}]));assert.throws(()=>confirmCostPayload([{...plan,amount:1.5}]));
+});
+test('manual payment has no editable amount and requires scoped evidence and actual date',()=>{
+ const entry={id:'c',revision:5,amount:12345,category:'BAAS_RENT' as const,effect:'COST' as const,lockedAt:null,reversal:null,payments:[],files:[{id:'f',name:'proof.pdf',mimeType:'application/pdf',size:12,sha256:'a'.repeat(64)}]};
+ assert.deepEqual(manualPaymentPayload({paidAt:'2026-01-05',referenceNo:'REF',reason:'已核对真实支付',fileIds:['f']},entry,'2026-01-05'),{revision:5,paidAt:'2026-01-05',referenceNo:'REF',reason:'已核对真实支付',fileIds:['f']});assert.throws(()=>manualPaymentPayload({paidAt:'2026-01-06',referenceNo:'REF',reason:'依据',fileIds:['f']},entry,'2026-01-05'));assert.throws(()=>manualPaymentPayload({paidAt:'2026-01-05',referenceNo:'REF',reason:'依据',fileIds:['foreign']},entry,'2026-01-05'));assert.throws(()=>manualPaymentPayload({paidAt:'2026-01-05',referenceNo:'REF',reason:'依据',fileIds:['f']},{...entry,reversal:{id:'r'} as any},'2026-01-05'));
+});

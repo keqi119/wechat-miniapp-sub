@@ -53,6 +53,7 @@ export type FadadaEndpoint =
   | "extsign_validation.api"
   | "extsign.api"
   | "extsign_auto.api"
+  | "contract_verify.api"
   | "query_sign_result.api"
   | "contract_status.api"
   | "downLoadContract.api"

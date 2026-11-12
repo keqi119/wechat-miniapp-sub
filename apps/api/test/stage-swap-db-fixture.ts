@@ -1,0 +1,38 @@
+import {randomUUID} from 'node:crypto';
+import {stageSwapSourceFixture} from './stage-swap-source-fixture';
+import {canonicalHash} from '../src/customers/types';
+import {freezeSwapPolicy} from '../src/swap-purchases/policy';
+import {tokenHash} from '../src/auth/auth.service';
+
+/** Persist an already approved synthetic source with real FK rows. This is not a renewal activation test. */
+export async function persistedStageSwap(db:any,actorId:string,count=1){
+ const source=await stageSwapSourceFixture(count),names=['order','customer','current-car','original-car','current-assignment','original-assignment','product','product-version','plan','goods','owner','stage-1','stage-2','renewal','renewal-quote','renewal-paper','renewal-terms','swap-terms','rental-contract','rental-version'];
+ const ids=Object.fromEntries(names.map(name=>[name,randomUUID()])),map=(v:any):any=>v instanceof Date?v:typeof v==='string'?ids[v]??v:Array.isArray(v)?v.map(map):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,map(x)])):v;
+ const token=randomUUID(),customer=await db.customer.create({data:{id:ids.customer,mobile:token,openId:token}});await db.customerSession.create({data:{id:tokenHash(token),customerId:customer.id,expiresAt:new Date(Date.now()+3600000)}});
+ for(const type of ['terms','privacy']){const doc=await db.legalDocument.findFirstOrThrow({where:{type,status:'PUBLISHED'},orderBy:{version:'desc'}});await db.customerConsent.create({data:{customerId:customer.id,documentId:doc.id,type,version:doc.version,source:'STAGE_TEST'}});}
+ for(const name of ['current-car','original-car'])await db.vehicle.create({data:{id:ids[name],brand:'合成',model:'EV',title:'阶段次数合成车',year:2026,city:'上海',mileageKm:100,status:name==='current-car'?'IN_USE':'PUBLISHED'}});
+ await db.vehicleOwner.create({data:{id:ids.owner,name:'合成出租方',subjectType:'ENTERPRISE',address:'合成地址',createdBy:actorId}});
+ await db.product.create({data:{id:ids.product,name:'续期合成产品',createdBy:actorId}});
+ const product=map(source.product);await db.productVersion.create({data:{id:ids['product-version'],productId:ids.product,version:2,name:product.name,configurationVersion:2,status:'PUBLISHED',months:12,baseFeeAmount:200000,mileageMonthlyFeeAmount:50000,monthlyFeeAmount:250000,mileagePerMonthKm:2200,excessMileagePriceAmount:175,energyDescription:product.energyDescription,conditions:product.conditions,swapPolicy:product.swapPolicy,vehicleIds:[ids['current-car']],modelDefinitionIds:[],createdBy:actorId,publishedAt:new Date(),publishedBy:actorId}});
+ await db.subscriptionPlan.create({data:{id:ids.plan,vehicleId:ids['current-car'],productVersionId:ids['product-version'],name:'阶段合成商品',months:12,monthlyFeeAmount:250000,mileagePerMonthKm:2200,excessMileagePriceAmount:175,energyDescription:product.energyDescription,conditions:product.conditions,benefits:[]}});
+ await db.vehicleListing.create({data:{id:ids.goods,vehicleId:ids['current-car'],productVersionId:ids['product-version'],subscriptionPlanId:ids.plan,source:'LEGACY_MIGRATED',status:'PUBLISHED',visible:true,revision:3,createdBy:actorId,publishedBy:actorId,publishedAt:new Date()}});
+ const original=map(source.order.finalPlanSnapshot),application=await db.application.create({data:{customerId:customer.id,vehicleId:ids['current-car'],subscriptionPlanId:ids.plan,profile:{},consents:[],idempotencyKey:token,requestHash:canonicalHash(token)}});
+ const order=await db.order.create({data:{id:ids.order,applicationId:application.id,customerId:customer.id,vehicleId:ids['current-car'],status:'ACTIVE',contractMode:'ESIGN',finalPlanSnapshot:original,confirmedMileageKm:100}});
+ const rental=await db.documentArchive.create({data:{kind:'RENTAL',subjectType:'ORDER',subjectId:order.id,orderId:order.id,ownerId:ids.owner,createdBy:actorId}});await db.archiveVersion.create({data:{id:ids['rental-version'],archiveId:rental.id,version:1,templateId:'synthetic-original-rental',templateVersion:1,businessSnapshotHash:original.commercialHash,partiesSnapshot:[],requiredSigners:[],scopeSnapshot:{}}});
+ const account=await db.usageAccount.create({data:{orderId:order.id,customerId:customer.id,policyVersion:'USAGE_V1',startedOn:new Date('2026-01-31'),pricingSnapshot:source.initial.usagePricing}});
+ await db.vehicleAssignment.create({data:{id:ids['original-assignment'],orderId:order.id,customerId:customer.id,vehicleId:ids['original-car'],status:'CLOSED',startAt:new Date('2026-01-31'),endAt:new Date('2026-12-31'),startReadingKm:0,endReadingKm:100}});
+ await db.vehicleAssignment.create({data:{id:ids['current-assignment'],orderId:order.id,customerId:customer.id,vehicleId:ids['current-car'],startAt:new Date('2026-12-31'),startReadingKm:100}});
+ await db.order.update({where:{id:order.id},data:{currentAssignmentId:ids['current-assignment']}});
+ const change=(id:string,kind:string)=>db.orderChange.create({data:{id,orderId:order.id,customerId:customer.id,kind,status:'APPLIED',originalContractId:'synthetic-original',priorTermsHash:canonicalHash(original),priorTerms:original,reason:'合成已生效来源',createdBy:actorId,idempotencyKey:randomUUID(),requestHash:canonicalHash(id)}});
+ const prior=await change(randomUUID(),'VEHICLE_CHANGE'),priorQuote=await db.delayQuote.create({data:{changeId:prior.id,revision:1,status:'CONFIRMED',commercialHash:canonicalHash(original),snapshot:{},fundsSnapshot:[],createdBy:actorId}});
+ await db.orderTermsVersion.create({data:{id:ids['swap-terms'],orderId:order.id,quoteId:priorQuote.id,version:1,hash:canonicalHash(original),snapshot:original,effectiveAt:new Date('2026-12-31')}});
+ const c=await change(ids.renewal,'SUBSCRIPTION_EXTENSION'),snap=map(source.snap),initial=map(source.initial),terms=snap.termsSnapshot;
+ const listing=snap.source.product,configuration=map(source.product);listing.sourceHash=canonicalHash({listingId:listing.listingId,listingRevision:listing.listingRevision,vehicleId:ids['current-car'],subscriptionPlanId:ids.plan,product:configuration});terms.productSnapshot.sourceHash=listing.sourceHash;
+ snap.swapPolicy=freezeSwapPolicy({finalPlanSnapshot:terms});snap.source.originalTermsHash=canonicalHash(original);initial.source.originalTermsHash=canonicalHash(original);initial.source.agreement.priorTermsHash=canonicalHash(original);
+ const quote=await db.delayQuote.create({data:{id:ids['renewal-quote'],changeId:c.id,revision:1,status:'CONFIRMED',commercialHash:terms.commercialHash,snapshot:terms,fundsSnapshot:[],createdBy:actorId,confirmedAt:new Date('2027-01-01'),financePreparedAt:new Date('2027-01-02')}});
+ const archive=await db.documentArchive.create({data:{kind:'ORDER_AMENDMENT',subjectType:'ORDER_CHANGE_QUOTE',subjectId:quote.id,quoteId:quote.id,orderId:order.id,ownerId:ids.owner,createdBy:actorId}});
+ await db.archiveVersion.create({data:{id:ids['renewal-paper'],archiveId:archive.id,version:1,templateId:'synthetic-approved-stage',templateVersion:1,businessSnapshotHash:terms.commercialHash,partiesSnapshot:[],requiredSigners:[],scopeSnapshot:{}}});
+ await db.orderTermsVersion.create({data:{id:ids['renewal-terms'],orderId:order.id,quoteId:quote.id,version:2,snapshot:terms,hash:terms.commercialHash,effectiveAt:new Date('2027-01-31')}});
+ for(const [s,status] of [[initial,'ENDED'],[snap,'ACTIVE']] as const){const row=map(source.row(s,status));delete row.serviceStageId;Object.assign(row,{id:s.identity.serviceStageId,snapshot:s,snapshotHash:canonicalHash(s),...(s.kind==='RENEWAL'?{createdBy:actorId,scheduledBy:actorId,activatedBy:actorId,termsVersionId:ids['renewal-terms']}:{})});await db.orderServiceStage.create({data:row});}
+ return{order,account,customer,token,ids,source:snap,initial};
+}

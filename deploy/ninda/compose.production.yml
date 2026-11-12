@@ -1,0 +1,48 @@
+name: ninda-prod
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ninda_prod
+      POSTGRES_DB: ninda_prod
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    command: [postgres, -c, shared_buffers=128MB, -c, max_connections=40, -c, work_mem=4MB]
+    volumes:
+      - ninda-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U ninda_prod -d ninda_prod']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: '3' }
+  api:
+    image: ${API_IMAGE:?required}
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    env_file: ../.env.production
+    environment:
+      HOST: 0.0.0.0
+      PORT: '3101'
+      UPLOAD_DIR: /app/uploads
+      NODE_ENV: production
+      APP_ENV: production
+    ports: ['127.0.0.1:13101:3101']
+    volumes:
+      - ../uploads:/app/uploads
+      - ../secrets:/run/ninda-secrets:ro
+    read_only: true
+    tmpfs: ['/tmp:size=64m,mode=1777']
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 768m
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: '3' }
+volumes:
+  ninda-db:
+    name: ninda-prod-db

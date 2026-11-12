@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "status": "proposal-not-approved",
+  "units": "CSS px at a 375px design viewport; adapt to rpx for implementation",
+  "shared": {
+    "fontFamily": "-apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif",
+    "fontBody": 16,
+    "fontMeta": 12,
+    "fontTitle": 24,
+    "lineHeight": 1.5,
+    "space": [4, 8, 12, 16, 24, 32],
+    "touchTargetMin": 44
+  },
+  "directions": {
+    "native": {
+      "name": "明朗原生",
+      "intent": "品牌延续，费用与选择优先",
+      "canvas": "#F5F6F7",
+      "surface": "#FFFFFF",
+      "text": "#231815",
+      "muted": "#65615C",
+      "accent": "#F9BE00",
+      "onAccent": "#231815",
+      "line": "#E9E7E3",
+      "radius": 12,
+      "layout": "compact vehicle header, stacked plan rows, grouped fee list"
+    },
+    "premium": {
+      "name": "静奢出行",
+      "intent": "车辆展示与品质感",
+      "canvas": "#F1EFEA",
+      "surface": "#FFFEFA",
+      "text": "#242724",
+      "muted": "#62645D",
+      "accent": "#263B35",
+      "onAccent": "#FFFFFF",
+      "highlight": "#D9C8A7",
+      "hero": "#202A27",
+      "onHero": "#F5F2EB",
+      "line": "#DFDED6",
+      "radius": 4,
+      "layout": "full-width vehicle photography, editorial title, inset plan selector and receipt"
+    },
+    "city": {
+      "name": "轻盈城市",
+      "intent": "长期用车服务，轻松浏览",
+      "canvas": "#EFF5F2",
+      "surface": "#FFFFFF",
+      "text": "#183D34",
+      "muted": "#51685F",
+      "accent": "#246B57",
+      "onAccent": "#FFFFFF",
+      "soft": "#DFEDE4",
+      "line": "#D7E5DD",
+      "radius": 22,
+      "layout": "friendly task heading, vehicle identity tile, paired plan choices, service progress"
+    }
+  }
+}

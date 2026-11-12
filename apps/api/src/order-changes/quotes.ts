@@ -1,3 +1,4 @@
+import {publishElectronicSwap,confirmElectronicSwap} from '../vehicle-changes/electronic-agreement';
 import {followupTemplateType,verifySwapOwner} from '../owner-signing/followup';
 import {vehicleIdentity} from '../vehicle-changes/quotes';
 import {approvedTemplate} from '../contract/contract-template';
@@ -5,7 +6,11 @@ import { hash } from '../common/data';
 import { ensure } from '../common/errors';
 import { dateOnly } from '../billing/rules';
 import { day,periods } from '../usage/rules';
-import { financialContext } from './context';
+import { financialContext,requireOfflineDelayFacts } from './context';
+import {publishOfflineDelay} from './offline-publish';
+import {publishOfflineSwap} from '../vehicle-changes/offline-publish';
+import {requireOfflineSwapFacts} from '../vehicle-changes/offline-facts';
+import {assertOfflineSwapQuote} from '../vehicle-changes/offline-target';
 import { requireCurrentConsents } from '../auth/consents';
 import {accountReadiness,decryptIdentity} from '../esign/fadada/fadada-safety';
 import {resolveDelayTemplate} from '../contract/delay-template';
@@ -16,6 +21,8 @@ export async function quote(tx:any,change:any,input:any,actor:any){
   ensure(['DRAFT','REVIEW_PENDING','REVIEWED'].includes(change.status)||(change.status==='AWAITING_CONFIRMATION'&&expired)||signingTerminated,409,'CHANGE_STATE','当前变更不可改价');
   ensure(!/待确认|待补齐|待填写|另行通知|\{\{|\}\}/.test(JSON.stringify([input.periods,input.reason,input.settlementExplanation,input.handoverArrangement,input.cancellationTerms])),400,'COMMERCIAL_INCOMPLETE','须逐单写明真实费用与安排，不可使用待确认等占位说明');
   const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId}}),funds=await financialContext(tx,order),prior=change.priorTerms;
+  if(order.contractMode==='OFFLINE')await requireOfflineDelayFacts(tx,order,change);
+  ensure(input.periods.every((p:any)=>Number.isSafeInteger(p.amount)&&p.amount>=0&&p.amount<=2147483647),400,'AMOUNT_INVALID','金额须为有效非负整数分');
   ensure(funds.blockers.length===0,409,'FUNDS_UNCONFIRMED',funds.blockers.join('；'));
   ensure(dateOnly(input.newStartDate)>dateOnly(String(prior.startDate).slice(0,10)),400,'DELAY_DATE','延期起租日须晚于原有效起租日');
   ensure(new Date(input.expiresAt)>new Date(),400,'QUOTE_EXPIRY','报价有效期须为未来时间');
@@ -38,6 +45,9 @@ export async function publish(tx:any,change:any){
   ensure(change.status==='REVIEWED',409,'CHANGE_STATE','请先完成独立财务复核');
   const q=await tx.delayQuote.findUniqueOrThrow({where:{id:change.activeQuoteId}});
   ensure(new Date(q.snapshot.expiresAt)>new Date(),409,'QUOTE_EXPIRED','报价已过期，请重新报价及复核');
+  const current=await tx.order.findUniqueOrThrow({where:{id:change.orderId}});
+  if(current.contractMode==='ELECTRONIC'&&change.kind==='VEHICLE_CHANGE')return publishElectronicSwap(tx,current,change,q);
+  if(current.contractMode==='OFFLINE')return change.kind==='VEHICLE_CHANGE'?publishOfflineSwap(tx,current,change,q):publishOfflineDelay(tx,current,change,q);
   const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId},include:{customer:true}});
   const legal=await tx.legalDocument.findFirst({where:{type:followupTemplateType(order,change.kind),status:'PUBLISHED',confirmedAt:{not:null}},orderBy:{version:'desc'}});
   if(change.kind==='VEHICLE_CHANGE'){if(order.finalPlanSnapshot?.lessorSnapshot){ensure(q.snapshot.ownerVehicleBinding,409,'OWNER_SWAP_BINDING','目标车辆归属尚未确认');await verifySwapOwner(tx,order,change.targetVehicleId,q.snapshot.ownerVehicleBinding);}const target=await tx.vehicle.findUnique({where:{id:change.targetVehicleId}}),hold=target?.holdId?await tx.vehicleHold.findUnique({where:{id:target.holdId}}):null;ensure(hold?.changeId===change.id&&hold.quoteId===q.id&&hold.status==='HELD'&&vehicleIdentity(target)===q.snapshot.targetVehicleIdentification&&(target.vin||target.plateNumber),409,'VEHICLE_HOLD_MISMATCH','目标车辆身份或预留已变化，须重新报价');}
@@ -60,10 +70,14 @@ export async function confirm(tx:any,change:any,input:any){
   ensure(change.status==='AWAITING_CONFIRMATION',409,'CHANGE_STATE','当前变更不可确认');
   await requireCurrentConsents(tx,change.customerId,['terms','privacy']);
   const q=await tx.delayQuote.findUniqueOrThrow({where:{id:change.activeQuoteId}}),document=q.snapshot.document;
+  ensure(q.changeId===change.id,409,'QUOTE_MISMATCH','当前报价不属于本次变更');
   ensure(new Date(q.snapshot.expiresAt)>new Date(),409,'QUOTE_EXPIRED','报价已过期，请联系运营重新出具');
   ensure(document&&q.commercialHash===input.commercialHash,409,'QUOTE_MISMATCH','报价已更新，请重新完整阅读');
   const legal=await tx.legalDocument.findUnique({where:{id:document.id}});ensure(legal?.status==='PUBLISHED'&&legal.confirmedAt&&hash(legal.content)===document.templateHash&&hash(document.content)===document.bodyHash,409,'LEGAL_UNAVAILABLE','补充协议版本已变化，请联系运营');
-  await tx.delayQuote.update({where:{id:q.id},data:{status:'CONFIRMED',confirmedAt:new Date()}});
   const contract=await tx.contract.findUnique({where:{delayQuoteId:q.id}});ensure(contract?.status==='DRAFT'&&contract.body===document.content&&contract.documentHash===q.commercialHash,409,'DOCUMENT_MISMATCH','补充协议正文已变化');
-  await tx.orderChange.update({where:{id:change.id},data:{status:'AWAITING_SIGNATURE'}});
+  const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId}}),offline=order.contractMode==='OFFLINE';
+  if(order.contractMode==='ELECTRONIC')await confirmElectronicSwap(tx,change,q);
+  if(offline){if(change.kind==='VEHICLE_CHANGE'){assertOfflineSwapQuote(change,q);await requireOfflineSwapFacts(tx,order,change,new Date(),!!q.snapshot.previousPreparedQuoteId);}else await requireOfflineDelayFacts(tx,order,change);ensure(['DELIVERY_DELAY','VEHICLE_CHANGE'].includes(change.kind)&&q.status==='PUBLISHED'&&contract.kind==='AMENDMENT'&&contract.executionMode==='OFFLINE'&&!contract.providerTaskId&&!contract.signedFileId&&contract.orderId===change.orderId&&contract.customerId===change.customerId&&document.type==='OFFLINE_ORDER_AMENDMENT'&&legal.type===document.type&&contract.documentId===document.id&&contract.templateVersion===document.version&&legal.version===document.version&&legal.confirmedBy,409,'DOCUMENT_MISMATCH','线下补充协议正文或归属已变化');}
+  await tx.delayQuote.update({where:{id:q.id},data:{status:'CONFIRMED',confirmedAt:new Date()}});
+  await tx.orderChange.update({where:{id:change.id},data:{status:offline?'AWAITING_ARCHIVE':'AWAITING_SIGNATURE'}});
 }

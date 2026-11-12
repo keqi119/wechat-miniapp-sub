@@ -1,0 +1,177 @@
+{
+  "status": "DRAFT_PENDING_USER_REVIEW",
+  "createdAt": "2026-10-27T13:23:07.861Z",
+  "sourceThreadId": "01a15dad-54f7-7aa2-8b9b-cb647c407a0f",
+  "approvalInheritedFromFiveContracts": false,
+  "formalApproval": false,
+  "published": false,
+  "platformLegalEntity": "上海宁达信息科技有限公司",
+  "contactEmail": "like@ndacar.com",
+  "readmeSha256": "abb0fcf6e2efeeadec7d168880e8e4a64487084f0b14f4b1c48776a53c6ab414",
+  "documents": [
+    {
+      "type": "usage-policy",
+      "candidateVersion": 2,
+      "status": "DRAFT_PENDING_USER_REVIEW",
+      "markdownPath": "docs/legal/drafts/ninda/offline-mvp-notices/usage-policy.md",
+      "markdownSha256": "c81c4fee82f0f492e0cc99b987b8554bc6eba9a8624413fc0972b16e2b2a0b31",
+      "payloadPath": "docs/legal/drafts/ninda/offline-mvp-notices/usage-policy.payload.json",
+      "payloadSha256": "38fa1a6795760b2e7631fbfdf5f33684397cb81c9a1c79eb0258ed169e769e9b",
+      "contentUtf8Sha256": "a8f2f9c0bfc12aeb08e74f47bc955679850c0de3a2693ad357cdf9d5e44e0f03",
+      "apiCanonicalContentHash": "6101326d209a6526292335d2addcf13e90a19ee4d0fd19560fef329cb0c723e5",
+      "supportedVariablesUsed": [],
+      "confirmationMetadataPresent": false
+    },
+    {
+      "type": "owner-data-sharing",
+      "candidateVersion": 2,
+      "status": "DRAFT_PENDING_USER_REVIEW",
+      "markdownPath": "docs/legal/drafts/ninda/offline-mvp-notices/owner-data-sharing.md",
+      "markdownSha256": "bb1ac103b30156a2ded8f4cca20d532bf26172b4a1b393fae48d704270f8b62d",
+      "payloadPath": "docs/legal/drafts/ninda/offline-mvp-notices/owner-data-sharing.payload.json",
+      "payloadSha256": "404643899f8fc0591c5938b7f077a327abda5b704e91c33440244783c9849fb0",
+      "contentUtf8Sha256": "b9cc373b5639cf52d8ac86c373752aa3bdb55ad3bea1e76a8a7064e0dbea9ecd",
+      "apiCanonicalContentHash": "6a5a501e6307ae2ec5ce98df638fdfe2a725e91eb49a32d2c993bb329b181a62",
+      "supportedVariablesUsed": [
+        "lessorAddress",
+        "lessorCreditCode",
+        "lessorName",
+        "lessorPhone"
+      ],
+      "confirmationMetadataPresent": false
+    }
+  ],
+  "sources": [
+    {
+      "path": "docs/legal/versions/ninda/usage-policy-v1.md",
+      "sha256": "ca90c9cfca32489f3f9c68b1917e3189759b4b3f55abc3c981a90ac445f75179"
+    },
+    {
+      "path": "docs/legal/versions/ninda/owner-data-sharing-v1.md",
+      "sha256": "ea4e536c8d454af8b27978b285e18c09bfb092aa4b7bc150f403df33a2fce517"
+    },
+    {
+      "path": "apps/api/src/usage/policy.ts",
+      "sha256": "8c8cb2cc5bb08610eea541b54367003f0a1d065751f8796bbc11aaa9983252cb"
+    },
+    {
+      "path": "apps/api/src/usage/usage.service.ts",
+      "sha256": "5289f4133a4fb23b822d08eb06cb2a55f87fc42df375998ef95979053dfb6c02"
+    },
+    {
+      "path": "apps/api/src/usage/refunds.ts",
+      "sha256": "c7852a8aff212342b2c7b01888aec53130c5be2aa582bf9dbcd8363506026798"
+    },
+    {
+      "path": "apps/api/prisma/migrations/202610160012_usage_policy/migration.sql",
+      "sha256": "33cc29783bab98d941717ac777c8112a48843193dc6e75539d0401f0de1c23da"
+    },
+    {
+      "path": "apps/api/src/owner-signing/lessor.ts",
+      "sha256": "5d121aba907db231382cbbb037f15e3876b35b4a67eabe8695b903109f1dad63"
+    },
+    {
+      "path": "apps/api/src/offline-documents/partner-access.ts",
+      "sha256": "6f722b5030b044ac8840fabdd6ba5ac9fdccd9e20e66adf2807fb1e9ebae4019"
+    },
+    {
+      "path": "apps/api/src/offline-documents/projection.ts",
+      "sha256": "89bd4340c15fe047ad9a692b0d6540298725386ef738798b9ed97c3ab8ca63f1"
+    },
+    {
+      "path": "apps/api/src/offline-documents/change-mode.ts",
+      "sha256": "3ffae50adba9bdd62b12c585f397d4046209474e3dc31c937f04e82ba90fc3a1"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-27-ninda-seven-module-mvp-design.md",
+      "sha256": "f70594b79699bf1fb99903519b9ec0a01aa2daee8172ec6b0673297b4279f0c8"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-26-ninda-offline-contract-mvp-design.md",
+      "sha256": "be3e79fd30f324b72c9ee3d2aaa5e16d5afd5d5362c0e85f75b2175cb4fbcbbd"
+    }
+  ],
+  "exactChanges": {
+    "usagePolicy": {
+      "preserved": [
+        "12个月最短订阅期；北京时间原始日号月界",
+        "每月1500公里；基础不结转；当期退订保留完整基础额度",
+        "超里程150分/公里；先基础后适用包",
+        "里程包1000/2000/3000公里，价格80000/150000/200000分",
+        "本单包余额结转；购买当期尚未结算及后续期适用；不追溯已结算或更早月份",
+        "退订未使用加购里程失效及一般不退费规则；异常收款/未履约等例外仍须核实处理",
+        "电池租赁与电费承担的原文规则；押金退款沿用主合同"
+      ],
+      "removed": [
+        "新增订单每12个月赠送1次换车的承诺",
+        "800元/次加购换车及叠加的销售承诺",
+        "新订单退订时加购换车次数失效的说明"
+      ],
+      "adapted": [
+        "纸质三方合同及平台角色",
+        "实际收车后禁止新购里程包，实际收车/正式还车/结清分离",
+        "首版不开放新换车/加购换车及相应自助变更；历史权益不抹除",
+        "里程包购买仍须单独正式mileage-pack说明和主动同意"
+      ]
+    },
+    "ownerDataSharing": {
+      "preserved": [
+        "明确本单出租方和四个已支持变量",
+        "本单必要订约/履约资料、客户单独选择、查阅更正和撤回联系",
+        "不提供其他出租方订单、密码、验证码、信用核验细节或后台账号"
+      ],
+      "adapted": [
+        "接收方从企业扩为企业或个人及经核验有权经办人",
+        "主体标识说明兼容个人出租方回退文字，不新增个人证件变量",
+        "资料载体为受控页面及归档纸质文件，不依赖新电子签",
+        "按当前订单、冻结接收方、告知摘要、同意和当前合作商身份读取",
+        "不以告知新增证件查询、征信、营销或代签/电子用印授权"
+      ]
+    }
+  },
+  "decisionExpansion": false,
+  "newChargesOrPenalties": false,
+  "validation": {
+    "usageRuleSnapshotAndAppendix": "PASS",
+    "mileagePackPricesFromExistingMigration": [
+      {
+        "km": 1000,
+        "amount": 80000
+      },
+      {
+        "km": 2000,
+        "amount": 150000
+      },
+      {
+        "km": 3000,
+        "amount": 200000
+      }
+    ],
+    "actualLessorRenderer": [
+      {
+        "subjectType": "ENTERPRISE",
+        "status": "PASS",
+        "unresolvedVariables": 0,
+        "personalCreditCodeFallback": null
+      },
+      {
+        "subjectType": "INDIVIDUAL",
+        "status": "PASS",
+        "unresolvedVariables": 0,
+        "personalCreditCodeFallback": "个人出租方"
+      }
+    ],
+    "markdownPayloadConsistency": true,
+    "payloadApprovalFieldsAbsent": true,
+    "syntheticOnlyInMemory": true,
+    "actualDbOrProviderCalls": 0
+  },
+  "outsideScopeUnchanged": [
+    "application",
+    "credit-verification",
+    "handover-location",
+    "mileage-pack",
+    "五份已审定线下合同",
+    "历史客户同意和历史订单"
+  ]
+}

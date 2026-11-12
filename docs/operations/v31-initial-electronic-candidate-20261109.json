@@ -1,0 +1,122 @@
+{
+  "status": "LOCAL_REVIEW_ONLY_BLOCKED",
+  "candidateVersionPlan": "1.3.0",
+  "releaseState": {
+    "production": "1.2.1",
+    "experience": "1.2.9",
+    "underReview": "1.2.9",
+    "pendingUntouched": true
+  },
+  "pins": {
+    "server": "8.133.232.213",
+    "project": "ninda-prod",
+    "database": "ninda_prod",
+    "api": "https://api.evsub.ndacar.com",
+    "admin": "https://admin.evsub.ndacar.com",
+    "legalH5": "https://sign.evsub.ndacar.com",
+    "miniappAppId": "wxb5115e5a5f70f1b1",
+    "currentImageRootObserved": "ninda-api:20261106-product-battery-filters-v1",
+    "candidateImage": "NOT_BUILT_OR_DEPLOYED",
+    "imageDigest": "UNASSIGNED_RELEASE_BLOCKER",
+    "machineId": "retain existing pinned value; never infer from IP",
+    "manifest": "task-11-artifact-manifest.json"
+  },
+  "scope": {
+    "kinds": [
+      "SUBSCRIPTION",
+      "COOPERATION",
+      "COOPERATION_GRANT"
+    ],
+    "lessor": "上海晓浪网络科技有限公司",
+    "platform": "上海宁达信息科技有限公司",
+    "customerRole": "root private scope customer; distinct role account",
+    "monthlyFeeAmount": 100,
+    "installments": 12,
+    "depositAmount": 100,
+    "scheduledRent": 1200,
+    "initialAmount": 200,
+    "vehicleProductApplicationOrderIds": "root private scope only; not frozen yet",
+    "plannedDeliveryDate": null,
+    "virtualAsset": "explicit test-only; no false VIN/qualification/insurance/title",
+    "authorizedActors": {
+      "CUSTOMER": "李柯（客户专用账号）",
+      "OWNER": "李柯（上海晓浪网络科技有限公司法人专用账号）",
+      "PLATFORM": "吴彪（上海宁达信息科技有限公司法人专用账号）"
+    }
+  },
+  "templateApproval": "docs/legal/versions/ninda/v31-initial-20261108/approval-manifest.json",
+  "templateActivation": {
+    "execute": false,
+    "create": "POST /admin/legal-documents with exact approved UTF-8 content, actual type, fresh version",
+    "activate": "POST /admin/legal-documents/:actualSavedId/activate {confirmed:true,expectedVersion:<actual>,expectedContentHash:<actual legalContentHash>,idempotencyKey:<unique>}",
+    "contentRule": "Keep approved internal DRAFT envelope; no 03–06. JSON SHA256 and legalContentHash are distinct."
+  },
+  "configuration": {
+    "checker": "scripts/ninda/electronic-candidate.mjs#validateElectronicTransition",
+    "changes": "exact exported electronicChanges; missing values fail; all other prior decoded values preserved",
+    "noAutomaticAuthority": true,
+    "providerMode": "initial bilateral manual fallback; true enterprise subject isolation required",
+    "deploymentEntry": "Existing activate-mvp-release.sh remains pinned OFFLINE/MANUAL_REVIEW and rejects this candidate. No bypass or invocation; update its preflight+runtime smoke under separate reviewed release change after blockers resolved.",
+    "status": "reviewable transition proposal, not executable release authorization",
+    "requiredConfiguration": {
+      "NEW_ORDER_CONTRACT_MODE": "ELECTRONIC",
+      "CUSTOMER_IDENTITY_POLICY": "SIGNING_REQUIRED",
+      "ESIGN_NEW_REQUESTS_ENABLED": "true",
+      "ELECTRONIC_SIGNING_ENABLED": "true",
+      "CUSTOMER_IDENTITY_ENABLED": "true",
+      "FADADA_ENABLED": "true",
+      "FADADA_ACCOUNT_REGISTER_ENABLED": "true",
+      "FADADA_REALNAME_VERIFY_ENABLED": "true",
+      "FADADA_SIGNING_ENABLED": "true",
+      "MINIAPP_SIGNING_ENABLED": "true",
+      "MINIAPP_FACE_BRIDGE_ENABLED": "true",
+      "OWNER_ONBOARDING_ENABLED": "true",
+      "OWNER_LEGAL_H5_ENABLED": "true",
+      "OWNER_LEGAL_H5_ONLY": "true"
+    }
+  },
+  "preflight": [
+    "Freeze all root private business/source references and reviewed test wrapper; resolve normalized-VIN create gate and source qualification gaps without fictitious proof.",
+    "Current root observed ordinary DRAFT owner and representative records initialized; bank evidence, driver qualification and virtual vehicle/product remain unready. Do not substitute licenses for account/driver/title evidence.",
+    "Bind approved 3 template bytes; preserve backup key, persistent credentials, JWT/session/staff digest keys and uploads.",
+    "Pin machine ID, image SHA256, migrations and release manifest; verify UID1000 access/private quarantine outside nginx static roots in actual candidate container.",
+    "Validate exact electronicChanges against protected prior env in memory; never log values; check native tenant/hosts/returns and Ningda real subject separately.",
+    "Back up DB/uploads/env, verify restore and permissions; preserve mode only, fresh forbidden.",
+    "Verify production1.2.1 and pending1.2.9 actual behavior before global mode change; do not infer from local source."
+  ],
+  "smoke": {
+    "identityConfig": {
+      "identityPolicy": "SIGNING_REQUIRED",
+      "enabled": true,
+      "faceBridgeConfigured": true
+    },
+    "signingConfig": {
+      "newOrderContractMode": "ELECTRONIC",
+      "newEsignRequestsEnabled": false,
+      "newElectronicRequestsEnabled": true,
+      "electronicEnabled": true,
+      "signProviderConfigured": true,
+      "enabled": false
+    },
+    "ownerPortal": "OWNER_LEGAL_H5 migrated=true; no readonly promotion",
+    "otherChecks": [
+      "exact deployed build/images/static manifests and healthy API",
+      "owning customer reads complete protected source/final/dependency PDF bytes and returns to bound order",
+      "unauthorized customer/readonly/same-person-account protections; current legal revision",
+      "true customer + both enterprise role identity/provider/manual signature/final archive, performed only by authorized people"
+    ]
+  },
+  "rollback": [
+    "Stop new dispatch first and retain query/evidence/manual review for already sent unknown operations.",
+    "Use exact known image/env/static release backup preserving persistent credentials and uploads; forward-compatible migrations require explicit audit, no blind destructive down migration.",
+    "Do not re-enable old incompatible signing writes, restore stale business rows or erase provider effects. Unknown supplier closure stays NEEDS_REVIEW.",
+    "Reconcile genuine signatures/payments and archives after rollback; software rollback cannot cancel legal or money effects."
+  ],
+  "compatibility": {
+    "currentProductionArtifact": "1.2.1 unavailable locally; behavior UNVERIFIED_BLOCKER",
+    "pendingProvenance": "Historical upload receipt retained; current7/8 external files match1.2.9 upload, services/api.js inherited reviewed10e1 change; all8 equalTask11 baseline.",
+    "localCandidate": "1.3.0 planned distinct artifact, no upload",
+    "coexistenceGate": "No global ELECTRONIC flip until authenticated per-application/customer server scope and old-client initiation behavior are reviewed; browse/history preserved, no paper fallback for scoped electronic requests."
+  },
+  "externalAuthorization": "root alone obtains genuinely missing scoped approvals; authorized people perform legal identity/signatures. No provider/SMS/payment/deploy/upload performed by implementer."
+}

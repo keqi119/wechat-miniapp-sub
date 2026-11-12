@@ -1,0 +1,14 @@
+import { z } from 'zod';
+import { key, text } from '../common/data';
+import {partnerCapabilities} from '../partners/capabilities';
+import {staffPassword} from './password-policy';
+export const staffRole = z.enum(['ADMIN','OPERATIONS','FINANCE','SUPPORT','FIELD']);
+export const staffCreateInput = z.object({username:z.string().trim().min(3).max(100),name:text,role:staffRole,password:staffPassword,idempotencyKey:key}).strict();
+export const staffRenameInput = z.object({name:text,revision:z.number().int().nonnegative(),idempotencyKey:key}).strict();
+export const staffActionInput = z.object({revision:z.number().int().nonnegative(),reason:z.string().trim().min(1).max(500),idempotencyKey:key}).strict();
+export const staffRoleInput = staffActionInput.extend({role:staffRole});
+export const staffResetInput = staffActionInput.extend({newPassword:staffPassword});
+export const staffCapabilitiesInput=staffActionInput.extend({capabilities:z.array(z.enum(partnerCapabilities)).max(partnerCapabilities.length).refine(values=>new Set(values).size===values.length,'能力不得重复')}).strict();
+export const staffPersonInput=staffActionInput.extend({staffPersonId:z.string().trim().min(1).max(128).regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/)}).strict();
+export type StaffActor = {id:string;role:string;authVersion?:number};
+export type StaffUserView = {id:string;username:string;name:string;role:string;active:boolean;revision:number;createdAt:Date;updatedAt:Date;pendingFieldTaskCount:number;partnerCapabilities:string[];staffPersonId:string|null};

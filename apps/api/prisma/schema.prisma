@@ -64,6 +64,7 @@ enum ApplicationStatus {
  FINAL_PLAN_CONFIRMED
 }
 enum OrderStatus {
+ AWAITING_CONTRACT_REVIEW
  AWAITING_SIGNATURE
  AWAITING_PAYMENT
  AWAITING_HANDOVER
@@ -134,6 +135,20 @@ enum ServiceStatus {
  CANCELLED
 }
 model AdminUser {
+ createdRenewalCancellations OrderRenewalCancellation[] @relation("CancellationCreatedBy")
+ verifiedRenewalCancellations OrderRenewalCancellation[] @relation("CancellationSignatureVerifiedBy")
+ mutuallyVerifiedRenewalCancellations OrderRenewalCancellation[] @relation("CancellationMutualAgreementVerifiedBy")
+ completedRenewalCancellations OrderRenewalCancellation[] @relation("CancellationCompletedBy")
+ createdServiceStages OrderServiceStage[] @relation("StageCreatedBy")
+ scheduledServiceStages OrderServiceStage[] @relation("StageScheduledBy")
+ activatedServiceStages OrderServiceStage[] @relation("StageActivatedBy")
+ voidedServiceStages OrderServiceStage[] @relation("StageVoidedBy")
+ assignedAssetWorkOrders AssetWorkOrder[]
+ partnerCapabilities String[] @default([])
+ staffPersonId String?
+ revision Int @default(0)
+ authVersion Int @default(0)
+ updatedAt DateTime @updatedAt
  fieldTasks FieldHandoverTask[]
  id String @id @default(cuid())
  username String @unique
@@ -143,8 +158,10 @@ model AdminUser {
  active Boolean @default(true)
  createdAt DateTime @default(now())
  sessions AdminSession[]
+ @@index([staffPersonId])
 }
 model AdminSession {
+ authVersion Int @default(0)
  id String @id
  adminId String
  admin AdminUser @relation(fields:[adminId],references:[id])
@@ -153,6 +170,9 @@ model AdminSession {
  createdAt DateTime @default(now())
 }
 model Customer {
+ qualificationConfirmations OrderQualificationConfirmation[]
+ sourceChannel String?
+ sourceRevision Int @default(0)
  ownerMemberships OwnerMember[]
  swapPurchases SwapCreditPurchase[]
  technicalAcceptances TechnicalAcceptance[]
@@ -168,6 +188,7 @@ model Customer {
  updatedAt DateTime @updatedAt
  sessions CustomerSession[]
   h5SigningSessions H5SigningSession[]
+ ownerH5Sessions OwnerH5Session[]
  applications Application[]
  orders Order[]
  files StoredFile[]
@@ -242,16 +263,361 @@ model H5SigningSession {
  createdAt DateTime @default(now())
  @@index([customerId,expiresAt])
 }
-model ModelDefinition {
+model OwnerH5Session {
+ identitySnapshot Json @default("[]")
+ id String @id
+ customerId String
+ customer Customer @relation(fields:[customerId],references:[id],onDelete:Cascade)
+ csrfToken String
+ expiresAt DateTime
+ createdAt DateTime @default(now())
+ @@index([customerId,expiresAt])
+}
+model VehicleAssetProfile {
+ vehicleId String @id
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ revision Int @default(0)
+ registeredOwnerName String?
+ engineNumber String?
+ bodyColor String?
+ initialMileageKm Int?
+ purchaseAmount Int?
+ purchaserName String?
+ purchaseDate DateTime? @db.Date
+ nextInspectionDate DateTime? @db.Date
+ batteryOwnership String @default("UNKNOWN")
+ firstRegistrationDate DateTime? @db.Date
+ batteryCapacityKwh Decimal? @db.Decimal(8,3)
+ notes String @default("")
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+}
+
+model VehicleBaasContract {
  id String @id @default(cuid())
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ revision Int @default(0)
+ previousContractId String?
+ previousContract VehicleBaasContract? @relation("BaasSuccession",fields:[previousContractId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ successors VehicleBaasContract[] @relation("BaasSuccession")
+ provider String?
+ contractNumber String
+ supplierContractNumber String @default("")
+ supplierOrderNumber String?
+ batteryBrand String?
+ lesseeName String?
+ payerOwnerId String?
+ payerOwner VehicleOwner? @relation("BaasPayer",fields:[payerOwnerId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ lesseeCreditCode String?
+ lessorCollectionAccountInfo String?
+ batteryPackage String?
+ batterySerialNumber String @default("")
+ effectiveFrom DateTime? @db.Date
+ effectiveTo DateTime? @db.Date
+ billingCycle String?
+ rentalAmount Int?
+ paymentDayOfMonth Int?
+ graceDays Int @default(0)
+ invoiceRequired Boolean @default(false)
+ taxIncluded Boolean?
+ currency String @default("CNY")
+ status String @default("DRAFT")
+ firstCostPeriod String?
+ termsHash String
+ notes String @default("")
+ activatedAt DateTime?
+ suspendedAt DateTime?
+ terminatedAt DateTime?
+ archivedAt DateTime?
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ plans AssetCostPlan[]
+ files AssetPrivateFile[]
+ revisions VehicleBaasContractRevision[]
+ @@unique([id,vehicleId])
+ @@index([payerOwnerId])
+ @@index([vehicleId,status])
+}
+
+model VehicleBaasContractRevision {
+ id String @id @default(cuid())
+ contractId String
+ vehicleId String
+ contract VehicleBaasContract @relation(fields:[contractId,vehicleId],references:[id,vehicleId],onDelete:Restrict,onUpdate:Restrict)
+ fromRevision Int
+ toRevision Int
+ termsHash String
+ termsSnapshot Json
+ firstCostPeriod String?
+ createdBy String
+ changeReason String
+ createdAt DateTime @default(now())
+ @@unique([contractId,fromRevision])
+ @@index([contractId,toRevision])
+}
+
+model VehicleDepreciationPolicy {
+ id String @id @default(cuid())
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ revision Int @default(0)
+ previousPolicyId String?
+ previousPolicy VehicleDepreciationPolicy? @relation("DepreciationSuccession",fields:[previousPolicyId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ successors VehicleDepreciationPolicy[] @relation("DepreciationSuccession")
+ method String
+ basisAmount Int
+ basisSource String
+ basisEvidence String
+ residualAmount Int
+ startDate DateTime @db.Date
+ usefulLifeMonths Int?
+ status String @default("DRAFT")
+ termsHash String
+ currency String @default("CNY")
+ notes String @default("")
+ activatedAt DateTime?
+ supersededAt DateTime?
+ archivedAt DateTime?
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ plans AssetCostPlan[]
+ files AssetPrivateFile[]
+ @@index([vehicleId,status])
+}
+
+model AssetCostPlan {
+ id String @id @default(cuid())
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ revision Int @default(0)
+ sourceKind String
+ baasContractId String?
+ baasContract VehicleBaasContract? @relation(fields:[baasContractId],references:[id],onDelete:Restrict)
+ depreciationPolicyId String?
+ depreciationPolicy VehicleDepreciationPolicy? @relation(fields:[depreciationPolicyId],references:[id],onDelete:Restrict)
+ workOrderCostId String? @unique
+ workOrderCost AssetWorkOrderCost? @relation(fields:[workOrderCostId,vehicleId],references:[id,vehicleId],onDelete:Restrict,onUpdate:NoAction)
+ costPeriod String
+ periodStart DateTime @db.Date
+ periodEnd DateTime @db.Date
+ amount Int
+ dueDate DateTime? @db.Date
+ status String @default("SCHEDULED")
+ sourceRevision Int
+ sourceHash String
+ sourceSnapshot Json
+ createdBy String
+ confirmedBy String?
+ confirmedAt DateTime?
+ voidedBy String?
+ voidedAt DateTime?
+ reason String @default("")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ entries AssetCostEntry[]
+ @@unique([baasContractId,costPeriod])
+ @@unique([depreciationPolicyId,costPeriod])
+ @@index([vehicleId,sourceKind,costPeriod])
+}
+
+model AssetCostEntry {
+ id String @id @default(cuid())
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ revision Int @default(0)
+ planId String
+ plan AssetCostPlan @relation(fields:[planId],references:[id],onDelete:Restrict)
+ sourceKey String @unique
+ category String
+ effect String @default("COST")
+ amount Int
+ periodStart DateTime @db.Date
+ periodEnd DateTime @db.Date
+ postedAt DateTime @default(now())
+ postedBy String
+ sourceSnapshot Json
+ sourceHash String
+ reversalOfId String? @unique
+ reversalOf AssetCostEntry? @relation("CostReversal",fields:[reversalOfId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ reversedBy AssetCostEntry? @relation("CostReversal")
+ lockedAt DateTime?
+ lockedBy String?
+ reason String @default("")
+ evidenceFileIds String[] @default([])
+ createdAt DateTime @default(now())
+ payments AssetManualPaymentRecord[]
+ files AssetPrivateFile[]
+ recoveries AssetRecoveryRecord[]
+ @@unique([id,vehicleId])
+ @@index([vehicleId,category,periodStart])
+}
+
+model AssetManualPaymentRecord {
+ id String @id @default(cuid())
+ entryId String
+ entry AssetCostEntry @relation(fields:[entryId],references:[id],onDelete:Restrict)
+ revision Int @default(0)
+ status String @default("RECORDED")
+ amount Int
+ paidAt DateTime @db.Date
+ referenceNo String
+ reason String
+ evidenceFileIds String[]
+ recordedBy String
+ recordedAt DateTime @default(now())
+ voidedBy String?
+ voidedAt DateTime?
+ voidReason String?
+ @@index([entryId,status])
+}
+
+model AssetPrivateFile {
+ fileId String @id
+ file StoredFile @relation(fields:[fileId],references:[id],onDelete:Restrict)
+ kind String
+ baasContractId String?
+ baasContract VehicleBaasContract? @relation(fields:[baasContractId],references:[id],onDelete:Restrict)
+ depreciationPolicyId String?
+ depreciationPolicy VehicleDepreciationPolicy? @relation(fields:[depreciationPolicyId],references:[id],onDelete:Restrict)
+ costEntryId String?
+ costEntry AssetCostEntry? @relation(fields:[costEntryId],references:[id],onDelete:Restrict)
+ licensePlateId String?
+ licensePlate LicensePlate? @relation(fields:[licensePlateId],references:[id],onDelete:Restrict)
+ observationId String?
+ observation MarketPriceObservation? @relation(fields:[observationId],references:[id],onDelete:Restrict)
+ valuationReviewId String?
+ valuationReview VehicleValuationReview? @relation(fields:[valuationReviewId],references:[id],onDelete:Restrict)
+ workOrderId String?
+ workOrder AssetWorkOrder? @relation(fields:[workOrderId],references:[id],onDelete:Restrict)
+ workOrderCostId String?
+ workOrderCost AssetWorkOrderCost? @relation(fields:[workOrderCostId],references:[id],onDelete:Restrict)
+ sha256 String
+ uploadedBy String
+ createdAt DateTime @default(now())
+ voidedAt DateTime?
+ voidedBy String?
+ voidReason String?
+ removedAt DateTime?
+ removedBy String?
+ removeReason String?
+ @@index([baasContractId])
+ @@index([depreciationPolicyId])
+ @@index([costEntryId])
+ @@index([licensePlateId])
+ @@index([observationId])
+ @@index([valuationReviewId])
+ @@index([workOrderId])
+ @@index([workOrderCostId])
+}
+
+model LicensePlate {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ plateNumber String
+ normalizedNumber String @unique
+ plateType String
+ region String @default("")
+ notes String @default("")
+ status String @default("ACTIVE")
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ archivedAt DateTime?
+ ownerships PlateOwnershipPeriod[]
+ bindings PlateVehicleBinding[]
+ files AssetPrivateFile[]
+}
+
+model PlateOwnershipPeriod {
+ id String @id @default(cuid())
+ plateId String
+ plate LicensePlate @relation(fields:[plateId],references:[id],onDelete:Restrict)
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id],onDelete:Restrict)
+ ownershipRevision Int @default(0)
+ previousPeriodId String?
+ previousPeriod PlateOwnershipPeriod? @relation("PlateOwnershipSuccession",fields:[previousPeriodId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ successors PlateOwnershipPeriod[] @relation("PlateOwnershipSuccession")
+ validFrom DateTime
+ validUntil DateTime?
+ recordedAt DateTime @default(now())
+ recordedBy String
+ reason String
+ endedBy String?
+ endReason String?
+ evidenceFileIds String[]
+ evidenceSnapshot Json
+ @@index([plateId,validFrom])
+ @@index([ownerId,validFrom])
+}
+
+model PlateVehicleBinding {
+ id String @id @default(cuid())
+ plateId String
+ plate LicensePlate @relation(fields:[plateId],references:[id],onDelete:Restrict)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ bindingRevision Int @default(0)
+ previousBindingId String?
+ previousBinding PlateVehicleBinding? @relation("PlateBindingSuccession",fields:[previousBindingId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ successors PlateVehicleBinding[] @relation("PlateBindingSuccession")
+ validFrom DateTime
+ validUntil DateTime?
+ recordedAt DateTime @default(now())
+ recordedBy String
+ reason String
+ endedBy String?
+ endReason String?
+ evidenceFileIds String[]
+ evidenceSnapshot Json
+ @@index([plateId,validFrom])
+ @@index([vehicleId,validFrom])
+}
+
+model ModelDefinition {
+ residualObservations MarketPriceObservation[]
+ residualCurves VehicleResidualCurve[]
+ id String @id @default(cuid())
+  revision Int @default(0)
  brand String
  name String
+  modelYear Int?
  bodyType String @default("")
  description String @default("")
  createdAt DateTime @default(now())
  vehicles Vehicle[]
 }
 model Vehicle {
+ virtualAcceptanceScopeId String? @unique
+ virtualAcceptanceScope VirtualAcceptanceScope? @relation(fields:[virtualAcceptanceScopeId],references:[id],onDelete:Restrict)
+ conditionAssessment VehicleConditionAssessment?
+ inspections VehicleInspection[]
+ inspectionFiles VehicleInspectionFile[]
+ documentRevision Int @default(0)
+ documentFiles VehicleDocumentFile[]
+ serviceStages OrderServiceStage[]
+  workOrders AssetWorkOrder[]
+  operationalRestrictions VehicleOperationalRestriction[]
+  maintenanceSchedule VehicleMaintenanceSchedule?
+  workOrderCosts AssetWorkOrderCost[]
+  assetRecoveries AssetRecoveryRecord[]
+  residualForecasts VehicleResidualForecast[]
+  valuationReviews VehicleValuationReview[]
+  plateBindings PlateVehicleBinding[]
+  assetProfile VehicleAssetProfile?
+  baasContracts VehicleBaasContract[]
+  depreciationPolicies VehicleDepreciationPolicy[]
+  assetCostPlans AssetCostPlan[]
+  assetCostEntries AssetCostEntry[]
+ revision Int @default(0)
  ownerBinding OwnerVehicle?
  holdId String? @unique
  vin String?
@@ -272,14 +638,58 @@ model Vehicle {
  coverFileId String?
  mediaFileIds String[] @default([])
  status VehicleStatus @default(DRAFT)
+ catalogPublished Boolean @default(false)
  reservedOrderId String? @unique
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
  plans SubscriptionPlan[]
+ listings VehicleListing[]
  applications Application[]
  orders Order[]
 }
+model VirtualAcceptanceScope {
+ id String @id @default(cuid())
+ singleton String @unique @default("NINDA_INITIAL_VIRTUAL_20261109")
+ vehicle Vehicle?
+ status String @default("DRAFT")
+ revision Int @default(0)
+ expiresAt DateTime
+ customerId String
+ ownerId String
+ ownerActorCustomerId String
+ platformId String
+ platformActorCustomerId String
+ productVersionId String?
+ productHash String?
+ cooperationVersionId String?
+ cooperationHash String?
+ subscriptionTemplateId String?
+ subscriptionTemplateHash String?
+ cooperationTemplateId String?
+ cooperationTemplateHash String?
+ grantTemplateId String?
+ grantTemplateHash String?
+ wrapperVersion String?
+ wrapperHash String?
+ wrapperApprovedBy String?
+ wrapperApprovedAt DateTime?
+ testFactsHash String?
+ noticeHash String
+ configurationHash String?
+ applicationId String? @unique
+ orderId String? @unique
+ months Int @default(12)
+ monthlyFeeAmount Int @default(100)
+ depositKind String @default("FIXED")
+ depositAmount Int @default(100)
+ createdBy String
+ createdAt DateTime @default(now())
+}
 model SubscriptionPlan {
+ serviceStages OrderServiceStage[]
+ listing VehicleListing?
+ productVersionId String?
+ productVersion ProductVersion? @relation(fields:[productVersionId],references:[id])
  id String @id @default(cuid())
  vehicleId String
  vehicle Vehicle @relation(fields:[vehicleId],references:[id])
@@ -310,6 +720,15 @@ model LegalDocument {
  @@unique([type,version])
 }
 model StoredFile {
+ ownerPlatformAuthorities OwnerPlatformAuthority[]
+ electronicQuarantines ElectronicFileQuarantine[]
+ vehicleInspectionFile VehicleInspectionFile?
+ vehicleDocumentFile VehicleDocumentFile?
+ electronicChannelEvidence ElectronicAutoAuthority[]
+ electronicSources ElectronicSigningTask[] @relation("ElectronicSource")
+ electronicFinals ElectronicSigningTask[] @relation("ElectronicFinal")
+  assetPrivateFile AssetPrivateFile?
+ archiveFiles ArchiveFile[]
  fieldTaskGeneration Int?
  fieldTaskId String?
  fieldTask FieldHandoverTask? @relation(fields:[fieldTaskId],references:[id])
@@ -324,7 +743,68 @@ model StoredFile {
  storagePath String
  purpose String
  createdAt DateTime @default(now())
+ @@unique([id,sha256],map:"StoredFile_electronic_digest_key")
+ @@unique([id,sha256],name:"documentDigest",map:"StoredFile_vehicle_document_digest_key")
 }
+model VehicleDocumentFile {
+ fileId String @id
+ file StoredFile @relation(fields:[fileId,sha256],references:[id,sha256],onDelete:Restrict,onUpdate:Restrict)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ category String
+ sourceRelativePath String
+ sha256 String
+ uploadedBy String
+ removedAt DateTime?
+ removedBy String?
+ createdAt DateTime @default(now())
+ @@unique([vehicleId,sourceRelativePath])
+ @@unique([fileId,sha256])
+ @@index([vehicleId,createdAt])
+}
+
+model VehicleConditionAssessment {
+ vehicleId String @id
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ revision Int @default(1)
+ fireDamage Boolean
+ floodDamage Boolean
+ structuralDamage Boolean
+ assessedBy String
+ assessedAt DateTime @default(now())
+ createdBy String
+ createdAt DateTime @default(now())
+}
+
+model VehicleInspection {
+ id String @id @default(cuid())
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ revision Int @default(0)
+ title String
+ provider String?
+ inspectedAt String?
+ description String @default("")
+ imageFileIds String[] @default([])
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([vehicleId,createdAt,id])
+}
+
+model VehicleInspectionFile {
+ fileId String @id
+ file StoredFile @relation(fields:[fileId,sha256],references:[id,sha256],onDelete:Restrict,onUpdate:Restrict)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ sha256 String
+ uploadedBy String
+ createdAt DateTime @default(now())
+ @@unique([fileId,sha256])
+ @@index([vehicleId,createdAt])
+}
+
 model Application {
  id String @id @default(cuid())
  customerId String
@@ -351,6 +831,12 @@ model Application {
  @@index([customerId,status])
 }
 model FinalPlan {
+ agreedFeeComponents Json?
+  revenueRuleSnapshot Json?
+ productSnapshot Json?
+ priceAdjustmentReason String?
+ reviewStatus String @default("LEGACY")
+ contractMode String @default("ESIGN")
  id String @id @default(cuid())
  lessorSnapshot Json?
  acceptancePricing Json?
@@ -428,6 +914,13 @@ model CreditVerification {
  @@unique([applicationId,revision])
 }
 model Order {
+ // Populated only by verified V31 first delivery (Task 5); historical orders remain null.
+ serviceAnchor Json?
+ qualificationConfirmations OrderQualificationConfirmation[]
+ renewalCancellations OrderRenewalCancellation[]
+ serviceStages OrderServiceStage[]
+ collectionCases CollectionCase[]
+ contractMode String @default("ESIGN")
  fieldTasks FieldHandoverTask[]
  swapPurchases SwapCreditPurchase[]
  currentAssignmentId String? @unique
@@ -458,8 +951,12 @@ model Order {
  mileages Mileage[]
  entitlements Entitlement[]
  usageAccount UsageAccount?
+ @@unique([id,customerId])
 }
 model Contract {
+ electronicTask ElectronicSigningTask?
+ executionMode String @default("ESIGN")
+ offlineArchiveId String?
  delayQuoteId String? @unique
  delayQuote DelayQuote? @relation(fields:[delayQuoteId],references:[id])
  id String @id @default(cuid())
@@ -478,8 +975,13 @@ model Contract {
  signedFileId String?
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
+ @@unique([id,orderId,customerId],map:"Contract_electronic_scope_key")
 }
 model Bill {
+ renewalCancellationRefunds Refund[] @relation("CancellationRefundBill")
+ serviceStageId String?
+ serviceStage OrderServiceStage? @relation(fields:[serviceStageId,orderId,customerId],references:[id,orderId,customerId],onDelete:Restrict,onUpdate:Restrict)
+ collectionLinks CollectionCaseBill[]
  swapPurchase SwapCreditPurchase?
  id String @id @default(cuid())
  orderId String
@@ -502,8 +1004,15 @@ model Bill {
  payments Payment[]
  @@unique([orderId,type,sequence])
  @@unique([orderId,idempotencyKey])
+ @@unique([id,orderId,customerId])
+  @@unique([id,orderId,customerId,serviceStageId],map:"Bill_cancellation_source_key")
 }
 model Payment {
+ renewalCancellationRefunds Refund[] @relation("CancellationRefundPayment")
+ succeededAt DateTime?
+ revision Int @default(0)
+  reconciliationRequired Boolean @default(false)
+  reconciliationReason String?
  swapPurchase SwapCreditPurchase?
  allocations PaymentAllocation[]
  id String @id @default(cuid())
@@ -520,8 +1029,40 @@ model Payment {
  updatedAt DateTime @updatedAt
  refunds Refund[]
  @@unique([customerId,idempotencyKey])
+  @@unique([id,billId,customerId],map:"Payment_cancellation_source_key")
 }
 model Refund {
+ replacesRefundId String? @unique
+ replacesRefund Refund? @relation("RefundReplacement",fields:[replacesRefundId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ replacement Refund? @relation("RefundReplacement")
+ reconciliationId String?
+ reconciliation PaymentReconciliation? @relation("CurrentRefundAuthorization",fields:[reconciliationId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ usedAuthorizations PaymentReconciliation[] @relation("UsedRefundAuthorization")
+ obligationId String?
+ obligation RefundObligation? @relation(fields:[obligationId,paymentId,customerId],references:[id,paymentId,customerId],onDelete:Restrict,onUpdate:Restrict)
+ method String @default("WECHAT_ORIGINAL")
+ revision Int @default(0)
+ dispatchedAt DateTime?
+ acceptedAt DateTime?
+ channelState String?
+ channelEvidence Json?
+ failureCode String?
+ bankAccountCiphertext String?
+ bankAccount Json?
+ bankExecution Json?
+ bankReceiptKey String? @unique
+ duplicateReceipt Json?
+
+ preDeliveryCancellationId String?
+ preDeliveryCancellationSourceHash String?
+ renewalCancellationId String?
+ renewalCancellationOrderId String?
+ renewalCancellationStageId String?
+ renewalCancellationBillId String?
+ renewalCancellation OrderRenewalCancellation? @relation(fields:[renewalCancellationId,renewalCancellationOrderId,customerId,renewalCancellationStageId],references:[id,orderId,customerId,serviceStageId],onDelete:Restrict,onUpdate:Restrict,map:"Refund_renewal_cancellation_source_fkey")
+ renewalCancellationPayment Payment? @relation("CancellationRefundPayment",fields:[paymentId,renewalCancellationBillId,customerId],references:[id,billId,customerId],onDelete:Restrict,onUpdate:Restrict,map:"Refund_renewal_payment_source_fkey")
+ renewalCancellationBill Bill? @relation("CancellationRefundBill",fields:[renewalCancellationBillId,renewalCancellationOrderId,customerId,renewalCancellationStageId],references:[id,orderId,customerId,serviceStageId],onDelete:Restrict,onUpdate:Restrict,map:"Refund_renewal_bill_source_fkey")
+ succeededAt DateTime?
  id String @id @default(cuid())
  paymentId String
  payment Payment @relation(fields:[paymentId],references:[id])
@@ -550,6 +1091,11 @@ model DepositEntry {
  @@unique([refundId,type])
 }
 model Handover {
+ confirmationMode String @default("SEPARATE_DOCUMENT")
+ onlineRecordSnapshot Json?
+ onlineConfirmation Json?
+ executionMode String @default("ESIGN")
+ offlineArchiveId String?
  fieldTaskId String?
  fieldTask FieldHandoverTask? @relation(fields:[fieldTaskId],references:[id])
  vehicleId String?
@@ -642,6 +1188,7 @@ enum ReturnSettlementStatus {
  COMPLETED
 }
 model UsageAccount {
+ pricingSnapshot Json?
  id String @id @default(cuid())
  orderId String @unique
  order Order @relation(fields:[orderId],references:[id])
@@ -658,6 +1205,10 @@ model UsageAccount {
  settlement ReturnSettlement?
 }
 model UsagePeriod {
+ serviceStageId String?
+ stageSequence Int?
+ serviceStage OrderServiceStage? @relation(fields:[serviceStageId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
+ pricingSnapshot Json?
  segments UsageSegment[]
  id String @id @default(cuid())
  accountId String
@@ -684,6 +1235,7 @@ model UsagePeriod {
  createdAt DateTime @default(now())
  mileages Mileage[]
  @@unique([orderId,sequence])
+ @@unique([serviceStageId,stageSequence])
 }
 model MileagePackProduct {
  id String @id
@@ -699,10 +1251,20 @@ model MileagePurchase {
  account UsageAccount @relation(fields:[accountId],references:[id])
  customerId String
  orderId String
- productId String
- product MileagePackProduct @relation(fields:[productId],references:[id])
+ productId String?
+ product MileagePackProduct? @relation(fields:[productId],references:[id])
  productVersion Int
  applicableFromSequence Int
+ ruleVersion String @default("MILEAGE_PACK_V1")
+ applicablePeriodId String?
+ serviceStageId String?
+ assignmentId String?
+ modelDefinitionId String?
+ addonVersionId String?
+ sourceHash String?
+ pricingSnapshot Json?
+ expiresAt DateTime?
+ sourcePaymentId String? @unique
  km Int
  amount Int
  remainingKm Int @default(0)
@@ -751,9 +1313,24 @@ model Entitlement {
  title String
  description String
  status String @default("ACTIVE")
+ kind String @default("DESCRIPTION")
+ sourceKey String?
+ productVersionId String?
+ benefitVersionId String?
+ sourceSnapshot Json?
+ sourceHash String?
+ unit String?
+ totalQuantity Int?
+ revision Int @default(0)
+ activatedAt DateTime?
+ expiredAt DateTime?
  createdAt DateTime @default(now())
+ @@unique([orderId,sourceKey])
 }
 model ServiceRequest {
+ assetWorkOrders AssetWorkOrder[]
+ entitlementId String?
+ revision Int @default(0)
  id String @id @default(cuid())
  customerId String
  orderId String
@@ -832,6 +1409,11 @@ model ESignAccount {
  verificationLeaseToken String?
  certStatus String @default("UNKNOWN")
  certSerialNo String?
+ certValidFrom DateTime?
+ certValidUntil DateTime?
+ certEvidenceHash String?
+ certSubjectHash String?
+ certCheckedAt DateTime?
  verifiedAt DateTime?
  checkedAt DateTime?
  registrationLeaseUntil DateTime?
@@ -840,9 +1422,20 @@ model ESignAccount {
 }
 
 model VehicleOwner {
+ contractProfile Json?
+ electronicAuthorities ElectronicAutoAuthority[]
+ electronicTasks ElectronicSigningTask[]
+ baasPayerContracts VehicleBaasContract[] @relation("BaasPayer")
+ renewalCancellations OrderRenewalCancellation[]
+ serviceStages OrderServiceStage[]
+ plateOwnerships PlateOwnershipPeriod[]
+ cooperationMode String @default("LEGACY")
+ ordinaryContactPhone String @default("")
+ contactRevision Int @default(0)
+ subjectType String @default("ENTERPRISE")
  id String @id @default(cuid())
  name String
- creditCode String @unique
+ creditCode String? @unique
  address String
  contactPhone String @default("")
  status String @default("DRAFT")
@@ -853,10 +1446,26 @@ model VehicleOwner {
  members OwnerMember[]
  invitations OwnerInvitation[]
  esignAccount OwnerESignAccount?
+ legalRepresentative OwnerLegalRepresentative?
  seals OwnerSeal[]
  vehicles OwnerVehicle[]
  authorities OwnerAutoAuthority[]
  signingTasks OwnerSigningTask[]
+}
+model OwnerLegalRepresentative {
+ id String @id @default(cuid())
+ ownerId String @unique
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ name String
+ mobileHash String
+ maskedMobile String
+ evidenceHash String
+ revision Int @default(1)
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([mobileHash])
 }
 model OwnerMember {
  id String @id @default(cuid())
@@ -900,6 +1509,11 @@ model OwnerESignAccount {
  realNameStatus String @default("NOT_STARTED")
  certStatus String @default("UNKNOWN")
  certSerialNo String?
+ certValidFrom DateTime?
+ certValidUntil DateTime?
+ certEvidenceHash String?
+ certSubjectHash String?
+ certCheckedAt DateTime?
  evidenceHash String?
  verifiedAt DateTime?
  checkedAt DateTime?
@@ -940,6 +1554,8 @@ model OwnerVehicle {
  updatedAt DateTime @updatedAt
 }
 model OwnerAutoAuthority {
+ platformEvidence OwnerPlatformAuthority?
+ electronicAuthorities ElectronicAutoAuthority[]
  id String @id @default(cuid())
  ownerId String
  owner VehicleOwner @relation(fields:[ownerId],references:[id])
@@ -955,6 +1571,8 @@ model OwnerAutoAuthority {
  scope Json
  scopeHash String
  consentSnapshot Json
+ method String @default("PROVIDER_AUTO_GRANT")
+ letter OwnerAuthorizationLetter?
  status String @default("PENDING")
  enabled Boolean @default(false)
  revision Int @default(0)
@@ -966,6 +1584,49 @@ model OwnerAutoAuthority {
  updatedAt DateTime @updatedAt
  @@unique([ownerId,idempotencyKey])
  @@index([ownerId,status])
+}
+model OwnerPlatformAuthority {
+ authorityId String @id
+ authority OwnerAutoAuthority @relation(fields:[authorityId],references:[id],onDelete:Restrict)
+ identitySnapshot Json
+ signedFileId String?
+ signedSha256 String?
+ signedFile StoredFile? @relation(fields:[signedFileId,signedSha256],references:[id,sha256],onDelete:Restrict,onUpdate:Restrict)
+ signedAt DateTime?
+ signatureEvidence Json?
+ providerEvidenceHash String?
+ scopeReviewedBy String?
+ scopeReviewedAt DateTime?
+ scopeReviewHash String?
+ pausedAt DateTime?
+ revokeReason String?
+ processingToken String?
+ processingUntil DateTime?
+ lastErrorCode String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+}
+model OwnerAuthorizationLetter {
+ authorityId String @id
+ authority OwnerAutoAuthority @relation(fields:[authorityId],references:[id],onDelete:Restrict)
+ state String @default("DRAFT")
+ snapshot Json
+ bodyHash String
+ sourceFileId String?
+ sourceSha256 String?
+ slotCoordinates Json?
+ uploadedAt DateTime?
+ signIssuedAt DateTime?
+ signedAt DateTime?
+ signedFileId String?
+ signedPdfHash String?
+ queryEvidenceHash String?
+ withdrawnAt DateTime?
+ processingToken String?
+ processingUntil DateTime?
+ lastErrorCode String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
 }
 model OwnerSigningTask {
  id String @id @default(cuid())
@@ -1087,6 +1748,11 @@ model FadadaTask {
  platformProviderId String
  customerTransactionId String @unique
  platformTransactionId String @unique
+ platformSigningMode String @default("AUTO")
+ platformManualRequestedAt DateTime?
+ platformManualSignerId String?
+ platformManualOwnerId String?
+ platformManualEvidence Json?
  status String @default("PREPARED")
  uploadedAt DateTime?
  customerSignedAt DateTime?
@@ -1101,6 +1767,8 @@ model FadadaTask {
 }
 
 enum OrderChangeStatus {
+ SCHEDULED
+ AWAITING_ARCHIVE
  SWAP_RETURNED
  DRAFT
  REVIEW_PENDING
@@ -1122,6 +1790,13 @@ enum DelayQuoteStatus {
  SUPERSEDED
 }
 model OrderChange {
+ renewalCancellations OrderRenewalCancellation[]
+ serviceStage OrderServiceStage? @relation("StageChange")
+ fieldTasks FieldHandoverTask[] @relation("FieldTaskChange")
+ originalArchiveVersionId String?
+ originalArchiveVersion ArchiveVersion? @relation("ChangeOriginalArchive",fields:[originalArchiveVersionId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ priorTermsVersionId String?
+ priorTermsVersion OrderTermsVersion? @relation("ChangePriorTerms",fields:[priorTermsVersionId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
  targetVehicleId String?
  returnHandoverId String?
  deliveryHandoverId String?
@@ -1145,9 +1820,17 @@ model OrderChange {
  createdAt DateTime @default(now())
  quotes DelayQuote[]
  @@unique([orderId,idempotencyKey])
+ @@unique([id,orderId])
+  @@unique([id,orderId,customerId],map:"OrderChange_cancellation_source_key")
  @@index([customerId,createdAt])
 }
 model DelayQuote {
+ renewalCancellations OrderRenewalCancellation[]
+ serviceStage OrderServiceStage? @relation("StageQuote")
+ fieldTasks FieldHandoverTask[] @relation("FieldTaskQuote")
+ approvedArchiveVersionId String?
+ approvedArchiveVersion ArchiveVersion? @relation("QuoteApprovedArchive",fields:[approvedArchiveVersionId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ offlineArchive DocumentArchive?
  id String @id @default(cuid())
  changeId String
  change OrderChange @relation(fields:[changeId],references:[id])
@@ -1166,8 +1849,14 @@ model DelayQuote {
  obligations ServiceObligation[]
  termsVersion OrderTermsVersion?
  @@unique([changeId,revision])
+ @@unique([id,changeId])
 }
 model ServiceObligation {
+ swapSettlementId String?
+ supersedesObligationId String?
+ serviceStageId String?
+ stageSequence Int?
+ serviceStage OrderServiceStage? @relation(fields:[serviceStageId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
@@ -1185,6 +1874,7 @@ model ServiceObligation {
  createdAt DateTime @default(now())
  allocations PaymentAllocation[]
  @@unique([quoteId,sequence])
+ @@index([serviceStageId,stageSequence])
  @@index([orderId,active,sequence])
 }
 model PaymentAllocation {
@@ -1199,6 +1889,12 @@ model PaymentAllocation {
  @@unique([paymentId,obligationId])
 }
 model OrderTermsVersion {
+ priorForServiceStages OrderServiceStage[] @relation("StagePriorTerms")
+ activatedServiceStage OrderServiceStage? @relation("StageActiveTerms")
+ fieldTasks FieldHandoverTask[] @relation("FieldTaskTerms")
+ offlineArchiveVersionId String?
+ offlineArchiveVersion ArchiveVersion? @relation("TermsOfflineArchive",fields:[offlineArchiveVersionId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ followingChanges OrderChange[] @relation("ChangePriorTerms")
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
@@ -1210,6 +1906,288 @@ model OrderTermsVersion {
  effectiveAt DateTime
  createdAt DateTime @default(now())
  @@unique([orderId,version])
+ @@unique([id,orderId])
+}
+
+enum OrderServiceStageKind {
+ INITIAL
+ RENEWAL
+}
+enum OrderServiceStageStatus {
+ PREPARED
+ SCHEDULED
+ ACTIVE
+ ENDED
+ VOIDED
+}
+model OrderServiceStage {
+ // Immutable original order calendar reference; not a newly anchored renewal start.
+ serviceAnchor Json?
+ renewalCancellations OrderRenewalCancellation[]
+ id String @id @default(cuid())
+ orderId String
+ customerId String
+ order Order @relation(fields:[orderId,customerId],references:[id,customerId],onDelete:Restrict,onUpdate:Restrict)
+ sequence Int
+ kind OrderServiceStageKind
+ status OrderServiceStageStatus
+ revision Int @default(0)
+ previousStageId String?
+ previousStage OrderServiceStage? @relation("StagePrevious",fields:[previousStageId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
+ followingStages OrderServiceStage[] @relation("StagePrevious")
+ changeId String? @unique
+ change OrderChange? @relation("StageChange",fields:[changeId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
+ quoteId String? @unique
+ quote DelayQuote? @relation("StageQuote",fields:[quoteId,changeId],references:[id,changeId],onDelete:Restrict,onUpdate:Restrict)
+ priorTermsVersionId String?
+ priorTermsVersion OrderTermsVersion? @relation("StagePriorTerms",fields:[priorTermsVersionId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
+ termsVersionId String? @unique
+ termsVersion OrderTermsVersion? @relation("StageActiveTerms",fields:[termsVersionId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
+ approvedArchiveVersionId String?
+ approvedArchiveVersion ArchiveVersion? @relation("StageApprovedArchive",fields:[approvedArchiveVersionId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ assignmentId String
+ assignment VehicleAssignment @relation(fields:[assignmentId,orderId,customerId,vehicleId],references:[id,orderId,customerId,vehicleId],onDelete:Restrict,onUpdate:Restrict)
+ ownerId String?
+ owner VehicleOwner? @relation(fields:[ownerId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ listingId String?
+ listing VehicleListing? @relation(fields:[listingId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ productVersionId String?
+ productVersion ProductVersion? @relation(fields:[productVersionId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ subscriptionPlanId String?
+ subscriptionPlan SubscriptionPlan? @relation(fields:[subscriptionPlanId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ startDate DateTime @db.Date
+ endDate DateTime @db.Date
+ months Int
+ firstPeriodSequence Int
+ lastPeriodSequence Int
+ snapshot Json
+ snapshotHash String
+ scheduledAt DateTime?
+ activatedAt DateTime?
+ endedAt DateTime?
+ voidedAt DateTime?
+ voidReason String?
+ createdBy String?
+ creator AdminUser? @relation("StageCreatedBy",fields:[createdBy],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ scheduledBy String?
+ scheduler AdminUser? @relation("StageScheduledBy",fields:[scheduledBy],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ activatedBy String?
+ activator AdminUser? @relation("StageActivatedBy",fields:[activatedBy],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ voidedBy String?
+ voider AdminUser? @relation("StageVoidedBy",fields:[voidedBy],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ periods UsagePeriod[]
+ obligations ServiceObligation[]
+ bills Bill[]
+ swapCredits SwapCredit[]
+ swapPurchases SwapCreditPurchase[]
+ @@unique([orderId,sequence])
+ @@unique([id,orderId])
+ @@unique([id,orderId,customerId])
+ @@unique([changeId,orderId])
+ @@unique([quoteId,changeId])
+ @@unique([termsVersionId,orderId])
+  @@unique([id,orderId,customerId,changeId,quoteId,ownerId],map:"OrderServiceStage_cancellation_source_key")
+ @@index([status,startDate])
+ @@index([orderId,status])
+}
+
+// A confirmed future renewal may be cancelled before finance creates a stage.
+// Structure only: paper/funds readiness and immutable completion facts are checked by the locked domain command.
+model OrderRenewalCancellation {
+ lifecycleState String?
+ id String @id @default(cuid())
+ orderId String
+ customerId String
+ order Order @relation(fields:[orderId,customerId],references:[id,customerId],onDelete:Restrict,onUpdate:Restrict,map:"RenewalCancellation_order_source_fkey")
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ changeId String
+ change OrderChange @relation(fields:[changeId,orderId,customerId],references:[id,orderId,customerId],onDelete:Restrict,onUpdate:Restrict,map:"RenewalCancellation_change_source_fkey")
+ quoteId String @unique
+ quote DelayQuote @relation(fields:[quoteId,changeId],references:[id,changeId],onDelete:Restrict,onUpdate:Restrict,map:"RenewalCancellation_quote_source_fkey")
+ serviceStageId String?
+ serviceStage OrderServiceStage? @relation(fields:[serviceStageId,orderId,customerId,changeId,quoteId,ownerId],references:[id,orderId,customerId,changeId,quoteId,ownerId],onDelete:Restrict,onUpdate:Restrict,map:"RenewalCancellation_stage_source_fkey")
+ revision Int @default(0)
+ status String @default("OPEN")
+ sourceSnapshot Json
+ sourceHash String
+ reason String
+ signatureState String @default("UNKNOWN")
+ signatureVerifiedBy String?
+ signatureVerifier AdminUser? @relation("CancellationSignatureVerifiedBy",fields:[signatureVerifiedBy],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ signatureVerifiedAt DateTime?
+ signatureEvidenceFileIds String[] @default([])
+ signatureNote String?
+ mutuallyAgreedAt DateTime?
+ mutualAgreementVerifiedBy String?
+ mutualAgreementVerifier AdminUser? @relation("CancellationMutualAgreementVerifiedBy",fields:[mutualAgreementVerifiedBy],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ mutualAgreementVerifiedAt DateTime?
+ mutualAgreementEvidenceFileIds String[] @default([])
+ mutualAgreementNote String?
+ mutualAgreementHash String?
+ terminationArchiveId String?
+ terminationArchive DocumentArchive? @relation("CancellationPinnedArchive",fields:[terminationArchiveId,id,orderId,ownerId],references:[id,renewalCancellationId,orderId,ownerId],onDelete:Restrict,onUpdate:Restrict,map:"RenewalCancellation_archive_source_fkey")
+ approvedArchiveVersionId String?
+ approvedArchiveVersion ArchiveVersion? @relation("CancellationPinnedVersion",fields:[approvedArchiveVersionId,terminationArchiveId],references:[id,archiveId],onDelete:Restrict,onUpdate:Restrict,map:"RenewalCancellation_archive_version_fkey")
+ terminationArchiveHash String?
+ completionSnapshot Json?
+ completionHash String?
+ completedBy String?
+ completer AdminUser? @relation("CancellationCompletedBy",fields:[completedBy],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ completedAt DateTime?
+ createdBy String
+ creator AdminUser @relation("CancellationCreatedBy",fields:[createdBy],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ archives DocumentArchive[] @relation("CancellationArchiveSource")
+ refunds Refund[]
+ @@unique([id,orderId,ownerId],map:"RenewalCancellation_archive_source_key")
+ @@unique([id,orderId,customerId,serviceStageId],map:"RenewalCancellation_refund_source_key")
+ @@index([orderId,status])
+}
+
+// V31 05 evidence/review/correction history. Updates/deletes are rejected by DB trigger.
+model OrderPreDeliveryCancellation {
+ id String @id
+ orderId String
+ customerId String
+ ownerId String
+ originalContractId String
+ originalTaskId String
+ originalArchiveVersionId String
+ version Int
+ revision Int @default(0)
+ state String @default("PROPOSED")
+ sourceHash String
+ sourceSnapshot Json
+ proposalHash String
+ proposal Json
+ contractId String @unique
+ createdBy String
+ createdAt DateTime @default(now())
+ @@unique([orderId,version])
+}
+model PreDeliveryCancellationFact {
+ id String @id
+ cancellationId String
+ kind String
+ revision Int
+ predecessorId String? @unique
+ predecessorHash String?
+ sourceHash String
+ proposalHash String
+ payload Json
+ factHash String
+ occurredAt DateTime
+ recordedAt DateTime
+ actorId String
+ @@unique([cancellationId,revision])
+}
+
+model OrderTermination {
+ id String @id
+ orderId String
+ customerId String
+ ownerId String
+ originalContractId String
+ originalTaskId String
+ originalArchiveVersionId String
+ version Int
+ revision Int @default(0)
+ state String @default("PROPOSED")
+ sourceHash String
+ sourceSnapshot Json
+ proposalHash String
+ proposal Json
+ kind String
+ contractId String? @unique
+ createdBy String
+ createdAt DateTime @default(now())
+ @@unique([orderId,version])
+}
+model TerminationFact {
+ id String @id
+ terminationId String
+ kind String
+ revision Int
+ predecessorId String? @unique
+ predecessorHash String?
+ sourceHash String
+ proposalHash String
+ payload Json
+ factHash String
+ occurredAt DateTime
+ recordedAt DateTime
+ actorId String
+ @@unique([terminationId,revision])
+}
+
+model OrderExitAmountResponse {
+ id String @id
+ orderId String
+ customerId String
+ terminationId String?
+ bindingHash String?
+ responseVersion Int?
+ predecessorId String? @unique
+ sourceHash String
+ source Json
+ decision String
+ reason String
+ confirmedAt DateTime
+ idempotencyKey String
+ requestHash String
+ @@unique([customerId,idempotencyKey])
+ @@index([orderId,confirmedAt])
+ @@unique([orderId,bindingHash,responseVersion])
+}
+
+model OrderOccupancyClaim {
+ id String @id
+ orderId String
+ customerId String
+ status String @default("PROPOSED")
+ responsibility String
+ sourceHash String
+ source Json
+ createdBy String
+ createdAt DateTime
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewReason String?
+ reviewPolicy String?
+ idempotencyKey String
+ requestHash String
+ @@unique([createdBy,idempotencyKey])
+ @@index([orderId,createdAt])
+}
+
+model RenewalCancellationFact {
+ id String @id
+ cancellationId String
+ orderId String
+ customerId String
+ changeId String
+ quoteId String
+ stageId String?
+ contractId String
+ archiveVersionId String
+ kind String
+ revision Int
+ predecessorId String? @unique
+ predecessorHash String?
+ sourceHash String
+ payload Json
+ factHash String
+ occurredAt DateTime
+ recordedAt DateTime
+ actorId String
+ @@unique([cancellationId,revision])
+ @@index([changeId,kind])
 }
 
 enum AssignmentStatus {
@@ -1237,6 +2215,7 @@ enum SwapReservationStatus {
  CONSUMED
 }
 model VehicleAssignment {
+ serviceStages OrderServiceStage[]
  id String @id @default(cuid())
  orderId String
  order Order @relation(fields:[orderId],references:[id])
@@ -1254,6 +2233,7 @@ model VehicleAssignment {
  createdAt DateTime @default(now())
  segments UsageSegment[]
  @@index([orderId,startAt])
+ @@unique([id,orderId,customerId,vehicleId])
 }
 model UsageSegment {
  id String @id @default(cuid())
@@ -1287,17 +2267,22 @@ model VehicleHold {
  @@index([changeId,status])
 }
 model SwapCredit {
+ serviceStageId String?
+ serviceStage OrderServiceStage? @relation(fields:[serviceStageId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
  purchase SwapCreditPurchase?
  id String @id @default(cuid())
  orderId String
  source SwapCreditSource
  cycleSequence Int?
+ termSequence Int?
+ policySnapshot Json?
  sourcePaymentId String? @unique
  consumedChangeId String? @unique
  status SwapCreditStatus @default(ACTIVE)
  createdAt DateTime @default(now())
  reservations SwapReservation[]
  @@unique([orderId,cycleSequence])
+ @@unique([serviceStageId,termSequence])
 }
 model SwapReservation {
  id String @id @default(cuid())
@@ -1341,6 +2326,8 @@ enum SwapPurchaseStatus {
  VOID
 }
 model SwapCreditPurchase {
+ serviceStageId String?
+ serviceStage OrderServiceStage? @relation(fields:[serviceStageId,orderId,customerId],references:[id,orderId,customerId],onDelete:Restrict,onUpdate:Restrict)
  order Order @relation(fields:[orderId],references:[id],onDelete:NoAction,onUpdate:NoAction)
  customer Customer @relation(fields:[customerId],references:[id],onDelete:NoAction,onUpdate:NoAction)
  bill Bill @relation(fields:[billId],references:[id],onDelete:NoAction,onUpdate:NoAction)
@@ -1358,6 +2345,7 @@ model SwapCreditPurchase {
  paymentId String? @unique
  creditId String? @unique
  termsSnapshot Json
+ pricingSnapshot Json?
  acceptedAt DateTime
  expiresAt DateTime
  idempotencyKey String
@@ -1369,6 +2357,13 @@ model SwapCreditPurchase {
  @@index([customerId,status])
 }
 model FieldHandoverTask {
+ batchKey String
+ changeId String?
+ change OrderChange? @relation("FieldTaskChange",fields:[changeId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
+ termsVersionId String?
+ termsVersion OrderTermsVersion? @relation("FieldTaskTerms",fields:[termsVersionId,orderId],references:[id,orderId],onDelete:Restrict,onUpdate:Restrict)
+ quoteId String?
+ quote DelayQuote? @relation("FieldTaskQuote",fields:[quoteId,changeId],references:[id,changeId],onDelete:Restrict,onUpdate:Restrict)
  vehicleId String
  vehicleAssignmentId String?
  materialGeneration Int @default(0)
@@ -1391,6 +2386,1862 @@ model FieldHandoverTask {
  updatedAt DateTime @updatedAt
  files StoredFile[]
  handovers Handover[]
- @@unique([orderId,type])
+ @@unique([orderId,batchKey])
  @@index([assigneeId,status])
+}
+
+model StaffCommand {
+ id String @id @default(cuid())
+ actorId String
+ targetKey String
+ targetId String
+ action String
+ idempotencyKey String
+ requestDigest String
+ digestKeyVersion String
+ responseSnapshot Json
+ createdAt DateTime @default(now())
+ @@unique([actorId,targetKey,action,idempotencyKey])
+}
+
+// Append these models; add `archiveFiles ArchiveFile[]` to StoredFile.
+model DocumentArchive {
+ renewalCancellationId String? @unique
+ renewalCancellation OrderRenewalCancellation? @relation("CancellationArchiveSource",fields:[renewalCancellationId,orderId,ownerId],references:[id,orderId,ownerId],onDelete:Restrict,onUpdate:Restrict,map:"DocumentArchive_renewal_cancellation_fkey")
+ renewalCancellationPins OrderRenewalCancellation[] @relation("CancellationPinnedArchive")
+ quoteId String? @unique
+ quote DelayQuote? @relation(fields:[quoteId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ id String @id @default(cuid())
+ kind String
+ subjectType String
+ subjectId String
+ ownerId String?
+ orderId String?
+ handoverId String?
+ revision Int @default(0)
+ currentApprovedVersionId String? @unique
+ currentApprovedVersion ArchiveVersion? @relation("CurrentArchiveVersion", fields:[currentApprovedVersionId], references:[id])
+ createdBy String
+ createdAt DateTime @default(now())
+ versions ArchiveVersion[] @relation("ArchiveVersions")
+ @@unique([subjectType,subjectId,kind])
+  @@unique([id,renewalCancellationId,orderId,ownerId],map:"DocumentArchive_cancellation_source_key")
+ @@index([orderId,kind])
+ @@index([ownerId,kind])
+}
+model ArchiveVersion {
+ executionMode String @default("OFFLINE")
+ electronicTask ElectronicSigningTask?
+ renewalCancellationPins OrderRenewalCancellation[] @relation("CancellationPinnedVersion")
+ serviceStages OrderServiceStage[] @relation("StageApprovedArchive")
+ originalForChanges OrderChange[] @relation("ChangeOriginalArchive")
+ approvedForQuotes DelayQuote[] @relation("QuoteApprovedArchive")
+ effectiveTerms OrderTermsVersion[] @relation("TermsOfflineArchive")
+ id String @id @default(cuid())
+ createdBy String?
+ editorIds String[] @default([])
+ archiveId String
+ archive DocumentArchive @relation("ArchiveVersions", fields:[archiveId], references:[id])
+ currentFor DocumentArchive? @relation("CurrentArchiveVersion")
+ version Int
+ status String @default("DRAFT")
+ templateId String
+ templateVersion Int
+ sourceFileId String?
+ businessSnapshotHash String
+ partiesSnapshot Json
+ requiredSigners String[]
+ signedOn String?
+ contractNumber String?
+ originalCustodian String?
+ originalLocation String?
+ declaredPages Int?
+ scopeSnapshot Json
+ fileManifestHash String?
+ submittedBy String?
+ submittedAt DateTime?
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewChecklist Json?
+ partyChecks Json?
+ reviewReason String?
+ invalidatedBy String?
+ invalidatedAt DateTime?
+ invalidationReason String?
+ createdAt DateTime @default(now())
+ files ArchiveFile[]
+ feedback ArchiveFeedback[]
+ @@unique([archiveId,version])
+  @@unique([id,archiveId],map:"ArchiveVersion_id_archiveId_key")
+}
+model ArchiveFile {
+ id String @id @default(cuid())
+ versionId String
+ version ArchiveVersion @relation(fields:[versionId], references:[id])
+ fileId String
+ file StoredFile @relation(fields:[fileId], references:[id])
+ position Int
+ uploadedBy String
+ uploadedRole String
+ createdAt DateTime @default(now())
+ @@unique([versionId,position])
+ @@unique([versionId,fileId])
+ @@unique([fileId])
+}
+model ArchiveFeedback {
+ id String @id @default(cuid())
+ source String?
+ recordedBy String?
+ versionId String
+ version ArchiveVersion @relation(fields:[versionId], references:[id])
+ actorType String
+ actorId String
+ message String
+ status String @default("OPEN")
+ resolvedBy String?
+ resolution String?
+ createdAt DateTime @default(now())
+ resolvedAt DateTime?
+ @@index([versionId,status])
+}
+model ArchiveCommand {
+ id String @id @default(cuid())
+ actorId String
+ resourceId String
+ action String
+ key String
+ requestHash String
+ resultSnapshot Json
+ createdAt DateTime @default(now())
+ @@unique([actorId,resourceId,action,key])
+}
+
+// Root integration: VehicleOwner.creditCode String? @unique;
+// VehicleOwner.subjectType String @default("ENTERPRISE")
+// OwnerMember: no field changes; historical electronic status is not offline authorization.
+// OwnerH5Session.identitySnapshot Json @default("[]")
+// Scalar foreign keys deliberately avoid edits to existing relation arrays.
+model PartnerVerification {
+ id String @id @default(cuid())
+ ownerId String
+ revision Int @default(0)
+ profileRevision Int
+ subjectType String
+ status String @default("SUBMITTED")
+ identityBindingId String
+ identityBindingRevision Int
+ evidenceFileIds String[]
+ submittedBy String
+ submittedAt DateTime @default(now())
+ reviewedBy String?
+ reviewedAt DateTime?
+ reason String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([ownerId,revision])
+}
+model PartnerIdentityBinding {
+ id String @id @default(cuid())
+ ownerId String
+ customerId String
+ relationship String
+ profileRevision Int
+ revision Int @default(0)
+ status String @default("SUBMITTED")
+ evidenceFileIds String[]
+ submittedBy String
+ submittedAt DateTime @default(now())
+ reviewedBy String?
+ reviewedAt DateTime?
+ reason String?
+ revokedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([ownerId,customerId])
+ @@index([customerId,status])
+}
+model PartnerVehicleBindingHistory {
+ id String @id @default(cuid())
+ ownerId String
+ vehicleId String
+ bindingRevision Int
+ evidenceFileId String
+ validFrom DateTime @default(now())
+ validUntil DateTime?
+ submittedBy String
+ reviewedBy String
+ @@unique([vehicleId,bindingRevision])
+ @@index([ownerId,vehicleId])
+}
+model PartnerVehicleBindingProposal {
+ id String @id @default(cuid())
+ ownerId String
+ vehicleId String
+ bindingRevision Int
+ evidenceFileId String
+ submittedBy String
+ status String @default("SUBMITTED")
+ reviewedBy String?
+ reviewedAt DateTime?
+ createdAt DateTime @default(now())
+ @@index([vehicleId,status])
+}
+
+// Root integration: add to SubscriptionPlan:
+// productVersionId String?
+// productVersion ProductVersion? @relation(fields:[productVersionId],references:[id])
+// Keep all legacy fields as read-only compatibility projection. Legacy rows remain inactive until verified.
+model Product {
+ id String @id @default(cuid())
+ name String
+ revision Int @default(0)
+ createdBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ versions ProductVersion[]
+}
+model ProductVersion {
+ customerBaas Json?
+ // No backfill/default: historic frozen products did not agree an independent minimum.
+ minimumTermMonths Int?
+ serviceStages OrderServiceStage[]
+ configurationVersion Int @default(1)
+ baseFeeAmount Int?
+ mileageMonthlyFeeAmount Int?
+ swapPolicy Json?
+ id String @id @default(cuid())
+ productId String
+ product Product @relation(fields:[productId],references:[id])
+ version Int
+ revision Int @default(0)
+ status String @default("DRAFT")
+ name String
+ months Int
+ monthlyFeeAmount Int
+ mileagePerMonthKm Int
+ excessMileagePriceAmount Int
+ energyDescription String
+ conditions String
+ vehicleIds String[]
+ modelDefinitionIds String[]
+ createdBy String
+ publishedBy String?
+ publishedAt DateTime?
+ retiredBy String?
+ retiredAt DateTime?
+ retirementReason String?
+ createdAt DateTime @default(now())
+ items ProductCombinationItem[]
+ plans SubscriptionPlan[]
+ listings VehicleListing[]
+ @@unique([productId,version])
+ @@index([status])
+}
+model VehicleListing {
+ inspectionSnapshots Json @default("[]")
+ basicConditionSnapshot Json?
+ serviceStages OrderServiceStage[]
+ id String @id @default(cuid())
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Cascade)
+ productVersionId String
+ productVersion ProductVersion @relation(fields:[productVersionId],references:[id],onDelete:Cascade)
+ subscriptionPlanId String @unique
+ subscriptionPlan SubscriptionPlan @relation(fields:[subscriptionPlanId],references:[id],onDelete:Cascade)
+ revision Int @default(0)
+ status String @default("DRAFT")
+ source String @default("EXPLICIT")
+ visible Boolean @default(true)
+ recommended Boolean @default(false)
+ sortOrder Int @default(0)
+ productSourceHash String?
+ snapshot Json?
+ createdBy String
+ publishedBy String?
+ publishedAt DateTime?
+ withdrawnBy String?
+ withdrawnAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([vehicleId,productVersionId])
+ @@index([status,visible,sortOrder])
+}
+model BenefitDefinition {
+ id String @id @default(cuid())
+ name String
+ createdBy String
+ createdAt DateTime @default(now())
+ versions BenefitDefinitionVersion[]
+}
+model BenefitDefinitionVersion {
+ id String @id @default(cuid())
+ definitionId String
+ definition BenefitDefinition @relation(fields:[definitionId],references:[id])
+ version Int
+ name String
+ description String
+ provider String
+ conditions String
+ kind String
+ unit String?
+ totalQuantity Int?
+ validity String
+ createdBy String
+ createdAt DateTime @default(now())
+ items ProductCombinationItem[]
+ @@unique([definitionId,version])
+}
+model ProductCombinationItem {
+ id String @id @default(cuid())
+ productVersionId String
+ productVersion ProductVersion @relation(fields:[productVersionId],references:[id],onDelete:Cascade)
+ position Int
+ kind String
+ benefitVersionId String?
+ benefitVersion BenefitDefinitionVersion? @relation(fields:[benefitVersionId],references:[id])
+ @@unique([productVersionId,position])
+}
+model ProductCommand {
+ id String @id @default(cuid())
+ actorId String
+ resourceId String
+ action String
+ key String
+ requestHash String
+ resultSnapshot Json
+ createdAt DateTime @default(now())
+ @@unique([actorId,resourceId,action,key])
+}
+
+// N05: scalar external references deliberately do not change existing model relation arrays.
+model InsurancePolicy {
+ id String @id @default(cuid())
+ insurer String
+ policyNumber String
+ revision Int @default(0)
+ renewalOfPolicyId String?
+ createdBy String
+ createdAt DateTime @default(now())
+ versions InsurancePolicyVersion[]
+ files InsurancePolicyFile[]
+ @@unique([insurer,policyNumber])
+}
+model InsurancePolicyVersion {
+ id String @id @default(cuid())
+ policyId String
+ policy InsurancePolicy @relation(fields:[policyId],references:[id])
+ version Int
+ revision Int @default(0)
+ status String @default("DRAFT")
+ policyType String?
+ insurerSnapshot String?
+ policyNumberSnapshot String?
+ registeredBy String?
+ registeredAt DateTime?
+ registrationSnapshot Json?
+ changeReason String?
+ changeKind String @default("ORIGINAL")
+ effectiveAt DateTime
+ startAt DateTime
+ endAt DateTime
+ policyholder String
+ insuredParty String
+ vehicleIds String[]
+ coverageItems Json
+ premiumAmount Int?
+ terms String
+ fileIds String[]
+ requirementVersionIds String[]
+ submittedBy String?
+ submittedAt DateTime?
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewChecks Json?
+ reviewReason String?
+ editedByIds String[] @default([])
+ createdBy String
+ createdAt DateTime @default(now())
+ @@unique([policyId,version])
+ @@index([status,endAt])
+}
+model InsurancePolicyFile {
+ id String @id @default(cuid())
+ policyId String
+ policy InsurancePolicy @relation(fields:[policyId],references:[id])
+ fileId String @unique
+ vehicleIds String[]
+ uploadedBy String
+ createdAt DateTime @default(now())
+}
+model CoverageRequirement {
+ id String @id @default(cuid())
+ scopeType String
+ scopeId String
+ revision Int @default(0)
+ versions CoverageRequirementVersion[]
+ @@unique([scopeType,scopeId])
+}
+model CoverageRequirementVersion {
+ id String @id @default(cuid())
+ requirementId String
+ requirement CoverageRequirement @relation(fields:[requirementId],references:[id])
+ version Int
+ effectiveAt DateTime
+ items Json
+ createdBy String
+ createdAt DateTime @default(now())
+ @@unique([requirementId,version])
+}
+model InsuranceRenewalReminder {
+ id String @id @default(cuid())
+ vehicleId String
+ policyId String
+ policyVersionId String
+ thresholdDays Int
+ dueAt DateTime
+ status String @default("OPEN")
+ createdAt DateTime @default(now())
+ @@unique([vehicleId,policyVersionId,thresholdDays])
+ @@index([status,dueAt])
+}
+model InsuranceCommand {
+ id String @id @default(cuid())
+ actorId String
+ resourceId String
+ action String
+ key String
+ requestHash String
+ resultSnapshot Json
+ createdAt DateTime @default(now())
+ @@unique([actorId,resourceId,action,key])
+}
+
+model InsuranceCoverageReviewTask {
+ id String @id @default(cuid())
+ vehicleId String
+ policyVersionId String
+ requirementVersionId String
+ dueAt DateTime
+ status String @default("OPEN")
+ createdAt DateTime @default(now())
+ @@unique([vehicleId,policyVersionId,requirementVersionId])
+ @@index([status,dueAt])
+}
+
+// N03 scalar snapshot references are checked together inside serializable transactions.
+// Add these standalone models; no inverse relation fields are required.
+model CustomerQualificationVersion {
+ profileSnapshot Json?
+ orderConfirmations OrderQualificationConfirmation[]
+ id String @id @default(cuid())
+ customerId String
+ revision Int
+ profileHash String
+ status String @default("SUBMITTED")
+ verificationSource String @default("MANUAL")
+ identityFileIds String[]
+ drivingLicenseFileIds String[]
+ evidenceHash String
+ identityExpiresAt DateTime?
+ drivingLicenseExpiresAt DateTime?
+ identityLongTerm Boolean @default(false)
+ drivingLicenseLongTerm Boolean @default(false)
+ submittedBy String
+ reviewedBy String?
+ reviewedAt DateTime?
+ reasonCodes String[] @default([])
+ supplementaryInstructions String @default("")
+ idempotencyKey String
+ requestHash String
+ createdAt DateTime @default(now())
+ @@unique([customerId,revision])
+ @@unique([customerId,idempotencyKey])
+ @@index([customerId,status])
+}
+
+model OrderQualificationConfirmation {
+ id String @id @default(cuid())
+ orderId String
+ order Order @relation(fields:[orderId],references:[id])
+ customerId String
+ customer Customer @relation(fields:[customerId],references:[id])
+ qualificationId String
+ qualification CustomerQualificationVersion @relation(fields:[qualificationId],references:[id])
+ qualificationRevision Int
+ profileContentHash String
+ originalScopeHash String
+ orderRevision Int
+ reviewedBy String
+ reason String
+ sameCustomerConfirmed Boolean
+ createdAt DateTime @default(now())
+ @@index([orderId,qualificationId,createdAt],map:"OrderQualificationConfirmation_order_qualification_created_idx")
+}
+
+model ApplicationRiskReview {
+ id String @id @default(cuid())
+ applicationId String
+ customerId String
+ revision Int
+ applicationRevision Int
+ profileHash String
+ applicationProfileHash String
+ qualificationId String
+ qualificationRevision Int
+ finalPlanId String
+ planRevision Int
+ commercialHash String
+ planInputHash String
+ vehicleId String
+ vehicleInputHash String
+ creditConsentId String
+ creditConsentRevision Int
+ creditConsentVersion Int
+ creditVerificationId String
+ creditVerificationRevision Int
+ creditRevision Int
+ decision String
+ reasonCodes String[] @default([])
+ supplementaryInstructions String @default("")
+ identityChecked Boolean
+ drivingQualificationChecked Boolean
+ reviewedBy String
+ reviewedAt DateTime @default(now())
+ idempotencyKey String
+ requestHash String
+ @@unique([applicationId,revision])
+ @@unique([applicationId,idempotencyKey])
+ @@index([customerId,reviewedAt])
+}
+
+model PartnerRevenueRule {
+ id String @id @default(cuid())
+ ownerId String
+ revision Int @default(0)
+ currentApprovedVersionId String?
+ createdAt DateTime @default(now())
+ @@index([ownerId])
+}
+model PartnerRevenueRuleVersion {
+ id String @id @default(cuid())
+ ruleId String
+ ownerId String
+ version Int
+ revision Int @default(0)
+ status String @default("DRAFT")
+ cooperationVersionId String?
+ vehicleIds String[]
+ validFrom DateTime? @db.Date
+ validUntil DateTime? @db.Date
+ terms Json
+ contentHash String
+ evidenceFileIds String[]
+ createdBy String
+ submittedBy String?
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewReason String?
+ createdAt DateTime @default(now())
+ @@unique([ruleId,version])
+ @@index([ownerId,status])
+}
+model PartnerAccountVersion {
+ id String @id @default(cuid())
+ ownerId String
+ version Int
+ revision Int @default(0)
+ status String @default("SUBMITTED")
+ accountName String
+ bankName String
+ accountNumber String
+ contentHash String
+ evidenceFileIds String[]
+ createdBy String
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewReason String?
+ createdAt DateTime @default(now())
+ @@unique([ownerId,version])
+ @@index([ownerId,status])
+}
+model PartnerSettlement {
+ id String @id @default(cuid())
+ ownerId String
+ revision Int @default(0)
+ status String @default("DRAFT")
+ periodStart DateTime @db.Date
+ periodEnd DateTime @db.Date
+ accountVersionId String
+ accountSnapshot Json
+ accountHash String
+ payableAmount Int
+ explanation String
+ createdBy String
+ submittedBy String?
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewReason String?
+ createdAt DateTime @default(now())
+ @@index([ownerId,status])
+}
+model PartnerSettlementLine {
+ id String @id @default(cuid())
+ settlementId String
+ ownerId String
+ orderId String?
+ category String
+ sourceType String?
+ sourceId String?
+ sourceShareAmount Int @default(0)
+ payableAmount Int
+ ruleVersionId String?
+ ruleSnapshot Json?
+ sourceSnapshot Json?
+ originalSettlementLineId String?
+ explanation String
+ evidenceFileIds String[]
+ createdAt DateTime @default(now())
+ @@index([settlementId])
+ @@index([sourceType,sourceId])
+}
+model PartnerSettlementPayment {
+ id String @id @default(cuid())
+ settlementId String
+ version Int
+ ownerId String
+ revision Int @default(0)
+ status String @default("RECORDED")
+ amount Int
+ paidOn DateTime @db.Date
+ accountVersionId String
+ accountHash String
+ reference String
+ evidenceFileIds String[]
+ recordedBy String
+ reconciledBy String?
+ reconciledAt DateTime?
+ reconciliationReason String?
+ createdAt DateTime @default(now())
+ @@unique([settlementId,version])
+}
+model PartnerSettlementFeedback {
+ id String @id @default(cuid())
+ settlementId String
+ ownerId String
+ customerId String?
+ recordedBy String?
+ source String?
+ status String @default("OPEN")
+ revision Int @default(0)
+ message String
+ resolvedBy String?
+ resolution String?
+ resolvedAt DateTime?
+ createdAt DateTime @default(now())
+ @@index([settlementId,status])
+}
+model PartnerSettlementFile {
+ id String @id @default(cuid())
+ ownerId String
+ fileId String @unique
+ kind String
+ uploadedBy String
+ createdAt DateTime @default(now())
+ @@index([ownerId])
+}
+
+model SwapReceiptEvent {
+ id String @id @default(cuid())
+ orderId String
+ customerId String
+ changeId String
+ quoteId String
+ assignmentId String
+ vehicleId String
+ handoverId String
+ handoverRevision Int
+ manifestHash String
+ fieldTaskId String?
+ materialGeneration Int?
+ revision Int
+ previousEventId String?
+ receivedAt DateTime
+ readingKm Int
+ storageLocation String
+ evidenceFileIds String[]
+ evidence Json
+ correctionReason String?
+ createdBy String
+ createdAt DateTime @default(now())
+ idempotencyKey String
+ requestHash String
+ factHash String
+ @@unique([changeId,revision])
+ @@unique([createdBy,idempotencyKey])
+ @@index([changeId,createdAt])
+}
+
+model SwapReceiptReview {
+ id String @id @default(cuid())
+ eventId String @unique
+ changeId String
+ decision String
+ disposition String
+ reason String
+ sourceSnapshot Json
+ sourceHash String
+ reviewedBy String
+ reviewedAt DateTime @default(now())
+ idempotencyKey String
+ requestHash String
+ @@unique([reviewedBy,idempotencyKey])
+ @@index([changeId,disposition])
+}
+
+model SwapReceiptResponse {
+ id String @id @default(cuid())
+ eventId String @unique
+ customerId String
+ decision String
+ reason String
+ evidenceFileIds String[]
+ factHash String
+ createdAt DateTime @default(now())
+ idempotencyKey String
+ requestHash String
+ @@unique([customerId,idempotencyKey])
+}
+
+model VehicleReceiptEvent {
+ id String @id @default(cuid())
+ handoverId String
+ orderId String
+ vehicleId String
+ assignmentId String?
+ revision Int
+ previousEventId String? @unique
+ isCurrent Boolean @default(true)
+ receivedAt DateTime
+ readingKm Int
+ storageLocation String
+ evidenceFileIds String[]
+ correctionReason String?
+ createdBy String
+ createdAt DateTime @default(now())
+ idempotencyKey String
+ requestHash String
+ sourceSnapshot Json?
+ evidenceSnapshot Json?
+ factHash String?
+ @@unique([handoverId,revision])
+ @@unique([createdBy,idempotencyKey])
+ @@index([orderId,isCurrent])
+}
+
+model VehicleReceiptReview {
+ id String @id
+ eventId String @unique
+ orderId String
+ decision String
+ disposition String
+ reason String
+ source Json
+ sourceHash String
+ reviewedBy String
+ reviewedAt DateTime
+ idempotencyKey String
+ requestHash String
+ @@unique([reviewedBy,idempotencyKey])
+ @@index([orderId,reviewedAt])
+}
+
+model OfflineCancellationReview {
+ id String @id @default(cuid())
+ orderId String
+ revision Int
+ isCurrent Boolean @default(true)
+ paperStatus String
+ status String @default("SUBMITTED")
+ businessSnapshotHash String
+ reason String
+ evidenceFileIds String[]
+ submittedBy String
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewReason String?
+ createdAt DateTime @default(now())
+ idempotencyKey String
+ requestHash String
+ @@unique([orderId,revision])
+ @@unique([orderId,idempotencyKey])
+ @@index([orderId,isCurrent])
+}
+// Migration must also add partial unique indexes:
+// CREATE UNIQUE INDEX "VehicleReceiptEvent_one_current" ON "VehicleReceiptEvent"("handoverId") WHERE "isCurrent"=true;
+// CREATE UNIQUE INDEX "OfflineCancellationReview_one_current" ON "OfflineCancellationReview"("orderId") WHERE "isCurrent"=true;
+
+model EntitlementReservation {
+ id String @id @default(cuid())
+ entitlementId String
+ orderId String
+ customerId String
+ serviceRequestId String @unique
+ quantity Int
+ status String @default("RESERVED")
+ reservedBy String
+ reservedAt DateTime @default(now())
+ resolvedBy String?
+ resolvedAt DateTime?
+ @@index([entitlementId,status])
+ @@index([orderId,status])
+}
+model EntitlementLedger {
+ id String @id @default(cuid())
+ entitlementId String
+ orderId String
+ customerId String
+ serviceRequestId String?
+ reservationId String?
+ type String
+ quantity Int
+ originalEntryId String?
+ actorId String
+ idempotencyKey String
+ reason String @default("")
+ createdAt DateTime @default(now())
+ @@unique([entitlementId,type,idempotencyKey])
+ @@index([entitlementId,createdAt])
+ @@index([originalEntryId])
+}
+model EntitlementCommand {
+ id String @id @default(cuid())
+ entitlementId String
+ actorId String
+ action String
+ idempotencyKey String
+ requestHash String
+ resultSnapshot Json
+ createdAt DateTime @default(now())
+ @@unique([entitlementId,action,idempotencyKey])
+}
+
+model PaymentReconciliation {
+ usedRefundId String?
+ usedRefund Refund? @relation("UsedRefundAuthorization",fields:[usedRefundId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ currentRefunds Refund[] @relation("CurrentRefundAuthorization")
+ id String @id @default(cuid())
+ paymentId String
+ status String @default("SUBMITTED")
+ resolution String
+ note String
+ evidenceFileIds String[] @default([])
+ paymentSnapshot Json
+ submittedBy String
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewNote String?
+ createdAt DateTime @default(now())
+ @@index([paymentId,status])
+}
+// Add to VehicleOwner. Existing revision remains the document/legal business revision.
+// ordinaryContactPhone String @default("")
+// contactRevision Int @default(0)
+
+model PartnerCooperationDraft {
+ editorIds String[] @default([])
+ id String @id @default(cuid())
+ ownerId String @unique
+ revision Int @default(0)
+ status String @default("DRAFT")
+ payload Json
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+}
+model PartnerCooperationSubmission {
+ editorIds String[] @default([])
+ id String @id @default(cuid())
+ ownerId String
+ revision Int
+ profileRevision Int
+ draftRevision Int
+ representatives Json
+ subjectEvidenceFileIds String[]
+ domainVersions Json
+ submissionHash String
+ status String @default("SUBMITTED")
+ submittedBy String
+ submittedAt DateTime @default(now())
+ reviewedBy String?
+ reviewedAt DateTime?
+ reason String?
+ completedActions Json
+ legacyVerificationId String? @unique
+ legacyIdentityBindingId String?
+ @@unique([ownerId,revision])
+ @@index([ownerId,status])
+}
+
+// Scalar references avoid modifying shared inverse relation arrays.
+model PartnerPortalAccess {
+ bindingMethod String?
+ boundAt DateTime?
+ boundInvitationId String?
+ id String @id @default(cuid())
+ ownerId String @unique
+ revision Int @default(0)
+ accessVersion Int @default(0)
+ status String @default("DISABLED")
+ displayName String @default("")
+ mobileHash String?
+ mobileCiphertext String?
+ maskedMobile String @default("")
+ reviewedBy String?
+ reviewedAt DateTime?
+ lastLoginAt DateTime?
+ disabledAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([mobileHash,status])
+}
+model PartnerPortalCandidate {
+ editedByIds String[] @default([])
+ id String @id @default(cuid())
+ accessId String
+ ownerId String
+ revision Int @default(0)
+ status String @default("DRAFT")
+ displayName String
+ mobileHash String
+ mobileCiphertext String
+ maskedMobile String
+ reason String
+ createdBy String
+ submittedBy String?
+ reviewedBy String?
+ reviewedAt DateTime?
+ reviewReason String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([accessId,status,createdAt])
+}
+model PartnerPortalChallenge {
+ id String @id
+ mobileHash String
+ maskedMobile String
+ smsChallengeId String? @unique
+ scopeSnapshot Json
+ scopeDigest String
+ status String @default("PENDING")
+ attempts Int @default(0)
+ expiresAt DateTime
+ consumedAt DateTime?
+ createdAt DateTime @default(now())
+ @@index([mobileHash,createdAt])
+}
+model PartnerPortalSession {
+ id String @id
+ mode String @default("PARTNER_READONLY")
+ mobileHash String
+ maskedMobile String
+ scopeSnapshot Json
+ csrfToken String
+ consentSnapshot Json
+ expiresAt DateTime
+ createdAt DateTime @default(now())
+ @@index([mobileHash,expiresAt])
+}
+// Migration: create only new tables, no Customer FK, no legacy conversion.
+// Unique owner access row serializes all effective-version/candidate commands.
+// Candidate status one pending constraint:
+// CREATE UNIQUE INDEX "PartnerPortalCandidate_one_pending" ON "PartnerPortalCandidate"("accessId") WHERE status IN ('DRAFT','SUBMITTED');
+// Sensitive payload encrypted AES-256-GCM with domain-separated SESSION_SECRET key;
+// indexed mobileHash uses domain-separated HMAC, never raw mobile in portal tables.
+
+// v2.3 direct registration; these are registration facts, never fabricated reviews.
+model PartnerAgreement {
+ id String @id @default(cuid())
+ ownerId String
+ revision Int @default(0)
+ status String @default("DRAFT")
+ currentVersionId String?
+ createdBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([ownerId,status])
+}
+model PartnerAgreementVersion {
+ sealGrants ElectronicSealGrant[]
+ electronicTask ElectronicSigningTask?
+ executionMode String @default("OFFLINE")
+ electronicTerms Json?
+ id String @id @default(cuid())
+ agreementId String
+ ownerId String
+ version Int
+ status String @default("DRAFT")
+ title String @default("")
+ referenceNumber String @default("")
+ fileIds String[] @default([])
+ vehicleIds String[] @default([])
+ partnerRateBps Int?
+ validFrom String?
+ validUntil String?
+ notes String @default("")
+ contentHash String
+ createdBy String
+ createdAt DateTime @default(now())
+ @@unique([agreementId,version])
+ @@index([ownerId,createdAt])
+ @@unique([id,ownerId],map:"PartnerAgreementVersion_electronic_owner_key")
+}
+
+model ElectronicAutoAuthority {
+ basis Json?
+ channelReview Json?
+ id String @id @default(cuid())
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id])
+ providerAuthorityId String
+ providerAuthority OwnerAutoAuthority @relation(fields:[providerAuthorityId],references:[id])
+ scope Json
+ scopeHash String
+ acceptedBy String
+ acceptedAt DateTime
+ businessEvidenceHash String
+ enabled Boolean @default(false)
+ revokedAt DateTime?
+ revision Int @default(0)
+ channelGranteeOwnerId String?
+ channelGranteeName String?
+ channelEvidenceFileId String?
+ channelEvidenceFile StoredFile? @relation(fields:[channelEvidenceFileId],references:[id])
+ channelEvidenceHash String?
+ channelReviewedBy String?
+ channelReviewedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([providerAuthorityId,scopeHash])
+ @@index([ownerId,enabled])
+}
+
+model ElectronicStoppedEvidence {
+ id String @id @default(cuid())
+ taskId String @unique
+ task ElectronicSigningTask @relation(fields:[taskId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ finalFileId String
+ proof Json
+ capturedAt DateTime @default(now())
+}
+model ElectronicSealGrant {
+ cooperationVersion PartnerAgreementVersion @relation(fields:[cooperationVersionId,ownerId],references:[id,ownerId],onDelete:Restrict,onUpdate:Restrict)
+ mainTask ElectronicSigningTask @relation("GrantMainTask",fields:[mainTaskId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ previousGrant ElectronicSealGrant? @relation("GrantChain",fields:[previousGrantId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ nextGrant ElectronicSealGrant? @relation("GrantChain")
+ id String @id @default(cuid())
+ cooperationVersionId String
+ version Int @default(1)
+ previousGrantId String? @unique
+ ownerId String
+ sourceHash String
+ sourceSnapshot Json
+ mainTaskId String
+ signedAt DateTime?
+ archivedAt DateTime?
+ revokedAt DateTime?
+ revision Int @default(0)
+ createdAt DateTime @default(now())
+ task ElectronicSigningTask? @relation("GrantSigningTask")
+ @@unique([cooperationVersionId,version])
+}
+model ElectronicSigningTask {
+ sourceGrants ElectronicSealGrant[] @relation("GrantMainTask")
+ sealGrantId String? @unique
+ sealGrant ElectronicSealGrant? @relation("GrantSigningTask",fields:[sealGrantId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+
+ recoveryNextCheckAt DateTime?
+ evidenceReviewStatus String?
+ quarantinedFiles ElectronicFileQuarantine[]
+ stoppedEvidence ElectronicStoppedEvidence?
+ stoppedEvidenceId String? @unique
+ stopStatus String?
+ finalVerification Json?
+ legalCompletedAt DateTime?
+
+ id String @id @default(cuid())
+ archiveVersionId String @unique
+ archiveVersion ArchiveVersion @relation(fields:[archiveVersionId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ contractId String? @unique
+ orderId String?
+ customerId String?
+ contract Contract? @relation(fields:[contractId,orderId,customerId],references:[id,orderId,customerId],onDelete:Restrict,onUpdate:Restrict)
+ cooperationVersionId String? @unique
+ cooperationVersion PartnerAgreementVersion? @relation(fields:[cooperationVersionId,ownerId],references:[id,ownerId],onDelete:Restrict,onUpdate:Restrict)
+ ownerId String
+ owner VehicleOwner @relation(fields:[ownerId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ platformSubjectId String
+ kind String
+ businessHash String
+ sourceFileId String
+ sourceSha256 String
+ sourceFile StoredFile @relation("ElectronicSource",fields:[sourceFileId,sourceSha256],references:[id,sha256],onDelete:Restrict,onUpdate:Restrict)
+ finalFileId String? @unique
+ finalSha256 String?
+ finalFile StoredFile? @relation("ElectronicFinal",fields:[finalFileId,finalSha256],references:[id,sha256],onDelete:Restrict,onUpdate:Restrict)
+ providerContractId String @unique
+ snapshot Json
+ snapshotHash String
+ approvedBy String
+ approvedAt DateTime
+ status String @default("PREPARED")
+ uploadStatus String @default("NOT_STARTED")
+ uploadedAt DateTime?
+ uploadEvidenceHash String?
+ filingStatus String @default("NOT_STARTED")
+ filedAt DateTime?
+ filingEvidenceHash String?
+ archivedAt DateTime?
+ withdrawnAt DateTime?
+ retiredAt DateTime?
+ revision Int @default(0)
+ processingToken String?
+ processingUntil DateTime?
+ lastErrorCode String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ parties ElectronicSigningParty[]
+ operations ElectronicSigningOperation[]
+ @@unique([contractId,orderId,customerId],map:"ElectronicSigningTask_contract_scope_key")
+ @@unique([cooperationVersionId,ownerId],map:"ElectronicSigningTask_cooperation_scope_key")
+ @@index([orderId,kind])
+ @@index([ownerId,status])
+ @@index([status,updatedAt])
+}
+
+model ElectronicSigningParty {
+ enrichmentQueryEvidenceHash String?
+ evidenceCheckedAt DateTime?
+ originalQueryEvidenceHash String?
+ providerSignedAt DateTime?
+ providerSignedAtRaw String?
+ providerSignedAtPrecisionMs Int?
+
+ documentConsent Json?
+ documentConsentHash String?
+ manualConsent Json?
+ manualConsentHash String?
+ id String @id @default(cuid())
+ taskId String
+ task ElectronicSigningTask @relation(fields:[taskId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ role String
+ subjectId String
+ subjectType String
+ providerCustomerId String
+ certSerialNo String
+ signatureId String?
+ identityVersion Int
+ identityHash String
+ identitySnapshot Json
+ transactionId String @unique
+ mode String
+ status String @default("PENDING")
+ authorityEvidenceHash String?
+ attemptedAt DateTime?
+ verifiedAt DateTime?
+ queryEvidenceHash String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ operations ElectronicSigningOperation[]
+ @@unique([taskId,role])
+ @@unique([id,taskId],map:"ElectronicSigningParty_task_key")
+}
+
+model ElectronicSigningOperation {
+ id String @id @default(cuid())
+ taskId String
+ task ElectronicSigningTask @relation(fields:[taskId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ partyId String?
+ party ElectronicSigningParty? @relation(fields:[partyId,taskId],references:[id,taskId],onDelete:Restrict,onUpdate:Restrict)
+ operationKey String @unique
+ kind String
+ status String @default("REQUESTED")
+ token String @unique
+ requestHash String
+ responseHash String?
+ requestedAt DateTime
+ settledAt DateTime?
+ errorCode String?
+ @@index([taskId,status])
+}
+model PartnerAgreementVehicle {
+ vehicleId String @id
+ ownerId String
+ agreementId String
+ agreementVersionId String
+ revision Int @default(1)
+ assignedBy String
+ assignedAt DateTime @default(now())
+ @@index([ownerId,agreementId])
+}
+model PartnerPortalInvitation {
+ id String @id @default(cuid())
+ accessId String
+ ownerId String
+ mobileHash String
+ codeHash String @unique
+ status String @default("PENDING")
+ accessVersion Int
+ expiresAt DateTime
+ createdBy String
+ createdAt DateTime @default(now())
+ boundAt DateTime?
+ previewTokenHash String? @unique
+ previewExpiresAt DateTime?
+ @@index([accessId,status])
+ @@index([mobileHash,createdAt])
+}
+model PartnerPortalInvitationAttempt {
+  id String @id @default(cuid())
+  mobileHash String
+  codeHash String
+  ipHash String?
+  createdAt DateTime @default(now())
+  @@index([mobileHash, createdAt])
+  @@index([codeHash, createdAt])
+  @@index([ipHash, createdAt])
+}
+
+model PartnerRevenueEvent {
+ id String @id @default(cuid())
+ sourceType String
+ sourceId String
+ paymentId String
+ orderId String
+ ownerId String
+ agreementId String
+ agreementVersionId String
+ vehicleId String
+ modelId String?
+ modelName String
+ plateNumber String
+ partnerRateBps Int
+ amount Int
+ partnerAmount Int
+ occurredAt DateTime
+ createdAt DateTime @default(now())
+ @@unique([sourceType,sourceId])
+ @@index([ownerId,occurredAt])
+ @@index([paymentId,sourceType])
+ @@index([ownerId,agreementId,occurredAt])
+}
+
+
+model AssetWorkOrder {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ eventSequence Int @default(0)
+ workOrderNo String @unique
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ kind String
+ status String @default("PENDING")
+ priority String @default("NORMAL")
+ occurredAt DateTime
+ title String
+ description String
+ sourceServiceRequestId String?
+ sourceServiceRequest ServiceRequest? @relation(fields:[sourceServiceRequestId],references:[id],onDelete:Restrict)
+ sourceServiceSnapshot Json?
+ relatedWorkOrderId String?
+ relatedWorkOrder AssetWorkOrder? @relation("RelatedWorkOrder",fields:[relatedWorkOrderId,vehicleId],references:[id,vehicleId],onDelete:Restrict,onUpdate:NoAction)
+ relatedWorkOrders AssetWorkOrder[] @relation("RelatedWorkOrder")
+ assignedStaffId String?
+ assignedStaff AdminUser? @relation(fields:[assignedStaffId],references:[id],onDelete:Restrict)
+ providerName String?
+ contact String?
+ scheduledAt DateTime?
+ costConfirmationRequired Boolean
+ noCostReason String?
+ solution String?
+ submissionSnapshot Json?
+ submissionEvidenceFileIds String[] @default([])
+ submittedBy String?
+ submittedAt DateTime?
+ submittedRevision Int?
+ acceptanceSnapshot Json?
+ acceptanceEvidenceFileIds String[] @default([])
+ acceptedBy String?
+ acceptedAt DateTime?
+ acceptedRevision Int?
+ acceptedEventId String?
+ acceptedEvent AssetWorkOrderEvent? @relation("AcceptedWorkOrderEvent",fields:[acceptedEventId,id],references:[id,workOrderId],onDelete:Restrict,onUpdate:NoAction)
+ closedBy String?
+ closedAt DateTime?
+ cancelledBy String?
+ cancelledAt DateTime?
+ cancelReason String?
+ accidentAt DateTime?
+ accidentLocation String?
+ accidentDescription String?
+ insurerName String?
+ claimNumber String?
+ claimStatus String?
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ events AssetWorkOrderEvent[] @relation("WorkOrderEvents")
+ restrictions VehicleOperationalRestriction[]
+ maintenanceSchedules VehicleMaintenanceSchedule[]
+ costs AssetWorkOrderCost[]
+ recoveries AssetRecoveryRecord[]
+ files AssetPrivateFile[]
+ @@unique([id,vehicleId])
+ @@index([vehicleId,status,occurredAt])
+ @@index([assignedStaffId,status])
+ @@index([sourceServiceRequestId])
+}
+
+model AssetWorkOrderEvent {
+ id String @id @default(cuid())
+ workOrderId String
+ workOrder AssetWorkOrder @relation("WorkOrderEvents",fields:[workOrderId],references:[id],onDelete:Restrict)
+ sequence Int
+ action String
+ actorId String
+ actorAt DateTime @default(now())
+ beforeRevision Int?
+ afterRevision Int
+ detailSnapshot Json
+ sourceHash String
+ acceptedByWorkOrders AssetWorkOrder[] @relation("AcceptedWorkOrderEvent")
+ @@unique([workOrderId,sequence])
+ @@unique([id,workOrderId])
+}
+
+model VehicleOperationalRestriction {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ workOrderId String
+ workOrder AssetWorkOrder @relation(fields:[workOrderId,vehicleId],references:[id,vehicleId],onDelete:Restrict,onUpdate:NoAction)
+ status String @default("ACTIVE")
+ scopes String[]
+ reason String
+ evidenceFileIds String[]
+ evidenceSnapshot Json
+ createdBy String
+ createdAt DateTime @default(now())
+ releasedBy String?
+ releasedAt DateTime?
+ releaseReason String?
+ releaseEvidenceFileIds String[] @default([])
+ releaseEvidenceSnapshot Json?
+ @@index([vehicleId,status])
+ @@index([workOrderId,status])
+}
+
+model VehicleMaintenanceSchedule {
+ vehicleId String @id
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ revision Int @default(0)
+ sourceWorkOrderId String?
+ sourceWorkOrder AssetWorkOrder? @relation(fields:[sourceWorkOrderId,vehicleId],references:[id,vehicleId],onDelete:Restrict,onUpdate:NoAction)
+ lastCompletedOn DateTime? @db.Date
+ lastMileageKm Int?
+ nextDueDate DateTime? @db.Date
+ nextDueMileageKm Int?
+ reason String
+ updatedBy String
+ updatedAt DateTime @updatedAt
+}
+
+model AssetWorkOrderCost {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ workOrderId String
+ workOrder AssetWorkOrder @relation(fields:[workOrderId,vehicleId],references:[id,vehicleId],onDelete:Restrict,onUpdate:NoAction)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ category String
+ status String @default("DRAFT")
+ amount Int
+ occurredOn DateTime @db.Date
+ supplierName String
+ referenceNo String
+ reason String
+ sourceSnapshot Json?
+ sourceHash String?
+ replacesCostId String? @unique
+ replacesCost AssetWorkOrderCost? @relation("WorkOrderCostReplacement",fields:[replacesCostId,workOrderId,vehicleId],references:[id,workOrderId,vehicleId],onDelete:Restrict,onUpdate:NoAction)
+ replacementCost AssetWorkOrderCost? @relation("WorkOrderCostReplacement")
+ frozenBy String?
+ frozenAt DateTime?
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ plans AssetCostPlan[]
+ files AssetPrivateFile[]
+ @@unique([id,vehicleId])
+ @@unique([id,workOrderId,vehicleId])
+ @@unique([replacesCostId,workOrderId,vehicleId])
+ @@index([workOrderId,status])
+ @@index([vehicleId,occurredOn])
+}
+
+model AssetRecoveryRecord {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ workOrderId String
+ workOrder AssetWorkOrder @relation(fields:[workOrderId,vehicleId],references:[id,vehicleId],onDelete:Restrict,onUpdate:NoAction)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ costEntryId String
+ costEntry AssetCostEntry @relation(fields:[costEntryId,vehicleId],references:[id,vehicleId],onDelete:Restrict,onUpdate:NoAction)
+ status String @default("RECORDED")
+ kind String @default("INSURANCE_RECEIPT")
+ amount Int
+ receivedOn DateTime @db.Date
+ referenceNo String
+ reason String
+ evidenceFileIds String[]
+ evidenceSnapshot Json
+ recordedBy String
+ recordedAt DateTime @default(now())
+ voidedBy String?
+ voidedAt DateTime?
+ voidReason String?
+ @@index([workOrderId,status])
+ @@index([costEntryId,status])
+}
+
+model MarketPriceObservation {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ modelDefinitionId String
+ modelDefinition ModelDefinition @relation(fields:[modelDefinitionId],references:[id],onDelete:Restrict)
+ modelSnapshot Json
+ source String
+ sourceListingId String?
+ observedOn DateTime @db.Date
+ priceType String
+ priceAmount Int
+ batteryOwnership String @default("UNKNOWN")
+ batteryCapacityKwh Decimal? @db.Decimal(8,3)
+ mileageKm Int?
+ registrationDate DateTime? @db.Date
+ vehicleAgeMonths Int?
+ province String @default("")
+ city String @default("")
+ trim String @default("")
+ conditionGrade String @default("")
+ batteryHealthPercent Int?
+ accidentFlag Boolean?
+ sourceUrl String?
+ sourceNote String
+ dedupeKey String
+ confidenceScore Int
+ status String @default("ACTIVE")
+ correctionOfId String?
+ correctionOf MarketPriceObservation? @relation("ObservationCorrection",fields:[correctionOfId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ corrections MarketPriceObservation[] @relation("ObservationCorrection")
+ importBatchId String?
+ importBatch MarketPriceImportBatch? @relation(fields:[importBatchId],references:[id],onDelete:Restrict)
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ files AssetPrivateFile[]
+ @@index([modelDefinitionId,status,observedOn])
+ @@index([importBatchId])
+ @@index([dedupeKey])
+}
+
+model MarketPriceImportBatch {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ csvHash String
+ fileName String
+ source String
+ status String
+ rowCount Int
+ importedCount Int
+ duplicateCount Int
+ failedCount Int
+ rowResults Json
+ createdBy String
+ createdAt DateTime @default(now())
+ observations MarketPriceObservation[]
+ @@index([createdAt])
+}
+
+model VehicleResidualCurve {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ modelDefinitionId String
+ modelDefinition ModelDefinition @relation(fields:[modelDefinitionId],references:[id],onDelete:Restrict)
+ name String
+ status String @default("DRAFT")
+ dimensionHash String
+ dimensionSnapshot Json
+ filterSnapshot Json
+ referencePriceAmount Int?
+ algorithmVersion String
+ referenceCommit String
+ sourceSnapshot Json
+ sourceHash String
+ pointCount Int
+ sampleCount Int
+ confidenceScore Int
+ skippedReasons Json
+ effectiveFrom DateTime? @db.Date
+ activatedAt DateTime?
+ activatedBy String?
+ supersededAt DateTime?
+ archivedAt DateTime?
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ points VehicleResidualCurvePoint[]
+ forecasts VehicleResidualForecast[]
+ @@index([modelDefinitionId,status])
+ @@index([dimensionHash])
+}
+
+model VehicleResidualCurvePoint {
+ id String @id @default(cuid())
+ curveId String
+ curve VehicleResidualCurve @relation(fields:[curveId],references:[id],onDelete:Restrict)
+ ageMonth Int
+ sampleCount Int
+ medianPriceAmount Int
+ p25PriceAmount Int
+ p75PriceAmount Int
+ averagePriceAmount Int
+ minPriceAmount Int
+ maxPriceAmount Int
+ predictedResidualRateBps Int?
+ confidenceScore Int
+ sampleSnapshot Json
+ @@unique([curveId,ageMonth])
+}
+
+model VehicleResidualForecast {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ curveId String
+ curve VehicleResidualCurve @relation(fields:[curveId],references:[id],onDelete:Restrict)
+ asOfDate DateTime @db.Date
+ status String @default("GENERATED")
+ vehicleRevision Int
+ assetRevision Int
+ curveRevision Int
+ inputSnapshot Json
+ curveSnapshot Json
+ sourceHash String
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ points VehicleResidualForecastPoint[]
+ @@index([vehicleId,status,createdAt])
+ @@index([curveId])
+}
+
+model VehicleResidualForecastPoint {
+ id String @id @default(cuid())
+ forecastId String
+ forecast VehicleResidualForecast @relation(fields:[forecastId],references:[id],onDelete:Restrict)
+ horizonMonth Int
+ targetDate DateTime @db.Date
+ targetAgeMonth Int
+ status String
+ interpolationMethod String
+ predictedAmount Int?
+ lowerAmount Int?
+ upperAmount Int?
+ predictedResidualRateBps Int?
+ matchSnapshot Json
+ adoptedAmount Int?
+ adoptReason String?
+ adoptedBy String?
+ adoptedAt DateTime?
+ valuationReviews VehicleValuationReview[]
+ @@unique([forecastId,horizonMonth])
+}
+
+model VehicleValuationReview {
+ id String @id @default(cuid())
+ revision Int @default(0)
+ vehicleId String
+ vehicle Vehicle @relation(fields:[vehicleId],references:[id],onDelete:Restrict)
+ forecastPointId String?
+ forecastPoint VehicleResidualForecastPoint? @relation(fields:[forecastPointId],references:[id],onDelete:Restrict)
+ source String
+ requestedAmount Int
+ reason String
+ beforeSnapshot Json
+ sourceSnapshot Json
+ sourceHash String
+ status String @default("PENDING")
+ approvedAmount Int?
+ decidedBy String?
+ decidedAt DateTime?
+ decisionReason String?
+ nextReviewDate DateTime? @db.Date
+ evidenceFileIds String[] @default([])
+ evidenceSnapshot Json?
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ files AssetPrivateFile[]
+ @@index([vehicleId,status,createdAt])
+ @@index([forecastPointId])
+}
+model CollectionCase {
+ id String @id @default(cuid())
+ orderId String
+ customerId String
+ order Order @relation(fields:[orderId,customerId],references:[id,customerId],onDelete:Restrict,onUpdate:Restrict)
+ revision Int @default(1)
+ status String @default("ACTIVE")
+ asOfDate DateTime @db.Date
+ totalOverdueAmount Int
+ maxOverdueDays Int
+ level String?
+ sourceSnapshot Json
+ sourceHash String
+ createdBy String
+ updatedBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ closedAt DateTime?
+ closedBy String?
+ closeReason String?
+ bills CollectionCaseBill[]
+ actions CollectionAction[]
+ @@unique([id,orderId,customerId])
+ @@index([status,updatedAt])
+ @@index([orderId,createdAt])
+}
+
+model CollectionCaseBill {
+ id String @id @default(cuid())
+ caseId String
+ orderId String
+ customerId String
+ collectionCase CollectionCase @relation(fields:[caseId,orderId,customerId],references:[id,orderId,customerId],onDelete:Restrict,onUpdate:Restrict)
+ billId String
+ bill Bill @relation(fields:[billId,orderId,customerId],references:[id,orderId,customerId],onDelete:Restrict,onUpdate:Restrict)
+ initialDueDate DateTime @db.Date
+ initialAmount Int
+ initialOverdueAmount Int
+ initialAsOfDate DateTime @db.Date
+ sourceSnapshot Json
+ sourceHash String
+ linkedBy String
+ linkedAt DateTime @default(now())
+ @@unique([caseId,billId])
+ @@index([billId])
+}
+
+model CollectionAction {
+ id String @id @default(cuid())
+ caseId String
+ orderId String
+ customerId String
+ collectionCase CollectionCase @relation(fields:[caseId,orderId,customerId],references:[id,orderId,customerId],onDelete:Restrict,onUpdate:Restrict)
+ sequence Int
+ beforeRevision Int
+ afterRevision Int
+ kind String
+ reason String
+ sourceSnapshot Json
+ sourceHash String
+ method String?
+ actionType String?
+ result String?
+ content String?
+ promiseDate DateTime? @db.Date
+ promiseAmount Int?
+ nextFollowUpDate DateTime? @db.Date
+ actorId String
+ createdAt DateTime @default(now())
+ @@unique([caseId,sequence])
+ @@unique([caseId,afterRevision])
+ @@index([caseId,createdAt])
+}
+
+model AddonProduct {
+ id String @id @default(cuid())
+ kind String
+ name String
+ revision Int @default(0)
+ createdBy String
+ createdAt DateTime @default(now())
+ versions AddonProductVersion[]
+}
+model AddonProductVersion {
+ id String @id @default(cuid())
+ productId String
+ product AddonProduct @relation(fields:[productId],references:[id])
+ kind String
+ name String
+ version Int
+ revision Int @default(0)
+ status String @default("DRAFT")
+ scopePrices Json
+ sourceHash String?
+ createdBy String
+ publishedBy String?
+ publishedAt DateTime?
+ createdAt DateTime @default(now())
+ @@unique([productId,version])
+ @@index([kind,status])
+}
+
+model ElectronicFileQuarantine {
+ id String @id @default(cuid())
+ taskId String
+ task ElectronicSigningTask @relation(fields:[taskId],references:[id],onDelete:Restrict,onUpdate:Restrict)
+ archiveVersionId String
+ providerContractId String
+ sourceSha256 String
+ snapshotHash String
+ fileId String @unique
+ file StoredFile @relation(fields:[fileId,sha256],references:[id,sha256],onDelete:Restrict,onUpdate:Restrict)
+ sha256 String
+ rejectionCode String
+ verificationReceiptHash String?
+ checkedAt DateTime
+ createdAt DateTime @default(now())
+ @@unique([taskId,sha256])
+}
+
+// Immutable provenance for the existing obligation/payment/refund pipeline.
+model SwapFactSettlement {
+ id String @id @default(cuid())
+ orderId String
+ customerId String
+ changeId String
+ quoteId String
+ receiptEventId String
+ deliveryHandoverId String
+ deliveryRevision Int
+ deliveryManifestHash String
+ termsHash String
+ sourceKey String @unique
+ sourceSnapshot Json
+ sourceHash String
+ createdBy String
+ createdAt DateTime @default(now())
+ @@index([changeId,createdAt])
+}
+model SwapFactAmountResponse {
+ id String @id @default(cuid())
+ settlementId String
+ customerId String
+ revision Int
+ previousResponseId String? @unique
+ sourceHash String
+ fundsHash String
+ fundsSnapshot Json?
+ amounts Json
+ amountHash String
+ decision String
+ reason String
+ idempotencyKey String
+ requestHash String
+ createdAt DateTime @default(now())
+ @@unique([customerId,idempotencyKey])
+ @@unique([settlementId,revision])
+ @@index([settlementId,createdAt])
+}
+model SwapFactFinance {
+ id String @id @default(cuid())
+ settlementId String @unique
+ quoteId String @unique
+ responseId String @unique
+ plan Json
+ planHash String
+ preparedBy String
+ preparedAt DateTime @default(now())
+}
+
+// Immutable legal source projections; Payment/Refund remain cash authority.
+model RefundObligation {
+ refunds Refund[]
+ @@unique([id,paymentId,customerId])
+ id String @id @default(uuid())
+ orderId String
+ customerId String
+ ownerId String
+ paymentId String
+ sourceKey String @unique
+ sourceKind String
+ sourceId String
+ debtKey String
+ amount Int
+ factAt DateTime
+ amountConfirmedAt DateTime
+ triggerAt DateTime
+ workingDays Int
+ policyVersion String
+ source Json
+ sourceHash String
+ createdAt DateTime @default(now())
+ @@index([orderId])
+}
+model RefundAmountConfirmation {
+ id String @id @default(uuid())
+ orderId String
+ customerId String
+ sourceKey String
+ sourceHash String
+ source Json
+ kind String
+ confirmedAt DateTime
+ actorId String
+ evidence Json?
+ predecessorId String? @unique
+ idempotencyKey String
+ requestHash String
+ recordedAt DateTime @default(now())
+ @@unique([actorId,idempotencyKey])
+ @@index([orderId,sourceKey])
+}
+model RefundObligationDeadline {
+ id String @id @default(uuid())
+ obligationId String @unique
+ dueAt DateTime
+ calculation Json
+ createdAt DateTime @default(now())
+}
+
+model AdvertisingCopySet {
+ id String @id
+ revision Int @default(1)
+ draftItems Json
+ draftHash String
+ updatedBy String
+ updatedAt DateTime @updatedAt
+ publishedVersionId String
+ publishedVersion AdvertisingCopyPublication @relation(fields:[publishedVersionId],references:[id])
+}
+
+model AdvertisingCopyPublication {
+ id String @id @default(cuid())
+ version Int @unique
+ items Json
+ contentHash String
+ publishedBy String
+ publishedAt DateTime @default(now())
+ currentSets AdvertisingCopySet[]
 }

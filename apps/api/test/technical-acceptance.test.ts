@@ -1,3 +1,4 @@
+import './legacy-esign-mode';
 import '../src/common/config';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,7 +27,7 @@ async function request(path:string,method='GET',body?:any,actor='customer'){
  const r=await fetch(base+'/api/'+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});return{status:r.status,data:await r.json() as any};
 }
 before(async()=>{
- const u=new URL(process.env.TEST_DATABASE_URL!);assert.ok(['localhost','127.0.0.1'].includes(u.hostname));u.pathname='/technical_acceptance_test';process.env.DATABASE_URL=u.href;process.env.NODE_ENV='test';process.env.ADMIN_ORIGIN='http://localhost:3100';
+ const u=new URL(process.env.TEST_DATABASE_URL!);assert.ok(['localhost','127.0.0.1'].includes(u.hostname)&&u.port==='55432'&&u.pathname==='/chundian_test');process.env.DATABASE_URL=u.href;process.env.NODE_ENV='test';process.env.ADMIN_ORIGIN='http://localhost:3100';
  db=new Db();const serial=db.serial.bind(db);db.serial=(async(op:any)=>{try{return await serial(op);}catch(e:any){dbErrors.push(String(e.code)+':'+String(e.meta?.code));throw e;}}) as any;customer=await db.customer.create({data:{mobile:'ta-'+randomUUID()}});other=await db.customer.create({data:{mobile:'ta-'+randomUUID()}});
  process.env.ESIGN_IDENTITY_ENCRYPTION_KEY=identityKey;process.env.FADADA_CJK_FONT_PATH='C:/Windows/Fonts/simhei.ttf';process.env.FADADA_ENABLED='false';process.env.FADADA_SIGNING_ENABLED='false';process.env.MINIAPP_SIGNING_ENABLED='true';process.env.FADADA_BASE_URL='https://textapi17.fadada.com/api2/';process.env.MINIAPP_SIGNING_PROVIDER_HOSTS='textapi17.fadada.com,realnameverify16.fadada.com';process.env.TECHNICAL_ACCEPTANCE_SIGNING_ENABLED='false';
  await db.customer.update({where:{id:customer.id},data:{mobile:'139'+String(Date.now()).slice(-8)}});customer=await db.customer.findUniqueOrThrow({where:{id:customer.id}});
@@ -56,7 +57,7 @@ test('published approved text produces an immutable standalone PDF; consent and 
  assert.equal((await request('customer/technical-acceptances/'+record.id+'/confirm','POST',payload)).data.revision,record.revision);
  process.env.TECHNICAL_ACCEPTANCE_SIGNING_ENABLED='true';assert.equal((await request('customer/technical-acceptances/'+record.id+'/sign','POST',{revision:record.revision,idempotencyKey:randomUUID()})).status,409);assert.equal(uploads,0);
  reviewer=await db.adminUser.create({data:{username:'ta-'+randomUUID(),passwordHash:'unused',name:'Other synthetic reviewer',role:'ADMIN'}});
- const seal=await db.enterpriseSeal.create({data:{evidenceFileId:'synthetic-evidence',sealName:'Synthetic seal',organizationName:'上海晓浪网络科技有限公司',providerCustomerId:'synthetic-platform',providerSignatureId:'synthetic-seal',status:'ACTIVE',confirmedBy:reviewer.id,confirmedAt:new Date()}});
+ const seal=await db.enterpriseSeal.create({data:{evidenceFileId:'synthetic-evidence',sealName:'Synthetic seal',organizationName:'上海宁达信息科技有限公司',providerCustomerId:'synthetic-platform',providerSignatureId:'synthetic-seal',status:'ACTIVE',confirmedBy:reviewer.id,confirmedAt:new Date()}});
  for(const[id,type]of[[admin.id,'REQUEST_USE'],[reviewer.id,'APPROVE_USE']])await db.sealAuthority.create({data:{sealId:seal.id,subjectType:'USER',subjectId:id,authorityType:type,status:'ACTIVE',requiresTwoPersonApproval:true}});
  policy=await db.signaturePolicy.create({data:{policyCode:randomUUID(),policyName:'Synthetic acceptance',kind:'TECHNICAL_ACCEPTANCE',sealId:seal.id,status:'ACTIVE',executionMode:'SEQUENTIAL'}});
  const prepared=await request('admin/technical-acceptances/'+record.id+'/prepare-signature','POST',{revision:record.revision,policyId:policy.id,idempotencyKey:randomUUID()},'admin');assert.equal(prepared.status,201,JSON.stringify(prepared.data));
@@ -131,16 +132,16 @@ test('concurrent signing reuses one envelope and partial/archive failure cannot 
  await app.get(SignaturePolicyService).approve(a.data.approval.id,reviewer.id,a.data.approval.planHash);
  const input={revision:r.revision,idempotencyKey:randomUUID()};const results=await Promise.all([request('customer/technical-acceptances/'+r.id+'/sign','POST',input),request('customer/technical-acceptances/'+r.id+'/sign','POST',input)]);assert.ok(results.some(x=>x.status===201));assert.ok(results.every(x=>[201,409].includes(x.status)),JSON.stringify(results.map(x=>({status:x.status,error:x.data.error})))+JSON.stringify(dbErrors));assert.equal(uploads,previousUploads+1);assert.equal(await db.fadadaTask.count({where:{resourceId:r.id}}),1);
  const task=await db.fadadaTask.findFirstOrThrow({where:{resourceId:r.id}});assert.equal((await realGateway.query(task.id)).status,'PENDING');assert.equal(seals,previousSeals);
- customerSigned=true;downloadFail=true;await assert.rejects(realGateway.query(task.id));assert.equal(seals,previousSeals+1);assert.equal((await request('customer/technical-acceptances/'+r.id)).data.signatureStatus,'PENDING');downloadFail=false;
+ customerSigned=true;assert.equal((await realGateway.query(task.id)).status,'PENDING');assert.equal(seals,previousSeals);platformSigned=true;await db.fadadaTask.update({where:{id:task.id},data:{sealRequestedAt:new Date()}});downloadFail=true;await assert.rejects(realGateway.query(task.id));assert.equal(seals,previousSeals);assert.equal((await request('customer/technical-acceptances/'+r.id)).data.signatureStatus,'PENDING');downloadFail=false;
  const payload={transaction_id:task.customerTransactionId,contract_id:task.providerEnvelopeId,timestamp:'20261016190000',result_code:'3000'},digest=buildFadadaMsgDigest({appId:'synthetic',appSecret:'synthetic',timestamp:payload.timestamp,businessParams:payload,explicitSortString:payload.transaction_id});
- const first=await request('callbacks/fadada-sign','POST',{...payload,msg_digest:digest});assert.equal(first.status,201,JSON.stringify(first.data));assert.equal(first.data.replayed,false);const again=await request('callbacks/fadada-sign','POST',{...payload,msg_digest:digest});assert.equal(again.data.replayed,true);assert.equal(seals,previousSeals+1);const complete=(await request('customer/technical-acceptances/'+r.id)).data;assert.equal(complete.signatureStatus,'SIGNED');assert.ok(complete.signedFileId);
+ const first=await request('callbacks/fadada-sign','POST',{...payload,msg_digest:digest});assert.equal(first.status,201,JSON.stringify(first.data));assert.equal(first.data.replayed,false);const again=await request('callbacks/fadada-sign','POST',{...payload,msg_digest:digest});assert.equal(again.data.replayed,true);assert.equal(seals,previousSeals);const complete=(await request('customer/technical-acceptances/'+r.id)).data;assert.equal(complete.signatureStatus,'SIGNED');assert.ok(complete.signedFileId);
  assert.equal((await request('callbacks/fadada-sign','POST',{...payload,msg_digest:'wrong'})).status,401);
 });
-test('a stop racing after approval evaluation wins before atomic seal dispatch',async()=>{
+test('a stop during a historical status query remains authoritative without dispatching a seal',async()=>{
  const r=await freshConfirmed();customerSigned=false;platformSigned=false;process.env.TECHNICAL_ACCEPTANCE_SIGNING_ENABLED='true';const prep=await request('admin/technical-acceptances/'+r.id+'/prepare-signature','POST',{revision:r.revision,policyId:policy.id,idempotencyKey:randomUUID()},'admin');await app.get(SignaturePolicyService).approve(prep.data.approval.id,reviewer.id,prep.data.approval.planHash);assert.equal((await request('customer/technical-acceptances/'+r.id+'/sign','POST',{revision:r.revision,idempotencyKey:randomUUID()})).status,201);
- const task=await db.fadadaTask.findFirstOrThrow({where:{resourceId:r.id}}),policies=app.get(SignaturePolicyService),original=policies.approved.bind(policies),previousSeals=seals;customerSigned=true;
- policies.approved=async(...args:any[])=>{const result=await original(...args);await request('customer/technical-acceptances/'+r.id+'/stop','POST',{revision:r.revision,idempotencyKey:randomUUID()});return result;};
- try{assert.equal((await realGateway.query(task.id)).status,'PENDING');assert.equal(seals,previousSeals);assert.equal((await db.fadadaTask.findUniqueOrThrow({where:{id:task.id}})).sealRequestedAt,null);}finally{policies.approved=original;}
+ const task=await db.fadadaTask.findFirstOrThrow({where:{resourceId:r.id}}),api=(realGateway as any).api,original=api.querySignResult,previousSeals=seals;customerSigned=true;let stopped=false;
+ api.querySignResult=async(input:any)=>{const result=await original(input);if(!stopped){stopped=true;assert.equal((await request('customer/technical-acceptances/'+r.id+'/stop','POST',{revision:r.revision,idempotencyKey:randomUUID()})).status,201);}return result;};
+ try{assert.equal((await realGateway.query(task.id)).status,'PENDING');assert.equal(stopped,true);assert.equal(seals,previousSeals);assert.equal((await db.fadadaTask.findUniqueOrThrow({where:{id:task.id}})).sealRequestedAt,null);}finally{api.querySignResult=original;}
  const current=(await request('admin/technical-acceptances/'+r.id,'GET',undefined,'admin')).data;await db.technicalAcceptance.update({where:{id:r.id},data:{retentionDueAt:new Date(Date.now()-1000)}});const reviewed=await request('admin/technical-acceptances/'+r.id+'/retention-review','POST',{revision:current.revision,idempotencyKey:randomUUID(),legalHold:false,reason:'Synthetic review'},'admin');assert.equal((await request('admin/technical-acceptances/'+r.id+'/purge','POST',{revision:reviewed.data.revision,idempotencyKey:randomUUID(),reason:'Synthetic attempted purge'},'admin')).status,409);
 });
 test('stale general privacy consent requires explicit existing consent flow before separate technical consent',async()=>{
@@ -157,12 +158,13 @@ test('finance/support cannot access technical records, approvals or PDF and admi
  const missing=await fetch(base+'/api/admin/technical-acceptances/'+row.id+'/stop',{method:'POST',headers:{Cookie:'admin_session='+adminToken,Origin:'http://localhost:3100','Content-Type':'application/json'},body:JSON.stringify({revision:row.revision,idempotencyKey:randomUUID()})});assert.equal(missing.status,403);
  const none=await fetch(base+'/api/customer/technical-acceptances');assert.equal(none.status,401);
 });
-test('stop committed during pre-dispatch audit prevents the actual seal call and clears only the unsent marker',async()=>{
+test('stopped historical tasks never emit execution audits or invent an unsent seal marker',async()=>{
  const previous=await db.technicalAcceptance.findFirst({where:{customerId:customer.id,stoppedAt:null,status:{in:['DRAFT','PENDING']}}});if(previous)await request('customer/technical-acceptances/'+previous.id+'/stop','POST',{revision:previous.revision,idempotencyKey:randomUUID()});
  const r=await freshConfirmed();process.env.TECHNICAL_ACCEPTANCE_SIGNING_ENABLED='true';customerSigned=false;platformSigned=false;
  const prep=await request('admin/technical-acceptances/'+r.id+'/prepare-signature','POST',{revision:r.revision,policyId:policy.id,idempotencyKey:randomUUID()},'admin');await app.get(SignaturePolicyService).approve(prep.data.approval.id,reviewer.id,prep.data.approval.planHash);assert.equal((await request('customer/technical-acceptances/'+r.id+'/sign','POST',{revision:r.revision,idempotencyKey:randomUUID()})).status,201);
  customerSigned=true;const previousSeals=seals,task=await db.fadadaTask.findFirstOrThrow({where:{resourceId:r.id}}),original=db.auditLog.create.bind(db.auditLog);
- db.auditLog.create=(async(input:any)=>{if(input.data.action==='ENTERPRISE_SEAL_EXECUTION'){assert.equal((await request('customer/technical-acceptances/'+r.id+'/stop','POST',{revision:r.revision,idempotencyKey:randomUUID()})).status,201);process.env.TECHNICAL_ACCEPTANCE_SIGNING_ENABLED='false';}return original(input);})as any;
+ assert.equal((await request('customer/technical-acceptances/'+r.id+'/stop','POST',{revision:r.revision,idempotencyKey:randomUUID()})).status,201);
+ db.auditLog.create=(async(input:any)=>{assert.notEqual(input.data.action,'ENTERPRISE_SEAL_EXECUTION');return original(input);})as any;
  try{assert.equal((await realGateway.query(task.id)).status,'PENDING');assert.equal(seals,previousSeals);assert.equal((await db.fadadaTask.findUniqueOrThrow({where:{id:task.id}})).sealRequestedAt,null);}finally{db.auditLog.create=original;}
 });
 test('lost archive lease discards the unpublished PDF without changing the winner or signed state',async()=>{
@@ -177,16 +179,17 @@ async function readyDispatch(){
  const prep=await request('admin/technical-acceptances/'+r.id+'/prepare-signature','POST',{revision:r.revision,policyId:policy.id,idempotencyKey:randomUUID()},'admin');assert.equal(prep.status,201,JSON.stringify(prep.data));await app.get(SignaturePolicyService).approve(prep.data.approval.id,reviewer.id,prep.data.approval.planHash);
  assert.equal((await request('customer/technical-acceptances/'+r.id+'/sign','POST',{revision:r.revision,idempotencyKey:randomUUID()})).status,201);customerSigned=true;return{r,task:await db.fadadaTask.findFirstOrThrow({where:{resourceId:r.id}})};
 }
-test('dispatch already in progress holds stop until the supplier call ends without a second seal',async()=>{
- const {r,task}=await readyDispatch(),api=(realGateway as any).api,original=api.autoSealContract,previousSeals=seals;let entered!:()=>void,release!:()=>void;
+test('a slow historical provider query does not hold stop or dispatch a new seal',async()=>{
+ const {r,task}=await readyDispatch(),api=(realGateway as any).api,original=api.querySignResult,previousSeals=seals;let entered!:()=>void,release!:()=>void;
  const started=new Promise<void>(resolve=>entered=resolve),gate=new Promise<void>(resolve=>release=resolve);
- api.autoSealContract=async(i:any)=>{entered();await gate;return original(i);};
- const pending=realGateway.query(task.id);await started;let stopped=false;const stopping=request('customer/technical-acceptances/'+r.id+'/stop','POST',{revision:r.revision,idempotencyKey:randomUUID()}).then(x=>{stopped=true;return x;});
- try{await new Promise(resolve=>setTimeout(resolve,100));assert.equal(stopped,false);assert.equal((await db.technicalAcceptance.findUniqueOrThrow({where:{id:r.id}})).stoppedAt,null);release();await pending;const result=await stopping;assert.equal(result.status,201,JSON.stringify(result.data));assert.equal(result.data.status,'STOPPED');assert.equal(seals,previousSeals+1);assert.equal((await realGateway.query(task.id)).status,'SIGNED');assert.equal(seals,previousSeals+1);}finally{release();api.autoSealContract=original;}
+ api.querySignResult=async(i:any)=>{entered();await gate;return original(i);};
+ const pending=realGateway.query(task.id);await started;
+ try{const result=await request('customer/technical-acceptances/'+r.id+'/stop','POST',{revision:r.revision,idempotencyKey:randomUUID()});assert.equal(result.status,201,JSON.stringify(result.data));assert.equal(result.data.status,'STOPPED');release();assert.equal((await pending).status,'PENDING');assert.equal(seals,previousSeals);assert.equal((await db.fadadaTask.findUniqueOrThrow({where:{id:task.id}})).sealRequestedAt,null);}finally{release();api.querySignResult=original;}
 });
-test('transaction failure after the supplier call preserves durable intent and never retries a seal',async()=>{
- const {r,task}=await readyDispatch(),original=db.$transaction.bind(db),previousSeals=seals;
- (db as any).$transaction=(action:any,options:any)=>original(options?.isolationLevel==='ReadCommitted'?async(tx:any)=>{await action(tx);throw Error('synthetic post-dispatch transaction failure');}:action,options);
- try{await assert.rejects(realGateway.query(task.id),/synthetic post-dispatch transaction failure/);assert.equal(seals,previousSeals+1);assert.ok((await db.fadadaTask.findUniqueOrThrow({where:{id:task.id}})).sealRequestedAt);}finally{(db as any).$transaction=original;}
- assert.equal((await realGateway.query(task.id)).status,'SIGNED');assert.equal(seals,previousSeals+1);await request('customer/technical-acceptances/'+r.id+'/stop','POST',{revision:r.revision,idempotencyKey:randomUUID()});
+test('archive transaction failure preserves historical dispatch evidence and retries only archival',async()=>{
+ const {r,task}=await readyDispatch(),original=db.serial.bind(db),previousSeals=seals;platformSigned=true;
+ await db.fadadaTask.update({where:{id:task.id},data:{sealRequestedAt:new Date()}});
+ db.serial=(async(action:any)=>original(async tx=>{await action(tx);throw Error('synthetic archive transaction failure');})) as any;
+ try{await assert.rejects(realGateway.query(task.id),/synthetic archive transaction failure/);assert.equal(seals,previousSeals);const retained=await db.fadadaTask.findUniqueOrThrow({where:{id:task.id}});assert.ok(retained.sealRequestedAt);assert.equal(retained.status,'PENDING');assert.equal(retained.signedFileId,null);}finally{db.serial=original;}
+ assert.equal((await realGateway.query(task.id)).status,'SIGNED');assert.equal(seals,previousSeals);await request('customer/technical-acceptances/'+r.id+'/stop','POST',{revision:r.revision,idempotencyKey:randomUUID()});
 });

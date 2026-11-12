@@ -1,7 +1,8 @@
+const {mileagePackPayment}=require('./mileage-pack-payment');
 const { money, date } = require('../utils/format');
 const { assignmentView, assignmentHistory, beijingTime } = require('./vehicle-assignments');
 const PERIOD_STATUS = { OPEN: '本期进行中', AWAITING_READING: '待月界读数或补证', REVIEW_PENDING: '仪表证据待人工审核', READY: '已审核，待结算', SETTLED: '已结算', CANCELLED: '已取消' };
-const PACK_STATUS = { PENDING_PAYMENT: '待支付，尚未发放', ACTIVE: '已到账', EXPIRED: '已失效', VOID: '已关闭', REFUND_PENDING:'退款核对中（已冻结，不可消费）',REFUNDED:'已退款（不可用）' };
+const PACK_STATUS = { PENDING_PAYMENT: '待支付，尚未发放', PAYMENT_REVIEW:'已付款，待人工核账（未发放）', ACTIVE: '已到账', EXPIRED: '已失效', VOID: '已关闭', REFUND_PENDING:'退款核对中（已冻结，不可消费）',REFUNDED:'已退款（不可用）' };
 const SETTLEMENT_STATUS = { READINGS_REQUIRED: '待月界证据，尚未结清', PENDING_PAYMENT: '待结算账单支付', DISPUTED: '异议处理中，尚未结清', COMPLETED: '服务端已确认结清' };
 const PRICES = { 1000: 80000, 2000: 150000, 3000: 200000 };
 const BILL_TYPES = { SUBSCRIPTION: '订阅费', DEPOSIT: '押金', MILEAGE_PACK: '加购里程包', MILEAGE_EXCESS: '月超里程费用' };
@@ -14,6 +15,11 @@ function createUsageApi({ call, identifier, error, idempotencyKey, getContext })
   function response(message = '月度里程数据暂不可用，请刷新或联系人工。') { throw error(message, 'RESPONSE'); }
   function day(value) { return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : ''; }
   function nullable(value) { if (value == null) return null; if (!nonnegative(value)) response(); return value; }
+  function pricingFields(value) {
+    if (!value || !['USAGE_V1','USAGE_V2'].includes(value.policyVersion) || !nonnegative(value.baseAllowanceKm) || !nonnegative(value.excessPriceAmount) || value.policyVersion === 'USAGE_V1' && (value.baseAllowanceKm !== 1500 || value.excessPriceAmount !== 150)) response();
+    return {policyVersion:value.policyVersion,baseAllowanceKm:value.baseAllowanceKm,excessPriceAmount:value.excessPriceAmount};
+  }
+  const samePricing = (a,b) => b && ['policyVersion','baseAllowanceKm','excessPriceAmount'].every(key => a[key] === b[key]);
   function purchaseTerms(value) {
     return value?.version === 'MILEAGE_PACK_V1' && typeof value.documentId === 'string' && value.documentId && Number.isInteger(value.documentVersion) && value.documentVersion > 0 && typeof value.hash === 'string' && /^[a-f0-9]{64}$/i.test(value.hash) && typeof value.content === 'string' && value.content.trim()
       ? { version: value.version, documentId:value.documentId,documentVersion:value.documentVersion,hash: value.hash, content: value.content } : null;
@@ -22,33 +28,48 @@ function createUsageApi({ call, identifier, error, idempotencyKey, getContext })
     if (!value || typeof value.id !== 'string' || !nonnegative(value.amount) || typeof value.status !== 'string') response('账单数据不完整，请查询普通账单。');
     return { id: value.id, type: value.type || '', typeText: BILL_TYPES[value.type] || '结算账单', amount: value.amount, amountText: money(value.amount), paidAmount: nullable(value.paidAmount), status: value.status, statusText:BILL_STATUS[value.status]||'请查看账单核对状态',dueDate: day(value.dueDate), dueDateText: date(value.dueDate), description: typeof value.description === 'string' ? value.description : '' };
   }
-  function periodView(value, returnCutoff = false) {
+  function periodView(value, returnCutoff = false, pricing) {
     if (!value || typeof value.id !== 'string' || !known(PERIOD_STATUS, value.status) || !Number.isInteger(value.sequence) || value.sequence < 1 || !Number.isInteger(value.revision) || !day(value.startDate) || !day(value.endDate) || !day(value.effectiveEndDate)) response();
+    const ownPricing = value.policyVersion == null && pricing?.policyVersion === 'USAGE_V1' ? pricingFields(pricing) : pricingFields(value);
+    const staged = value.serviceStageId != null || value.stageSequence != null;
+    if (staged && (typeof value.serviceStageId !== 'string' || !value.serviceStageId.trim() || value.serviceStageId.includes('\0') || !Number.isInteger(value.stageSequence) || value.stageSequence < 1 || value.stageSequence > 120)) response();
+    if (pricing && !samePricing(ownPricing,pricing) && !staged && !samePricing(ownPricing,pricing.initialPricing)) response();
     const fields = Object.fromEntries(['startReadingKm', 'endReadingKm', 'usedKm', 'baseUsedKm', 'packUsedKm', 'excessKm', 'excessAmount'].map(key => [key, nullable(value[key])]));
     const segmented = Array.isArray(value.segments);
     const segments = (value.segments || []).map(row => { if (typeof row?.id !== 'string' || typeof row.assignmentId !== 'string' || typeof row.vehicleId !== 'string' || typeof row.vehicleTitle !== 'string' || !['OPEN', 'REVIEW_PENDING', 'READY', 'FROZEN'].includes(row.status) || !Number.isInteger(row.revision) || row.revision < 0 || beijingTime(row.startAt) === '待核对' || (row.endAt != null && beijingTime(row.endAt) === '待核对')) response(); const startReadingKm = nullable(row.startReadingKm), endReadingKm = nullable(row.endReadingKm); if (startReadingKm !== null && endReadingKm !== null && endReadingKm < startReadingKm) response(); const boundaryDate = row.endAt ? new Date(Date.parse(row.endAt) + 8 * 3600000).toISOString().slice(0, 10) : day(value.effectiveEndDate); return { id: row.id, assignmentId: row.assignmentId, vehicleId: row.vehicleId, vehicleTitle: row.vehicleTitle, startAt: row.startAt, endAt: row.endAt || null, startAtText: beijingTime(row.startAt), endAtText: row.endAt ? beijingTime(row.endAt) : '本月界/归还日截止，等候证据', startReadingKm, endReadingKm, readingId: row.readingId || null, revision: row.revision, status: row.status, statusText: { OPEN: '待本车月界证据', REVIEW_PENDING: '本车证据待审核', READY: '本车段已核验', FROZEN: '已结算冻结' }[row.status], boundaryDate, boundaryDateText: date(boundaryDate), canSubmit: row.canSubmit === true && row.status === 'OPEN' && !['SETTLED', 'CANCELLED'].includes(value.status) }; });
-    return { id: value.id, sequence: value.sequence, revision: value.revision, startDate: day(value.startDate), endDate: day(value.endDate), effectiveEndDate: day(value.effectiveEndDate), status: value.status, statusText: PERIOD_STATUS[value.status], ...fields, segmented, segments,
+    return { id: value.id, sequence: value.sequence, revision: value.revision, serviceStageId: staged ? value.serviceStageId : null, stageSequence: staged ? value.stageSequence : null, startDate: day(value.startDate), endDate: day(value.endDate), effectiveEndDate: day(value.effectiveEndDate), status: value.status, statusText: PERIOD_STATUS[value.status], ...fields, ...ownPricing, excessPriceText:money(ownPricing.excessPriceAmount), segmented, segments,
       periodText: date(value.startDate) + '—' + date(value.effectiveEndDate) + (!returnCutoff && day(value.effectiveEndDate) === day(value.endDate) ? '（末日不含）' : '（归还日，以实际还车时刻截止）'), boundaryDateText: date(value.effectiveEndDate), excessAmountText: fields.excessAmount == null ? '尚未结算' : money(fields.excessAmount),
       billId: typeof value.billId === 'string' ? value.billId : null, canSubmit: segmented ? segments.some(row => row.canSubmit) : value.canSubmit === true && ['OPEN', 'AWAITING_READING'].includes(value.status), reviewNote: typeof value.reviewNote === 'string' ? value.reviewNote : '' };
   }
   function usageView(value, orderId) {
-    if (!value || value.orderId !== orderId || value.policyVersion !== 'USAGE_V1' || value.baseAllowanceKm !== 1500 || !nonnegative(value.excessPriceAmount) || !nonnegative(value.packBalanceKm) || !['ACTIVE', 'FROZEN', 'EXPIRED'].includes(value.packStatus) || ['periods', 'packs', 'ledger', 'products'].some(key => !Array.isArray(value[key]))) response();
+    if (!value || value.orderId !== orderId || !['USAGE_V1','USAGE_V2'].includes(value.policyVersion) || !nonnegative(value.baseAllowanceKm) || (value.policyVersion === 'USAGE_V1' && value.baseAllowanceKm !== 1500) || !nonnegative(value.excessPriceAmount) || !nonnegative(value.packBalanceKm) || !['ACTIVE', 'FROZEN', 'EXPIRED'].includes(value.packStatus) || ['periods', 'packs', 'ledger', 'products'].some(key => !Array.isArray(value[key]))) response();
+    if (value.initialPricing != null) pricingFields(value.initialPricing);
+    const state = value.servicePeriod;
+    if (state != null && (!['CURRENT','NO_ACTIVE_PERIOD','ENDED'].includes(state.status) || state.periodId != null && !value.periods.some(p => p.id === state.periodId && p.status !== 'CANCELLED') || state.status === 'CURRENT' && !state.periodId)) response();
+    const servicePeriod = state ? {status:state.status,periodId:state.periodId??null} : null;
+    const servicePeriodNotice = state?.status === 'NO_ACTIVE_PERIOD' ? '当前无已生效服务期，请联系运营核对续期。历史月份仍按原规则核对，暂不可加购。' : state?.status === 'ENDED' ? '用车服务已结束；以下保留历史月份及其原计价规则。' : '';
     const currentAssignment = assignmentView(value.currentAssignment, response);
     const products = value.products.map(product => {
       if (typeof product?.id !== 'string' || !Object.prototype.hasOwnProperty.call(PRICES, product.km) || PRICES[product.km] !== product.amount) response('里程包规格或金额不符合已确认规则，不能购买。');
       return { id: product.id, version: product.version, km: product.km, amount: product.amount, amountText: money(product.amount) };
     });
+    const historicalPendingPackBalanceKm=value.historicalPendingPackBalanceKm??0;if(!nonnegative(historicalPendingPackBalanceKm))response();
     const packs = value.packs.map(pack => {
       if (typeof pack?.id !== 'string' || !known(PACK_STATUS, pack.status) || !nonnegative(pack.km) || !nonnegative(pack.amount) || !nonnegative(pack.remainingKm)) response();
-      return { id: pack.id, km: pack.km, amount: pack.amount, amountText: money(pack.amount), status: pack.status, statusText: PACK_STATUS[pack.status], availabilityText:pack.status==='REFUND_PENDING'?'已冻结，不可消费；结果以服务端退款核对为准。':pack.status==='REFUNDED'?'已退款，该包不可用。':'',billId: typeof pack.billId === 'string' ? pack.billId : null, remainingKm: pack.remainingKm };
+      const ruleVersion=pack.ruleVersion||'MILEAGE_PACK_V1',monthly=ruleVersion==='MILEAGE_PACK_V2';if(!['MILEAGE_PACK_V1','MILEAGE_PACK_V2'].includes(ruleVersion)||monthly&&(typeof pack.periodId!=='string'||!Number.isFinite(Date.parse(pack.expiresAt))||typeof pack.canUseNow!=='boolean'))response();
+      const payment=mileagePackPayment(pack,response);
+      return { ...payment, ruleVersion,periodId:pack.periodId||null,expiresAt:pack.expiresAt||null,expiresAtText:pack.expiresAt?beijingTime(pack.expiresAt):'',canUseNow:pack.canUseNow===true,ruleText:monthly?'仅购买时计费月有效，不结转；同月换车随原主订单共用。':'历史V1：按原订阅期结转，原约定保持。', id: pack.id, km: pack.km, amount: pack.amount, amountText: money(pack.amount), status: pack.status, statusText: payment.statusText, availabilityText:payment.effectiveStatus==='PAYMENT_REVIEW'?'已确认付款，未发放额度；待平台核账，请勿再次付款。':payment.effectiveStatus==='REFUND_PENDING'?'已冻结，不可消费；结果以服务端退款核对为准。':payment.effectiveStatus==='REFUNDED'?'已退款，该包不可用。':monthly?(pack.canUseNow?'当期可用；仅本计费月。':pack.status==='ACTIVE'?'仅保留核对原计费月，不能抵扣当期。':'本计费月购买记录，以到账与原月结算为准。'):pack.status==='ACTIVE'?(pack.canUseNow?'当期可用；历史V1按原订阅期规则核对。':'历史V1保留用于原月核对，当前不可用。'):'历史V1购买记录，按原订阅期与到账状态核对。',billId: typeof pack.billId === 'string' ? pack.billId : null, remainingKm: pack.remainingKm };
     });
+    const availableFromPacks=packs.filter(p=>p.canUseNow).reduce((total,p)=>total+p.remainingKm,0);
+    const availablePackBalanceKm=value.availablePackBalanceKm??availableFromPacks;
+    if(!nonnegative(availablePackBalanceKm)||value.availablePackBalanceKm!==undefined&&availablePackBalanceKm!==availableFromPacks)response('当期可用里程与逐包状态不一致，请重新核对。');
     const terms = purchaseTerms(value.purchaseTerms);
     const lastPeriod = value.periods.filter(period => period.status !== 'CANCELLED').reduce((last, period) => !last || period.sequence > last.sequence ? period : last, null);
     const returnPeriodId = value.returnedOn && lastPeriod && day(lastPeriod.effectiveEndDate) === day(value.returnedOn) ? lastPeriod.id : null;
-    return { orderId, orderStatus: value.orderStatus, policyVersion: value.policyVersion, currentAssignment, assignments: assignmentHistory(value.assignments, response), assignmentTracked: Object.prototype.hasOwnProperty.call(value, 'currentAssignment'), startedOn: day(value.startedOn), startedOnText: date(value.startedOn), returnedOn: day(value.returnedOn) || null, returnedOnText: value.returnedOn ? date(value.returnedOn) : '', baseAllowanceKm: 1500, excessPriceAmount: value.excessPriceAmount, excessPriceText: money(value.excessPriceAmount), packBalanceKm: value.packBalanceKm, packStatus: value.packStatus,
-      packStatusText: { ACTIVE: '当前订阅期可用', FROZEN: '已冻结，仅用于归还前未结算月份', EXPIRED: '订阅已结束，剩余包额度失效' }[value.packStatus], periods: value.periods.map(period => periodView(period, period.id === returnPeriodId)), packs,
-      ledger: value.ledger.map(row => { if (typeof row?.id !== 'string' || !Number.isSafeInteger(row.deltaKm)) response(); return { id: row.id, type: row.type, typeText:{GRANT:'支付到账发放',CONSUME:'月结算抵扣',EXPIRE:'订阅结束失效',REFUND:'退款收回'}[row.type]||'额度变动',periodId: row.periodId || null, packId: row.packId || null, deltaKm: row.deltaKm, createdAt: row.createdAt }; }), products, purchaseTerms: terms,
-      canPurchase: value.canPurchase === true && value.orderStatus === 'ACTIVE' && value.packStatus === 'ACTIVE' && Boolean(terms) && products.length > 0,
+    return { orderId, orderStatus: value.orderStatus, policyVersion: value.policyVersion, currentAssignment, assignments: assignmentHistory(value.assignments, response), assignmentTracked: Object.prototype.hasOwnProperty.call(value, 'currentAssignment'), startedOn: day(value.startedOn), startedOnText: date(value.startedOn), returnedOn: day(value.returnedOn) || null, returnedOnText: value.returnedOn ? date(value.returnedOn) : '', baseAllowanceKm: value.baseAllowanceKm, excessPriceAmount: value.excessPriceAmount, excessPriceText: money(value.excessPriceAmount), packBalanceKm: value.packBalanceKm, availablePackBalanceKm, historicalPendingPackBalanceKm,hasMonthlyPacks:packs.some(p=>p.ruleVersion==='MILEAGE_PACK_V2'),hasLegacyPacks:packs.some(p=>p.ruleVersion==='MILEAGE_PACK_V1'), packStatus: value.packStatus,
+      servicePeriod, servicePeriodNotice, packStatusText: state && state.status !== 'CURRENT' && value.packStatus === 'ACTIVE' ? '保留用于历史月份核对，暂不可加购' : { ACTIVE: '当前订阅期可用', FROZEN: '已冻结，仅用于归还前未结算月份', EXPIRED: '订阅已结束，剩余包额度失效' }[value.packStatus], periods: value.periods.map(period => periodView(period, period.id === returnPeriodId, value)), packs,
+      ledger: value.ledger.map(row => { if (typeof row?.id !== 'string' || !Number.isSafeInteger(row.deltaKm)) response(); return { id: row.id, type: row.type, typeText:{GRANT:'支付到账发放',CONSUME:'月结算抵扣',EXPIRE:packs.find(p=>p.id===row.packId)?.ruleVersion==='MILEAGE_PACK_V2'?'原计费月结算余额失效':'订阅结束失效',REFUND:'退款收回'}[row.type]||'额度变动',periodId: row.periodId || null, packId: row.packId || null, deltaKm: row.deltaKm, createdAt: row.createdAt }; }), products, purchaseTerms: terms,
+      canPurchase: value.canPurchase === true && (!state || state.status === 'CURRENT') && value.orderStatus === 'ACTIVE' && value.packStatus === 'ACTIVE' && Boolean(terms) && products.length > 0,
       returnSettlement: value.returnSettlement && typeof value.returnSettlement.id === 'string' && known(SETTLEMENT_STATUS, value.returnSettlement.status) ? { id: value.returnSettlement.id, status: value.returnSettlement.status, revision: value.returnSettlement.revision } : null };
   }
   async function getUsageAccount(orderId) { return usageView(await call('GET', '/customer/orders/' + identifier(orderId) + '/usage-account'), orderId); }

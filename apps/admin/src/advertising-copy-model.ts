@@ -1,0 +1,11 @@
+export const advertisingCopyIds=['just-right','beyond-daydreams','find-yourself','leave-some-space','find-your-joy','stay-curious','live-the-story','share-the-view','your-next-stop','room-for-distance','everyday-wilderness','follow-the-spark'] as const;
+export type CopyItem={id:string;title:string;lines:[string,string];catalogDescription:string};
+export type CopyHistory={version:number;contentHash:string;publishedAt:string;publishedBy:string};
+export type CopyDetail={id:'discovery';revision:number;draft:{items:CopyItem[];contentHash:string;updatedAt:string;updatedBy:string};published:CopyHistory&{items:CopyItem[]};history:CopyHistory[]};
+function text(value:unknown,max:number){if(typeof value!=='string'||/[\u0000-\u001f\u007f-\u009f\u2028\u2029<>]/u.test(value))throw Error('请输入单行纯文本，不可包含控制字符或尖括号');const trimmed=value.trim();if(!trimmed||Array.from(trimmed).length>max)throw Error(`请输入 1 至 ${max} 个字符`);return trimmed;}
+export function normalizeItems(value:unknown):CopyItem[]{
+ if(!Array.isArray(value)||value.length!==12)throw Error('广告词必须包含固定的 12 组');
+ return value.map((item,index)=>{if(!item||typeof item!=='object'||Object.keys(item).sort().join(',')!=='catalogDescription,id,lines,title'||item.id!==advertisingCopyIds[index]||!Array.isArray(item.lines)||item.lines.length!==2)throw Error('广告词位置、编号或字段不正确');return {id:item.id,title:text(item.title,9),lines:[text(item.lines[0],32),text(item.lines[1],32)],catalogDescription:text(item.catalogDescription,40)};});
+}
+export function canPublish(input:CopyItem[],saved:CopyItem[],draftHash:string,publishedHash:string){return JSON.stringify(input)===JSON.stringify(saved)&&draftHash!==publishedHash;}
+export function validateDetail(value:CopyDetail):CopyDetail{if(!value||value.id!=='discovery'||!Number.isSafeInteger(value.revision)||value.revision<1||!value.draft||!value.published||!Number.isSafeInteger(value.published.version)||value.published.version<1||!Array.isArray(value.history)||value.history.length>10||![value.draft.contentHash,value.published.contentHash].every(v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v)))throw Error('广告词资料不完整，请重新读取');normalizeItems(value.draft.items);normalizeItems(value.published.items);return value;}

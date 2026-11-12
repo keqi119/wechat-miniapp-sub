@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {build} from 'vite';
+import {chromium,expect} from '@playwright/test';
+import {fileURLToPath} from 'node:url';
+test('virtual workspace offers exact scoped quote and review without ordinary credit approval',async()=>{
+ const result=await build({configFile:false,root:fileURLToPath(new URL('..',import.meta.url)),logLevel:'silent',plugins:[{name:'fixture',resolveId:id=>id==='virtual:fixture'?id:undefined,load:id=>id==='virtual:fixture'?`
+ import React from 'react';import {createRoot} from 'react-dom/client';import {ApplicationWorkspace} from '/src/application-workspace';import {api} from '/src/core';import '/src/style.css';
+ api.setSession({user:{id:'staff',username:'synthetic',role:'ADMIN',permissions:['*']},csrfToken:'local'});
+ createRoot(document.getElementById('root')).render(React.createElement(ApplicationWorkspace,{application:{id:'app',customerId:'customer',status:'IN_REVIEW',revision:2,virtualAcceptance:{notice:'仅用于实名、电子签、支付与归档验证，不形成真实车辆租赁或交付义务'},finalPlan:{revision:2,startDate:'2026-11-09',commercialTerms:{customerAddress:'合成已保存地址'},commercialHash:'a'.repeat(64),reviewStatus:'DRAFT'}},refreshKey:0,onRefresh:()=>{},actions:[],onAction:()=>{}}));
+ `:undefined}],build:{write:false,minify:false,rolldownOptions:{input:'virtual:fixture'}}});
+ const output=(Array.isArray(result)?result[0]:result) as {output:{type:string;fileName:string;code?:string;source?:string|Uint8Array}[]},assets=new Map(output.output.map(x=>['/'+x.fileName,x])),script=output.output.find(x=>x.type==='chunk')!.fileName,styles=output.output.filter(x=>x.fileName.endsWith('.css')).map(x=>`<link rel="stylesheet" href="/${x.fileName}">`).join('');
+ const server=createServer((req,res)=>{const a=assets.get(req.url!);res.setHeader('Content-Type',a?a.fileName.endsWith('.css')?'text/css':'text/javascript':'text/html');res.end(a?a.code||a.source:`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">${styles}<div id="root"></div><script type="module" src="/${script}"></script>`);});await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));
+ const browser=await chromium.launch({channel:'chrome',headless:true});try{const page=await browser.newPage(),calls:{path:string;body:any}[]=[];await page.route('**/api/**',async route=>{const req=route.request(),path=new URL(req.url()).pathname;if(req.method()==='POST')calls.push({path,body:req.postDataJSON()});await route.fulfill({json:path.endsWith('final-plan-defaults')?{kind:'VIRTUAL_ACCEPTANCE',referenceDate:'2026-11-09'}:{}});});await page.goto(`http://127.0.0.1:${(server.address() as any).port}`);
+ await expect(page.getByText('测试资料确认（驾驶资格、信用核验不适用）',{exact:true})).toBeVisible();await page.getByLabel('客户实际联系地址').fill('合成地址，仅供本地界面测试');await expect(page.getByRole('button',{name:'确认测试资料与方案',exact:true})).toBeDisabled();await page.getByRole('button',{name:'生成测试方案',exact:true}).click();await expect.poll(()=>calls.length).toBe(1);assert.equal(calls[0].path,'/api/admin/applications/app/virtual-quote');assert.equal(calls[0].body.revision,2);assert.equal(calls[0].body.customerAddress,'合成地址，仅供本地界面测试');await page.getByLabel('客户实际联系地址',{exact:true}).fill('合成已保存地址');await page.getByRole('button',{name:'确认测试资料与方案',exact:true}).click();await expect.poll(()=>calls.length).toBe(2);assert.equal(calls[1].body.commercialHash,'a'.repeat(64));assert.ok(calls.every(x=>!x.path.includes('credit')));await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ }finally{await browser.close();await new Promise<void>(r=>server.close(()=>r()));}
+});

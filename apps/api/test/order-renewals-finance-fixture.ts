@@ -1,0 +1,35 @@
+import {renewalFixture,renewalPreviewInput,renewalNow,renewalOps,renewalFinance} from './order-renewals-fixture';
+import {OrderRenewalsService} from '../src/order-renewals/service';
+import {offlineChangeScope} from '../src/order-changes/agreement-facts';
+import {validateManifest} from '../src/offline-documents/files';
+import {canonicalHash} from '../src/customers/types';
+import {hash} from '../src/common/data';
+
+export async function renewalFinanceFixture(options:{depositAmount?:number}={}){
+ const f=renewalFixture(),tx=f.tx,oldLegal=tx.legalDocument.findFirst;tx.legalDocument.findFirst=async(args:any)=>{const d=await oldLegal(args);return d?{...d,title:d.title??'合成已确认文书'}:d;};
+ if(options.depositAmount){(f.initial as any).depositAmount=options.depositAmount;f.stage.snapshot.source.originalTermsHash=canonicalHash(f.initial);f.stage.snapshot.source.agreement.priorTermsHash=hash(f.initial);f.stage.snapshotHash=canonicalHash(f.stage.snapshot);f.bills.push({id:'original-deposit',orderId:f.order.id,customerId:f.customer.id,type:'DEPOSIT',sequence:1,amount:options.depositAmount,paidAmount:0,dueDate:new Date('2026-10-01'),status:'PENDING',payments:[]});}
+ const service=new OrderRenewalsService(f.db as any,()=>renewalNow),raw=renewalPreviewInput(f),preview=await service.preview(f.order.id,raw,renewalOps),created=await service.create(f.order.id,{...raw,previewHash:preview.previewHash,idempotencyKey:'finance-core-create'},renewalOps);
+ const next=renewalPreviewInput(f),quoted=await service.preview(f.order.id,next,renewalOps,created.id);await service.act(created.id,'quotes',{...next,previewHash:quoted.previewHash,revision:created.revision,idempotencyKey:'finance-core-quote'},renewalOps);
+ const change=f.changes[0],quote=f.quotes[0];await service.act(change.id,'review',{revision:change.revision,idempotencyKey:'finance-core-review',decision:'APPROVED',note:'独立核对本次续期'},renewalFinance);await service.act(change.id,'publish',{revision:change.revision,idempotencyKey:'finance-core-publish'},renewalOps);
+ await service.customerAct(change.id,'confirm',{revision:change.revision,idempotencyKey:'finance-core-confirm',quoteId:quote.id,quoteRevision:quote.revision,commercialHash:quote.commercialHash,bodyHash:quote.snapshot.document.bodyHash,lessorHash:quote.snapshot.source.lessorHash,noticeHash:quote.snapshot.renewalTerms.lessorSnapshot.sharingNotice.contentHash,sharingAccepted:true},f.customer.id);
+ const contract=quote.contract,archiveId='renewal-paper',versionId=archiveId+'-v1',source=f.source(archiveId+'-source'),signed={...f.source(archiveId+'-signed'),purpose:'offline-archive'},binding={versionId,fileId:signed.id,position:1,file:signed};Object.assign(f.files.find(v=>v.id===signed.id)!,signed);
+ const version={...structuredClone(f.rental.versions[0]),id:versionId,archiveId,templateId:quote.snapshot.document.id,templateVersion:quote.snapshot.document.version,businessSnapshotHash:quote.commercialHash,scopeSnapshot:offlineChangeScope(change,quote,contract),sourceFileId:source.id,files:[binding],fileManifestHash:validateManifest([binding]),partyChecks:f.initial.partiesSnapshot.map((p:any)=>({...p,passed:true,signaturePageRefs:[{fileId:signed.id,page:1}],authorityFileIds:[]}))};
+ const archive={id:archiveId,kind:'ORDER_AMENDMENT',subjectType:'ORDER_CHANGE_QUOTE',subjectId:quote.id,quoteId:quote.id,orderId:f.order.id,ownerId:f.owner.id,handoverId:null,currentApprovedVersionId:versionId,versions:[version]};f.archives.push(archive);contract.offlineArchiveId=archiveId;change.status='AWAITING_FINANCE';
+ for(const bill of f.bills)for(const payment of bill.payments)Object.assign(payment,{billId:bill.id,customerId:f.customer.id,revision:1,providerTransactionId:'transaction-'+payment.id,reconciliationRequired:false,refunds:[]});
+ const allocations=f.allocations,oldObligationFind=tx.serviceObligation.findMany;
+ tx.serviceObligation.findMany=async(args:any={})=>(await oldObligationFind(args)).map((o:any)=>({...o,allocations:allocations.filter(a=>a.obligationId===o.id&&!a.releasedAt).map(a=>({...a,payment:f.bills.flatMap(b=>b.payments).find(p=>p.id===a.paymentId)}))}));
+ tx.paymentAllocation.findMany=async({where}:any={})=>allocations.filter(a=>!a.releasedAt&&(!where?.paymentId?.in||where.paymentId.in.includes(a.paymentId)));
+ tx.bill.create=async({data}:any)=>{const b={id:'renewal-bill-'+f.bills.length,paidAmount:0,payments:[],...data};f.bills.push(b);f.writes.push({table:'bill',data});return b;};
+ tx.orderServiceStage.findFirst=async({where}:any)=>f.stages.find(s=>Object.entries(where).every(([k,v]:any)=>typeof v==='object'?v.in?.includes(s[k]):s[k]===v))??null;
+ tx.orderServiceStage.updateMany=async({where,data}:any)=>{const s=f.stages.find(s=>s.id===where.id&&s.revision===where.revision);if(!s)return{count:0};Object.assign(s,data,{revision:s.revision+(data.revision?.increment??0)});f.writes.push({table:'stage.update',data});return{count:1};};
+ const pay=(bill:any)=>{const p={id:'paid-'+bill.id,billId:bill.id,customerId:f.customer.id,revision:1,status:'SUCCEEDED',amount:bill.amount,providerTransactionId:'transaction-'+bill.id,reconciliationRequired:false,refunds:[]};bill.payments.push(p);bill.paidAmount=bill.amount;bill.status='PAID';const obligation=f.obligations.find(o=>o.chargeBillId===bill.id);if(obligation)allocations.push({id:'allocation-'+bill.id,paymentId:p.id,obligationId:obligation.id,amount:bill.amount,releasedAt:null});return p;};
+ return{...f,service,change,quote,contract,archive,version,pay};
+}
+
+export function markRenewalHistoricallyActive(f:Awaited<ReturnType<typeof renewalFinanceFixture>>){
+ for(const obligation of f.obligations)if(obligation.serviceStageId===f.stages.find(s=>s.kind==='RENEWAL')?.id)obligation.active=true;
+ const stage=f.stages.find(s=>s.kind==='RENEWAL')!,initialStage=f.stages.find(s=>s.kind==='INITIAL')!,at=new Date('2027-10-01T00:00:00+08:00');Object.assign(initialStage,{status:'ENDED',endedAt:at});Object.assign(stage,{status:'ACTIVE',scheduledBy:'finance',scheduledAt:renewalNow,activatedBy:'ops',activatedAt:at,termsVersionId:'renewal-effective-terms'});f.change.status='APPLIED';
+ const terms={id:stage.termsVersionId,orderId:f.order.id,quoteId:f.quote.id,version:1,snapshot:structuredClone(f.quote.snapshot.renewalTerms),hash:f.quote.commercialHash,offlineArchiveVersionId:f.quote.approvedArchiveVersionId,effectiveAt:at};f.terms.push(terms);f.order.effectiveTermsVersionId=terms.id;
+ const later=f.addChange(true);Object.assign(later.change,{kind:'VEHICLE_CHANGE',targetVehicleId:'target'});later.terms!.snapshot={...structuredClone(terms.snapshot),commercialHash:later.quote.commercialHash,amendmentContractId:later.contract.id,vehicleId:'target',lessorSnapshot:{...terms.snapshot.lessorSnapshot,vehicleId:'target'}};later.version.scopeSnapshot=offlineChangeScope(later.change,later.quote,later.contract);
+ Object.assign(f.assignment,{status:'CLOSED',endAt:new Date('2027-11-01T02:00:00Z'),returnHandoverId:'later-return'});f.order.vehicleId='target';f.order.currentAssignmentId='later-assignment';stage.snapshotHash=canonicalHash(stage.snapshot);return stage;
+}

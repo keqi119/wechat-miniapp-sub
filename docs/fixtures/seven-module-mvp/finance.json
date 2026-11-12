@@ -1,0 +1,15 @@
+{
+  "synthetic": true,
+  "role": "FINANCE",
+  "payment": {
+    "id": "synthetic-payment",
+    "amount": 1,
+    "status": "SUCCEEDED",
+    "revision": 0,
+    "reconciliationRequired": true,
+    "reconciliationReason": "ARCHIVE_FEEDBACK_OPEN"
+  },
+  "settlementMode": "MANUAL",
+  "automaticPayout": false,
+  "canReadCustomerIdentity": false
+}

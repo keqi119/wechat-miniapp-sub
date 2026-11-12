@@ -43,13 +43,19 @@ export function creditVerificationPayload(body: Record<string, unknown>, idempot
 }
 export function scopedAcceptanceOffer(review: CreditReview | undefined, applicationId: string): AcceptancePricingOffer | undefined {
   const offer = review?.acceptancePricing;
-  return review?.applicationId === applicationId && offer?.mode === 'V1_ONE_FEN' && offer.monthlyFeeAmount === 1 && offer.depositAmount === 1 && offer.months === 12 && !!offer.startDate && !!offer.firstDueDate && !!offer.reference ? offer : undefined;
+  const amount = offer?.mode === 'V2_ONE_YUAN' ? 100 : offer?.mode === 'V1_ONE_FEN' ? 1 : undefined;
+  return review?.applicationId === applicationId && amount !== undefined && offer?.monthlyFeeAmount === amount && offer.depositAmount === amount && offer.months === 12 && !!offer.startDate && !!offer.firstDueDate && !!offer.reference ? offer : undefined;
 }
 export function creditPlanInitial(entity: Entity, review?: CreditReview): Record<string, unknown> {
-  return { ...(entity.subscriptionPlan as Record<string, unknown> ?? entity.plan as Record<string, unknown> ?? {}), ...(entity.finalPlan as Record<string, unknown> ?? {}), commercialTerms: prefillHandoverTerms(entity,(entity.finalPlan as Record<string, unknown> | undefined)?.commercialTerms), mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, revision: entity.revision ?? 0, creditVerificationId: review?.verification?.id ?? '', creditBand: review?.verification?.band ?? '', creditRevision: review?.creditRevision, creditRuleVersion: review?.ruleVersion, pricingMode: (entity.finalPlan as Record<string, unknown> | undefined)?.acceptancePricing ? 'V1_ONE_FEN' : 'STANDARD', acceptancePricingScope: scopedAcceptanceOffer(review, entity.id) };
+  const previous = entity.finalPlan as Record<string, unknown> | undefined;
+  const priorMode = (previous?.acceptancePricing as {ruleVersion?:string} | undefined)?.ruleVersion ?? previous?.pricingMode;
+  return { ...(entity.subscriptionPlan as Record<string, unknown> ?? entity.plan as Record<string, unknown> ?? {}), ...(previous ?? {}), commercialTerms: prefillHandoverTerms(entity,previous?.commercialTerms), revision: entity.revision ?? 0, creditVerificationId: review?.verification?.id ?? '', creditBand: review?.verification?.band ?? '', creditRevision: review?.creditRevision, creditRuleVersion: review?.ruleVersion, pricingMode: priorMode === 'V1_ONE_FEN' || priorMode === 'V2_ONE_YUAN' ? priorMode : 'STANDARD', acceptancePricingScope: scopedAcceptanceOffer(review, entity.id) };
 }
 export function creditDepositPreview(values: Record<string, string>, initial: Record<string, unknown>): string {
-  if (values.pricingMode === 'V1_ONE_FEN') return (initial.acceptancePricingScope as AcceptancePricingOffer | undefined)?.mode === 'V1_ONE_FEN' ? '0.01' : '本单验收报价未授权，请重新核对';
+  if (values.pricingMode === 'V1_ONE_FEN' || values.pricingMode === 'V2_ONE_YUAN') {
+    const offer = initial.acceptancePricingScope as AcceptancePricingOffer | undefined;
+    return offer?.mode === values.pricingMode ? (offer.depositAmount / 100).toFixed(2) : '本单验收报价未授权，请重新核对';
+  }
   try { const amount = creditDeposit(moneyToCents(values.monthlyFeeAmount ?? ''), String(initial.creditBand ?? '')); return amount === undefined ? '待有效信用核验' : (amount / 100).toFixed(2); }
   catch (error) { return error instanceof Error ? error.message : '请核对月费'; }
 }

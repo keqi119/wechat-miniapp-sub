@@ -33,7 +33,7 @@ test('filing cannot precede the last signer, archive cannot precede filing, and 
   }
 });
 test('cooperation has exactly its two parties and cannot acquire a customer signature slot',()=>{
-  const {proof,expected}=electronicProof();proof.kind='COOPERATION';expected.kind='COOPERATION';proof.parties=proof.parties.slice(1);expected.parties=expected.parties.slice(1);
+  const {proof,expected}=electronicProof();proof.kind='COOPERATION';expected.kind='COOPERATION';proof.parties=proof.parties.slice(1);expected.parties=expected.parties.slice(1);proof.finalVerification.subjects=proof.finalVerification.subjects.slice(1);
   assert.doesNotThrow(()=>assertElectronicArchiveProof(proof,expected));proof.parties.push(electronicProof().proof.parties[0]);rejected(proof,expected);
 });
 test('even a persisted automatic claim cannot sign for a natural person or omit an enterprise seal',()=>{

@@ -1,4 +1,5 @@
-import {MINIAPP_RETURN,runNativeSigning} from '../esign/native-signing';
+import {miniappReturnUrl,runNativeSigning} from '../esign/native-signing';
+import {assertNewEsignAllowed} from '../offline-documents/mode';
 import { Controller, Get, Inject, Param, Post, Req, Optional } from '@nestjs/common';
 import { Db } from '../common/db';
 import { ESignGateway } from '../common/gateways';
@@ -9,10 +10,11 @@ import {OwnerContractGateway} from '../owner-signing/gateway';
 @Controller()
 export class SignaturesController {
   constructor(@Inject(Db) private db: Db, @Inject(ESignGateway) private esign: ESignGateway, @Inject(SignatureService) private signatures: SignatureService, @Optional() @Inject(OwnerContractGateway) private ownerGateway?:OwnerContractGateway) {}
-  @Post('customer/contracts/:id/sign') sign(@Param('id') id: string, @Req() request: any) { return runNativeSigning(()=>this.send(id, request.customer.id,MINIAPP_RETURN)); }
+  @Post('customer/contracts/:id/sign') sign(@Param('id') id: string, @Req() request: any) { return runNativeSigning(()=>this.send(id, request.customer.id,miniappReturnUrl())); }
   @Post('admin/contracts/:id/send') adminSign(@Param('id') id: string) { return this.send(id); }
   async send(id: string, customerId?: string, returnUrl?:string) {
     const current=await this.db.contract.findFirst({where:{id,...(customerId?{customerId}:{})},include:{order:true}});ensure(current,404,'NOT_FOUND','合同不存在');
+    assertNewEsignAllowed({executionMode:current.executionMode,contractMode:current.order.contractMode});
     if((current.order.finalPlanSnapshot as any).lessorSnapshot){ensure(customerId,409,'OWNER_CUSTOMER_SIGNATURE_REQUIRED','请由订阅客户本人从小程序确认并进入签署');ensure(this.ownerGateway,409,'OWNER_NATIVE_REQUIRED','请从小程序车主合同入口办理');return this.ownerGateway.customerSign(customerId,id);}
     const claim = await this.db.serial(async tx => {
       const contract = await tx.contract.findFirst({ where: { id, ...(customerId ? { customerId } : {}) }, include: { order: { include: { customer: true } } } });
@@ -30,7 +32,7 @@ export class SignaturesController {
   }
 
   @Get('customer/contracts/:id/sign-status') async status(@Param('id') id: string, @Req() request: any) { const item = await this.db.contract.findFirst({ where: { id, customerId: request.customer.id } }); ensure(item, 404, 'NOT_FOUND', '合同不存在'); return this.sync(id); }
-  @Post('customer/contracts/:id/sync') async customerSync(@Param('id')id:string,@Req()request:any){const c=await this.db.contract.findFirst({where:{id,customerId:request.customer.id},include:{order:true}});ensure(c,404,'NOT_FOUND','合同不存在');if((c.order.finalPlanSnapshot as any).lessorSnapshot&&c.providerTaskId){ensure(this.ownerGateway,409,'OWNER_NATIVE_REQUIRED','请从小程序车主合同入口办理');return this.ownerGateway.query(c.providerTaskId,true);}return this.sync(id);}
+  @Post('customer/contracts/:id/sync') async customerSync(@Param('id')id:string,@Req()request:any){const c=await this.db.contract.findFirst({where:{id,customerId:request.customer.id},include:{order:true}});ensure(c,404,'NOT_FOUND','合同不存在');if((c.order.finalPlanSnapshot as any).lessorSnapshot&&c.providerTaskId){ensure(this.ownerGateway,409,'OWNER_NATIVE_REQUIRED','请从小程序车主合同入口办理');return this.ownerGateway.query(c.providerTaskId,false);}return this.sync(id);}
   @Post('admin/contracts/:id/sync') async sync(@Param('id') id: string) {
     const contract=await this.db.contract.findUnique({where:{id}});ensure(contract?.kind==='SUBSCRIPTION',409,'CONTRACT_KIND','补充协议须从订单变更入口查询');
     const order=await this.db.order.findUniqueOrThrow({where:{id:contract.orderId}});if((order.finalPlanSnapshot as any).lessorSnapshot){ensure(this.ownerGateway,409,'OWNER_NATIVE_REQUIRED','请从小程序车主合同入口办理');return contract.providerTaskId?this.ownerGateway.query(contract.providerTaskId):{status:'DRAFT',documentHash:contract.documentHash};}

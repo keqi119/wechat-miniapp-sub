@@ -1,0 +1,741 @@
+{
+  "generatedOn": "2026-10-31",
+  "classification": "SYNTHETIC_REVIEW_DRAFT_NOT_APPROVED",
+  "template": {
+    "path": "docs/legal/drafts/offline-order-amendment-v1.md",
+    "rawSha256": "e7fab549049a0cb7cf4508f09e635c9829bcd47efb56afe203e64ec8819d2301",
+    "publisherTemplateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6"
+  },
+  "method": "Actual current publisher functions and OrderRenewalsService with in-memory test doubles; no database/client/app/provider constructed. Mock PUBLISHED/review states only satisfy renderer guards inside isolated memory; no real approval.",
+  "sourceFiles": [
+    {
+      "path": "apps/api/src/order-changes/offline-publish.ts",
+      "sha256": "11aa7e5df335dbbd2182a564daae6f9e61c32c1b535c139f9e985a5a332cfa87"
+    },
+    {
+      "path": "apps/api/src/vehicle-changes/offline-publish.ts",
+      "sha256": "c0230a25eb3b0a523fa411a34ec5c42494f7266914b9b33f36406b134386c722"
+    },
+    {
+      "path": "apps/api/src/order-renewals/offline-publish.ts",
+      "sha256": "56dc213a9919bf6f968f0c82f25f6ab86e689bf986ccfd32a2219cc2c4b267ef"
+    },
+    {
+      "path": "apps/api/src/order-renewals/service.ts",
+      "sha256": "55714ddcf31f500552366b33c532ce341f8ed97ea7564c6bde35f322915cd3a0"
+    },
+    {
+      "path": "apps/api/src/vehicle-changes/offline-pricing.ts",
+      "sha256": "4944db2e59ee61ff4dd5a98c19ea8412eb49580b13c52d886e71c7256ebd11a9"
+    },
+    {
+      "path": "apps/api/test/offline-delivery-delay-fixture.ts",
+      "sha256": "7bdec73af9948f1213f1a355348d15dd7e52db7c940838c6dc83fab5e3ee17e6"
+    },
+    {
+      "path": "apps/api/test/offline-swap-quotes-fixture.ts",
+      "sha256": "5f4c5808b1e40c85fb8dcf016e1f330dacd2f1f925d62ab7590ff15653a4359e"
+    },
+    {
+      "path": "apps/api/test/order-renewals-fixture.ts",
+      "sha256": "409bc3e90beba86b1ef917b1680f57f870c5db1bcf51fa44517e11e16b374bd8"
+    }
+  ],
+  "samples": [
+    {
+      "id": "delay",
+      "title": "01 · 未交付延期",
+      "input": {
+        "fixture": "offlineDelayFixture",
+        "changes": {
+          "template": "original draft bytes",
+          "originalContractNumber": "SYNTHETIC-RENTAL-2026-D01"
+        }
+      },
+      "cards": [
+        [
+          "服务日期",
+          "2026-10-01—12-31 → 2026-11-01—2027-01-31（末日均含）"
+        ],
+        [
+          "期数 / 月费",
+          "仍为 3 个月；100.00 元 / 月"
+        ],
+        [
+          "资金 / 押金",
+          "3 期各沿用已收 100.00 元；补收、退款与原押金均为 0"
+        ],
+        [
+          "里程 / 换车次数",
+          "保持原合同规则；本延期夹具未提供可重列的数值"
+        ]
+      ],
+      "notes": [
+        "延期样张明确保留原里程和换车权益，不新增补能权益。因该合成源未冻结具体里程与次数数值，样张不猜补。",
+        "原文金额使用现有延期格式，例如“月费¥100.00元”；保留实际渲染结果供审阅。"
+      ],
+      "document": {
+        "id": "template-ORDER_AMENDMENT",
+        "type": "OFFLINE_ORDER_AMENDMENT",
+        "version": 1,
+        "templateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6",
+        "bodyHash": "9ba1eda856d2ed8ac9c02c9f376223334612c606e0d463293ea9a0f0dad440dc",
+        "content": "# 车辆订阅补充协议\n\n原车辆订阅合同编号：SYNTHETIC-RENTAL-2026-D01\n\n订阅订单号：order\n\n承租人：原签约客户\n\n出租人：原出租方\n\n平台服务方：平台主体\n\n上述各方就原车辆订阅合同及此前已生效补充协议项下的本次安排协商一致，订立本补充协议。本次变更的车辆、服务期间、费用、权益及办理安排，以以下明确列示的内容为准。\n\n## 一、本次变更事实及安排\n\n本次办理未交付延期，变更记录change-1，报价第1版；原合同编号SYNTHETIC-RENTAL-2026-D01，已签纸质版第1版。\n车辆：原冻结车辆 VIN123。原服务期2026-10-01至2026-12-31（含最后日）；延期后2026-11-01至2027-01-31（含最后日），仍为3个月。\n月费¥100.00元，原押金¥0.00元不变；逐期应收、沿用款项及退款以本协议明细为准。\n延期原因：双方确认未交付延期。结算依据：原同一期已付款沿用。交付安排：新起租日交车。取消及异常：按原合同约定办理。\n本次不改变原冻结产品、里程政策和换车权益，不增加补能权益；充换电费用由客户自付。车辆尚未交付，后续按实际交付事实办理，延期确认不等于已经交车。\n\n## 二、服务期间及逐期应收金额\n\n第1期：2026-11-01（含）至2026-12-01（不含），应收¥100.00，付款到期日2026-11-01；依据：原同一期金额不变\n第2期：2026-12-01（含）至2027-01-01（不含），应收¥100.00，付款到期日2026-12-01；依据：原同一期金额不变\n第3期：2027-01-01（含）至2027-02-01（不含），应收¥100.00，付款到期日2027-01-01；依据：原同一期金额不变\n\n各期起止日期、计费依据、应收金额及付款到期日按上述明细执行；注明“不含”的结束日不计入该期。未在本协议中明确改变的原服务期约定及已经发生的履行事实，继续保留。\n\n## 三、已收款、补付款及退款安排\n\n第1期：原净实收¥100.00，本期沿用¥100.00，需主动补付¥0.00，需原路退回¥0.00\n第2期：原净实收¥100.00，本期沿用¥100.00，需主动补付¥0.00，需原路退回¥0.00\n第3期：原净实收¥100.00，本期沿用¥100.00，需主动补付¥0.00，需原路退回¥0.00\n\n上述已收、沿用、补付及应退金额依本次确认时核实的资金记录列示。客户按约主动支付应付款项；退款按原支付记录及明确确认的退款安排办理。本协议的签署、上传或归档不等于款项已经到账或已经退回，实际到账、退款和后续核对结果分别保留记录。\n\n## 四、交接与后续确认\n\n本协议中的计划交付、计划归还和后续办理日期属于各方确认的安排；实际交付、归还、车辆状况及里程，以对应车辆的真实交接记录为准。需要调整本协议已明确的日期、金额或其他变更事项时，应重新确认相应书面内容，保留前后版本，不以修改历史记录代替本次确认。\n\n本协议签署及纸质归档不单独证明车辆已经交付、已经归还或续期已经办理生效。各项办理还应满足本协议列明的资金、交接及生效条件。\n\n## 五、其他约定\n\n本协议与原合同及此前已生效补充协议共同保存。仅本协议明确变更的事项按本协议执行；未明确变更的事项仍按原合同及此前已生效补充协议执行，不因本次办理自动增加费用、放弃已有权利或更改历史实收款项。\n\n承租人、出租人及平台服务方分别核对本协议正文与明细后签署。签字、盖章及签署日期见本协议签署页，各方可按已约定的方式取得本协议留存件。\n",
+        "bodyRawSha256": "9a8136ece31b3a75b9552f90e15a7b5dbbaf9805cbb468dc91669261ccc25cee"
+      },
+      "facts": {
+        "originalContractNumber": "SYNTHETIC-RENTAL-2026-D01",
+        "originalMonthlyFeeAmount": 10000,
+        "originalDepositAmount": 0,
+        "originalTermMonths": 3,
+        "newMonthlyFeeAmount": 10000,
+        "periods": [
+          {
+            "sequence": 1,
+            "startDate": "2026-11-01",
+            "endDate": "2026-12-01",
+            "dueDate": "2026-11-01",
+            "amount": 10000,
+            "originalAmount": 10000,
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 0,
+            "refundAmount": 0,
+            "calculationBasis": "原同一期金额不变"
+          },
+          {
+            "sequence": 2,
+            "startDate": "2026-12-01",
+            "endDate": "2027-01-01",
+            "dueDate": "2026-12-01",
+            "amount": 10000,
+            "originalAmount": 10000,
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 0,
+            "refundAmount": 0,
+            "calculationBasis": "原同一期金额不变"
+          },
+          {
+            "sequence": 3,
+            "startDate": "2027-01-01",
+            "endDate": "2027-02-01",
+            "dueDate": "2027-01-01",
+            "amount": 10000,
+            "originalAmount": 10000,
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 0,
+            "refundAmount": 0,
+            "calculationBasis": "原同一期金额不变"
+          }
+        ],
+        "pricing": null,
+        "totalAmount": 30000,
+        "depositAmount": 0,
+        "usagePricing": null,
+        "swapPolicy": null
+      },
+      "inMemoryOnly": true
+    },
+    {
+      "id": "swap-same-price",
+      "title": "02A · 同价换车",
+      "input": {
+        "fixture": "offlineSwapFixture + swapV2Input",
+        "variant": "SAME_PRICE",
+        "overrides": {
+          "targetProductName": "合成同价产品",
+          "targetBaseFeeAmount": 10000,
+          "targetMonthlyFeeAmount": 10000,
+          "plannedReturnAt": "2026-11-15T09:00:00+08:00",
+          "plannedDeliveryAt": "2026-11-15T10:00:00+08:00",
+          "reason": "合成同价换车"
+        }
+      },
+      "cards": [
+        [
+          "服务日期",
+          "原期 2026-10-01—12-31 不延长；11 月 15 日换入新车"
+        ],
+        [
+          "月费",
+          "100.00 → 100.00 元"
+        ],
+        [
+          "逐期 / 差价",
+          "3 期各 100.00 元；本次差价为 0"
+        ],
+        [
+          "原权益 / 押金",
+          "原合同期赠送 2 次、额外单次 500.00 元；押金 0 元"
+        ]
+      ],
+      "notes": [
+        "同价仅更换实际车辆，不增加月费；不据此承诺免费换车，次数仍按原合同核销。",
+        "目标产品即使配置 2400 公里、赠送 99 次，本次换车也不覆盖原用量、原合同期次数或已购余额。正文只明确沿用原用量政策，不猜补该夹具未冻结的原具体里程条款。",
+        "这里是计划交付日下的报价样张；实际日改变时必须重新计价、确认及归档，不能把计划当作已经交付。"
+      ],
+      "document": {
+        "id": "template-ORDER_AMENDMENT",
+        "type": "OFFLINE_ORDER_AMENDMENT",
+        "version": 1,
+        "templateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6",
+        "bodyHash": "bff4f674e0b3371a1ef0e9a28cda0cfb25baae2710cfe970633ae0eebe9afd51",
+        "content": "# 车辆订阅补充协议\n\n原车辆订阅合同编号：SYNTHETIC-RENTAL-2026-S01\n\n订阅订单号：order\n\n承租人：原签约客户\n\n出租人：原出租方\n\n平台服务方：平台主体\n\n上述各方就原车辆订阅合同及此前已生效补充协议项下的本次安排协商一致，订立本补充协议。本次变更的车辆、服务期间、费用、权益及办理安排，以以下明确列示的内容为准。\n\n## 一、本次变更事实及安排\n\n原车：原车；VIN：ORIGINAL；车牌：未登记；车况：未披露；换入车：换入车；VIN：TARGET；车牌：未登记；车况：未披露。\n同一实际出租方：原出租方（owner）；商品target-listing，版本2；产品合成同价产品，版本2；商品来源dc6240ff9d5d23c9b15eb47b7f299cdb67c9a50154253b7caa478b2993d6393a。\n原服务期2026-10-01至2026-12-31（含最后日），原3个月不延长。原当前月费100.00元，新月费100.00元。\n计划旧车归还2026-11-15T09:00:00+08:00，新车交付2026-11-15T10:00:00+08:00；实际交付日计入新车，逐期按原服务月实际天数折算并四舍五入到分，差额合计0.00元。\n押金0.00元；依据：押金不变。本报价未另收交接费。\n保险及责任：按原合同责任；无车期间：当天无车期间明确安排；交接：分别核对归还与交付。\n结算：差价按原服务月计收；取消及异常：按原合同办理。\n原合同期赠送2次，额外单次服务费500.00元；本次实际完成仅扣一次，原合同期不重置。\n原用量政策、原服务月和已购里程余额沿用，目标商品里程或赠送次数不覆盖原权益；充换电费用由客户自付。\n先核清本次应退、押金及交付所在期及之前应收；未来月份仍按原到期日主动付款，不自动扣款。\n\n## 二、服务期间及逐期应收金额\n\n第1期原服务月2026-10-01（含）至2026-11-01（不含），共31天，新车计0天；原应收100.00元，本次差价0.00元，新应收100.00元，到期2026-10-01。\n第2期原服务月2026-11-01（含）至2026-12-01（不含），共30天，新车计16天；原应收100.00元，本次差价0.00元，新应收100.00元，到期2026-11-01。\n第3期原服务月2026-12-01（含）至2027-01-01（不含），共31天，新车计31天；原应收100.00元，本次差价0.00元，新应收100.00元，到期2026-12-01。\n\n各期起止日期、计费依据、应收金额及付款到期日按上述明细执行；注明“不含”的结束日不计入该期。未在本协议中明确改变的原服务期约定及已经发生的履行事实，继续保留。\n\n## 三、已收款、补付款及退款安排\n\n第1期实际净收100.00元，沿用100.00元，补收0.00元，原路应退0.00元。\n第2期实际净收100.00元，沿用100.00元，补收0.00元，原路应退0.00元。\n第3期实际净收100.00元，沿用100.00元，补收0.00元，原路应退0.00元。\n押金原净收0.00元，补收0.00元，原路应退0.00元。\n\n上述已收、沿用、补付及应退金额依本次确认时核实的资金记录列示。客户按约主动支付应付款项；退款按原支付记录及明确确认的退款安排办理。本协议的签署、上传或归档不等于款项已经到账或已经退回，实际到账、退款和后续核对结果分别保留记录。\n\n## 四、交接与后续确认\n\n本协议中的计划交付、计划归还和后续办理日期属于各方确认的安排；实际交付、归还、车辆状况及里程，以对应车辆的真实交接记录为准。需要调整本协议已明确的日期、金额或其他变更事项时，应重新确认相应书面内容，保留前后版本，不以修改历史记录代替本次确认。\n\n本协议签署及纸质归档不单独证明车辆已经交付、已经归还或续期已经办理生效。各项办理还应满足本协议列明的资金、交接及生效条件。\n\n## 五、其他约定\n\n本协议与原合同及此前已生效补充协议共同保存。仅本协议明确变更的事项按本协议执行；未明确变更的事项仍按原合同及此前已生效补充协议执行，不因本次办理自动增加费用、放弃已有权利或更改历史实收款项。\n\n承租人、出租人及平台服务方分别核对本协议正文与明细后签署。签字、盖章及签署日期见本协议签署页，各方可按已约定的方式取得本协议留存件。\n",
+        "bodyRawSha256": "774f8da4e7e15c7477a674bc7dd09602c0ca7d7177a96c8dc8624902204cf47c"
+      },
+      "facts": {
+        "originalContractNumber": "SYNTHETIC-RENTAL-2026-S01",
+        "originalMonthlyFeeAmount": 10000,
+        "originalDepositAmount": 0,
+        "originalTermMonths": 3,
+        "newMonthlyFeeAmount": 10000,
+        "periods": [
+          {
+            "sequence": 1,
+            "startDate": "2026-10-01",
+            "endDate": "2026-11-01",
+            "dueDate": "2026-10-01",
+            "originalAmount": 10000,
+            "differenceAmount": 0,
+            "amount": 10000,
+            "calculationBasis": "原服务月 2026-10-01 至 2026-11-01（结束日不含），本次升级差额 0 分",
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 0,
+            "refundAmount": 0
+          },
+          {
+            "sequence": 2,
+            "startDate": "2026-11-01",
+            "endDate": "2026-12-01",
+            "dueDate": "2026-11-01",
+            "originalAmount": 10000,
+            "differenceAmount": 0,
+            "amount": 10000,
+            "calculationBasis": "原服务月 2026-11-01 至 2026-12-01（结束日不含），本次升级差额 0 分",
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 0,
+            "refundAmount": 0
+          },
+          {
+            "sequence": 3,
+            "startDate": "2026-12-01",
+            "endDate": "2027-01-01",
+            "dueDate": "2026-12-01",
+            "originalAmount": 10000,
+            "differenceAmount": 0,
+            "amount": 10000,
+            "calculationBasis": "原服务月 2026-12-01 至 2027-01-01（结束日不含），本次升级差额 0 分",
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 0,
+            "refundAmount": 0
+          }
+        ],
+        "pricing": {
+          "pricingVersion": 2,
+          "financialGate": "BEFORE_RETURN",
+          "priorTermsVersionId": null,
+          "priorTermsHash": "2a66dfab9c4d9d228e2009ebcc23264a9f7e170fc5e54399e6e3caa9b7b823a0",
+          "currentMonthlyFeeAmount": 10000,
+          "targetMonthlyFeeAmount": 10000,
+          "target": {
+            "vehicleId": "target",
+            "subscriptionPlanId": "target-plan",
+            "product": {
+              "productId": "target-product",
+              "productVersionId": "target-version",
+              "version": 2,
+              "name": "合成同价产品",
+              "months": 12,
+              "monthlyFeeAmount": 10000,
+              "mileagePerMonthKm": 2400,
+              "excessMileagePriceAmount": 230,
+              "energyDescription": "充换电费用由客户自付",
+              "conditions": "明确条件",
+              "vehicleIds": [
+                "target"
+              ],
+              "modelDefinitionIds": [],
+              "benefits": [],
+              "configurationVersion": 2,
+              "baseFeeAmount": 10000,
+              "mileageMonthlyFeeAmount": 0,
+              "swapPolicy": {
+                "version": 2,
+                "period": "TERM",
+                "includedCount": 99,
+                "extraFeeAmount": 99000
+              },
+              "listingId": "target-listing",
+              "listingRevision": 2,
+              "sourceHash": "dc6240ff9d5d23c9b15eb47b7f299cdb67c9a50154253b7caa478b2993d6393a"
+            }
+          },
+          "pricing": {
+            "ruleVersion": "SWAP_UPGRADE_ACTUAL_DAYS_V1",
+            "timeZone": "Asia/Shanghai",
+            "startDate": "2026-10-01",
+            "endDate": "2027-01-01",
+            "deliveryDate": "2026-11-15",
+            "monthlyDifferenceAmount": 0,
+            "periods": [
+              {
+                "sequence": 1,
+                "startDate": "2026-10-01",
+                "endDate": "2026-11-01",
+                "totalDays": 31,
+                "chargeDays": 0,
+                "differenceAmount": 0
+              },
+              {
+                "sequence": 2,
+                "startDate": "2026-11-01",
+                "endDate": "2026-12-01",
+                "totalDays": 30,
+                "chargeDays": 16,
+                "differenceAmount": 0
+              },
+              {
+                "sequence": 3,
+                "startDate": "2026-12-01",
+                "endDate": "2027-01-01",
+                "totalDays": 31,
+                "chargeDays": 31,
+                "differenceAmount": 0
+              }
+            ],
+            "totalDifferenceAmount": 0
+          },
+          "periods": [
+            {
+              "sequence": 1,
+              "startDate": "2026-10-01",
+              "endDate": "2026-11-01",
+              "dueDate": "2026-10-01",
+              "originalAmount": 10000,
+              "differenceAmount": 0,
+              "amount": 10000
+            },
+            {
+              "sequence": 2,
+              "startDate": "2026-11-01",
+              "endDate": "2026-12-01",
+              "dueDate": "2026-11-01",
+              "originalAmount": 10000,
+              "differenceAmount": 0,
+              "amount": 10000
+            },
+            {
+              "sequence": 3,
+              "startDate": "2026-12-01",
+              "endDate": "2027-01-01",
+              "dueDate": "2026-12-01",
+              "originalAmount": 10000,
+              "differenceAmount": 0,
+              "amount": 10000
+            }
+          ],
+          "totalOriginalAmount": 30000,
+          "totalAmount": 30000
+        },
+        "totalAmount": 30000,
+        "depositAmount": 0,
+        "usagePricing": null,
+        "swapPolicy": {
+          "version": 2,
+          "period": "TERM",
+          "includedCount": 2,
+          "extraFeeAmount": 50000
+        }
+      },
+      "inMemoryOnly": true
+    },
+    {
+      "id": "swap-upgrade",
+      "title": "02B · 升级换车",
+      "input": {
+        "fixture": "offlineSwapFixture + swapV2Input",
+        "variant": "UPGRADE",
+        "overrides": {
+          "targetProductName": "合成升级产品",
+          "targetBaseFeeAmount": 20000,
+          "targetMonthlyFeeAmount": 20000,
+          "plannedReturnAt": "2026-11-15T09:00:00+08:00",
+          "plannedDeliveryAt": "2026-11-15T10:00:00+08:00",
+          "reason": "合成升级用车"
+        }
+      },
+      "cards": [
+        [
+          "服务日期",
+          "原期 2026-10-01—12-31 不延长；11 月 15 日换入新车"
+        ],
+        [
+          "月费",
+          "100.00 → 200.00 元"
+        ],
+        [
+          "逐期 / 差价",
+          "10 月 100.00；11 月 153.33；12 月 200.00；本次差价合计 153.33 元"
+        ],
+        [
+          "原权益 / 押金",
+          "原合同期赠送 2 次、额外单次 500.00 元；押金 0 元"
+        ]
+      ],
+      "notes": [
+        "11 月实际 30 天，15—30 日计新车 16 天：100.00 × 16 / 30 = 53.33 元；12 月加 100.00 元，合计 153.33 元。",
+        "目标产品即使配置 2400 公里、赠送 99 次，本次换车也不覆盖原用量、原合同期次数或已购余额。正文只明确沿用原用量政策，不猜补该夹具未冻结的原具体里程条款。",
+        "这里是计划交付日下的报价样张；实际日改变时必须重新计价、确认及归档，不能把计划当作已经交付。"
+      ],
+      "document": {
+        "id": "template-ORDER_AMENDMENT",
+        "type": "OFFLINE_ORDER_AMENDMENT",
+        "version": 1,
+        "templateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6",
+        "bodyHash": "516fb6f4b2c76aeda38196ee6cf972dd5d03b405c0e0d15cd6437461c07fd45b",
+        "content": "# 车辆订阅补充协议\n\n原车辆订阅合同编号：SYNTHETIC-RENTAL-2026-S02\n\n订阅订单号：order\n\n承租人：原签约客户\n\n出租人：原出租方\n\n平台服务方：平台主体\n\n上述各方就原车辆订阅合同及此前已生效补充协议项下的本次安排协商一致，订立本补充协议。本次变更的车辆、服务期间、费用、权益及办理安排，以以下明确列示的内容为准。\n\n## 一、本次变更事实及安排\n\n原车：原车；VIN：ORIGINAL；车牌：未登记；车况：未披露；换入车：换入车；VIN：TARGET；车牌：未登记；车况：未披露。\n同一实际出租方：原出租方（owner）；商品target-listing，版本2；产品合成升级产品，版本2；商品来源11c65b0595de08eb4747945b149b4bd4d83bd5b9784a4add19cb7394f60fe734。\n原服务期2026-10-01至2026-12-31（含最后日），原3个月不延长。原当前月费100.00元，新月费200.00元。\n计划旧车归还2026-11-15T09:00:00+08:00，新车交付2026-11-15T10:00:00+08:00；实际交付日计入新车，逐期按原服务月实际天数折算并四舍五入到分，差额合计153.33元。\n押金0.00元；依据：押金不变。本报价未另收交接费。\n保险及责任：按原合同责任；无车期间：当天无车期间明确安排；交接：分别核对归还与交付。\n结算：差价按原服务月计收；取消及异常：按原合同办理。\n原合同期赠送2次，额外单次服务费500.00元；本次实际完成仅扣一次，原合同期不重置。\n原用量政策、原服务月和已购里程余额沿用，目标商品里程或赠送次数不覆盖原权益；充换电费用由客户自付。\n先核清本次应退、押金及交付所在期及之前应收；未来月份仍按原到期日主动付款，不自动扣款。\n\n## 二、服务期间及逐期应收金额\n\n第1期原服务月2026-10-01（含）至2026-11-01（不含），共31天，新车计0天；原应收100.00元，本次差价0.00元，新应收100.00元，到期2026-10-01。\n第2期原服务月2026-11-01（含）至2026-12-01（不含），共30天，新车计16天；原应收100.00元，本次差价53.33元，新应收153.33元，到期2026-11-01。\n第3期原服务月2026-12-01（含）至2027-01-01（不含），共31天，新车计31天；原应收100.00元，本次差价100.00元，新应收200.00元，到期2026-12-01。\n\n各期起止日期、计费依据、应收金额及付款到期日按上述明细执行；注明“不含”的结束日不计入该期。未在本协议中明确改变的原服务期约定及已经发生的履行事实，继续保留。\n\n## 三、已收款、补付款及退款安排\n\n第1期实际净收100.00元，沿用100.00元，补收0.00元，原路应退0.00元。\n第2期实际净收100.00元，沿用100.00元，补收53.33元，原路应退0.00元。\n第3期实际净收100.00元，沿用100.00元，补收100.00元，原路应退0.00元。\n押金原净收0.00元，补收0.00元，原路应退0.00元。\n\n上述已收、沿用、补付及应退金额依本次确认时核实的资金记录列示。客户按约主动支付应付款项；退款按原支付记录及明确确认的退款安排办理。本协议的签署、上传或归档不等于款项已经到账或已经退回，实际到账、退款和后续核对结果分别保留记录。\n\n## 四、交接与后续确认\n\n本协议中的计划交付、计划归还和后续办理日期属于各方确认的安排；实际交付、归还、车辆状况及里程，以对应车辆的真实交接记录为准。需要调整本协议已明确的日期、金额或其他变更事项时，应重新确认相应书面内容，保留前后版本，不以修改历史记录代替本次确认。\n\n本协议签署及纸质归档不单独证明车辆已经交付、已经归还或续期已经办理生效。各项办理还应满足本协议列明的资金、交接及生效条件。\n\n## 五、其他约定\n\n本协议与原合同及此前已生效补充协议共同保存。仅本协议明确变更的事项按本协议执行；未明确变更的事项仍按原合同及此前已生效补充协议执行，不因本次办理自动增加费用、放弃已有权利或更改历史实收款项。\n\n承租人、出租人及平台服务方分别核对本协议正文与明细后签署。签字、盖章及签署日期见本协议签署页，各方可按已约定的方式取得本协议留存件。\n",
+        "bodyRawSha256": "666b31de909ed0278863e208c3161ec45e3ee291523768883b3528f07779693c"
+      },
+      "facts": {
+        "originalContractNumber": "SYNTHETIC-RENTAL-2026-S02",
+        "originalMonthlyFeeAmount": 10000,
+        "originalDepositAmount": 0,
+        "originalTermMonths": 3,
+        "newMonthlyFeeAmount": 20000,
+        "periods": [
+          {
+            "sequence": 1,
+            "startDate": "2026-10-01",
+            "endDate": "2026-11-01",
+            "dueDate": "2026-10-01",
+            "originalAmount": 10000,
+            "differenceAmount": 0,
+            "amount": 10000,
+            "calculationBasis": "原服务月 2026-10-01 至 2026-11-01（结束日不含），本次升级差额 0 分",
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 0,
+            "refundAmount": 0
+          },
+          {
+            "sequence": 2,
+            "startDate": "2026-11-01",
+            "endDate": "2026-12-01",
+            "dueDate": "2026-11-01",
+            "originalAmount": 10000,
+            "differenceAmount": 5333,
+            "amount": 15333,
+            "calculationBasis": "原服务月 2026-11-01 至 2026-12-01（结束日不含），本次升级差额 5333 分",
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 5333,
+            "refundAmount": 0
+          },
+          {
+            "sequence": 3,
+            "startDate": "2026-12-01",
+            "endDate": "2027-01-01",
+            "dueDate": "2026-12-01",
+            "originalAmount": 10000,
+            "differenceAmount": 10000,
+            "amount": 20000,
+            "calculationBasis": "原服务月 2026-12-01 至 2027-01-01（结束日不含），本次升级差额 10000 分",
+            "netPaidAmount": 10000,
+            "carryAmount": 10000,
+            "chargeAmount": 10000,
+            "refundAmount": 0
+          }
+        ],
+        "pricing": {
+          "pricingVersion": 2,
+          "financialGate": "BEFORE_RETURN",
+          "priorTermsVersionId": null,
+          "priorTermsHash": "2a66dfab9c4d9d228e2009ebcc23264a9f7e170fc5e54399e6e3caa9b7b823a0",
+          "currentMonthlyFeeAmount": 10000,
+          "targetMonthlyFeeAmount": 20000,
+          "target": {
+            "vehicleId": "target",
+            "subscriptionPlanId": "target-plan",
+            "product": {
+              "productId": "target-product",
+              "productVersionId": "target-version",
+              "version": 2,
+              "name": "合成升级产品",
+              "months": 12,
+              "monthlyFeeAmount": 20000,
+              "mileagePerMonthKm": 2400,
+              "excessMileagePriceAmount": 230,
+              "energyDescription": "充换电费用由客户自付",
+              "conditions": "明确条件",
+              "vehicleIds": [
+                "target"
+              ],
+              "modelDefinitionIds": [],
+              "benefits": [],
+              "configurationVersion": 2,
+              "baseFeeAmount": 20000,
+              "mileageMonthlyFeeAmount": 0,
+              "swapPolicy": {
+                "version": 2,
+                "period": "TERM",
+                "includedCount": 99,
+                "extraFeeAmount": 99000
+              },
+              "listingId": "target-listing",
+              "listingRevision": 2,
+              "sourceHash": "11c65b0595de08eb4747945b149b4bd4d83bd5b9784a4add19cb7394f60fe734"
+            }
+          },
+          "pricing": {
+            "ruleVersion": "SWAP_UPGRADE_ACTUAL_DAYS_V1",
+            "timeZone": "Asia/Shanghai",
+            "startDate": "2026-10-01",
+            "endDate": "2027-01-01",
+            "deliveryDate": "2026-11-15",
+            "monthlyDifferenceAmount": 10000,
+            "periods": [
+              {
+                "sequence": 1,
+                "startDate": "2026-10-01",
+                "endDate": "2026-11-01",
+                "totalDays": 31,
+                "chargeDays": 0,
+                "differenceAmount": 0
+              },
+              {
+                "sequence": 2,
+                "startDate": "2026-11-01",
+                "endDate": "2026-12-01",
+                "totalDays": 30,
+                "chargeDays": 16,
+                "differenceAmount": 5333
+              },
+              {
+                "sequence": 3,
+                "startDate": "2026-12-01",
+                "endDate": "2027-01-01",
+                "totalDays": 31,
+                "chargeDays": 31,
+                "differenceAmount": 10000
+              }
+            ],
+            "totalDifferenceAmount": 15333
+          },
+          "periods": [
+            {
+              "sequence": 1,
+              "startDate": "2026-10-01",
+              "endDate": "2026-11-01",
+              "dueDate": "2026-10-01",
+              "originalAmount": 10000,
+              "differenceAmount": 0,
+              "amount": 10000
+            },
+            {
+              "sequence": 2,
+              "startDate": "2026-11-01",
+              "endDate": "2026-12-01",
+              "dueDate": "2026-11-01",
+              "originalAmount": 10000,
+              "differenceAmount": 5333,
+              "amount": 15333
+            },
+            {
+              "sequence": 3,
+              "startDate": "2026-12-01",
+              "endDate": "2027-01-01",
+              "dueDate": "2026-12-01",
+              "originalAmount": 10000,
+              "differenceAmount": 10000,
+              "amount": 20000
+            }
+          ],
+          "totalOriginalAmount": 30000,
+          "totalAmount": 45333
+        },
+        "totalAmount": 45333,
+        "depositAmount": 0,
+        "usagePricing": null,
+        "swapPolicy": {
+          "version": 2,
+          "period": "TERM",
+          "includedCount": 2,
+          "extraFeeAmount": 50000
+        }
+      },
+      "inMemoryOnly": true
+    },
+    {
+      "id": "renewal",
+      "title": "03 · 同车续期",
+      "input": {
+        "fixture": "renewalFixture + actual OrderRenewalsService preview/create/quotes/review/publish using in-memory tx",
+        "clock": "2026-10-31T02:00:00.000Z",
+        "overrides": {
+          "originalDepositAmount": 50000,
+          "depositPaidAmount": 0,
+          "newTermIncludedSwapCount": 3
+        },
+        "cancellationTerms": "按双方正式补充协议及真实收退款核清"
+      },
+      "cards": [
+        [
+          "同一车辆 / 原期",
+          "合成原车 VIN ORIGINAL；原期至 2027-10-01（不含）"
+        ],
+        [
+          "续期 / 月费",
+          "2027-10-01（含）—2028-10-01（不含）；12 期 × 200.00 = 2400.00 元"
+        ],
+        [
+          "原押金 / 新里程",
+          "原押金合同额 500.00 元不变、不重收；每月 2400 公里，超额 2.30 元 / 公里"
+        ],
+        [
+          "新阶段次数",
+          "赠送 3 次；额外单次 321.00 元；原免费次数不结转"
+        ]
+      ],
+      "notes": [
+        "续期取消及异常文字仅沿用既有合成输入“按双方正式补充协议及真实收退款核清”。这不是正式取消费、退款比例或违约责任规则；该业务决定仍待确认。",
+        "原押金 500.00 元为合同额；合成源中该押金未付款，样张不声称其已经到账。续期不得重复收取押金，也不豁免既有应付。",
+        "全单期号连续为 13—24，本续期段期号为 1—12；不新增交付或归还事实，不提前发放新阶段次数。"
+      ],
+      "document": {
+        "id": "template-ORDER_AMENDMENT",
+        "type": "OFFLINE_ORDER_AMENDMENT",
+        "version": 1,
+        "templateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6",
+        "bodyHash": "b99d5517bba2925c2b697a60ba29bc9e61afda47509d968cb3d5fd3ae3d0726a",
+        "content": "# 车辆订阅补充协议\n\n原车辆订阅合同编号：SYNTHETIC-RENTAL-2026-R01\n\n订阅订单号：order\n\n承租人：原签约客户\n\n出租人：原出租方\n\n平台服务方：平台主体\n\n上述各方就原车辆订阅合同及此前已生效补充协议项下的本次安排协商一致，订立本补充协议。本次变更的车辆、服务期间、费用、权益及办理安排，以以下明确列示的内容为准。\n\n## 一、本次变更事实及安排\n\n原订单同一实际车辆原车；VIN：ORIGINAL；车牌：未登记。同一实际出租方：原出租方。\n原服务期至2027-10-01（不含）；续期2027-10-01（含）至2028-10-01（不含），共12个月，不新增交付或归还事实。\n选择商品target-listing版本2；产品明确升级产品版本2，来源摘要d3c795be97b00cf896ec5dcfbb195dac3dea0838f7242cb566052d8b81522189。原月费100.00元；续期月费200.00元。\n原押金保持500.00元，不重复收取押金。续期每月基础2400公里，超额每公里2.30元；充换电费用由客户自付。\n续期阶段赠送3次换车，额外单次321.00元；原免费次数到期不结转，已付费次数仍按购买时原有效期及冻结金额处理，不延长或改退款价。\n客户确认、纸档归档与提前付款均不提前改变当前费率或赠送；运营须在生效日或之后核清真实来源并显式激活。保险在办理及实际激活时核实，不能将某一时点保障视为全部续期保障。\n原服务月按原冻结规则结算；原已购里程按原条款和真实余额处理，不在续期时自动清零、延长或恢复。\n办理原因：按实际同车商品续期。续期条款：明确条件。资金安排：新增各期独立应收，押金维持原额。取消及异常：按双方正式补充协议及真实收退款核清。\n\n\n订阅里程与退订规则附件（版本 2；文档 new-usage；SHA-256 ea7984f13f9a6aace38e16b4808c38feb512233cc07008c3b7d360883c1e6c4c）\n\n每月 2400 公里，超额每公里 2.30 元。\n\n## 二、服务期间及逐期应收金额\n\n续期第1期（全单第13期）：2027-10-01（含）至2027-11-01（不含），应收200.00元，到期日2027-10-01。\n续期第2期（全单第14期）：2027-11-01（含）至2027-12-01（不含），应收200.00元，到期日2027-11-01。\n续期第3期（全单第15期）：2027-12-01（含）至2028-01-01（不含），应收200.00元，到期日2027-12-01。\n续期第4期（全单第16期）：2028-01-01（含）至2028-02-01（不含），应收200.00元，到期日2028-01-01。\n续期第5期（全单第17期）：2028-02-01（含）至2028-03-01（不含），应收200.00元，到期日2028-02-01。\n续期第6期（全单第18期）：2028-03-01（含）至2028-04-01（不含），应收200.00元，到期日2028-03-01。\n续期第7期（全单第19期）：2028-04-01（含）至2028-05-01（不含），应收200.00元，到期日2028-04-01。\n续期第8期（全单第20期）：2028-05-01（含）至2028-06-01（不含），应收200.00元，到期日2028-05-01。\n续期第9期（全单第21期）：2028-06-01（含）至2028-07-01（不含），应收200.00元，到期日2028-06-01。\n续期第10期（全单第22期）：2028-07-01（含）至2028-08-01（不含），应收200.00元，到期日2028-07-01。\n续期第11期（全单第23期）：2028-08-01（含）至2028-09-01（不含），应收200.00元，到期日2028-08-01。\n续期第12期（全单第24期）：2028-09-01（含）至2028-10-01（不含），应收200.00元，到期日2028-09-01。\n\n各期起止日期、计费依据、应收金额及付款到期日按上述明细执行；注明“不含”的结束日不计入该期。未在本协议中明确改变的原服务期约定及已经发生的履行事实，继续保留。\n\n## 三、已收款、补付款及退款安排\n\n续期12期合计2400.00元，各期单独应收；原账单、原收款和原押金保持，不挪用原期已收款，不自动扣款或退款。财务核准后客户可主动提前支付续期首期，后续期按到期安排主动付款；首期及相关既有义务核清后才可安排待生效。\n\n上述已收、沿用、补付及应退金额依本次确认时核实的资金记录列示。客户按约主动支付应付款项；退款按原支付记录及明确确认的退款安排办理。本协议的签署、上传或归档不等于款项已经到账或已经退回，实际到账、退款和后续核对结果分别保留记录。\n\n## 四、交接与后续确认\n\n本协议中的计划交付、计划归还和后续办理日期属于各方确认的安排；实际交付、归还、车辆状况及里程，以对应车辆的真实交接记录为准。需要调整本协议已明确的日期、金额或其他变更事项时，应重新确认相应书面内容，保留前后版本，不以修改历史记录代替本次确认。\n\n本协议签署及纸质归档不单独证明车辆已经交付、已经归还或续期已经办理生效。各项办理还应满足本协议列明的资金、交接及生效条件。\n\n## 五、其他约定\n\n本协议与原合同及此前已生效补充协议共同保存。仅本协议明确变更的事项按本协议执行；未明确变更的事项仍按原合同及此前已生效补充协议执行，不因本次办理自动增加费用、放弃已有权利或更改历史实收款项。\n\n承租人、出租人及平台服务方分别核对本协议正文与明细后签署。签字、盖章及签署日期见本协议签署页，各方可按已约定的方式取得本协议留存件。\n",
+        "bodyRawSha256": "b212a0af4133116150f0d0f6cece6ba7c00273404115de899be1f9f6312889a0"
+      },
+      "facts": {
+        "originalContractNumber": "SYNTHETIC-RENTAL-2026-R01",
+        "originalMonthlyFeeAmount": 10000,
+        "originalDepositAmount": 50000,
+        "originalTermMonths": 12,
+        "newMonthlyFeeAmount": 20000,
+        "periods": [
+          {
+            "sequence": 13,
+            "stageSequence": 1,
+            "startDate": "2027-10-01",
+            "endDate": "2027-11-01",
+            "dueDate": "2027-10-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 14,
+            "stageSequence": 2,
+            "startDate": "2027-11-01",
+            "endDate": "2027-12-01",
+            "dueDate": "2027-11-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 15,
+            "stageSequence": 3,
+            "startDate": "2027-12-01",
+            "endDate": "2028-01-01",
+            "dueDate": "2027-12-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 16,
+            "stageSequence": 4,
+            "startDate": "2028-01-01",
+            "endDate": "2028-02-01",
+            "dueDate": "2028-01-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 17,
+            "stageSequence": 5,
+            "startDate": "2028-02-01",
+            "endDate": "2028-03-01",
+            "dueDate": "2028-02-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 18,
+            "stageSequence": 6,
+            "startDate": "2028-03-01",
+            "endDate": "2028-04-01",
+            "dueDate": "2028-03-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 19,
+            "stageSequence": 7,
+            "startDate": "2028-04-01",
+            "endDate": "2028-05-01",
+            "dueDate": "2028-04-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 20,
+            "stageSequence": 8,
+            "startDate": "2028-05-01",
+            "endDate": "2028-06-01",
+            "dueDate": "2028-05-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 21,
+            "stageSequence": 9,
+            "startDate": "2028-06-01",
+            "endDate": "2028-07-01",
+            "dueDate": "2028-06-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 22,
+            "stageSequence": 10,
+            "startDate": "2028-07-01",
+            "endDate": "2028-08-01",
+            "dueDate": "2028-07-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 23,
+            "stageSequence": 11,
+            "startDate": "2028-08-01",
+            "endDate": "2028-09-01",
+            "dueDate": "2028-08-01",
+            "amount": 20000
+          },
+          {
+            "sequence": 24,
+            "stageSequence": 12,
+            "startDate": "2028-09-01",
+            "endDate": "2028-10-01",
+            "dueDate": "2028-09-01",
+            "amount": 20000
+          }
+        ],
+        "pricing": null,
+        "totalAmount": 240000,
+        "depositAmount": 50000,
+        "usagePricing": {
+          "policyVersion": "USAGE_V2",
+          "baseAllowanceKm": 2400,
+          "excessPriceAmount": 230,
+          "sourceHash": "cb87f47f58033f51e885473202eaf08ea9118cf1fef4d7140e19ca0f4f0d338f"
+        },
+        "swapPolicy": {
+          "policyVersion": "SWAP_TERM_V2",
+          "includedCount": 3,
+          "extraFeeAmount": 32100,
+          "sourceHash": "d12836cb7a3134647b0cc8a3274262588b78bdfd01de9a98258e1ba3dc20dda2"
+        }
+      },
+      "inMemoryOnly": true
+    }
+  ]
+}

@@ -1,8 +1,8 @@
-<view class="page catalog-page">
+<view class="page catalog-page main-tab-page {{mainTabMotion}}">
   
   <view class="catalog-header"
-    ><view class="eyebrow">FIND YOUR EVERYDAY</view><view class="title">选一台，刚刚好。</view
-    ><view class="muted">上海 · 二手纯电 · 预设订阅套餐</view></view
+    ><view class="eyebrow">上海 · 纯电汽车订阅</view><view class="title">{{heroCopy.title}}</view
+    ><view class="muted">{{heroCopy.catalogDescription}}</view></view
   >
   <view class="search-bar row"
     ><input
@@ -61,7 +61,7 @@
       aria-label="查看{{item.name}}"
     >
       <view class="vehicle-photo"
-        ><image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFit" /><view
+        ><image wx:if="{{item.imageUrl}}" src="{{item.imageUrl}}" mode="aspectFill" /><view
           wx:else
           class="missing-photo"
           >车辆图片待补充</view

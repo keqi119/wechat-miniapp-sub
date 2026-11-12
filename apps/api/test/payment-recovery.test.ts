@@ -60,7 +60,8 @@ test('refund request replay retains one approval request and rejects changed pay
   await db.payment.update({where:{id:paymentId},data:{status:'SUCCEEDED'}});
   const controller = new BillingController(db,service,gateway);
   const payload = { paymentId,amount:2000,reason:'相同退款申请',idempotencyKey:'refund-request-recovery-01' };
-  const request = {admin:{id:`admin-${customer.id}`}};
+  const actor=await db.adminUser.create({data:{username:`admin-${customer.id}`,name:'合成退款申请人',role:'FINANCE',passwordHash:'synthetic-test-only'}});
+  const request = {admin:actor};
   const first = await controller.requestRefund(payload,request);
   const repeat = await controller.requestRefund(payload,request);
   assert.equal(first.id,repeat.id);

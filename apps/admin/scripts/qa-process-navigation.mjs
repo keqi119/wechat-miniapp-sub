@@ -1,0 +1,67 @@
+import {chromium,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {createServer} from 'vite';
+const server=await createServer({configFile:false,root:fileURLToPath(new URL('../',import.meta.url)),server:{host:'127.0.0.1',port:0},define:{'import.meta.env.VITE_API_BASE_URL':JSON.stringify('/api')}});await server.listen();
+const base='http://127.0.0.1:'+server.httpServer.address().port,out=new URL('../../../.runtime/ninda/workspace-efficiency-20261030/browser/',import.meta.url);
+await mkdir(out,{recursive:true});
+const browser=await chromium.launch({channel:'chrome',headless:true});
+expect.configure({timeout:15000});
+const report={mode:'local synthetic responses, no production requests or writes',checks:[],errors:[],writes:[]};
+try{
+ for(const width of [1440,600]){
+  const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage();
+  const reads=[];
+  page.on('pageerror',error=>report.errors.push(error.message));
+  await context.route('**/*',async route=>{
+   const req=route.request(),url=new URL(req.url());assert.equal(url.origin,base);
+   if(!url.pathname.startsWith('/api/'))return route.continue();
+   assert.equal(req.method(),'GET','this QA must not write');reads.push(url.pathname);
+   let data={items:[],total:0,page:1,pageSize:12};
+   const bill={id:'qa-bill',orderId:'qa-order',type:'SUBSCRIPTION',sequence:1,status:'PENDING',amount:399900,paidAmount:0,revision:1,dueDate:'2026-10-29',description:'合成首期租金',paymentId:'qa-payment',history:Array.from({length:35},(_,i)=>({description:'合成历史记录 '+i,createdAt:'2026-10-29T00:00:00Z'}))};
+   const payment={id:'qa-payment',orderId:'qa-order',billId:'qa-bill',status:'SUCCEEDED',amount:399900,revision:1};
+   if(url.pathname==='/api/admin/auth/me')data={user:{id:'qa-admin',username:'qa',name:'合成验收',role:'ADMIN',permissions:['*']},csrfToken:'synthetic'};
+   else if(url.pathname==='/api/public/config')data={mvpV2Enabled:true};
+   else if(url.pathname==='/api/admin/bills')data={...data,items:[bill],total:1};
+   else if(url.pathname==='/api/admin/bills/qa-bill')data=bill;
+   else if(url.pathname==='/api/admin/payments/qa-payment')data=payment;
+   else if(url.pathname==='/api/admin/coverage-requirements/qa-requirement')data={id:'qa-requirement',scopeType:'MODEL',revision:1,versions:[{id:'qa-version',version:1,items:[{code:'TEST',label:'合成核验条件',description:'仅供本地界面验收'}]}]};
+   return route.fulfill({json:data});
+  });
+  await page.goto(base+'/#bills?record=qa-bill');
+  await expect(page.getByRole('dialog')).toBeVisible({timeout:15000}).catch(async e=>{await writeFile(new URL('navigation-failed.html',out),await page.content());await page.screenshot({path:fileURLToPath(new URL('navigation-failed.png',out))});throw e;});
+  await page.getByRole('tab',{name:'历史记录',exact:true}).click();
+  await page.locator('[role=tabpanel]:visible details summary').first().click();
+  const scroll=page.locator('.detail-panel-scroll');
+  await scroll.evaluate(el=>{el.scrollTop=260;});
+  const top=await scroll.evaluate(el=>el.scrollTop);assert.ok(top>200,'history is scrollable');
+  await page.getByRole('tab',{name:'详细资料',exact:true}).click();
+  await page.getByRole('tab',{name:'历史记录',exact:true}).click();
+  await expect.poll(()=>scroll.evaluate(el=>el.scrollTop)).toBe(top);
+  await page.getByRole('tab',{name:'详细资料',exact:true}).click();
+  await page.getByRole('link',{name:'qa-payment',exact:true}).click();
+  await expect(page).toHaveURL(/#payments\?record=qa-payment.*returnTo=/);
+  await expect(page.getByRole('dialog').getByRole('button',{name:'返回上一步办理'})).toBeVisible();
+  await page.getByRole('dialog').getByRole('button',{name:'返回上一步办理'}).click();
+  await expect(page).toHaveURL(/#bills\?record=qa-bill&view=details$/);
+  await expect(page.getByRole('tab',{name:'详细资料',exact:true})).toHaveAttribute('aria-selected','true');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  assert.equal(await page.getByRole('dialog').evaluate(el=>el.scrollWidth>el.clientWidth+1),false);
+  await page.screenshot({path:fileURLToPath(new URL('navigation-'+width+'.png',out))});
+  report.checks.push({width,tabScrollPreserved:true,returnedToRecordAndSection:true});
+  await page.goto(base+'/#coverage-requirements?record=qa-requirement&returnTo='+encodeURIComponent('#bills?record=qa-bill&view=details'));
+  await expect(page.locator('.record-workspace-shell')).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  if(width<=800)await page.getByRole('button',{name:/切换分区/}).click();
+  await page.locator('.record-workspace-shell').getByRole('tab',{name:'详细资料',exact:true}).click();
+  await expect(page.locator('.record-workspace-shell').getByText('合成核验条件',{exact:true})).toBeVisible();
+  assert.equal(reads.includes('/api/admin/insurance-policies/qa-requirement'),false,'a requirement record must not be read as a policy');
+  await page.locator('.record-workspace-shell').getByRole('button',{name:'返回上一步办理'}).click();
+  await expect(page).toHaveURL(/#bills\?record=qa-bill&view=details$/);
+  report.checks.push({width,coverageRequirementRoute:true,singleRecordWorkspace:true});
+  await context.close();
+ }
+ assert.deepEqual(report.errors,[]);
+}finally{await browser.close();await server.close();await writeFile(new URL('navigation-report.json',out),JSON.stringify(report,null,2));}
+console.log(JSON.stringify(report));

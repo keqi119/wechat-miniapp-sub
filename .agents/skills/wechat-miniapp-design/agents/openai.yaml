@@ -1,0 +1,5 @@
+interface:
+  display_name: "微信小程序体验设计"
+  short_description: "为微信小程序提供可比较的视觉方向、交互原型和可复用设计规范"
+  brand_color: "#F9BE00"
+  default_prompt: "请使用 $wechat-miniapp-design，结合现有品牌与业务流程，提供三种微信小程序设计风格，并展示选车、账单和交接页面。"

@@ -17,7 +17,7 @@ async function scenario(options,run){
    if(options.offline){await route.abort('failed');return;}
    if(req.method()==='POST'){const body=req.postDataJSON();report.writes.push({path,body:{...body,...(body.mobile?{mobile:'[QA synthetic omitted]'}:{}),...(body.code?{code:'[QA synthetic omitted]'}:{}),...(body.name?{name:'[QA synthetic omitted]'}:{}),...(body.idCardNo?{idCardNo:'[QA synthetic omitted]'}:{})},csrf:!!req.headers()['x-csrf-token']});}
    let status=200,data={};
-   if(path==='/config')data={mode:'SERVICE_ACCOUNT_H5',entryUrl:'https://app.subauto.keybox.cloud/miniapp-sign/',enabled:!options.disabled};
+   if(path==='/config')data={mode:'SERVICE_ACCOUNT_H5',entryUrl:'https://sign.evsub.ndacar.com/miniapp-sign/',enabled:!options.disabled};
    else if(path==='/legal'){legalReads++;data={documents:[{id:'qa-terms',type:'terms',version:1,title:'QA 服务协议',content:'QA 合成协议正文'},{id:'qa-privacy',type:'privacy',version:options.stalePrivacy&&legalReads>1?2:1,title:'QA 隐私政策',content:'QA 隐私用途说明'}]};}
    else if(path==='/auth/me'){status=logged?200:401;data=logged?{...session,...(options.sessionExpires?{expiresAt:new Date(Date.now()+1500).toISOString()}:{})}:{message:'请先登录'};}
    else if(path==='/auth/sms/request'){status=201;data={accepted:true};}

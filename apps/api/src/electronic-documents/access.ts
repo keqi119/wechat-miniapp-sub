@@ -1,9 +1,11 @@
+import {requireCurrentStaff} from '../auth/staff-session';
 import {ensure} from '../common/errors';
 import {requireElectronicOwnerActor} from './identities';
-export type ElectronicActor={kind:'ADMIN'|'CUSTOMER'|'OWNER';id:string;ownerId?:string};
+export type ElectronicActor={kind:'ADMIN'|'CUSTOMER'|'OWNER';id:string;ownerId?:string;role?:string;authVersion?:number};
 export async function electronicAccess(tx:any,actor:ElectronicActor,task:any,write=false,ownerCheck= requireElectronicOwnerActor){
  if(actor.kind==='ADMIN'){
   const staff=await tx.adminUser.findUnique({where:{id:actor.id}});
+  if(actor.role!==undefined)await requireCurrentStaff(tx,{id:actor.id,role:actor.role,authVersion:actor.authVersion},'electronic-documents',write);
   ensure(staff?.active&&(write?['ADMIN','OPERATIONS']:['ADMIN','OPERATIONS','FINANCE','SUPPORT']).includes(staff.role),403,'FORBIDDEN','当前岗位无电子合同办理权限');return{role:null,staff};
  }
  if(actor.kind==='CUSTOMER'){

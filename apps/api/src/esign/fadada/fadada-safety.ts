@@ -2,9 +2,10 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import { ensure } from '../../common/errors';
 import { verifyFadadaCallbackDigest } from './fadada-digest';
 import { matchesFadadaQuery } from '../fadada-query-binding';
+import {certificateEvidence} from './certificate-evidence';
 export function accountReadiness(account: any, now = new Date()) {
   const providerBacked = account?.verificationSource === 'QUERY' || account?.verificationSource === 'CALLBACK';
-  const recent = account?.checkedAt && now.getTime() - new Date(account.checkedAt).getTime() < 24 * 60 * 60 * 1000;
+  const recent = account?.checkedAt && new Date(account.checkedAt).getTime()<=now.getTime() && now.getTime() - new Date(account.checkedAt).getTime() < 24 * 60 * 60 * 1000;
   const registered = account?.registrationStatus === 'REGISTERED' && Boolean(account?.providerCustomerId);
   const identityBound = Boolean(account?.identityCiphertext && account?.verifiedIdentityHash === createHash('sha256').update(account.identityCiphertext).digest('hex') && account?.verifiedSerialNo && account?.verificationTransactionNo && !account?.verificationLeaseToken);
   const realName = registered && identityBound && account?.realNameStatus === 'VERIFIED' && Boolean(account?.verifiedAt) && providerBacked;
@@ -34,23 +35,5 @@ export function assertSignerResult(value: any, expected: { contractId: string; c
 }
 export function assertApprovedText(document: any) { ensure(document?.status === 'PUBLISHED' && document.confirmedBy && document.confirmedAt && typeof document.content === 'string' && document.content.trim().length > 0,409,'LEGAL_NOT_APPROVED','正式文案尚未审定发布'); ensure(!/\{\{[^}]*\}\}|待补齐|待填写/.test(document.content),409,'LEGAL_PLACEHOLDERS','正式文案仍有未填写字段'); }
 export function certificateCurrentlyValid(raw: unknown, now = Date.now()) {
-  function field(value: any, keys: string[], depth = 0): string | undefined {
-    if (depth > 4) return;
-    if (typeof value === 'string') { try { return field(JSON.parse(value), keys, depth + 1); } catch { return; } }
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
-    for (const key of keys) if (typeof value[key] === 'string' || typeof value[key] === 'number') return String(value[key]);
-    for (const nested of Object.values(value)) { const found = field(nested, keys, depth + 1); if (found) return found; }
-  }
-  function time(value?: string): number {
-    if (!value) return NaN;
-    const compact = value.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
-    const local = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}):(\d{2}))?$/);
-    const parts = compact || local;
-    if (parts) return Date.UTC(Number(parts[1]), Number(parts[2])-1, Number(parts[3]), Number(parts[4] || 0)-8, Number(parts[5] || 0), Number(parts[6] || 0));
-    if (/^\d{10,13}$/.test(value)) return Number(value) * (value.length <= 10 ? 1000 : 1);
-    return Date.parse(value);
-  }
-  const start = time(field(raw, ['startTime','start_time','validStartTime','valid_start_time']));
-  const end = time(field(raw, ['endTime','end_time','validEndTime','valid_end_time']));
-  return Number.isFinite(start) && Number.isFinite(end) && start <= now && now < end;
+  return certificateEvidence(raw,now)!==null;
 }

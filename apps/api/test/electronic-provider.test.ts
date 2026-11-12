@@ -6,8 +6,8 @@ import {recordFadadaQuery} from '../src/esign/fadada-query-binding';
 const pdf=Buffer.from('%PDF-1.7\n'+('synthetic source '.repeat(10))+'\n%%EOF'),hash=(v:Buffer)=>createHash('sha256').update(v).digest('hex');
 const document={providerContractId:'NDDocument123',sourceSha256:hash(pdf),title:'合成三方协议',positions:{CUSTOMER:[{pagenum:0,x:80,y:600}],OWNER:[{pagenum:0,x:250,y:600}],PLATFORM:[{pagenum:0,x:420,y:600}]}},party={role:'OWNER' as const,subjectType:'ENTERPRISE' as const,providerCustomerId:'OwnerAccount',signatureId:'OwnerSeal',transactionId:'OwnerTransaction'};
 const config:any={enabled:true,signingEnabled:true,baseUrl:'https://textapi17.fadada.com/api2/',appId:'synthetic',appSecret:'synthetic-secret',apiVersion:'2.0',requestTimeoutMs:1000,signUrlValidityMinutes:15};
-async function flags(fn:()=>Promise<void>){const values={ELECTRONIC_SIGNING_ENABLED:'true',ESIGN_NEW_REQUESTS_ENABLED:'true',PLATFORM_API_ORIGIN:'https://api.evsub.ndacar.com',H5_SIGNING_ORIGIN:'https://app.evsub.ndacar.com'};const old=Object.fromEntries(Object.keys(values).map(k=>[k,process.env[k]]));Object.assign(process.env,values);try{await fn();}finally{for(const[k,v]of Object.entries(old))if(v===undefined)delete process.env[k];else process.env[k]=v;}}
-function harness(){let result:any={code:'1000',result:'success'},status=0,binary=pdf,sign:any={code:'1',data:{result:'3000'}},redirect=false;const requests:any[]=[];
+async function flags(fn:()=>Promise<void>){const values={OWNER_AUTO_SIGNING_ENABLED:'true',NEW_ORDER_CONTRACT_MODE:'ELECTRONIC',ELECTRONIC_SIGNING_ENABLED:'true',ESIGN_NEW_REQUESTS_ENABLED:'true',PLATFORM_API_ORIGIN:'https://api.evsub.ndacar.com',H5_SIGNING_ORIGIN:'https://app.evsub.ndacar.com'};const old=Object.fromEntries(Object.keys(values).map(k=>[k,process.env[k]]));Object.assign(process.env,values);try{await fn();}finally{for(const[k,v]of Object.entries(old))if(v===undefined)delete process.env[k];else process.env[k]=v;}}
+function harness(){let result:any={code:'1000',result:'success'},status=0,binary=pdf,sign:any={code:'1',data:{result:'3000',endTime:'2026-01-01 09:00:00'}},redirect=false;const requests:any[]=[];
  const transport:any=async(req:any)=>{requests.push(req);const body=req.responseType==='arraybuffer'?{bodyBuffer:binary}:req.url.endsWith('query_sign_result.api')?{bodyText:JSON.stringify(sign)}:req.url.endsWith('contract_status.api')?{bodyText:JSON.stringify({...result,contract_status:status})}:{bodyText:JSON.stringify(result)};return{status:redirect?302:200,headers:{'content-type':'application/pdf'},...body};};
  return{provider:new ElectronicProvider(config,transport),requests,setResult:(v:any)=>result=v,setStatus:(v:number)=>status=v,setPdf:(v:Buffer)=>binary=v,setSign:(v:any)=>sign=v,setRedirect:()=>redirect=true};
 }
@@ -23,6 +23,15 @@ test('signed status needs the exact signed query receipt; generic success and co
 test('an unknown upload is recovered only by original bytes; pre-filing status never proves all signatures or filing',async()=>flags(async()=>{
  const f=harness();assert.equal((await f.provider.queryUpload(document)).uploaded,true);assert.equal((await f.provider.queryFiling(document)).filed,false);f.setPdf(Buffer.from('%PDF-1.7\nchanged'+('x'.repeat(100))));await assert.rejects(f.provider.queryUpload(document));f.setStatus(2);assert.equal((await f.provider.queryFiling(document)).filed,true);await assert.rejects(f.provider.queryUpload(document));
 }));
+
+test('an uploaded but not-yet-signed channel document is recovered from exact bytes despite missing sign-state record',async()=>{
+ let raw:any={code:'2002',result:'error',contract_status:null,contract_status_desc:null,msg:'未检索到该合同号的记录'},binary=pdf;
+ const provider=new ElectronicProvider(config,async(req:any)=>({status:200,headers:{},...(req.responseType==='arraybuffer'?{bodyBuffer:binary}:{bodyText:JSON.stringify(raw)})}));
+ assert.equal((await provider.queryUpload(document)).uploaded,true);
+ await assert.rejects(provider.queryFiling(document));
+ binary=Buffer.from('%PDF-1.7\n'+('a different document '.repeat(10)));await assert.rejects(provider.queryUpload(document));binary=pdf;
+ for(const patch of [{contract_id:'DifferentDocument'},{msg:'其他错误'},{contract_status:'2'},{code:'2001'}]){const original=raw;raw={...raw,...patch};await assert.rejects(provider.queryUpload(document));raw=original;}
+});
 test('manual page fixes actual company seal, Ningda callback, role coordinates and proper surface, without provider request',async()=>flags(async()=>{
  const f=harness(),url=new URL((await f.provider.manualUrl(document,party,'OWNER_H5')).url);
  assert.equal(url.searchParams.get('signature_id'),'OwnerSeal');assert.equal(url.searchParams.get('customer_id'),'OwnerAccount');assert.equal(url.searchParams.get('transaction_id'),'OwnerTransaction');assert.equal(url.searchParams.get('notify_url'),'https://api.evsub.ndacar.com/api/callbacks/fadada-electronic-sign');assert.equal(url.searchParams.get('return_url'),'https://app.evsub.ndacar.com/owner/return/');assert.equal(url.searchParams.get('open_environment'),'0');assert.equal(f.requests.length,0);
@@ -31,6 +40,10 @@ test('manual page fixes actual company seal, Ningda callback, role coordinates a
 }));
 test('auto acceptance is not a signature, and final PDF must differ from source',async()=>flags(async()=>{
  const f=harness();const accepted=await f.provider.autoSign(document,party);assert.equal('signed' in accepted,false);await assert.rejects(f.provider.downloadFinal(document));f.setPdf(Buffer.from('%PDF-1.7\nSigned synthetic '+('s'.repeat(100))+'\n%%EOF'));assert.notEqual((await f.provider.downloadFinal(document)).sha256,document.sourceSha256);
+}));
+test('global enterprise automatic execution off blocks dispatch before any provider request',async()=>flags(async()=>{
+ const previous=process.env.OWNER_AUTO_SIGNING_ENABLED;process.env.OWNER_AUTO_SIGNING_ENABLED='false';
+ try{const f=harness();await assert.rejects(f.provider.autoSign(document,party),e=>(e as any).getResponse?.().error?.code==='OWNER_AUTO_DISABLED');assert.equal(f.requests.length,0);}finally{if(previous===undefined)delete process.env.OWNER_AUTO_SIGNING_ENABLED;else process.env.OWNER_AUTO_SIGNING_ENABLED=previous;}
 }));
 test('fixed channel and mutation gate apply to all calls; default transport rejects redirects',async()=>flags(async()=>{
  const f=harness();process.env.ELECTRONIC_SIGNING_ENABLED='false';await assert.rejects(f.provider.upload(document,pdf));assert.equal(f.requests.length,0);process.env.ELECTRONIC_SIGNING_ENABLED='true';const foreign=new ElectronicProvider({...config,baseUrl:'https://foreign.invalid/'},async()=>{throw new Error('must not dispatch');});await assert.rejects(foreign.querySigner(document,party));

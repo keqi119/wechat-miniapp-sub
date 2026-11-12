@@ -1,7 +1,7 @@
 export const electronicDocumentKinds = [
   'SUBSCRIPTION','DELIVERY_DELAY','VEHICLE_SWAP','RENEWAL','PRE_DELIVERY_CANCELLATION',
   'EARLY_TERMINATION','RETURN_SETTLEMENT','RENEWAL_CANCELLATION',
-  'COOPERATION','COOPERATION_AMENDMENT','COOPERATION_TERMINATION'
+  'COOPERATION','COOPERATION_GRANT','COOPERATION_AMENDMENT','COOPERATION_TERMINATION'
 ] as const;
 export type ElectronicDocumentKind = typeof electronicDocumentKinds[number];
 export type SignerRole = 'CUSTOMER'|'OWNER'|'PLATFORM';
@@ -10,12 +10,19 @@ export type SignerStatus = 'PENDING'|'ISSUED'|'UNKNOWN'|'SIGNED'|'DECLINED'|'EXP
 export type ElectronicTaskStatus = 'PREPARED'|'SIGNING'|'SIGNED'|'FILING'|'ARCHIVING'|'ARCHIVED'|'WITHDRAWN'|'DECLINED'|'EXPIRED'|'RETIRED';
 export type OperationStatus = 'NOT_STARTED'|'REQUESTED'|'UNKNOWN'|'CONFIRMED';
 export interface SigningContext {
+  autoSigningPolicyVersion?: 3;
+  authorityCreatedBefore?: string;
+  signaturePolicy?: 'MANUAL_ONLY';
+  orderId?: string;
   kind: ElectronicDocumentKind;
   platformSubjectId: string;
   cooperationVersionId: string|null;
   vehicleIds: string[];
 }
 export interface AutoAuthorityEvidence {
+  policyVersion?: 3;
+  platformSubjectId?: string;
+  applicationBinding?: string;
   id: string;
   subjectId: string;
   providerCustomerId: string;
@@ -41,7 +48,7 @@ export interface SigningPartyInput {
   identityVersion: number;
   identityHash: string;
   identityVerified: boolean;
-  certificate: {serialNo:string;status:string;validFrom:string;validUntil:string;checkedAt:string};
+  certificate: {subjectHash?:string;serialNo:string;status:string;validFrom:string;validUntil:string;checkedAt:string};
   signatureId?: string;
   autoAuthority?: AutoAuthorityEvidence|null;
 }
@@ -50,6 +57,8 @@ export interface SigningModes {
   reasonCodes: string[];
 }
 export interface ElectronicPartyFacts extends SigningPartyInput {
+  requiresEvidenceEnrichment?: boolean;
+  documentAccepted?: boolean;
   transactionId: string;
   mode: SigningMode;
   status: SignerStatus;
@@ -79,6 +88,7 @@ export interface ElectronicPartyBinding {
   identityVersion: number;
   identityHash: string;
   certSerialNo: string;
+  certSubjectHash?: string;
   signatureId?: string;
   transactionId: string;
   mode: SigningMode;
@@ -90,6 +100,9 @@ export interface ElectronicSignerProof extends ElectronicPartyBinding {
   status: 'SIGNED';
   attemptedAt: string;
   verifiedAt: string;
+  providerSignedAt: string;
+  providerSignedAtRaw: string;
+  providerSignedAtPrecisionMs: number;
   queryEvidenceHash: string;
 }
 export interface ElectronicArchiveProof {
@@ -101,6 +114,7 @@ export interface ElectronicArchiveProof {
   status: 'ARCHIVED';
   sourceFile: {id:string;sha256:string};
   finalFile: {id:string;sha256:string;mimeType:string;size:number};
+  finalVerification: {providerContractId:string;sourceSha256:string;finalSha256:string;subjects:string[];integrity:true;timestamps:true;evidenceHash:string;verifiedAt:string};
   uploadedAt: string;
   parties: ElectronicSignerProof[];
   filing: {status:'CONFIRMED';providerContractId:string;responseHash:string;confirmedAt:string};

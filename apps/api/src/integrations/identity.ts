@@ -41,6 +41,9 @@ export class RealIdentityGateway extends IdentityGateway {
   private smsConfigured() { ensure(this.settings.smsEnabled && this.settings.smsHashSecret.length >= 32, 503, 'SMS_UNAVAILABLE', '短信登录尚未配置完成'); }
   private codeHash(id: string, code: string) { return createHmac('sha256', this.settings.smsHashSecret).update(`${id}:${code}`).digest('hex'); }
   async requestSms(mobile: string) {
+    await this.requestSmsChallenge(mobile);
+  }
+  async requestSmsChallenge(mobile: string):Promise<{challengeId:string}> {
     this.smsConfigured(); mobileSchema.parse(mobile);
     const code = randomInt(0, 1000000).toString().padStart(6, '0'), id = randomUUID(), now = new Date(this.clock());
     await this.db.serial(async tx => {
@@ -54,18 +57,27 @@ export class RealIdentityGateway extends IdentityGateway {
     });
     try { await this.sendCode(mobile, code); await this.db.smsChallenge.update({ where: { id }, data: { status: 'SENT' } }); }
     catch { await this.db.smsChallenge.update({ where: { id }, data: { status: 'FAILED' } }); fail(503, 'SMS_SEND_FAILED', '短信未发送成功，请稍后再试'); }
+    return{challengeId:id};
   }
   async verifySms(input: { mobile: string; code: string; loginCode?: string }) {
+    await this.verifySmsCode(input);
+    return { mobile: input.mobile, ...(input.loginCode ? { openId: await this.openId(input.loginCode) } : {}) };
+  }
+  async verifySmsChallenge(input:{challengeId:string;mobile:string;code:string}):Promise<{mobile:string}>{
+    ensure(typeof input.challengeId==='string'&&input.challengeId.length>0&&input.challengeId.length<=128,400,'SMS_CODE_INVALID','验证码无效或已过期');
+    await this.verifySmsCode(input,input.challengeId);
+    return{mobile:input.mobile};
+  }
+  private async verifySmsCode(input:{mobile:string;code:string},challengeId?:string){
     this.smsConfigured(); mobileSchema.parse(input.mobile); ensure(/^\d{6}$/.test(input.code), 400, 'SMS_CODE_INVALID', '验证码无效或已过期');
     // Commit failed-attempt counters before returning an error; throwing inside would roll them back.
     const accepted = await this.db.serial(async tx => {
-      const row = await tx.smsChallenge.findFirst({ where: { mobile: input.mobile }, orderBy: { sentAt: 'desc' } });
-      if (!row || row.status !== 'SENT' || row.consumedAt || row.expiresAt.getTime() <= this.clock() || row.attempts >= 5) return false;
+      const row = challengeId?await tx.smsChallenge.findUnique({where:{id:challengeId}}):await tx.smsChallenge.findFirst({ where: { mobile: input.mobile }, orderBy: { sentAt: 'desc' } });
+      if (!row || row.mobile!==input.mobile || row.status !== 'SENT' || row.consumedAt || row.expiresAt.getTime() <= this.clock() || row.attempts >= 5) return false;
       const actual = Buffer.from(this.codeHash(row.id, input.code), 'hex'), expected = Buffer.from(row.codeHash, 'hex');
       const valid = actual.length === expected.length && timingSafeEqual(actual, expected);
       await tx.smsChallenge.update({ where: { id: row.id }, data: { attempts: { increment: 1 }, ...(valid ? { status: 'CONSUMED', consumedAt: new Date(this.clock()) } : {}) } }); return valid;
     });
     ensure(accepted, 400, 'SMS_CODE_INVALID', '验证码无效或已过期');
-    return { mobile: input.mobile, ...(input.loginCode ? { openId: await this.openId(input.loginCode) } : {}) };
   }
 }

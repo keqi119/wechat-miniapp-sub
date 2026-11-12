@@ -1,3 +1,5 @@
+import {publishLegacyPlanFixture} from './legacy-esign-mode';
+import {seedTrustedCustomerProfile} from './customer-profile-fixture';
 import {listenForHttpTests} from './http-listener';
 import { seedUsageLegal } from './usage-fixtures';
 import '../src/common/config';
@@ -41,6 +43,7 @@ before(async () => {
   customerToken = c.data.token; customerId = c.data.customer.id;
   const c2 = await req('/customer/auth/wechat', 'POST', { loginCode: 'second', phoneCode: 'valid', consents }, 'none');
   otherToken = c2.data.token; otherId = c2.data.customer.id;
+  await seedTrustedCustomerProfile(db,customerId,{name:'测试客户',drivingYears:2});await seedTrustedCustomerProfile(db,otherId,{name:'另一客户',drivingYears:2});
 });
 after(async () => { if (app) await app.close(); if (db) await db.$disconnect(); });
 test('security: missing/expired sessions fail and CSRF Origin are enforced', async () => {
@@ -63,6 +66,7 @@ test('catalogue validates integer fees and preserves published vehicle view', as
   plan = (await req('/admin/plans', 'POST', payload)).data;
   assert.equal((await req(`/admin/plans/${plan.id}/activate`, 'POST', {})).status, 201);
   assert.equal((await req(`/admin/vehicles/${vehicle.id}/publish`, 'POST', {})).status, 201);
+  await publishLegacyPlanFixture(db,plan);
   const view = await req(`/public/vehicles/${vehicle.id}`, 'GET', undefined, 'none');
   assert.equal(view.data.vehicle.minFeeAmount, 300000); assert.equal(view.data.plans[0].termMonths, 12);
   doc = await db.legalDocument.create({ data: { type: 'application', version: 1, title: '测试协议', content: '仅测试', status: 'PUBLISHED', confirmedBy: 'test-fixture', confirmedAt: new Date(), publishedAt: new Date() } });
@@ -86,10 +90,12 @@ test('final plan optimistic revisions and concurrent confirmation allocate one v
     assert.equal(verified.status,201); return verified.data.verification.id;
   }
   const commercialTerms = Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key => [key, '测试明确条款：' + key]));
-  const p = { creditVerificationId:await authorizeCredit(application.id,'customer'), commercialTerms, revision: 0, monthlyFeeAmount: 300000, depositAmount: 300000, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '自费', benefits: ['救援'], conditions: '测试', startDate: '2026-12-31', firstDueDate: '2026-12-31' };
+  const p = { idempotencyKey:'integration-final-plan-v1', creditVerificationId:await authorizeCredit(application.id,'customer'), commercialTerms, revision: 0, monthlyFeeAmount: 300000, depositAmount: 300000, months: 12, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '自费', benefits: ['救援'], conditions: '测试', startDate: '2026-12-31', firstDueDate: '2026-12-31' };
   assert.equal((await req(`/admin/applications/${application.id}/review`, 'POST', { decision: 'IN_REVIEW', note: '审核' })).status, 201);
   const f = await req(`/admin/applications/${application.id}/final-plan`, 'POST', p); assert.equal(f.status, 201); final = f.data.finalPlan;
-  assert.equal((await req(`/admin/applications/${application.id}/final-plan`, 'POST', p)).status, 409);
+  const replay=await req(`/admin/applications/${application.id}/final-plan`, 'POST', p);assert.equal(replay.status,201);assert.equal(replay.data.finalPlan.id,final.id);
+  assert.equal((await req(`/admin/applications/${application.id}/final-plan`, 'POST', {...p,conditions:'changed payload'})).status,409);
+  assert.equal((await req(`/admin/applications/${application.id}/final-plan`, 'POST', {...p,idempotencyKey:'integration-stale-final-plan'})).status,409);
   assert.equal((await req(`/customer/applications/${application.id}/confirm`, 'POST', { revision: 0, commercialHash: final.commercialHash }, 'customer')).status, 409);
   const otherApplication = (await req('/customer/applications', 'POST', { vehicleId: vehicle.id, subscriptionPlanId: plan.id, profile: { name: '另一客户' }, consents: [{ documentId: doc.id, version: 1 }], idempotencyKey: key }, 'other')).data;
   await req(`/admin/applications/${otherApplication.id}/review`, 'POST', { decision: 'IN_REVIEW', note: '审核' });
@@ -107,13 +113,16 @@ test('final plan optimistic revisions and concurrent confirmation allocate one v
   const dates = await db.bill.findMany({ where: { type: 'SUBSCRIPTION' }, orderBy: { sequence: 'asc' } });
   assert.deepEqual(dates.slice(0,3).map(d => d.dueDate.toISOString().slice(0, 10)), ['2026-12-31', '2027-01-31', '2027-02-28']);
 });
-test('legacy signing is closed and unconfigured payment never succeeds; handover requires signature and funds', async () => {
+test('legacy signing is closed and draft automatic bills remain unpayable; handover requires signature and funds', async () => {
   const identity = order.customerId === customerId ? 'customer' : 'other';
   const contract = await db.contract.findFirstOrThrow();
   const legacySigning=await req(`/customer/contracts/${contract.id}/sign`, 'POST', {}, identity);
   assert.equal(legacySigning.status,503);assert.equal(legacySigning.data.error.code,'MINIAPP_SIGNING_UNAVAILABLE');
-  const bill = await db.bill.findFirstOrThrow(); await req(`/admin/bills/${bill.id}/publish`, 'POST', {});
-  assert.equal((await req(`/customer/bills/${bill.id}/pay`, 'POST', { idempotencyKey: 'payment-test-0001' }, identity)).status, 503);
+  const bill = await db.bill.findFirstOrThrow(),manual=await req(`/admin/bills/${bill.id}/publish`, 'POST', {});
+  assert.equal(manual.status,409);assert.equal(manual.data.error.code,'BILL_AUTO_PUBLICATION_MANAGED');
+  const payment=await req(`/customer/bills/${bill.id}/pay`, 'POST', { idempotencyKey: 'payment-test-0001' }, identity);
+  assert.equal(payment.status,409);assert.equal(payment.data.error.code,'BILL_NOT_PAYABLE');
+  assert.equal(await db.payment.count({where:{billId:bill.id}}),0);
   assert.equal((await db.bill.findUniqueOrThrow({ where: { id: bill.id } })).paidAmount, 0);
   await db.order.update({where:{id:order.id},data:{status:'AWAITING_HANDOVER'}});
   const h = await req('/admin/handovers', 'POST', { orderId: order.id, type: 'DELIVERY', actualAt:new Date().toISOString(), readingKm: 100, fileIds: [], checklist: [{ label: '车况', value: '已检查' }] });

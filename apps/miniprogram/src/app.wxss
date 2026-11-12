@@ -1,9 +1,9 @@
 page {
-  background: #f4f3ef;
-  color: #252723;
+  background: #f5f6f7;
+  color: #231815;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: 28rpx;
-  line-height: 1.65;
+  font-size: 30rpx;
+  line-height: 1.6;
 }
 view,
 text,
@@ -18,7 +18,7 @@ button {
   padding: 0;
   font: inherit;
   line-height: 1.5;
-  border-radius: 8rpx;
+  border-radius: 16rpx;
 }
 button::after {
   border: 0;
@@ -30,40 +30,40 @@ image {
   display: block;
 }
 .page {
-  padding: 16rpx 40rpx 48rpx;
+  padding: 24rpx 32rpx 48rpx;
   min-height: 100vh;
 }
 .eyebrow {
-  color: #74776f;
-  font-size: 20rpx;
-  letter-spacing: 3rpx;
+  color: #65615c;
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
   line-height: 1.6;
 }
 .title {
-  font-size: 52rpx;
-  font-weight: 500;
-  letter-spacing: -1.5rpx;
+  font-size: 48rpx;
+  font-weight: 600;
+  letter-spacing: -1rpx;
   line-height: 1.3;
-  margin: 18rpx 0 24rpx;
+  margin: 14rpx 0 28rpx;
   overflow-wrap: break-word;
 }
 .section-title {
   font-size: 34rpx;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.4;
   margin: 36rpx 0 22rpx;
 }
 .muted {
-  color: #6c7068;
+  color: #65615c;
 }
 .small {
   font-size: 24rpx;
 }
 .card {
-  background: #fffefa;
-  padding: 28rpx;
-  border: 1rpx solid #e3e2da;
-  border-radius: 8rpx;
+  background: #ffffff;
+  padding: 32rpx;
+  border: 1rpx solid #e1e1de;
+  border-radius: 24rpx;
   overflow: hidden;
 }
 .row {
@@ -89,29 +89,48 @@ image {
 }
 .primary,
 .secondary {
-  min-height: 92rpx;
+  min-height: 96rpx;
   padding: 22rpx 28rpx;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 500;
 }
 .primary {
-  background: #252723;
-  color: #fffefa;
+  background: #231815;
+  color: #ffffff;
+  font-weight: 650;
+  border: 1rpx solid #231815;
 }
 .secondary {
-  background: transparent;
-  color: #252723;
-  border: 1rpx solid #a5a89e;
+  background: #ffffff;
+  color: #231815;
+  border: 1rpx solid #cccac7;
+}
+.browse-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  width: auto;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 16rpx 24rpx;
+  background: #ffffff;
+  color: #231815;
+  border: 1rpx solid #d8d6d2;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  text-align: left;
 }
 .text-button {
   min-height: 88rpx;
   background: transparent;
-  color: #b44919;
+  color: #231815;
   padding: 18rpx 0;
   text-align: left;
   font-size: 26rpx;
@@ -120,16 +139,16 @@ image {
 }
 .tag {
   display: inline-block;
-  color: #745035;
-  font-size: 21rpx;
+  color: #231815;
+  font-size: 24rpx;
   line-height: 1.5;
-  background: #ede5d9;
+  background: #fcc900;
   padding: 6rpx 14rpx;
-  border-radius: 4rpx;
+  border-radius: 8rpx;
 }
 .price {
-  font-size: 48rpx;
-  font-weight: 500;
+  font-size: 52rpx;
+  font-weight: 600;
   letter-spacing: -1.5rpx;
   line-height: 1.3;
   font-variant-numeric: tabular-nums;
@@ -140,38 +159,38 @@ image {
 .label {
   display: block;
   margin-bottom: 12rpx;
-  font-size: 26rpx;
+  font-size: 28rpx;
   font-weight: 500;
 }
 .input,
 .textarea {
   width: 100%;
-  background: #fffefa;
-  border: 1rpx solid #d4d6cd;
-  border-radius: 6rpx;
+  background: #ffffff;
+  border: 1rpx solid #cccac7;
+  border-radius: 16rpx;
   padding: 22rpx;
-  font-size: 28rpx;
-  color: #252723;
+  font-size: 32rpx;
+  color: #231815;
 }
 .input {
-  height: 92rpx;
+  height: 96rpx;
 }
 .textarea {
   height: 200rpx;
   line-height: 1.6;
 }
 .notice {
-  background: #ecebe4;
+  background: #fff6d8;
   padding: 22rpx 24rpx;
-  color: #62665e;
+  color: #62553a;
   font-size: 24rpx;
-  border-left: 3rpx solid #b44919;
-  border-radius: 2rpx;
+  border-left: 4rpx solid #fcc900;
+  border-radius: 12rpx;
 }
 .empty {
   padding: 72rpx 24rpx;
   text-align: center;
-  color: #676b63;
+  color: #65615c;
 }
 .empty .primary,
 .empty .secondary {
@@ -179,8 +198,8 @@ image {
 }
 .divider {
   height: 1rpx;
-  background: #dcded4;
-  margin: 30rpx 0;
+  background: #e9e7e3;
+  margin: 28rpx 0;
 }
 .sticky-actions {
   position: fixed;
@@ -188,10 +207,10 @@ image {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 20rpx 40rpx;
+  padding: 20rpx 32rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background: #f4f3ef;
-  border-top: 1rpx solid #dcddd4;
+  background: #ffffff;
+  border-top: 1rpx solid #e9e7e3;
 }
 .bottom-space {
   padding-bottom: calc(176rpx + env(safe-area-inset-bottom));
@@ -205,4 +224,95 @@ image {
 checkbox {
   transform: scale(0.85);
   transform-origin: center;
+}
+.card > .section-title:first-child,
+.notice > .section-title:first-child {
+  margin-top: 0;
+}
+.row > view,
+.between > view,
+.grid-2 > view {
+  min-width: 0;
+}
+.tag {
+  max-width: 100%;
+  flex-shrink: 0;
+}
+.price,
+.title,
+.section-title,
+.card {
+  overflow-wrap: break-word;
+}
+.input:focus,
+.textarea:focus {
+  border-color: #231815;
+}
+
+/* Approved Ninda VI palette. Existing page structure and business states stay intact. */
+.page .primary {
+  background: #231815;
+  color: #ffffff;
+  border-color: #231815;
+  box-shadow: none;
+}
+.page .secondary {
+  color: #231815;
+  background: #ffffff;
+  border-color: #cccac7;
+  box-shadow: none;
+}
+.page .text-button, .page .record-link, .page .back-link,
+.page .profile-card .document-actions .text-button,
+.page.profile-page .identity-refresh,
+.page .profile-legal-footer .text-button { color: #231815; }
+.page .card, .page .hero, .page .vehicle-preview, .page .catalog-card,
+.page .record-card, .page .service-tile, .page .addon-entry {
+  background: #ffffff;
+  border-color: #e1e1de;
+  box-shadow: none;
+}
+.page .tag, .page .profile-card .identity-verified, .page .status-pill,
+.page .hero .eyebrow, .page .photo-status {
+  color: #231815;
+  background: #fcc900;
+  border-color: transparent;
+}
+.page .status-pill.unavailable { background: #e9ebed; color: #65615c; }
+.page .brand-chip.is-selected { background: #fff9e6; color: #231815; border-color: #d7c991; }
+.page .brand-chip:not(.is-selected) { background: #ffffff; color: #65615c; border-color: #e1e1de; }
+.page .notice, .page .next-card {
+  background: #ffffff;
+  color: #231815;
+  border-color: #e1e1de;
+  border-left-color: #fcc900;
+}
+.page .muted, .page .eyebrow, .page .city, .page .hero-copy,
+.page .hero-caption, .page .price-caption, .page .document-state { color: #65615c; }
+.page .hero .eyebrow { color: #231815; }
+.page .input, .page .textarea, .page .search-input { background: #ffffff; border-color: #cccac7; color: #231815; }
+.page .profile-mark, .page .timeline-dot.done, .page .step-number { background: #fcc900; color: #231815; }
+.page .profile-mark image { width: 48rpx; height: 48rpx; }
+.page .tile-number, .page .addon-entry-name, .page .addon-entry-note, .page .next-step-label { color: #231815; }
+.page .photo-surface, .page .vehicle-photo { background: #f0f1f1; }
+.page .view-label { color: #231815; background: transparent; }
+.page .next-step { background: #f5f6f7; color: #231815; }
+.page .addon-entry-note { background: #f5f6f7; }
+.page .section-title, .page .record-title { color: #231815; }
+.page .title, .page .hero-title { letter-spacing: -1rpx; }
+
+/* Native tab routing keeps its own page state; only the destination enters. */
+.page.main-tab-page { padding-bottom: calc(100px + env(safe-area-inset-bottom)); overflow-x: hidden; }
+.main-tab-from-right { animation: main-tab-enter-right 220ms cubic-bezier(.2,.7,.2,1) both; }
+.main-tab-from-left { animation: main-tab-enter-left 220ms cubic-bezier(.2,.7,.2,1) both; }
+@keyframes main-tab-enter-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes main-tab-enter-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-tab-from-right, .main-tab-from-left { animation: none; }
 }

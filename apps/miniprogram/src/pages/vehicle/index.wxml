@@ -1,6 +1,6 @@
 <view class="page bottom-space vehicle-page">
   
-  <view wx:if="{{loading}}" class="empty" role="status">正在加载车辆与预设套餐…</view>
+  <view wx:if="{{loading}}" class="empty" role="status">正在加载车辆与订阅产品…</view>
   <view wx:elif="{{error}}" class="empty"
     ><view>{{error}}</view><button class="secondary" bindtap="refresh">重新加载</button
     ><button class="text-button" bindtap="openCatalog">返回选车</button></view
@@ -11,11 +11,14 @@
   >
   <block wx:else>
     <view class="vehicle-hero"
-      ><image wx:if="{{vehicle.imageUrl}}" src="{{vehicle.imageUrl}}" mode="aspectFit" /><view
+      ><swiper wx:if="{{vehicle.galleryUrls.length}}" class="vehicle-gallery" current="{{galleryIndex}}" bindchange="galleryChanged"
+        ><swiper-item wx:for="{{vehicle.galleryUrls}}" wx:key="*this"
+          ><image src="{{item}}" mode="aspectFit" bindtap="previewGallery" data-src="{{item}}" aria-label="车辆相册第{{index + 1}}张，点击查看大图" /></swiper-item
+        ></swiper><view
         wx:else
         class="missing-photo"
         >车辆图片待补充</view
-      ><text class="vehicle-status">{{vehicle.statusText}}</text></view
+      ><text class="vehicle-status">{{vehicle.statusText}}</text><text wx:if="{{vehicle.galleryUrls.length}}" class="gallery-counter">{{galleryIndex + 1}} / {{vehicle.galleryUrls.length}} · 点击查看大图</text></view
     >
     <view class="vehicle-intro"
       ><view class="eyebrow">{{vehicle.brand}} · {{vehicle.city}}</view
@@ -64,20 +67,21 @@
       >{{vehicle.statusText}}。当前不能提交新申请，可返回选择其他车辆。</view
     >
     <view class="plans-heading"
-      ><view class="eyebrow">YOUR SUBSCRIPTION</view><view class="section-title">选择预设套餐</view
-      ><view class="muted">期限、里程和权益随套餐一同确定。</view></view
+      ><view class="eyebrow">同一台车 · 多种选择</view><view class="section-title">选择订阅产品</view
+      ><view class="muted">期限、里程和权益随产品一同确定。</view></view
     >
     <view wx:if="{{!plans.length}}" class="empty"
-      ><view>暂时没有可用套餐</view
-      ><button class="secondary" bindtap="refresh">刷新套餐</button></view
+      ><view>暂时没有可用产品</view
+      ><button class="secondary" bindtap="refresh">刷新产品</button></view
     >
+    <view wx:if="{{selectionNotice}}" class="notice availability-note">{{selectionNotice}}</view>
     <button
       wx:for="{{plans}}"
       wx:key="id"
       class="plan-card {{selectedPlan.id === item.id ? 'selected' : ''}} {{!item.available ? 'disabled-plan' : ''}}"
       bindtap="selectPlan"
       data-id="{{item.id}}"
-      disabled="{{!item.available}}"
+      disabled="{{busy || !item.available}}"
       aria-pressed="{{selectedPlan.id === item.id}}"
       ><view class="row between"
         ><view class="plan-title">{{item.title}}</view
@@ -91,21 +95,30 @@
       ></button
     >
     <view wx:if="{{selectedPlan}}" class="fee-section"
-      ><view class="section-title">这份套餐包含什么</view
+      ><view class="section-title">方案费用与权益</view
+      ><view wx:for="{{selectedPlan.monthlyFeeParts}}" wx:key="label" class="detail-row row between"
+        ><text class="muted">{{item.label}}</text><text>{{item.amountText}} / 月</text></view
       ><view class="detail-row row between"
         ><text class="muted">订阅期限</text><text>{{selectedPlan.termMonths}} 个月</text></view
       ><view class="detail-row row between"
         ><text class="muted">包含里程</text><text>{{selectedPlan.mileageText}}</text></view
       ><view class="detail-row row between"
         ><text class="muted">能源说明</text><text>{{selectedPlan.energyText}}</text></view
-      ><view class="benefit" wx:for="{{selectedPlan.benefits}}" wx:key="*this"
+      ><view wx:if="{{selectedPlan.excessMileagePriceText}}" class="detail-row row between"
+        ><text class="muted">超里程单价</text><text>{{selectedPlan.excessMileagePriceText}} / km</text></view
+      ><view wx:if="{{selectedPlan.swapIncludedText}}" class="detail-row row between"
+        ><text class="muted">换车权益</text><text>{{selectedPlan.swapIncludedText}}</text></view
+      ><view wx:if="{{selectedPlan.swapExtraFeeText}}" class="detail-row row between"
+        ><text class="muted">额外换车服务费</text><text>{{selectedPlan.swapExtraFeeText}}</text></view
+      ><view wx:if="{{selectedPlan.swapExtraFeeText}}" class="muted small-note">升级车辆的差价另计，具体以确认方案为准。</view
+      ><view wx:for="{{selectedPlan.benefitDetails}}" wx:key="benefitVersionId" class="field"><view>{{item.name}}<text wx:if="{{item.kind === 'COUNT'}}"> · {{item.totalQuantity}} {{item.unit}}</text></view><view class="muted small">{{item.description}}</view><view class="muted small">提供方：{{item.provider}} · {{item.conditions}}</view></view><view wx:if="{{!selectedPlan.benefitDetails.length}}" class="benefit" wx:for="{{selectedPlan.benefits}}" wx:key="*this"
         ><text class="benefit-check">✓</text><text>{{item}}</text></view
       ><view class="fee-total row between"
         ><text>预估月费</text><text class="price">{{selectedPlan.monthlyFeeText}}</text></view
       ><view class="detail-row row between"
         ><text class="muted">押金</text
         ><text>{{selectedPlan.depositText || '待审核确认'}}</text></view
-      ><view class="muted small-note">月费为所选预设套餐总额，最终应付以确认方案及账单为准。</view
+      ><view class="muted small-note">月费为所选订阅产品总额，最终应付以确认方案及账单为准。</view
       ><button
         class="disclosure row between"
         bindtap="toggleConditions"
@@ -125,8 +138,8 @@
       ><view wx:if="{{vehicle.available && selectedPlan}}" class="action-price"
         ><text class="price">{{selectedPlan.monthlyFeeText}}</text
         ><text class="muted"> / 月</text></view
-      ><button class="primary" bindtap="apply" disabled="{{!vehicle.available || !selectedPlan}}"
-        >{{!vehicle.available ? '车辆暂不可申请' : !selectedPlan ? '暂无可售套餐' :
+      ><button class="primary" bindtap="apply" disabled="{{busy || !vehicle.available || !selectedPlan}}"
+        >{{!vehicle.available ? '车辆暂不可申请' : !selectedPlan ? '请选择订阅产品' :
         '申请此方案'}}</button
       ><button
         wx:if="{{!vehicle.available || !selectedPlan}}"

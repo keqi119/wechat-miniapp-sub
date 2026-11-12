@@ -1,3 +1,4 @@
+import {syntheticSigningTime,syntheticFinalVerification} from './electronic-fixtures';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -8,14 +9,14 @@ import {offlineOrder} from './offline-fixtures';
 import {esignNow,sha,signingParties} from './electronic-fixtures';
 const code=(value:string)=>(e:any)=>e?.getResponse?.().error?.code===value;
 
-async function fixture(db:any){
+async function fixture(db:any,orderContext?:string){
   const base=await offlineOrder(db),owner=await db.vehicleOwner.create({data:{name:'合成电子签合作商',address:'合成地址',createdBy:'synthetic'}});
   await db.order.update({where:{id:base.order.id},data:{contractMode:'ELECTRONIC',status:'AWAITING_SIGNATURE'}});
   const source=await db.storedFile.create({data:{customerId:base.customer.id,name:'合成源文件.pdf',mimeType:'application/pdf',size:1024,sha256:sha('d'),storagePath:'synthetic-only',purpose:'electronic-source'}});
   await db.contract.update({where:{id:base.contract.id},data:{executionMode:'ELECTRONIC',sourceFileId:source.id}});
   const archive=await db.documentArchive.create({data:{kind:'RENTAL',subjectType:'ORDER',subjectId:base.order.id,orderId:base.order.id,ownerId:owner.id,createdBy:'synthetic'}});
   const parties=signingParties();parties[0].subjectId=base.customer.id;parties[1].subjectId=owner.id;parties[1].autoAuthority!.subjectId=owner.id;
-  const context={kind:'SUBSCRIPTION' as const,platformSubjectId:'ninda',cooperationVersionId:'cooperation-v1',vehicleIds:['vehicle-a']};
+  const context={...(orderContext?{orderId:orderContext}:{}),kind:'SUBSCRIPTION' as const,platformSubjectId:'ninda',cooperationVersionId:'cooperation-v1',vehicleIds:['vehicle-a']};
   const version=await db.archiveVersion.create({data:{archiveId:archive.id,version:1,executionMode:'ELECTRONIC',templateId:'synthetic-template',templateVersion:1,sourceFileId:source.id,businessSnapshotHash:sha('a'),requiredSigners:['CUSTOMER','OWNER','PLATFORM'],partiesSnapshot:parties.map(p=>({role:p.role,partyId:p.subjectId,subjectType:p.subjectType})),scopeSnapshot:{electronicContext:context}}});
   const input={archiveVersionId:version.id,contractId:base.contract.id,context,parties,approvedBy:'synthetic-operator',now:esignNow};
   return {...base,owner,source,archive,version,input};
@@ -45,11 +46,11 @@ test('an electronic archive needs Ningda signature and provider filing; it never
     const f=await fixture(db),task=await db.serial(tx=>createElectronicTask(tx,f.input));
     await assert.rejects(db.serial(tx=>finalizeElectronicArchive(tx,task.id,esignNow)),code('ELECTRONIC_ARCHIVE_REQUIRED'));
     const final=await db.storedFile.create({data:{customerId:f.customer.id,name:'合成签署文件.pdf',mimeType:'application/pdf',size:2048,sha256:sha('f'),storagePath:'synthetic-final-only',purpose:'electronic-signed'}});
-    await (db as any).electronicSigningTask.update({where:{id:task.id},data:{status:'ARCHIVING',uploadStatus:'UPLOADED',uploadedAt:new Date('2026-11-02T05:00:00Z'),filingStatus:'CONFIRMED',filedAt:new Date('2026-11-02T07:30:00Z'),filingEvidenceHash:sha('b'),finalFileId:final.id,finalSha256:final.sha256}});
+    await (db as any).electronicSigningTask.update({where:{id:task.id},data:{status:'ARCHIVING',uploadStatus:'UPLOADED',uploadedAt:new Date('2026-11-02T05:00:00Z'),filingStatus:'CONFIRMED',filedAt:new Date('2026-11-02T07:30:00Z'),filingEvidenceHash:sha('b'),finalFileId:final.id,finalSha256:final.sha256,finalVerification:syntheticFinalVerification(task,final.sha256,esignNow)}});
     for(const party of task.parties.filter((p:any)=>p.mode==='MANUAL'))await db.electronicSigningParty.update({where:{id:party.id},data:{manualConsent:{taskId:task.id,role:party.role,actorId:party.subjectId,sourceSha256:task.sourceSha256},manualConsentHash:sha('a')}});
-    for(const [i,party] of task.parties.entries())await (db as any).electronicSigningParty.update({where:{id:party.id},data:{status:i===2?'PENDING':'SIGNED',attemptedAt:i===2?null:new Date(`2026-11-02T06:${i}0:00Z`),verifiedAt:i===2?null:new Date(`2026-11-02T06:${i}5:00Z`),queryEvidenceHash:i===2?null:sha(String(i+1))}});
+    for(const [i,party] of task.parties.entries())await (db as any).electronicSigningParty.update({where:{id:party.id},data:{status:i===2?'PENDING':'SIGNED',attemptedAt:i===2?null:new Date(`2026-11-02T06:${i}0:00Z`),verifiedAt:i===2?null:new Date(`2026-11-02T06:${i}5:00Z`),...syntheticSigningTime(new Date(`2026-11-02T06:${i}1:00Z`)),queryEvidenceHash:i===2?null:sha(String(i+1))}});
     await assert.rejects(db.serial(tx=>finalizeElectronicArchive(tx,task.id,esignNow)),code('ELECTRONIC_SIGNER_PROOF_REQUIRED'));
-    await (db as any).electronicSigningParty.update({where:{id:task.parties[2].id},data:{status:'SIGNED',attemptedAt:new Date('2026-11-02T06:20:00Z'),verifiedAt:new Date('2026-11-02T06:25:00Z'),queryEvidenceHash:sha('3')}});
+    await (db as any).electronicSigningParty.update({where:{id:task.parties[2].id},data:{status:'SIGNED',attemptedAt:new Date('2026-11-02T06:20:00Z'),verifiedAt:new Date('2026-11-02T06:25:00Z'),...syntheticSigningTime(new Date('2026-11-02T06:21:00Z')),queryEvidenceHash:sha('3')}});
     const archived=await db.serial(tx=>finalizeElectronicArchive(tx,task.id,esignNow));assert.equal(archived.current,true);
     const v=await db.archiveVersion.findUniqueOrThrow({where:{id:f.version.id}});assert.equal(v.status,'ARCHIVED');assert.equal(v.reviewedBy,null);assert.equal(v.partyChecks,null);assert.equal(v.originalCustodian,null);
     const proof=await loadElectronicArchiveProof(db,f.version.id,esignNow);assert.equal(proof?.parties.length,3);assert.equal(proof?.finalFile.id,final.id);
@@ -97,4 +98,14 @@ test('database NULL semantics cannot mark an unverified signer or an unbound fin
     await (db as any).electronicSigningTask.update({where:{id:task.id},data:{status:'RETIRED',retiredAt:esignNow}});
     await assert.rejects(db.serial(tx=>reserveElectronicOperation(tx,{taskId:task.id,revision:0,kind:'UPLOAD',now:esignNow})),code('ELECTRONIC_OPERATION_NOT_AVAILABLE'));
   }finally{await db.$disconnect();}
+});
+import {assertNoUnclosedSigning} from '../src/electronic-documents/repository';
+test('an accepted stopped transaction blocks conflicting versions across the same business resource',async()=>{
+ const db=new Db();try{const f=await fixture(db),task=await db.serial(tx=>createElectronicTask(tx,f.input));await db.electronicSigningTask.update({where:{id:task.id},data:{status:'WITHDRAWN',withdrawnAt:new Date(),stopStatus:'NEEDS_REVIEW'}});await db.electronicSigningParty.update({where:{id:task.parties[1].id},data:{status:'UNKNOWN',attemptedAt:new Date()}});
+ await assert.rejects(assertNoUnclosedSigning(db,'ORDER',f.order.id),code('ELECTRONIC_STOP_REVIEW_REQUIRED'));await assertNoUnclosedSigning(db,'ORDER','another-order');
+ }finally{await db.$disconnect();}
+});
+
+test('automatic commercial context cannot be rebound to a different order',async()=>{
+ const db=new Db();try{const f=await fixture(db,'foreign-order');await assert.rejects(db.serial(tx=>createElectronicTask(tx,f.input)),code('ELECTRONIC_REFERENCE_MISMATCH'));}finally{await db.$disconnect();}
 });

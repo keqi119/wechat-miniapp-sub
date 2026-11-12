@@ -1,0 +1,7 @@
+# Enterprise center SMS and entry
+
+`/owner/` uses the original enterprise login and shell. SMS/login accept `purpose: ENTERPRISE_CENTER`; the server selects an exact legal invitation or current legal member, otherwise independent readonly grants. Omitted purpose retains readonly compatibility; explicit ELECTRONIC_LEGAL remains supported. An explicit legal invitation never falls back to readonly. Exact requested purpose, resolved mode/scopes and invitation hash are challenge-bound and rechecked on login. Temporary readonly switching requires its own OTP and does not override a legal invitation.
+
+`POST /owner-h5/auth/sms/request` returns201 with accepted:true, challengeId, expiresInSeconds and resendAfterSeconds ONLY after successful channel dispatch and persistence of the exact PENDING challenge. This indicates channel submission, not handset delivery. All clients must handle non-success as unsent, clear pending client challenge and avoid starting a countdown. Generic403 SMS_NOT_SENT guides first binding/registration checks,429 SMS_RATE_LIMITED guides waiting/retry, and503 SMS_UNAVAILABLE guides channel retry. Responses expose no private scope, company, provider error or usable challenge. Failed/rate/decoy attempt and audit records remain committed; existing limits and exact OTP verification are unchanged.
+
+Required login terms/privacy remain `/legal`; optional confirmed published identity/auto-sign notices are projected by `/legal-signing` with missingTypes. Missing optional notices block their corresponding operation only.

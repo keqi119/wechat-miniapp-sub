@@ -14,6 +14,26 @@ test('required notes and invalid integers are rejected before network writes', (
 test('vehicle edit can clear a cover while empty passwords are omitted', () => {
   assert.deepEqual(serializeForm([{ key: 'coverFileId', label: '封面', type: 'files' }, { key: 'password', label: '密码', type: 'password' }], { coverFileId: '', password: '' }), { coverFileId: null });
 });
+test('account form rejects passwords outside the API length range without exposing the supplied value', () => {
+  const fields = resources.find(resource => resource.key === 'users')!.fields!;
+  for (const length of [7, 257]) {
+    const password = String.fromCharCode(81).repeat(length);
+    assert.throws(() => serializeForm(fields, { username: 'qa-field', name: '合成现场人员', role: 'FIELD', active: 'true', password }), (error: unknown) => error instanceof Error && /密码/.test(error.message) && (length < 8 ? /8/.test(error.message) : /256/.test(error.message)) && !error.message.includes(password));
+  }
+});
+test('account form preserves accepted password boundaries and explicit field role without altering credential bytes', () => {
+  const fields = resources.find(resource => resource.key === 'users')!.fields!;
+  for (const length of [8, 15, 256]) {
+    const password = ' ' + String.fromCharCode(87).repeat(length - 2) + ' ';
+    const body = serializeForm(fields, { username: 'qa-field', name: '合成现场人员', role: 'FIELD', active: 'true', password });
+    assert.equal(body.password === password, true);
+    assert.equal(body.username, 'qa-field'); assert.equal(body.name, '合成现场人员'); assert.equal(body.role, 'FIELD'); assert.equal(body.active, true);
+  }
+});
+test('editing account fields with an empty password omits it while preserving other updates', () => {
+  const fields = resources.find(resource => resource.key === 'users')!.fields!;
+  assert.deepEqual(serializeForm(fields, { username: 'qa-field', name: '合成现场人员已修改', role: 'FIELD', active: 'false', password: '' }), { username: 'qa-field', name: '合成现场人员已修改', role: 'FIELD', active: false });
+});
 test('handover checklist cannot submit incomplete inspection evidence', () => {
   const fields = [{ key: 'checklist', label: '清单', type: 'checklist' as const, required: true }];
   assert.throws(() => serializeForm(fields, { checklist: '[]' }));
@@ -85,3 +105,5 @@ test('same-task renewal requires expired approval and affirmative server eligibi
   assert.deepEqual(fieldsForAction('esign-approvals', configured, entity)[0].sourceFilters, { status: 'ACTIVE', kind: 'HANDOVER', sealId: 'original-seal' });
   assert.deepEqual(serializeForm(fieldsForAction('esign-approvals', configured, entity), { policyId: 'active-policy', injectedTaskId: 'different' }), { policyId: 'active-policy' });
 });
+
+test('online swap handover completion uses customer-confirmed facts and backend guards instead of signature status',()=>{const command={path:'complete'} as any;assert.equal(actionAllowed('handovers',command,{id:'h',type:'SWAP_RETURN',status:'CUSTOMER_CONFIRMED',executionMode:'OFFLINE',confirmationMode:'ONLINE_RECORD',signatureStatus:'DRAFT'}),true);assert.equal(actionAllowed('handovers',command,{id:'h',type:'SWAP_RETURN',status:'PUBLISHED',executionMode:'OFFLINE',confirmationMode:'ONLINE_RECORD',signatureStatus:'DRAFT'}),false);});

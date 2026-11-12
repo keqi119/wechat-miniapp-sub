@@ -17,9 +17,9 @@ function setup(handler = () => ({ statusCode: 200, data: {} }), native = {}) {
     uploadFile: value => { calls.push(value); value.success({ statusCode: 201, data: JSON.stringify({ id: 'file-1', name: '仪表照片', url: '/api/customer/files/file-1', mimeType: 'image/jpeg', size: 10 }) }); },
     ...native,
   };
-  const api = createApi({ apiBase: 'https://mini-api.subauto.keybox.cloud', storageKey: 'customer-session', signingHosts: ['sign.fadada.com'] }, value => {
+  const api = createApi({ apiBase: 'https://api.evsub.ndacar.com', storageKey: 'customer-session', signingHosts: ['sign.fadada.com'] }, value => {
     calls.push(value);
-    const result = value.url.endsWith('/public/signing-config') ? { statusCode: 200, data: { mode: 'MINIAPP_WEBVIEW', enabled: true, signProviderConfigured: true, providerHosts: ['textapi17.fadada.com', 'realnameverify16.fadada.com'], returnUrl: 'https://mini-api.subauto.keybox.cloud/api/public/esign-return' } } : handler(value);
+    const result = value.url.endsWith('/public/signing-config') ? { statusCode: 200, data: { mode: 'MINIAPP_WEBVIEW', newOrderContractMode: 'ESIGN', newEsignRequestsEnabled: true, enabled: true, signProviderConfigured: true, providerHosts: ['textapi17.fadada.com', 'realnameverify16.fadada.com'], returnUrl: 'https://api.evsub.ndacar.com/api/public/esign-return' } } : handler(value);
     if (result.network) value.fail({ errMsg: 'request:fail' });
     else value.success(result);
   }, platform);
@@ -31,8 +31,14 @@ function setup(handler = () => ({ statusCode: 200, data: {} }), native = {}) {
 test('authenticated calls target new customer API with Bearer, never old portal routes', async () => {
   const { api, calls } = setup(() => ({ statusCode: 200, data: { subscription: null } }));
   assert.deepEqual(await api.getDashboard(), { subscription: null });
-  assert.equal(calls[0].url, 'https://mini-api.subauto.keybox.cloud/api/customer/dashboard');
+  assert.equal(calls[0].url, 'https://api.evsub.ndacar.com/api/customer/dashboard');
   assert.equal(calls[0].header.Authorization, 'Bearer session-token');
+});
+test('ordinary rescue and accident requests preserve the selected order without requiring an entitlement',async()=>{
+ const {api,calls}=setup();
+ for(const type of ['rescue','accident'])await api.submitService({type,orderId:'selected-order-2',description:'合成工单',mobile:'13800000000',location:'测试地点',fileIds:[],idempotencyKey:'service-'+type});
+ const requests=calls.filter(c=>c.url.endsWith('/customer/services'));
+ assert.equal(requests.length,2);assert(requests.every(c=>c.data.orderId==='selected-order-2'));assert(requests.every(c=>!Object.hasOwn(c.data,'entitlementId')));
 });
 test('401 revokes cached session and propagates expired error without fallback', async () => {
   const { api, storage } = setup(() => ({ statusCode: 401, data: { error: { code: 'SESSION_EXPIRED', message: '请重新登录' } } }));
@@ -105,20 +111,20 @@ test('final plan confirmation carries exact revision/hash and 409 clears no clie
   assert.deepEqual(calls[0].data, { revision: 2, commercialHash: 'hash-v2' });
 });
 test('payment cancellation has own result and server remains authoritative', async () => {
-  const { api, calls } = setup(v => ({ statusCode: 200, data: v.url.endsWith('/pay') ? { paymentId: 'payment-1', timeStamp: '1', nonceStr: 'nonce', package: 'prepay_id=1', signType: 'RSA', paySign: 'signature' } : { status: 'PENDING' } }), { requestPayment: value => value.fail({ errMsg: 'requestPayment:fail cancel' }) });
+  const { api, calls } = setup(v => ({ statusCode: 200, data: v.url.endsWith('/records/bills/b-1')?{id:'b-1',status:'PENDING',cancellation:null,actions:[{id:'pay'}]}:v.url.endsWith('/pay') ? { paymentId: 'payment-1', timeStamp: '1', nonceStr: 'nonce', package: 'prepay_id=1', signType: 'RSA', paySign: 'signature' } : { status: 'PENDING' } }), { requestPayment: value => value.fail({ errMsg: 'requestPayment:fail cancel' }) });
   const result = await api.performAction('bills', 'b-1', 'pay', { idempotencyKey: 'payment-once' });
   assert.equal(result.status, 'CANCELLED');
-  assert.equal(calls.at(-1).url, 'https://mini-api.subauto.keybox.cloud/api/customer/payments/payment-1');
+  assert.equal(calls.at(-1).url, 'https://api.evsub.ndacar.com/api/customer/payments/payment-1');
   assert.equal(result.payment.status, 'PENDING');
 });
 test('payment native success queries server and never declares settlement from native callback', async () => {
-  const { api } = setup(v => ({ statusCode: 200, data: v.url.endsWith('/pay') ? { paymentId: 'payment-1', timeStamp: '1', nonceStr: 'n', package: 'prepay_id=1', signType: 'RSA', paySign: 's' } : { status: 'PENDING' } }));
+  const { api } = setup(v => ({ statusCode: 200, data: v.url.endsWith('/records/bills/b-1')?{id:'b-1',status:'PENDING',cancellation:null,actions:[{id:'pay'}]}:v.url.endsWith('/pay') ? { paymentId: 'payment-1', timeStamp: '1', nonceStr: 'n', package: 'prepay_id=1', signType: 'RSA', paySign: 's' } : { status: 'PENDING' } }));
   const result = await api.performAction('bills', 'b-1', 'pay');
   assert.equal(result.status, 'PENDING');
   assert.match(result.message, /确认|处理中/);
 });
 test('explicit native signing opens the validated provider page and refresh obtains archived server status', async () => {
-  const { api, calls } = setup(v => ({ statusCode: 200, data: v.url.endsWith('/sign') ? { taskId: 'task1', status: 'PENDING', url: 'https://textapi17.fadada.com/api2/sign' } : { status: 'SIGNED', signedFileId: 'archive1' } }));
+  const { api, calls } = setup(v => ({ statusCode: 200, data: v.url.endsWith('/records/contracts/c-1') ? {id:'c-1',executionMode:'ESIGN'} : v.url.endsWith('/sign') ? { taskId: 'task1', status: 'PENDING', url: 'https://textapi17.fadada.com/api2/sign' } : { status: 'SIGNED', signedFileId: 'archive1' } }));
   const result = await api.performAction('contracts', 'c-1', 'sign');
   assert.match(calls.find(c => c.navigation).navigation, /^\/pages\/sign\/index\?/);
   assert.equal(result.status, 'PENDING');
@@ -126,7 +132,7 @@ test('explicit native signing opens the validated provider page and refresh obta
   assert.equal(calls.filter(value => value.method === 'POST').length, 1);
 });
 test('malformed payment payloads are never sent to native payment APIs', async () => {
-  const pay = setup(() => ({ statusCode: 200, data: { paymentId: 'p-1', paySign: 's' } }));
+  const pay = setup(v => ({ statusCode: 200, data: v.url.endsWith('/records/bills/b-1')?{id:'b-1',status:'PENDING',cancellation:null,actions:[{id:'pay'}]}:{ paymentId: 'p-1', paySign: 's' } }));
   await assert.rejects(pay.api.performAction('bills', 'b-1', 'pay'), { code: 'RESPONSE' });
 });
 test('upload transfers local image with Bearer; upload failure cannot become private attachment', async () => {
@@ -177,7 +183,7 @@ test('private file access downloads with Bearer and never forwards token to an e
     previewImage: value => { opened = value; value.success({}); },
   });
   await api.openPrivateFile('file-1');
-  assert.equal(download.url, 'https://mini-api.subauto.keybox.cloud/api/customer/files/file-1');
+  assert.equal(download.url, 'https://api.evsub.ndacar.com/api/customer/files/file-1');
   assert.equal(download.header.Authorization, 'Bearer session-token');
   assert.deepEqual(opened.urls, ['/local/private.jpg']);
   const denied = setup(undefined, { downloadFile: value => value.success({ statusCode: 403, tempFilePath: '/local/error.html' }) });
@@ -205,11 +211,11 @@ test('server upload budget rejects an 11MB attachment before transferring bytes'
 });
 test('new platform relative public media is resolved to the new API origin', async () => {
   const { api } = setup(() => ({ statusCode: 200, data: { items: [{ id: 'v', coverImageUrl: '/api/public/media/cover-1' }], total: 1, page: 1, pageSize: 20 } }));
-  assert.equal((await api.getVehicles()).items[0].imageUrl, 'https://mini-api.subauto.keybox.cloud/api/public/media/cover-1');
+  assert.equal((await api.getVehicles()).items[0].imageUrl, 'https://api.evsub.ndacar.com/api/public/media/cover-1');
 });
 test('logged-in home maps new API media and final commercial conditions remain readable before accepting', async () => {
   const { api } = setup(value => ({ statusCode: 200, data: value.url.endsWith('/home') ? { vehicles: [{ id: 'v1', imageUrl: '/api/public/media/image-1' }], nextAction: null } : { id: 'a1', planName: '运营套餐', finalPlan: { revision: 2, commercialHash: 'hash-2', title: '运营最终方案', months: 12, monthlyFeeAmount: 0, depositAmount: 100, mileagePerMonthKm: 1500, excessMileagePriceAmount: 80, energyDescription: '充电自付', benefits: [], conditions: '超里程另计；提前退车按合同结算', startDate: '2026-11-01', firstDueDate: '2026-10-25' } } }));
-  assert.equal((await api.getHome()).vehicles[0].imageUrl, 'https://mini-api.subauto.keybox.cloud/api/public/media/image-1');
+  assert.equal((await api.getHome()).vehicles[0].imageUrl, 'https://api.evsub.ndacar.com/api/public/media/image-1');
   const row = await api.getApplication('a1');
   assert.equal(row.finalPlan.planTitle, '运营最终方案');
   assert.equal(row.finalPlan.notes, '超里程另计；提前退车按合同结算');
@@ -235,8 +241,8 @@ test('login refuses an unchecked or missing published document snapshot before n
 test('all confirmed commercial clauses and anchored monthly periods are available before accepting; old incomplete plans block confirmation', async () => {
   const terms = Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key => [key, '明确' + key]));
   let commercialTerms = terms;
-  let usagePolicy={version:'USAGE_V1',documentId:'usage-v1',documentVersion:1,hash:'a'.repeat(64),content:'本地合成已批准月台账全文，不作为生产文案。',baseAllowanceKm:1500,excessPriceAmount:150};
-  const { api } = setup(() => ({ statusCode: 200, data: { id: 'a', finalPlan: { revision: 1, commercialHash: 'h', title: '确定方案', monthlyFeeAmount: 0, depositAmount: 100, months: 2, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '自付', benefits: [], conditions: '明确限制', startDate: '2026-01-31', firstDueDate: '2026-01-25', commercialTerms,usagePolicy } } }));
+  let usagePolicy={policyVersion:'USAGE_V1',documentId:'usage-v1',documentVersion:1,hash:'a'.repeat(64),content:'本地合成已批准月台账全文，不作为生产文案。',baseAllowanceKm:1500,excessPriceAmount:150};
+  const { api } = setup(() => ({ statusCode: 200, data: { id: 'a', finalPlan: { revision: 1, commercialHash: 'h', title: '确定方案', monthlyFeeAmount: 0, depositAmount: 100, months: 2, mileagePerMonthKm: 1500, excessMileagePriceAmount: 150, energyDescription: '自付', benefits: [], conditions: '明确限制', startDate: '2026-01-31', firstDueDate: '2026-01-25', commercialTerms,usagePolicyVersion:'USAGE_V1',usagePolicy } } }));
   const plan = (await api.getApplication('a')).finalPlan;
   assert.equal(plan.complete, true);assert.equal(plan.commercialRows.length, 14);
   assert.equal(plan.commercialRows.find(row => row.key === 'insuranceDetails').value, '明确insuranceDetails');
@@ -245,4 +251,17 @@ test('all confirmed commercial clauses and anchored monthly periods are availabl
   commercialTerms = null;assert.equal((await api.getApplication('a')).finalPlan.complete, false);
   commercialTerms = { ...terms, insuranceDetails: '待确认' };assert.equal((await api.getApplication('a')).finalPlan.complete, false);
   commercialTerms=terms;usagePolicy=null;assert.equal((await api.getApplication('a')).finalPlan.complete,false);
+});
+
+test('v2 final plan requires frozen configured mileage and approved template evidence, including valid zero prices', async () => {
+  const commercialTerms=Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key=>[key,'明确'+key]));
+  let policy={policyVersion:'USAGE_V2',documentId:'usage-v2',documentVersion:1,hash:'a'.repeat(64),content:'本单每月2400公里，超出2.30元',templateContent:'本单每月{{baseAllowanceKm}}公里，超出{{excessPriceYuan}}元',templateHash:'b'.repeat(64),baseAllowanceKm:2400,excessPriceAmount:230};
+  let mileage=2400,price=230;
+  const {api}=setup(()=>({statusCode:200,data:{id:'a',finalPlan:{revision:1,commercialHash:'h',title:'确定方案',monthlyFeeAmount:198000,depositAmount:100,months:12,mileagePerMonthKm:mileage,excessMileagePriceAmount:price,energyDescription:'自付',benefits:[],conditions:'明确限制',startDate:'2026-01-31',firstDueDate:'2026-01-25',commercialTerms,usagePolicyVersion:'USAGE_V2',usagePolicy:policy}}}));
+  assert.equal((await api.getApplication('a')).finalPlan.complete,true);
+  mileage=0;price=0;policy={...policy,baseAllowanceKm:0,excessPriceAmount:0};assert.equal((await api.getApplication('a')).finalPlan.complete,true);
+  policy={...policy,baseAllowanceKm:1};assert.equal((await api.getApplication('a')).finalPlan.complete,false);
+  policy={...policy,baseAllowanceKm:0,templateHash:undefined};assert.equal((await api.getApplication('a')).finalPlan.complete,false);
+  policy={...policy,templateHash:'b'.repeat(64),templateContent:'没有里程占位符'};assert.equal((await api.getApplication('a')).finalPlan.complete,false);
+  policy={...policy,policyVersion:'USAGE_UNKNOWN'};assert.equal((await api.getApplication('a')).finalPlan.complete,false);
 });

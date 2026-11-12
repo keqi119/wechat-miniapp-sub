@@ -1,0 +1,468 @@
+﻿分组编号,文书,字段/字段组,涉及细项,原文定位,判断,当前可复用能力,当前页面情况,需要补齐或调整,建议页面,代码依据
+01-01,01_汽车订阅合同_三方_V2.1,合同编号、订单编号、合同版本,,P004,可复用来源,电子准备生成 NDS-档案ID-版本合同号；订单 ID、LegalDocument.version 和模板摘要已有。电子打印正文只绑定 contractNumber/三方名称，页眉输出文件版本；没有 orderNo 或新版 V2.1 的模板版本映射。,现有合同中心/电子准备代码；未核线上可用性,区分合同号、订单号、正式文本版本、档案文件版本；为新版模板逐一映射，不能将文件版次冒充合同文本版本。,合同中心：电子合同准备/预览,"D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:87
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:32
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:56
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:667
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:886"
+01-02,01_汽车订阅合同_三方_V2.1,订约地点,,P004,字段/页面补齐,最终方案和电子 prepare 变量中没有结构化订约地点。客户建议交接点不是订约地点。,未见专用订约地点录入页,增加订约地点或由正式审定模板规定统一订约地点，须明确确认后冻结。,合同中心：签前交易信息,"D:/wechat-miniapp-sub/apps/api/src/applications/applications.ts:36
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:61
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:19"
+01-03,01_汽车订阅合同_三方_V2.1,客户姓名、手机、身份证件号码、甲方联系人及电话,,P005 / T1R6C2,可复用来源,Customer.name/mobile、申请和订单客户资料快照、法大大加密身份证号已有；电子打印以当前可信实名解密号码并输出姓名/身份证号/电话。甲方联系人若就是客户本人可复用；当前没有独立合同联系人选择和冻结。,现有客户资料/实名页；未见独立合同联系人页,接入新版主体栏和联系人栏；若允许代理联系人，需增加授权/联系人记录，不能擅用紧急联系人或员工姓名。,客户资料；申请最终方案；合同签前确认,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:172
+D:/wechat-miniapp-sub/apps/api/src/customers/profile.ts:16
+D:/wechat-miniapp-sub/apps/api/src/customers/profile.ts:74
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:63
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:11"
+01-04,01_汽车订阅合同_三方_V2.1,身份证件类型,,P005,字段/页面补齐,现有电子身份模型是 name/idCardNo，打印校验只接受18位身份证号；没有可选证件种类。,现有身份证实名页；无证件类型选择,若业务仅接受居民身份证，可在审定模板明确固定类型；若支持其他证件，需新增类型、号码校验和渠道实名适配。,客户资料/实名核验,"D:/wechat-miniapp-sub/apps/api/src/esign/customer-esign-onboarding.service.ts:35
+D:/wechat-miniapp-sub/apps/api/src/esign/customer-esign-onboarding.service.ts:44
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:6"
+01-05,01_汽车订阅合同_三方_V2.1,客户联系地址,,P005,人工确认,commercialTerms.customerAddress 为必填自由文本，旧/新电子生成器均可输出这段文字。默认值尝试读取 profile.contactAddress，但当前客户资料及申请输入 strict schema 未采集地址。,现有最终方案14项商业条款自由文本；客户资料页无地址字段,增加专用联系地址字段及客户确认/版本快照，再迁移到新版正文；不要把建议交接地点当联系地址。,小程序个人资料；后台客户资料/最终方案,"D:/wechat-miniapp-sub/apps/api/src/applications/commercial-terms.ts:5
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:9
+D:/wechat-miniapp-sub/apps/api/src/customers/profile.ts:14
+D:/wechat-miniapp-sub/apps/api/src/applications/applications.ts:41
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:29"
+01-06,01_汽车订阅合同_三方_V2.1,客户电子邮箱、约定电子通知渠道,,P005 / P072,字段/页面补齐,客户资料输入只有姓名、驾龄及证件文件；Customer及profile快照未见邮箱字段。,客户资料页无邮箱字段,新增邮箱及有效渠道核实；重大通知需记录内容、渠道和到达凭据。不能以发送成功或已读替代合同要求的真实到达证据。,小程序个人资料/联系方式；后台客户资料/通知办理,"D:/wechat-miniapp-sub/apps/api/src/customers/profile.ts:14
+D:/wechat-miniapp-sub/apps/api/src/customers/profile.ts:16
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:172
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1283"
+01-07,01_汽车订阅合同_三方_V2.1,有效驾驶证、准驾车型,,P005,可复用来源 / 字段/页面补齐,已有驾驶证文件和人工资格审核、有效期/长期有效；没有结构化驾驶证号、准驾车型字段，电子 prepare 未读取驾驶资格。驾龄不能替代准驾车型。,现有客户资料原件查看与人工资格审核页；无准驾车型输入,资格审核页增加核验后的驾驶证号/准驾车型等必要资料，输出可核对的有效资格摘要并冻结来源版本；不需重录已上传原件。,客户资料：驾驶资格审核；小程序补件,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2590
+D:/wechat-miniapp-sub/apps/api/src/customers/types.ts:12
+D:/wechat-miniapp-sub/apps/api/src/customers/qualifications.ts:23
+D:/wechat-miniapp-sub/apps/admin/src/customer-profile.tsx:10
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:61"
+01-08,01_汽车订阅合同_三方_V2.1,实际出租方企业名称、统一社会信用代码,,P006,可复用来源,VehicleOwner.name/creditCode、lessorSnapshot 已有，电子 prepare 输出 OWNER 主体并由 partyPrintValue打印名称/信用代码。,现有合作商档案页,将语义 OWNER 明确映射为新版乙方；需每单确认实际出租方，而非登记所有人或BaaS出租人。新文本仅企业资产公司，而系统也允许个人出租方，需确定产品/模板适用范围。,合作商档案；合同中心主体核对,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1353
+D:/wechat-miniapp-sub/apps/api/src/owner-signing/lessor.ts:27
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:59
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:61
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:11
+D:/wechat-miniapp-sub/apps/api/src/partners/simple-agreements.ts:16"
+01-09,01_汽车订阅合同_三方_V2.1,实际出租方住所,,P006,可复用来源 / 人工确认,VehicleOwner.address、lessorSnapshot.address 已存；当前后台叫联系地址/文书联系地址，不保证是法定住所。新电子 ArchiveParty 没有地址字段。,现有合作商联系地址；法定住所未独立标注,核实住所与联系地址是否相同；按需分开存储。选择确认后的住所冻结并打印。,合作商档案：主体资料,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1367
+D:/wechat-miniapp-sub/apps/api/src/owner-signing/lessor.ts:27
+D:/wechat-miniapp-sub/apps/admin/src/partner-simple.tsx:11
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:13
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:2"
+01-10,01_汽车订阅合同_三方_V2.1,法定代表人、有权签署人、授权依据,,P006 / P007 / P081 / P083 / P085,可复用来源 / 字段/页面补齐,"OwnerLegalRepresentative.name/evidenceHash、旧合作资料 representatives(role,授权文件ID)已有；新电子身份核验要求登记法人手机号和企业经办人一致，未把法人名/授权依据渲染到合同。新电子不等于已支持任意授权代表代法人签。",现有法人资料/企业与印章及旧合作资料代表授权页；新电子任意授权代表未接入,复用法人和授权材料档案，明确本单实际签署人的角色/姓名/依据并冻结；若拟支持授权代表签署，需扩展身份与授权校验流程，不可只加文本框。个人客户签署栏的“企业填写”应按主体类型标不适用。,合作商/平台企业与印章；合同中心签署人确认,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1383
+D:/wechat-miniapp-sub/apps/api/src/partners/cooperation.ts:16
+D:/wechat-miniapp-sub/apps/api/src/partners/cooperation.ts:75
+D:/wechat-miniapp-sub/apps/api/src/owner-h5/legal-representative.ts:22
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/identities.ts:22
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:39
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/policy.ts:30"
+01-11,01_汽车订阅合同_三方_V2.1,乙方联系人及电话、邮箱或其他可留痕渠道,,P006 / T1R6C2,可复用来源 / 字段/页面补齐,contactPhone/ordinaryContactPhone 有；现资料无独立文书联系人姓名/邮箱，新电子主体仅打印企业名和信用代码。合作商查看管理员是访问账号，不自动等于合同联系人或签署人。,现有合作商电话字段及查看管理员；无专用合同联系人姓名/邮箱,增加合同联系人姓名/岗位、电话及邮箱/其他留痕渠道，并核实其通知和隐私申请受理权限，冻结到每单。,合作商档案：合同联系信息,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1361
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1368
+D:/wechat-miniapp-sub/apps/api/src/partners/simple-agreements.ts:16
+D:/wechat-miniapp-sub/apps/admin/src/partner-simple.tsx:11
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:11"
+01-12,01_汽车订阅合同_三方_V2.1,宁达名称、宁达统一社会信用代码,,P007,可复用来源,平台名称常量及独立法大大企业账号绑定；platformParty从该账号关联VehicleOwner读取信用代码并输出。未查询真实档案是否齐备或当前渠道是否可用。,现有企业与印章路径/VehicleOwner复用；平台主体配置完整性未核实,复用本项目宁达主体记录，明确映射新版丙方；不得读取docs/legal/company-profile.json替代，该文件主体仍是晓浪。,平台主体资料/企业与印章；合同中心主体核对,"D:/wechat-miniapp-sub/apps/api/src/common/platform-legal-entity.ts:5
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:30
+D:/wechat-miniapp-sub/docs/legal/company-profile.json:2"
+01-13,01_汽车订阅合同_三方_V2.1,宁达住所,,P007,可复用来源 / 人工确认,宁达也可通过VehicleOwner.address登记，但platformParty只读取名称、主体类型和信用代码，且address语义为联系地址。,现有VehicleOwner联系地址；无专用宁达住所输出,核验宁达法定住所并补入平台主体快照及新版模板；不能使用晓浪地址。,平台主体资料,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1367
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:39
+D:/wechat-miniapp-sub/docs/legal/company-profile.json:2"
+01-14,01_汽车订阅合同_三方_V2.1,日常客服及投诉渠道、紧急救援联系渠道、丙方服务联系人或岗位/电话/邮箱或留痕渠道,,P007 / T1R6C2,人工确认 / 字段/页面补齐,final-plan-defaults.serviceCoverage 内硬编码平台电话/邮箱；未见可配置的岗位、投诉、救援渠道及本单联系人结构。,商业条款默认文案带电话邮箱；未见统一客服/投诉/救援管理页,建设统一平台合同联系资料，区分日常/投诉/紧急救援，签前确认并冻结；以后各方通知/个人信息行权复用它，而不是每份文档重复录。,平台设置：服务与合同联系资料；合同签前确认,"D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:30
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:29
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:2"
+01-15,01_汽车订阅合同_三方_V2.1,方案名称及版本,,T1R1C2,可复用来源,ProductVersion.name/version及productSnapshot 已有完整冻结源；电子subscriptionSections没有输出方案名称或版本。,现有产品工作台/版本与最终方案,从本单冻结productSnapshot映射到附件一，不读签后可变商品页。,产品工作台；最终方案/合同预览,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2363
+D:/wechat-miniapp-sub/apps/api/src/products/snapshot.ts:10
+D:/wechat-miniapp-sub/apps/api/src/products/snapshot.ts:12
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:30"
+01-16,01_汽车订阅合同_三方_V2.1,本次约定期限,,T1R1C2,可复用来源 / 字段/页面补齐,FinalPlan.months已存并在电子明细打印，但产品、最终方案输入与电子prepare均至少12个月且quote要求与产品months相等；只支持整月。,现有产品/最终方案整月期限页,常规整月可复用；产品最短期与本次约定期要分开建模；跨商原剩余期间不是简单months，需订单关联、原服务月边界及剩余期间新流程。,产品工作台；最终方案；跨商换车工作台,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:813
+D:/wechat-miniapp-sub/apps/api/src/products/types.ts:8
+D:/wechat-miniapp-sub/apps/api/src/products/snapshot.ts:42
+D:/wechat-miniapp-sub/apps/api/src/applications/applications.ts:36
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:60"
+01-17,01_汽车订阅合同_三方_V2.1,最短订阅期限/本单产品最短期限,,P016 / T1R1C2,字段/页面补齐,只有产品months和FinalPlan.months，没有独立minimumTermMonths；当前最小值12硬编码。00中的拟3个月不是已存产品参数。,现有产品期限页仅months至少12；无独立最短期限,新增版本化最短期限字段和签前冻结、校验规则，同时修改产品/API/最终方案/电子准备下限；跨商剩余期例外单独判断。,产品工作台：期限规则；最终方案,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2376
+D:/wechat-miniapp-sub/apps/api/src/products/types.ts:8
+D:/wechat-miniapp-sub/apps/api/src/applications/applications.ts:36
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:60"
+01-18,01_汽车订阅合同_三方_V2.1,含税月订阅费、押金,,P021 / T1R1C2,可复用来源 / 人工确认,FinalPlan整数分月费/押金已冻结并由money除100输出；产品V2支持基础费+里程包月费。押金按信用/验收规则由服务端核算。没有订阅费含税属性、开票主体/开票流程字段。,现有产品定价/最终方案与押金规则页；未见订阅税票办理页,金额无需重建；须确认当前展示月费的含税业务口径，显式冻结。税票按实际交易主体办，不能复用BaaS成本侧taxIncluded或invoiceRequired。,产品定价；最终方案；资金/开票办理,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:811
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:26
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:30
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:31
+D:/wechat-miniapp-sub/apps/api/src/applications/applications.ts:108
+D:/wechat-miniapp-sub/apps/admin/src/resources.ts:84
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:323"
+01-19,01_汽车订阅合同_三方_V2.1,里程、超额单价、换车权益、额外费用及无则明确无,,T1R1C2,可复用来源 / 人工确认,mileagePerMonthKm/excessMileagePriceAmount、productSnapshot.baseFee/mileageMonthlyFee/swapPolicy/benefits已有并在电子明细打印；otherFees是自由文本。电子权益明细未输出provider；没有逐单额外收费结构化清单。,现有产品工作台/权益/最终方案14项条款,整包映射冻结方案并校验金额合计；额外收费须具体确认，空值不能自动当无。核对默认条款与新主文无冲突。,产品工作台；最终方案；合同附件预览,"D:/wechat-miniapp-sub/apps/api/src/products/types.ts:22
+D:/wechat-miniapp-sub/apps/api/src/products/types.ts:24
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:30
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:32
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:34
+D:/wechat-miniapp-sub/apps/api/src/applications/commercial-terms.ts:8"
+01-20,01_汽车订阅合同_三方_V2.1,BaaS是否含月费、另付金额及对象,,P021 / T1R1C2,人工确认 / 字段/页面补齐,车辆资产有BaaS底层合同/出租人/租金/代付合作商，但那是资产成本合同。订阅产品只含energyDescription（V2固定日常充换电自付）和自由文本usageCosts/otherFees，没有客户侧是否包含、另付金额及收款对象。,现有BaaS资产合同页；无客户订阅BaaS收费配置,增加客户侧BaaS收费模式/金额/对象及冻结快照；可参考资产档案但不可把资产租金或代付人直接当客户收费。,产品工作台：费用构成；最终方案；BaaS档案参照,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:297
+D:/wechat-miniapp-sub/apps/api/src/products/configuration.ts:7
+D:/wechat-miniapp-sub/apps/api/src/products/types.ts:10
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:27
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:34
+D:/wechat-miniapp-sub/apps/admin/src/asset-baas.tsx:63"
+01-21,01_汽车订阅合同_三方_V2.1,品牌车型、车牌、VIN,,T1R2C2,可复用来源,Vehicle结构化字段已存；电子明细从order.vehicle当前记录输出车型/车牌/VIN，scope保存vehicleFacts。最终方案中另有vehicleIdentification自由文本，可能和实时档案不同。,现有车辆基础信息工作台,为V2.1三项映射；生成前比较并冻结同一车辆版本，避免正文、附件和签章文件引用不同事实。,车辆工作台：基础信息；最终方案/合同预览,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:620
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:626
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:30
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:54
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:61"
+01-22,01_汽车订阅合同_三方_V2.1,登记所有人、电池方式（整车含电池/BaaS）,,T1R2C2,可复用来源,VehicleAssetProfile.registeredOwnerName/batteryOwnership已存，可在资产页维护；电子prepare只include vehicle:true，没有assetProfile关系，也未输出两字段。,现有车辆资产资料/电池BaaS页,从本车资产资料校验并冻结映射；UNKNOWN必须补齐，不能默认为整车含电池。实际出租方和登记所有人应分开展示。,车辆工作台：资产资料/电池BaaS；合同附件预览,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:275
+D:/wechat-miniapp-sub/apps/admin/src/asset-profile.tsx:8
+D:/wechat-miniapp-sub/apps/admin/src/asset-profile.tsx:11
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:54
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:30"
+01-23,01_汽车订阅合同_三方_V2.1,计划交付日、计划交付地点,,T1R3C2,人工确认 / 字段/页面补齐,现有startDate为冻结起租日期，handoverArrangement为自由文本；application.profile.handoverLocation只是客户建议地点。没有主合同专用已确认计划交付日/地点。,现有起租日期、建议交接地点与条款自由文本；非独立计划交付表单,独立增加计划交付日/地点及确认人；实际起租在真实交接后据事实计算，不能直接改名复用startDate并保留旧守卫。,申请最终方案：交付安排；员工交接任务,"D:/wechat-miniapp-sub/apps/api/src/applications/applications.ts:36
+D:/wechat-miniapp-sub/apps/api/src/applications/applications.ts:58
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:19
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:31
+D:/wechat-miniapp-sub/apps/api/src/usage/rules.ts:19"
+01-24,01_汽车订阅合同_三方_V2.1,每月支付日,,P022 / T1R4C2,字段/页面补齐,订阅FinalPlan只有firstDueDate；账单按该日期原日号滚动生成，没有独立paymentDayOfMonth。同名字段仅存在BaaS成本合同。,现有首期到期日；无订阅每月支付日字段,增加1-31支付日并冻结；第二期起按服务月起日所在自然月映射，首期单独交付前应付。需改计费算法、账单生成时点及短月测试，不能从firstDueDate偷偷推断。,最终方案：付款安排；客户确认；账单计划预览,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:819
+D:/wechat-miniapp-sub/apps/api/src/billing/rules.ts:10
+D:/wechat-miniapp-sub/apps/api/src/applications/applications.ts:153
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:321"
+01-25,01_汽车订阅合同_三方_V2.1,险种、保险公司、保单号、多份保单、未出单承保安排,,P040 / P090 / T1R5C2,可复用来源 / 人工确认 / 字段/页面补齐,InsurancePolicy/Version及原件包含前三项和有效期/车辆对应；最新登记原件须齐备。电子prepare没有查询保险，只输出insuranceDetails通用自由文本；未出单承保安排无专用状态。,现有保险工作台登记与后台原件查看；未见客户保险披露包,签前选择本车适用保单版本/承保安排并冻结三项；未出单标明安排与交付前补单任务。完整保单通过订单归属授权给客户查阅保存，不要开放后台原件接口。,车辆保险工作台；合同签前保险确认；交付资料检查；小程序合同资料,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2474
+D:/wechat-miniapp-sub/apps/api/src/insurance/registrations.ts:14
+D:/wechat-miniapp-sub/apps/api/src/insurance/registrations.ts:69
+D:/wechat-miniapp-sub/apps/api/src/insurance/registrations.ts:104
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:29
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:28
+D:/wechat-miniapp-sub/apps/api/src/insurance/controller.ts:17
+D:/wechat-miniapp-sub/apps/api/src/insurance/controller.ts:38
+D:/wechat-miniapp-sub/apps/api/src/files/files.ts:51"
+01-26,01_汽车订阅合同_三方_V2.1,本人签名、企业有效盖章（非待填写下划线）,,P080 / P082 / P084,可复用来源 / 字段/页面补齐 / 签后事实,新电子打印器按CUSTOMER/OWNER/PLATFORM生成独立签署页和真实签章坐标，有三方身份/证书/印章守卫；不是Word中原签署空线的锚点填充。,已有新电子三方签章准备/坐标代码；入口未闭环,新版正文及附件适配后重新核验完整PDF和三方签章位置；签名/印章必须实际签署产生，不能提前填图或当普通字段。甲客户乙出租方与旧模板相反，应按语义角色统一。,电子合同准备/全文预览；客户/企业签署页,"D:/wechat-miniapp-sub/apps/api/src/electronic-documents/policy.ts:10
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:61
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:64
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/identities.ts:44
+D:/wechat-miniapp-sub/docs/legal/drafts/ninda/launch-20261102-electronic/subscription.md:7"
+01-27,01_汽车订阅合同_三方_V2.1,签署日期及时间、最后签署生效时刻（非待填写下划线）,,P015 / P081 / P083 / P085,字段/页面补齐 / 签后事实,ElectronicSigningParty只有attemptedAt/verifiedAt；service在可信查询时写verifiedAt=now，展示接口将verifiedAt叫signedAt。未存/输出渠道实际签署时间。,现有签署进度把verifiedAt投影为signedAt；无实际签署时间录入/解析,补可信签署时间来源及每方事实，生效时刻取最后有效签署时刻；不能使用创建时间、归档时间或查询核验时间替代。签前留动态签署栏。,合同签署进度/签后归档证明,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:3149
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/service.ts:52
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/service.ts:146
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/service.ts:182
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/provider.ts:64"
+02-G01,02_车辆合作协议_V2.0,编号、版本、合作期间与实际签署时间,合同编号；本协议编号；签署日期；合作起日；合作止日；另约生效日期或明确无；附件一关联主编号；附件一版本及日期；逐车合作起止日；附件二关联主编号；附件二版本及日期；附件三关联主编号；附件三版本及日期；附件四关联主编号；附件四版本及日期；关联合作协议编号,P002 / P003 / P010 / P076 / P079 / P083 / P096 / P103 / P106,可复用来源 / 人工确认 / 字段/页面补齐 / 签后事实,referenceNumber、PartnerAgreementVersion.version/validFrom/validUntil和ArchiveVersion.contractNumber/templateVersion已存在；电子正文编号是准备器生成NDC编号，尚未使用录入referenceNumber。 现有合作version contentHash；电子ArchiveVersion保存模板/主体/scope及PDF哈希。,合作商档案→合作协议→其他协议资料可编辑编号与起止。；电子准备API存在，当前PC未接电子准备/审阅流程。,正文P002/P003及四附件关联编号必须同源；合作期间与另约生效日未分开；模板法律版本V2.0与协议数据版本不可混写；实际签署日期不可用生成日/verifiedAt替代。 合作协议办理新增基本条款页：关联主编号、文书法律版本、附件版本/形成日期、合作期间、另约生效日/明确无；签后从可信实际签署证据展示签署日期。,合作协议办理新增基本条款页：关联主编号、文书法律版本、附件版本/形成日期、合作期间、另约生效日/明确无；签后从可信实际签署证据展示签署日期。,"D:/wechat-miniapp-sub/apps/admin/src/partner-simple.tsx:11
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/cooperation.ts:11
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:21
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/proof.ts:17"
+02-G02,02_车辆合作协议_V2.0,双方主体、住所、法人、有权签署人与证照,甲方统一社会信用代码；甲方住所；甲方法定代表人；乙方企业全称；乙方统一社会信用代码；乙方住所；乙方法定代表人；甲方真实住所及对应上海具体区；主体权属出租权限备案检验保险资料清单/有效期/更新联系人；签署时甲方真实住所及上海区；商务确认权人与权源证明；授权企业全称和统一社会信用代码；法人或有权签署人及权源；授权人法人或有权签署人；受权人有权签署人,P006 / P066 / P071 / P072 / P073 / P074 / P079 / P093 / P099 / P105 / P113,可复用来源 / 字段/页面补齐 / 流程/规则调整,名称、subjectType、creditCode、address可录；法人模型和带凭据的登记API存在。电子合作打印仅公司名/代码。 当前合作version不冻结完整主体；准备时partiesSnapshot只保存名称/类型/代码。,合作商档案→更新主体资料维护名称、代码、联系地址、电话；名称外其余可空。；法人/授权签署人不在当前SimplePartners表单；旧合作资料representatives组件不在现行入口。,联系地址不一定是法律住所；缺主体证照类别/有效期、经营备案、授权签署权源/期限及可核验附件清单；新版仅企业，不应套给个人。 合作商详情加主体证照与签署权限；平台宁达加同结构的受控主体资料卡。区分注册地址、通知地址；签前按企业主体和有权人员核实，全部入合作条款快照。,合作商详情加主体证照与签署权限；平台宁达加同结构的受控主体资料卡。区分注册地址、通知地址；签前按企业主体和有权人员核实，全部入合作条款快照。,"D:/wechat-miniapp-sub/apps/admin/src/partner-simple.tsx:11
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1353
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:2
+D:/wechat-miniapp-sub/apps/api/src/owner-h5/legal-representative.ts:77
+D:/wechat-miniapp-sub/docs/legal/drafts/ninda/launch-20261102-electronic/cooperation.md:3
+D:/wechat-miniapp-sub/docs/legal/company-profile.json:2"
+02-G03,02_车辆合作协议_V2.0,服务、财务、隐私与法律通知联系人,甲方统一受理电话/小程序/邮箱；乙方服务与投诉渠道；主体权属出租权限备案检验保险资料清单/有效期/更新联系人；紧急救援联系；双方有权业务联系人/邮箱/电话/通知地址；财务联系人；个人信息事务与安全事件联系人；撤销缩小授权的指定邮箱和送达地址,P036 / P079 / P092 / P111,可复用来源 / 人工确认 / 字段/页面补齐,只有普通contactPhone/ordinaryContactPhone及公司管理员查看账号；不能替代业务授权联系人。 当前生成器不带联系人、邮箱或通知地址。,合作商主体联系电话可维护；无合同联系人角色/邮箱/书面地址编辑。,双方法律通知、服务投诉、财务、个人信息安全事件角色/备援、邮箱和地址没有独立字段；不应从可变平台配置直接回写已签文本。 合作协议→联系人与送达：逐方逐角色建立联系人、电话、邮箱、送达地址、备援及有效期。业务联系人先核实后固定，变更另留通知及到达证据。,合作协议→联系人与送达：逐方逐角色建立联系人、电话、邮箱、送达地址、备援及有效期。业务联系人先核实后固定，变更另留通知及到达证据。,"D:/wechat-miniapp-sub/apps/admin/src/partner-simple.tsx:11
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1353
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36
+D:/wechat-miniapp-sub/apps/signing-h5/src/owner/App.tsx:91
+D:/wechat-miniapp-sub/apps/signing-h5/src/owner/SimpleWorkspace.tsx:10"
+02-G04,02_车辆合作协议_V2.0,逐车身份、登记与法定出租权源,车辆序号；VIN；号牌；品牌/车型/年款/核定载人数；首次登记日/使用性质/检验有效期；登记所有人；乙方出租权限文件/有效期/可出租至日；所有权/抵押等限制及必要同意文件或无；逐车合作起止日；主体权属出租权限备案检验保险资料清单/有效期/更新联系人；适用车辆/VIN集合；授权VIN清单,P078 / P079 / P098 / P108,可复用来源 / 字段/页面补齐 / 流程/规则调整,Vehicle VIN/号牌/品牌车型、ModelDefinition.modelYear、VehicleAssetProfile登记所有人/首次登记日；当前车辆原件可保存登记证/行驶证等。 现有合作电子scope只冻结车辆id/车牌/VIN，未冻结登记/权源和车辆原件清单。,车辆工作区→车辆资料/资产资料/原件；车型资料维护真实年款。,无核定载人数、使用性质、检验有效期（现有仅下次年检日期）、实际出租权源类型/文件链/有效起止/可出租截止、权利限制及必要同意结构；登记人/合作商/牌照归属必须区分。 车辆工作区新增出租合规资料卡；签合作时逐车选择资料版本并校验权源覆盖合作与订单租期；到期/限制风险形成待办及受影响业务暂停/恢复。,车辆工作区新增出租合规资料卡；签合作时逐车选择资料版本并校验权源覆盖合作与订单租期；到期/限制风险形成待办及受影响业务暂停/恢复。,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:275
+D:/wechat-miniapp-sub/apps/admin/src/asset-profile.tsx:8
+D:/wechat-miniapp-sub/apps/api/src/vehicles/admin-query.ts:23
+D:/wechat-miniapp-sub/apps/admin/src/vehicle-document-model.ts:1
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36"
+02-G05,02_车辆合作协议_V2.0,车况、召回、维修披露与逐车用途限制,车况/事故/召回/维修披露；可租用途/区域/驾驶人限制；已知损伤/里程/电量,P079 / P080,可复用来源 / 人工确认 / 字段/页面补齐,车况披露文字、火烧/泡水/结构损伤、查验记录/照片及里程可复用。 商品已有车况快照；合作生成器未选取这些来源。,车辆工作区→车况/查验记录，数据可保存回读。,召回、里程异常、缺陷处置、租赁允许用途/区域/驾驶人限制没有完整合同字段；不能仅取车辆当前描述替代签时披露。 合作车辆附件编辑器选择车况/查验版本、补充未覆盖事实与限制，固定来源哈希；未来变化追加通知/补正记录。,合作车辆附件编辑器选择车况/查验版本、补充未覆盖事实与限制，固定来源哈希；未来变化追加通知/补正记录。,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:275
+D:/wechat-miniapp-sub/apps/admin/src/vehicle-condition.tsx:35
+D:/wechat-miniapp-sub/apps/admin/src/vehicle-inspections.tsx:23
+D:/wechat-miniapp-sub/apps/api/src/products/snapshot.ts:6
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36"
+02-G06,02_车辆合作协议_V2.0,交强险、商业险、限额、免赔与续保承诺,保单/险种限额/投保用途/有效期/续保提交日期；主体权属出租权限备案检验保险资料清单/有效期/更新联系人；保险险种限额免赔/租赁用途/续保责任费用/凭证时点；未投保错投保退保迟延理赔补救及内部责任；免赔与未赔分担依据,P079 / P091,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,保单号、保险公司、类型、被保险人、投保人、保费、期间及原件可直接选取。 保单有不可变登记版本与原件摘要；合作生成器尚不引用。,保单档案/车辆工作区保单登记；当前表单仅基本信息和原件。；schema旧coverageItems/terms和旧API存在，但当前登记创建空coverageItems/terms；不算当前可维护。,险种细项/限额/免赔/除外/真实租赁用途、续保提交日期、实施责任与费用、未投保或拒赔的内部分担需结构化或签前人工条款确认。 保单档案补保障详情与租赁用途核验；合作协议履约责任表填续保责任/凭证时间、内部责任。续保提醒可复用，责任/SLA/缺保停新业务需合同关联。,保单档案补保障详情与租赁用途核验；合作协议履约责任表填续保责任/凭证时间、内部责任。续保提醒可复用，责任/SLA/缺保停新业务需合同关联。,"D:/wechat-miniapp-sub/apps/api/src/insurance/registrations.ts:14
+D:/wechat-miniapp-sub/apps/admin/src/insurance-workspace.tsx:46
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:297
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36"
+02-G07,02_车辆合作协议_V2.0,电池BaaS资料及对客户收费关系,电池归属/BaaS机构合同号及租赁使用限制；BaaS租金额/含月费与否/支付人,P079 / P091,可复用来源 / 人工确认 / 字段/页面补齐,电池归属、BaaS机构/合同号/期间/租金/承租人/代付合作商可复用。 BaaS有termsHash和修订快照；未进入合作电子PDF。,车辆资产资料→电池归属，BAAS合同登记页。,租赁使用限制、BaaS是否计入对客户月费、实际合同支付义务人和代付人不能混同；现有payerOwnerId不是可直接推断的合同义务。 BaaS登记补租赁使用限制及证据；合作车辆条款增加是否包含月费枚举、承担人/实际代付人及费用规则，引用BaaS版本并固定。,BaaS登记补租赁使用限制及证据；合作车辆条款增加是否包含月费枚举、承担人/实际代付人及费用规则，引用BaaS版本并固定。,"D:/wechat-miniapp-sub/apps/admin/src/asset-profile.tsx:8
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:297
+D:/wechat-miniapp-sub/apps/admin/src/asset-baas.tsx:63
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36"
+02-G08,02_车辆合作协议_V2.0,未出租保管、调运、双边移交与退出返还,未出租车返还地点/期限/费用；未出租保管方和地点；移交时间/钥匙证件/随车物；调运实施方/权限/费用；已知损伤/里程/电量；退出合作返还地点/期限/费用；甲乙双方确认人及日期；保管停车调运费用,P063 / P080 / P091,人工确认 / 字段/页面补齐 / 流程/规则调整,客户订单交接可存实际时间地点、里程、电量、随车物和车况。 当前合作协议无保管/调运/返还专用快照。,订单交接/现场端为客户交还车流程；不是资产合作商与宁达的保管移交。,保管方/场地、钥匙证件、调运权限费用、退出返还地/期限/费用、双方确认人及时间缺失；未来移交事实不能签前造填。 合作协议附件一先录确定的保管和返还条件；另加合作车辆移交/退场记录（双方确认、照片、里程电量、钥匙证件、实际时间），与客户订单事实分开。,合作协议附件一先录确定的保管和返还条件；另加合作车辆移交/退场记录（双方确认、照片、里程电量、钥匙证件、实际时间），与客户订单事实分开。,"D:/wechat-miniapp-sub/apps/api/src/operations/handover-records.ts:11
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/cooperation.ts:11
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36"
+02-G09,02_车辆合作协议_V2.0,产品快照和可售商业区间,各产品最短期限（月）；可租用途/区域/驾驶人限制；适用产品版本/快照文件编号/矩阵记录；适用车辆/VIN集合；产品名称/版本/形成日/快照编号完整文件；可售期间；本产品最短月数；本产品最长月数；基础费/里程费/总月费或区间及甲方区间权限；押金或经确认审核区间；月里程/超里程单价；赠换次数/有效期/额外费；同价换车升级条件和差价规则；续期方案边界；优惠承担方/额度/期限；三方合同和场景附件完整版本/日期/快照编号；授权产品及版本快照,P019 / P079 / P098 / P099 / P100 / P108,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,产品名称/id/版本、固定月数、基础费/里程费/总费、里程/超里程、整期换车次数及额外费已有完整产品快照。 产品与订单快照存在，但合作附件未固定产品/快照文件/可售期间。,产品仓库/商品中心可维护版本；合作协议没有产品选择或矩阵页。,逐产品最短/最长、价格/押金授权区间、可售期间、同价/升级规则、续期边界缺失；现有产品months至少12，不能自动改成起草说明拟3个月或把固定months当最短期。 合作协议→产品与商务权限：选择不可变产品版本及完整快照，明确最短/最长、金额/押金/优惠区间、有效期间；发布商品、报价、换车/续期前校验合作矩阵，越界走具体确认。,合作协议→产品与商务权限：选择不可变产品版本及完整快照，明确最短/最长、金额/押金/优惠区间、有效期间；发布商品、报价、换车/续期前校验合作矩阵，越界走具体确认。,"D:/wechat-miniapp-sub/apps/api/src/products/types.ts:8
+D:/wechat-miniapp-sub/apps/api/src/products/snapshot.ts:6
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36"
+02-G10,02_车辆合作协议_V2.0,经营授权矩阵及超限逐笔商务确认,适用产品版本/快照文件编号/矩阵记录；基础费/里程费/总月费或区间及甲方区间权限；押金或经确认审核区间；同价换车升级条件和差价规则；续期方案边界；甲方自主事项/区间/精确边界；乙方逐笔确认事项；禁止事项；优惠承担方/额度/期限；商务确认权人与权源证明；三方合同和场景附件完整版本/日期/快照编号；经营权限起止；双方有权确认人与日期；硬边界权限矩阵编号,P079 / P098 / P099 / P100 / P108,人工确认 / 字段/页面补齐 / 流程/规则调整,RBAC只证明后台操作权限；简单协议仅车辆/比例/期间。 无双方商务矩阵不可变版本、实际接受凭据与逐单引用。,现行合作商PC和H5都无经营权限矩阵编辑/专门确认。,自主事项/范围、需逐笔确认、禁止事项、优惠承担与额度、商务确认权人及权源、模板允许版本、权限起止均缺失。不能以管理员或运营权限推定商务授权。 合作协议新增逐项矩阵、双方有权人核对签署；超限报价/费用/责任/豁免生成有权确认记录，冻结matrixVersionId/hash/适用订单后才能继续。,合作协议新增逐项矩阵、双方有权人核对签署；超限报价/费用/责任/豁免生成有权确认记录，冻结matrixVersionId/hash/适用订单后才能继续。,"D:/wechat-miniapp-sub/apps/api/src/partners/simple-agreements.ts:16
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/cooperation.ts:11
+D:/wechat-miniapp-sub/apps/api/src/products/types.ts:8
+D:/wechat-miniapp-sub/apps/api/src/products/snapshot.ts:6
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/authorization.ts:9"
+02-G11,02_车辆合作协议_V2.0,租金分润、舍入、升级差价及其他费用分配,乙方分润比例；适用车辆及收款来源范围；乙方租金分润比例；比例适用起日及新旧来源界限；甲方报酬构成与算法；是否另约税额处理及完整算法或无；每笔舍入与尾差规则；升级差价计入分润时比例；升级差价计入时归期；升级差价不计入时归属与结算；换车服务费单独分配双方金额/比例/归期；换车服务费单方取得人；超里程及其他费用权利人/代收结算,P045 / P085 / P086,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,partnerRateBps和不可变来源分润、成功退款沿原比例、按分舍入、全退归零已实现；基础使用费+里程费合计计入SUBSCRIPTION。 订单/服务段/换车目标快照→PartnerRevenueEvent冻结协议版本、比例与成功时间。,合作协议编辑维护比例；PC/H5有净实收分润统计。,附表要求税额处理/源界限/平台报酬构成、升级差价和换车服务费分配显式勾选、不同费类比例/归期。现有阶段SWAP_ADJUSTMENT自动纳入分润；新版未明确不并入，二者不一致。 合作商业条件加逐费类participation/rate/recipient/period/税额口径/roundingPolicy版本；来源创建时冻结并按新约定执行。舍入规则须写准确，不能擅自把当前算法改为逐笔退款独立四舍五入。,合作商业条件加逐费类participation/rate/recipient/period/税额口径/roundingPolicy版本；来源创建时冻结并按新约定执行。舍入规则须写准确，不能擅自把当前算法改为逐笔退款独立四舍五入。,"D:/wechat-miniapp-sub/apps/api/src/partners/simple-agreements.ts:16
+D:/wechat-miniapp-sub/apps/api/src/partners/simple-revenue.ts:10
+D:/wechat-miniapp-sub/apps/api/src/order-service-stages/revenue-source.ts:10
+D:/wechat-miniapp-sub/apps/admin/src/partner-simple.tsx:75
+D:/wechat-miniapp-sub/docs/api-partner-simple.md:7"
+02-G12,02_车辆合作协议_V2.0,合作商对公账户与客户受托收款范围,超里程及其他费用权利人/代收结算；乙方对公户名/开户行/账号；客户受托收款账户/渠道/允许项目；资金保管与可核验安排,P086 / P088,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,PartnerAccountVersion含户名/银行/账号/凭据/审核及hash；真实支付渠道存在但不是已确认代收授权范围。 历史结算冻结账户版本；合作PDF未引用账户。,当前SimplePartners无账户表单。；旧PartnerFinance账户组件未挂；历史账户API可受控调用，不能当现行可直接编辑。,需确认账户企业一致性、对公性质、变更通知；缺客户代收渠道/账户/允许项目及资金保管安排。不得将支付密钥/配置作为可公开合同账户文本。 合作商详情加对公账户维护与核验；合作协议选定已核验accountVersion/hash和受托收款项目白名单。账户变更留通知及核验，不覆盖旧合同。,合作商详情加对公账户维护与核验；合作协议选定已核验accountVersion/hash和受托收款项目白名单。账户变更留通知及核验，不覆盖旧合同。,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2684
+D:/wechat-miniapp-sub/apps/admin/src/partner-finance.tsx:20
+D:/wechat-miniapp-sub/apps/api/src/partners/settlement-controller.ts:42
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:15
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36"
+02-G13,02_车辆合作协议_V2.0,账期、实付到期、返还补足、准备金及抵销,退款资金缺口补足工作日数；已付分润返还工作日数；升级差价不计入时归属与结算；换车服务费单独分配双方金额/比例/归期；超里程及其他费用权利人/代收结算；结算周期；每期截止和出账日；对账异议与答复期限；甲方应付款到期日或出账后天数；负额冲减或现金返还方式及期限；历史差错更正方式；资金保管与可核验安排；退款资金补足工作日数；准备金计提基数/比例或金额上限；准备金专门台账/保管方式；准备金用途；准备金使用凭证与通知；准备金补足条件和期限；准备金释放条件和最迟清理日,P041 / P042 / P086 / P087 / P088,人工确认 / 字段/页面补齐 / 流程/规则调整,净实收分润只是统计；历史人工结算、付款登记/复核及账户冻结可参考。 历史账单/实付凭证独立于新合作协议；无本合同结算规则版本链。,当前仅净实收统计，无期初/应结/已付/结转或到期义务工作台。；旧结算UI已退役；旧结算API依赖PartnerRevenueRuleVersion，不直接消费SIMPLE_AGREEMENT新流水。,周期/出账/异议与答复/付款到期、负额处理/历史更正、退款资金补足/分润返还工作日期限；准备金选项与专门台账/来源/使用通知/补足释放；抵销通知到达及无争议款分离。 合作协议商业条件录入经确认参数；合作商结算工作台从原来源核算、人工付款后登记复核，支持应付到期、已付/结转/返还。若双方选设准备金才新增其隔离台账与释放任务；不得用客户押金或预估退款替代。自动银行打款并非新版要求。,合作协议商业条件录入经确认参数；合作商结算工作台从原来源核算、人工付款后登记复核，支持应付到期、已付/结转/返还。若双方选设准备金才新增其隔离台账与释放任务；不得用客户押金或预估退款替代。自动银行打款并非新版要求。,"D:/wechat-miniapp-sub/apps/api/src/partners/simple-revenue.ts:10
+D:/wechat-miniapp-sub/apps/admin/src/partner-simple.tsx:75
+D:/wechat-miniapp-sub/apps/signing-h5/src/owner/SimpleWorkspace.tsx:10
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2684
+D:/wechat-miniapp-sub/apps/api/src/partners/settlements.ts:9
+D:/wechat-miniapp-sub/apps/api/src/partners/settlement-payments.ts:7"
+02-G14,02_车辆合作协议_V2.0,税票、渠道费、迟延违约金与费用口径,迟延付款违约金基数/利率或金额/起止/上限；是否另约税额处理及完整算法或无；含税口径/税费承担/票种税目/开票对象期限；票款先后条件及补正期限；渠道费等项目标准凭证/可抵扣或无；迟延支付违约金完整算法,P057 / P085 / P089,人工确认 / 字段/页面补齐 / 流程/规则调整,无合作税票/渠道费/罚息计算结构；BaaS自身taxIncluded/invoiceRequired不属于合作结算。 备注可存文字，但不能逐项校验和保证金额计算一致。,无对应当前维护/开票流转页。,含税/不含税、税费承担、票种税目、开票对象与期限、票款先后/补正、允许扣费及凭证、违约金基数/率/日期/上限均待协商。 合作商业条件增加明确字段/人工条款；如需要系统执行，新增开票待办/凭证/扣费审批与按约罚息引擎。不得自选税率、票种或违约金。,合作商业条件增加明确字段/人工条款；如需要系统执行，新增开票待办/凭证/扣费审批与按约罚息引擎。不得自选税率、票种或违约金。,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1353
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/cooperation.ts:11
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:297
+D:/wechat-miniapp-sub/apps/api/src/partners/simple-revenue.ts:10
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2684"
+02-G15,02_车辆合作协议_V2.0,维修、救援、停驶、投诉与风险补正时限,非紧急合理补正工作日数；重大违约经催告后的合理补救期限；保管停车调运费用；常规保养实施方/承担方/期限；自然故障维修责任；轮胎易耗件责任；事故维修及救援责任；未投保错投保退保迟延理赔补救及内部责任；停驶减费/替代车/退出/内部成本；普通服务响应与解决期限；紧急救援联系；投诉响应升级结案安排,P057 / P061 / P091 / P092,人工确认 / 字段/页面补齐 / 流程/规则调整,已有车辆维修/工单/内部成本和客户服务处理基础；没有合作商责任/SLA冻结字段。 现行合作PDF只输出备注。,维修工单记录事实不等于双方合同中实施方/费用承担/期限；合作协议无责任表。,常规保养、自然故障、轮胎易耗、事故维修救援逐项责任；停驶减费/替代车/退出与内部成本；服务/投诉响应升级结案；非紧急补正与重大违约补救期限。 合作协议→履约责任表逐项人工确认；服务工单关联责任版本及截止时间/备援升级。风险暂停应定位受影响车辆和新业务，不应停既有服务或全部无关付款。,合作协议→履约责任表逐项人工确认；服务工单关联责任版本及截止时间/备援升级。风险暂停应定位受影响车辆和新业务，不应停既有服务或全部无关付款。,"D:/wechat-miniapp-sub/apps/api/src/electronic-documents/cooperation.ts:11
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36
+D:/wechat-miniapp-sub/apps/api/src/operations/handover-records.ts:11"
+02-G16,02_车辆合作协议_V2.0,责任上限与管辖的个别协商和专门确认,甲方真实住所及对应上海具体区；责任上限的受影响订单/报酬核算口径；责任上限协商记录及双方有权人专门确认；签署时甲方真实住所及上海区；管辖协商和提示说明记录；管辖甲方有权人专门确认；管辖乙方有权人专门确认,P066 / P093,人工确认 / 字段/页面补齐 / 流程/规则调整,通用协议审定/签名有基础；没有两项独立的协商记录与专门确认模型。 无双方有权确认人/时间/记录哈希/明确适用或不适用。,当前合作协议无专门确认控件；后台保存和公司管理员绑定均不能替代。,P093必须分别选择责任上限适用与否；记录报酬计算口径、协商/提示说明及双方专门确认。管辖须使用签时宁达真实住所与区，不能从旧晓浪资料抄填。 签前审阅独立呈现两项、不预选，记录协商证据和双方有权人的本版专门确认；冻结后生成正文/附件。仅一般签章不得设成已确认。,签前审阅独立呈现两项、不预选，记录协商证据和双方有权人的本版专门确认；冻结后生成正文/附件。仅一般签章不得设成已确认。,"D:/wechat-miniapp-sub/apps/admin/src/partner-simple.tsx:11
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:21
+D:/wechat-miniapp-sub/docs/legal/company-profile.json:2"
+02-G17,02_车辆合作协议_V2.0,企业电子印章独立授权与硬边界,附件四版本及日期；授权企业全称和统一社会信用代码；法人或有权签署人及权源；关联合作协议编号；电子章名称/标识或证书信息；授权生效日至截止日；审定订阅合同正文附件完整版本/日期/快照编号；其他逐项列名文件/版本/允许字段/金额边界；授权VIN清单；授权产品及版本快照；硬边界权限矩阵编号；客户和订单适用范围；撤销缩小授权的指定邮箱和送达地址；授权企业盖章；受权人企业盖章确认,P103 / P105 / P106 / P108 / P109 / P111 / P112 / P113,可复用来源 / 字段/页面补齐 / 流程/规则调整,企业实名、证书、选章、渠道授权及业务scope读取/核验基础；任一企业自动条件不足双企手签策略已具备。 ElectronicAutoAuthority scopeHash/businessEvidenceHash/channelEvidenceHash和逐方任务绑定可复用。,新电子准备/签署API存在，但当前PC/H5缺对应页面；旧AuthorityPanel不在主入口。未找到生产src对ElectronicAutoAuthority的创建/更新入口。；旧独立授权书有企业/法人/章/期限/文书种类；不等于新版附四。,缺完整模板版本/日期/hash、产品及矩阵、VIN/客户订单集合、允许变动字段、月费/押金/租期/里程/费用责任硬边界；scope集合可null宽泛，不能表达新版精确要求。还缺独立授权签署/接收方确认、撤销指定渠道与有效到达处理。 PC用印授权准备→有权企业本人H5独立审阅签署→宁达确认；绑定授权书PDF/hash/矩阵/模板/产品/金额/期限/订单边界。自动签前同源校验，缺失或越界停自动；单独受理撤销/缩小并立即停受影响任务。排除本合作/补充/终止及授权扩展等，三方变更文件仅显式逐项授权后可纳入。,PC用印授权准备→有权企业本人H5独立审阅签署→宁达确认；绑定授权书PDF/hash/矩阵/模板/产品/金额/期限/订单边界。自动签前同源校验，缺失或越界停自动；单独受理撤销/缩小并立即停受影响任务。排除本合作/补充/终止及授权扩展等，三方变更文件仅显式逐项授权后可纳入。,"D:/wechat-miniapp-sub/apps/api/src/electronic-documents/authorization.ts:9
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/policy.ts:22
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/controller.ts:15
+D:/wechat-miniapp-sub/apps/api/src/owner-h5/legal-representative.ts:77
+D:/wechat-miniapp-sub/apps/api/src/owner-signing/authorization.ts:58
+D:/wechat-miniapp-sub/apps/signing-h5/src/owner/App.tsx:91
+D:/wechat-miniapp-sub/apps/signing-h5/src/owner/SimpleWorkspace.tsx:10"
+02-G18,02_车辆合作协议_V2.0,正文与授权书签章、实际签署人及日期,签署日期；甲乙双方确认人及日期；双方有权确认人与日期；授权企业盖章；授权人法人或有权签署人；授权人签署日期；受权人企业盖章确认；受权人有权签署人；受权人确认日期,P003 / P071 / P072 / P073 / P074 / P080 / P100 / P113,可复用来源 / 字段/页面补齐 / 流程/规则调整 / 签后事实,电子任务可存签署方主体/证书/章/交易与核验证据；统一签署页支持企业章。 源/签后PDF和逐方证据已绑定；不是可以签前填出真实印章/签署时间。,当前H5只读入口没有新电子文书办理页。,正文双方签署与独立授权书签署不能只放到同一个通用页；有权自然人姓名/权源和真实签署时刻需明确来源，verifiedAt仅渠道核验时间。 新模板建立各签署位/独立授权任务/签署人绑定，授权文件独立有效归档；完成后展示可信签后文书，不生成假签名、盖章或签署日期。,新模板建立各签署位/独立授权任务/签署人绑定，授权文件独立有效归档；完成后展示可信签后文书，不生成假签名、盖章或签署日期。,"D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:36
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:21
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/controller.ts:15
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/proof.ts:17"
+03-C1,03_补充协议_换车_V2.0,协议编号、模板V2.0、签署日期、附件关联主文书编号/附件版本/日期；甲本人签名、乙丙盖章、有权签署人、三方签署日期时间及附件确认时间,,P003 / P040 / P041 / P042 / P043 / P044 / P045 / P047 / P059,可复用来源 / 人工确认 / 签后事实 / 流程/规则调整,档案已有 contractNumber、模板/档案版本、signedOn；纸件逐方审核已有 signerName、signedOn、签署页和权限证据。电子打印有编号及三方签署区域。当前纸质 signedOn 只有日期，不能当作最后一方精确签署时间。,现有模型/旧文书入口可复用，当前完整电子办理页待接入,合同管理补充“签约成立/生效时点”和各方签署事件；版本、附件编号由系统生成并冻结。签名/盖章由真实签署产生。新电子签链路接入后从可信供应商签署事实取时间；不能用生成、客户确认或归档时间冒充。,合同中心 / 主体资料 / 订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:13
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:16
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:15
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:65
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:52"
+03-C2,03_补充协议_换车_V2.0,客户姓名/证件号/电话/联系地址/电子通知地址；出租方名称/统一信用代码/住所/法定代表人或授权签署人/电话/通知地址；宁达信用代码/住所/授权签署人/履约联系渠道,,P006,可复用来源 / 人工确认 / 字段/页面补齐,冻结客户快照有姓名手机号，商业条款有customerAddress；lessorSnapshot有名称代码地址电话，当前合作商简单页面有地址电话；代表姓名/身份/授权证据存在于旧组件和模型，未挂到现行简单入口。ArchiveParty目前只有姓名、类型、证件、电话、代码。新纸文换车/续期values未含证件号、代表姓名、全部电子通知渠道及完整平台资料；电子主合同可在私有PDF输入中解密身份，不能公开回传。,现有模型/旧文书入口可复用，当前完整电子办理页待接入,复用客户/合作商/平台档案，增加每方“文书通知渠道、对外联系人、有权签署代表及授权版本”维护及逐单冻结。只填缺失事实，不能把合作商联系人自动视为授权签署人，也不能把登记所有人当出租方。证件号按现有私有文书路径处理。,合同中心 / 主体资料 / 订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:2
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:13
+D:/wechat-miniapp-sub/apps/api/src/owner-signing/lessor.ts:44
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:13
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:35
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:41
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:30
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:63"
+03-01,03_补充协议_换车_V2.0,原合同名称/合同号/订单号、换车业务号；同价/升级唯一选项、类型、提出方及提出日期,,P007 / P009 / P049,可复用来源 / 人工确认,OrderChange关联原订单、客户、originalContractId、priorTerms及原因/创建人/创建时刻；报价可区分月费相等或升级并拒绝降级。生成器已有originalContractNo/orderNo/changeId，但没有原合同名称和法定“提出方”字段。,详见现状及来源代码；不代表生产已开放,在现有换车办理页增加明确提出方/提出时间与客户请求来源；同价/升级由冻结月费计算供核对，再唯一勾选。原合同名称从精确原模板版本取，不从当前最新模板取。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1697
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/upgrade-pricing.ts:58
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:21
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:41"
+03-02,03_补充协议_换车_V2.0,旧新车VIN、车牌、品牌车型年款、登记所有人；新车出租权限依据/查验方式；原新产品名称、确认版本和确认日期；原固定最短期限,,P049 / P051,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,报价冻结旧/新车标识、目标商品及产品版本、同出租方快照和合作权限范围；车辆资产页有登记所有人及真实车型年款。现换车identity文本通常只含标题/VIN/牌号；产品只有months代表产品租期，尚无与实际租期分开的本单最短期限。,详见现状及来源代码；不代表生产已开放,换车条件页汇总车辆档案、登记证所有人及已核出租权限文件/期限，逐单冻结，不从当前资料追写已签文本。增加独立最短订阅期限快照（若采用新版规则）；产品确认时间应取有效确认/签署事件，不能用产品创建日期代替。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-quote-preview.ts:64
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-quote-preview.ts:74
+D:/wechat-miniapp-sub/apps/admin/src/asset-profile.tsx:8
+D:/wechat-miniapp-sub/apps/admin/src/asset-profile.tsx:58
+D:/wechat-miniapp-sub/apps/api/src/owner-signing/lessor.ts:44
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:33"
+03-03,03_补充协议_换车_V2.0,原服务起止/原到期日、当前服务月边界/原日号；计划还旧/交新时间地点/接收交付人；实际还旧、实际交新、换车完成、差价起算及签约生效时点,,P013 / P014 / P015 / P016 / P050,可复用来源 / 人工确认 / 签后事实 / 字段/页面补齐 / 流程/规则调整,计划还旧/交新时刻、实际双侧handover.actualAt、assignment起止、actualCompletedAt和原月边界都有。现流程固定先归还再交付；实际日与报价日不同会阻断要求重报。计划地点与人员主要只能写handoverArrangement；签约生效与实际业务APPLIED需分开。,详见现状及来源代码；不代表生产已开放,扩展换车交接安排为两侧独立时间/地点/人员及授权来源；签约完成、还旧、新交付、完成=max两侧、差价起算分别展示。明确原止点排他/现inclusiveEnd转换；新车实际时间出现后补录，不把计划当实际。签约生效规则见冲突C03。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing-input.ts:26
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:34
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:50
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:95
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:98
+D:/wechat-miniapp-sub/apps/admin/src/swap-offline-form.tsx:33"
+03-04,03_补充协议_换车_V2.0,原/新基础费、里程包月费、总月费；沿用包含里程/超里程单价；允许用途及驾驶人范围；保险险种保额免赔、维修保养、救援、事故未赔、停驶、BaaS是否包含/承担方,,P018 / P019 / P020 / P051,可复用来源 / 人工确认 / 字段/页面补齐,v2商品快照有基础费、里程费、总月费与原用量政策；换车保留原里程规则。原commercialTerms已有用途、保险、保养、服务、费用自由文本，换车报价有insuranceResponsibility和downtimeArrangement，尚不具备新版逐项责任/是否包含清单。,详见现状及来源代码；不代表生产已开放,复用原商品和逐单服务条款，换车页增加原/新并列服务责任表，明确仅变更项目、承担主体、包含状态、限额/条件、来源证据和驾驶人范围。BaaS资产付款事实不可直接当客户已同意承担规则。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:37
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:39
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:96
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:29
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:31
+D:/wechat-miniapp-sub/apps/api/src/order-service-stages/source.ts:39"
+03-05,03_补充协议_换车_V2.0,逐期起止/总天数/剩余天数、原新总月费/差额、完整或不足月、当期差价、原应付/实收/抵用/净补退、付款到期日,,P022 / P023 / P053 / T1R2C1 / T1R2C2 / T1R2C3 / T1R2C4 / T1R2C5 / T1R2C6 / T1R3C1 / T1R3C2 / T1R3C3 / T1R3C4 / T1R3C5 / T1R3C6 / T1R4C1 / T1R4C2 / T1R4C3 / T1R4C4 / T1R4C5 / T1R4C6,可复用来源 / 签后事实,已有按上海交付日（含）、原服务月实际天数逐期四舍五入到分的差价算法，以及periods的原额/差额/新额、净实收/沿用/补退/原到期日；纸文现把这些拼为段落，没有新表逐列映射。付款实收须区分报价时快照与后来成功回款。,详见现状及来源代码；不代表生产已开放,换车报价预览增加完整列，明确整月/不足月，生成全部影响月份，不只三条示例。原实收应保留毛额/已退款/净额及渠道引用，不能用netPaidAmount直接标“成功实收总额”。按新模板版号冻结计算结果和公式。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/upgrade-pricing.ts:48
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/upgrade-pricing.ts:64
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing.ts:108
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:42
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:43
+D:/wechat-miniapp-sub/apps/admin/src/swap-offline-form.tsx:38"
+03-06,03_补充协议_换车_V2.0,换车服务费及依据、无车间隔及减免/退费计算、本次应付/此前实收/已退/可抵/应补/应退、逐笔渠道和所属期间；押金原约定维持,,P015 / P016 / P024 / P025 / P054,可复用来源 / 字段/页面补齐 / 流程/规则调整,付费次数购买/可信到账/消费可复用，服务费和升级差价已分开；换车当前没有另收交接费。现自动价格只在原应收上加差价，不按旧车归还时刻减去无车间隔租金；报价允许手填depositAmount并补收/退押金，与03固定原押金不增加不一致。,详见现状及来源代码；不代表生产已开放,新增无车期间费用调整行及重算/三方确认流程，按确认规则区分占用费和其他服务分项，减免/退费同步账单及真实退款；如采纳新03，锁定原押金并取消这一路的增押金入口。服务费从本次预占/消费的真实权益购买引用，不重复收取。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing.ts:96
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing.ts:108
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/segments.ts:38
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing-input.ts:27
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-quote-preview.ts:74
+D:/wechat-miniapp-sub/apps/admin/src/swap-offline-form.tsx:33
+D:/wechat-miniapp-sub/docs/legal/versions/vehicle-change/vehicle-change-amendment-v1.md:39"
+03-07,03_补充协议_换车_V2.0,逐笔成功收款日期金额渠道项目期间、退款义务人/代退执行人/期限/异常路径办法/逾期责任,,P025 / P054,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,Payment/Refund/PaymentAllocation已有可信成功、原路退、归属和同单抵用。退款需独立财务复核，不能模板填额即执行；无多主体退款义务/控制资金事实/备用实名账户/到期追踪结构。,详见现状及来源代码；不代表生产已开放,在订单资金页新增退款安排及履约跟踪，逐笔绑定原款、退款责任主体、持款与授权、明确到期日、原路失败原因、客户核验替代账户及补退期限。不得以内部清分自动推导谁承担退款，也不能未授权跨主体轧差。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/order-changes/finance.ts:74
+D:/wechat-miniapp-sub/apps/api/src/order-changes/finance.ts:76
+D:/wechat-miniapp-sub/apps/api/src/order-changes/finance.ts:78
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:50
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:229
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:258"
+03-08,03_补充协议_换车_V2.0,当期包含公里、旧车期初/交还、新车交付/期末、分段/合并使用量及超额；赠送总/已用/可用/预占/交付耗用；已购来源/余额/有效期/本次使用,,P027 / P028 / P057,可复用来源 / 签后事实,UsageSegment按车辆assignment分别核验起止读数并合计，同一UsagePeriod核算里程；换车次数已有赠送及付费来源、预占、释放、实际新车交付消费；已购里程/次数有购买和有效期快照。新模板尚未汇总映射这些台账。,详见现状及来源代码；不代表生产已开放,换车页新增“当期里程/权益附件”只读汇总及证据链接，引用原购买适用车型/产品和有效期。缺读数留待补证，不能推算；期末未发生的读数/消费只在履约记录补记。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/segments.ts:17
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/credits.ts:65
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/credits.ts:69
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/credits.ts:70
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:95
+D:/wechat-miniapp-sub/apps/api/src/usage/usage.service.ts:58"
+03-09,03_补充协议_换车_V2.0,旧/新交接各自车辆时间地点、里程电量油量、查验清单照片、物品钥匙、提交人、客户确认异议及核实；事故损伤违章逐项证据/争议/各方主张/核实人期限,,P030 / P031 / P032 / P058,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整 / 签后事实,现场任务已有实际时地/里程/电量/物品/车况/未结事项/处理方案/证据，线上确认保存版本哈希且异议后修订。未结事项仅自由文字，没有逐案责任人/核查期限。独立实物接收入口仅支持RETURN，不支持SWAP_RETURN；换车正式完成仍要求客户确认。,详见现状及来源代码；不代表生产已开放,复用双侧线上交接，扩展逐项未决清单、授权接收人、费用认可独立于事实确认；给旧车换车归还增加可在异议中如实登记占有移交的事件，避免因未确认车损而无法记录收车。无需另建纸交接合同。法大大实名与当前人工资格核验需区分。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/field-handover/rules.ts:5
+D:/wechat-miniapp-sub/apps/api/src/field-handover/rules.ts:18
+D:/wechat-miniapp-sub/apps/api/src/operations/online-handover.ts:61
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-physical-source.ts:26
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/vehicle-receipt.ts:43
+D:/wechat-miniapp-sub/apps/admin/src/field/OfflineReceipt.tsx:15"
+03-10,03_补充协议_换车_V2.0,报价有效期与预约前提；无法交新/取消/替代安排、实际合理不可退费用证据与责任；三方附件确认/后续更改同意,,P023 / P034 / P035 / P058 / P059,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,报价expiresAt、取消说明和重新报价流程已有；取消释放次数/目标车预留，实际日期变更要求新报价。当前externalCompensationRequired强制false；没有针对已发生交还后的撤回、替代交通和补偿逐项办理模型。,详见现状及来源代码；不代表生产已开放,现换车页扩展异常办理子流程：客户选择继续旧车/调整/替代/撤回，记录已发生事实与确认文本；合理费用明细、第三方不可退凭证、责任及减损由人工复核。履约后异常不通过普通cancel抹除已发生交接。,订单详情 → 换车办理 / 双侧交接,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing-input.ts:28
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing-input.ts:30
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-quote.ts:20
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:50
+D:/wechat-miniapp-sub/apps/admin/src/swap-offline-form.tsx:35"
+04-C1,04_解除协议_跨合作商换车_V2.0,协议编号、模板V2.0、签署日期、附件关联主文书编号/附件版本/日期；甲本人签名、乙丙盖章、有权签署人、三方签署日期时间及附件确认时间,,P003 / P037 / P038 / P039 / P040 / P041 / P042 / P044 / P055 / P066,可复用来源 / 人工确认 / 签后事实 / 流程/规则调整,档案已有 contractNumber、模板/档案版本、signedOn；纸件逐方审核已有 signerName、signedOn、签署页和权限证据。电子打印有编号及三方签署区域。当前纸质 signedOn 只有日期，不能当作最后一方精确签署时间。,现有模型/旧文书入口可复用，当前完整电子办理页待接入,合同管理补充“签约成立/生效时点”和各方签署事件；版本、附件编号由系统生成并冻结。签名/盖章由真实签署产生。新电子签链路接入后从可信供应商签署事实取时间；不能用生成、客户确认或归档时间冒充。,合同中心 / 主体资料 / 新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:13
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:16
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:15
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:65
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:52"
+04-C2,04_解除协议_跨合作商换车_V2.0,客户姓名/证件号/电话/联系地址/电子通知地址；出租方名称/统一信用代码/住所/法定代表人或授权签署人/电话/通知地址；宁达信用代码/住所/授权签署人/履约联系渠道,,P006,可复用来源 / 人工确认 / 字段/页面补齐,冻结客户快照有姓名手机号，商业条款有customerAddress；lessorSnapshot有名称代码地址电话，当前合作商简单页面有地址电话；代表姓名/身份/授权证据存在于旧组件和模型，未挂到现行简单入口。ArchiveParty目前只有姓名、类型、证件、电话、代码。新纸文换车/续期values未含证件号、代表姓名、全部电子通知渠道及完整平台资料；电子主合同可在私有PDF输入中解密身份，不能公开回传。,现有模型/旧文书入口可复用，当前完整电子办理页待接入,复用客户/合作商/平台档案，增加每方“文书通知渠道、对外联系人、有权签署代表及授权版本”维护及逐单冻结。只填缺失事实，不能把合作商联系人自动视为授权签署人，也不能把登记所有人当出租方。证件号按现有私有文书路径处理。,合同中心 / 主体资料 / 新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:2
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:13
+D:/wechat-miniapp-sub/apps/api/src/owner-signing/lessor.ts:44
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:13
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:35
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:41
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:30
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:63"
+04-01,04_解除协议_跨合作商换车_V2.0,原合同名称编号及有效补充文件、原车牌/VIN/登记所有人/权限；新合作商、拟换车方案、新合同号/签署生效证据、新产品版本/剩余期/最短期例外/新止点,,P007 / P008 / P009 / P010 / P046,可复用来源 / 字段/页面补齐 / 流程/规则调整,旧合同链、车档、商品和合作资格可复用；现报价强制新旧ownerId、name、type、creditCode一致，OrderChange仅有同一个orderId和targetVehicleId，Order没有前后订单关联。现服务段类型仅INITIAL/RENEWAL。,详见现状及来源代码；不代表生产已开放,新增“跨合作商换车”办理页和独立案件实体，绑定旧订单/完整合同链、旧解除文件、新订单/新三方合同、新出租方/车辆/产品版本；保留原总到期点并标记剩余期衔接例外。先核验新合同已成立及新供车安排，不能依新订单待签标签判断法律效力，也不能直接放宽同主体校验。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-quote-preview.ts:65
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-target.ts:27
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:872
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1697
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1815
+D:/wechat-miniapp-sub/docs/superpowers/specs/2026-11-02-ninda-electronic-signing-relaunch-design.md:125"
+04-02,04_解除协议_跨合作商换车_V2.0,方案一/方案二唯一选择；旧车计划/实际接收、原解除、旧租金截止、新车计划/实际交付、新租金起算；新商确认；过渡窗口/用车间隔,,P012 / P013 / P014 / P015 / P016 / P046 / P047 / P048,字段/页面补齐 / 流程/规则调整 / 人工确认 / 签后事实,当前只支持先还旧再交新且在同一订单完成；没有先交新后还旧窗口、旧合同解除事件与新合同起租联动。当前差价按日，不是跨合同的服务月实际分钟分段。,详见现状及来源代码；不代表生产已开放,跨商页增加两种排他方案和时点矩阵；把原合同解除、旧租金止、新租金起、两侧实际占有分别建事件。方案一允许明确过渡窗口但不得双收；方案二须明确间隔承担并保留原单已解除后不自动复活。新增分钟比例计费与重复时间收费校验。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing-input.ts:31
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:34
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/handovers.ts:61
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/upgrade-pricing.ts:55
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1705"
+04-03,04_解除协议_跨合作商换车_V2.0,新付款押金到账或新商书面认可凭证、报价有效期预约前提、最迟新交付、失败告知协调期限、替代交通承担人标准垫付时限,,P013 / P018 / P019 / P048,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,原生Payment/Refund和车辆预留可作真实来源，但没有跨单衔接门槛及新商受领/替代承诺；旧换车异常赔付不在自动入口范围。,详见现状及来源代码；不代表生产已开放,新增衔接条件核验、失败分支与待办时限；新商签收/新合同/资金证据分别审核。按交还事实决定继续原约、调整、退出或另行恢复原车，不自动撤销独立新合同。替代和垫付责任必须明确确认，不能系统默认平台担保。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:50
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:107
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-pricing-input.ts:30
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2017"
+04-04,04_解除协议_跨合作商换车_V2.0,原车接收地点/人员/联系方式/权限、线上交接索引；时间里程电量油量、钥匙证件物品/查验/照片视频、客户实名确认异议及修订,,P021 / P022 / P048 / P050,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整 / 签后事实,普通RETURN有独立实物接收和线上交接；字段/确认及修订可复用。现交接证据只接受JPEG/PNG/PDF，非视频；当前线上确认来源是人工资料资格，不能宣称每次已法大大实名。无跨单两侧交接绑定。,详见现状及来源代码；不代表生产已开放,跨商案件同时关联旧单RETURN与新单DELIVERY，复用证据页；补接收权限证据和双方交接联动，不将旧同单SWAP_RETURN直接当完整跨商解除。若模板要视频，需新增受控视频证据支持，或明确实际采用照片/PDF的证据方式。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/vehicle-receipt.ts:14
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/vehicle-receipt.ts:43
+D:/wechat-miniapp-sub/apps/api/src/operations/online-handover.ts:50
+D:/wechat-miniapp-sub/apps/api/src/operations/online-handover.ts:57
+D:/wechat-miniapp-sub/apps/api/src/field-handover/rules.ts:5
+D:/wechat-miniapp-sub/docs/superpowers/specs/2026-11-01-acceptance-corrections-design.md:15"
+04-05,04_解除协议_跨合作商换车_V2.0,原完整服务月/总里程M、旧车起止用量证据/新交付读数；比例/旧实际消耗/固定数量三选一、小数规则、新商同意及增配承担；旧新月费/里程额/单价/BaaS,,P024 / P025 / P026 / P050 / P051 / P052,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,同单UsageSegment能两车用量合并到原月，没有跨两个订单分割同一总额度和三种分配选择；旧新合同费用需独立，不能继续收同期间旧升级差价。,详见现状及来源代码；不代表生产已开放,新增跨单里程分配账本及唯一选项、舍入规则和新商接受证据，旧+新额度等于M，额外增配单列；分别冻结旧新价格、超额已购扣减和新阶段边界，防止两单各发完整额度/重复扣已购量。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/segments.ts:17
+D:/wechat-miniapp-sub/apps/api/src/usage/usage.service.ts:115
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1998
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/upgrade-pricing.ts:59"
+04-06,04_解除协议_跨合作商换车_V2.0,赠送/已购次数及里程来源、余额/有效期、本次预占消费、退款或承接金额、新商另行同意及新服务月额度,,P026 / P052,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,现赠送/付费换车与里程均绑定原订单/服务段及购买条件，可查询余额、预占、消费和原支付；没有跨新商新订单承接债务/权益关系。,详见现状及来源代码；不代表生产已开放,跨商权益处理页逐笔选退回、按原条件保留或有证据承接；记录新商接受、清偿范围和原账同步核销。只在新车实际交付消耗本次次数，失败释放预占；赠送不能默认重新授予。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/credits.ts:65
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/credits.ts:69
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/credits.ts:70
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:2088
+D:/wechat-miniapp-sub/apps/api/src/usage/refunds.ts:30"
+04-07,04_解除协议_跨合作商换车_V2.0,债权人/付款人、项目/期间/依据凭证、A应付/B成功实收/C已退/D现金抵入/E转出、T及净补退；现金到位/受领/授权、各方向付款主体账户到账期限,,P024 / P028 / P029 / P030 / P057 / T1R2C1 / T1R2C2 / T1R2C3 / T1R2C4 / T1R2C5 / T1R2C6 / T1R2C7 / T1R3C1 / T1R3C2 / T1R3C3 / T1R3C4 / T1R3C5 / T1R3C6 / T1R3C7 / T1R4C1 / T1R4C2 / T1R4C3 / T1R4C4 / T1R4C5 / T1R4C6 / T1R4C7,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,订单内逐期款项分配与原路退款已有；现同单carry并不代表跨商实际转款。ReturnSettlement只存订单、状态、争议说明，没有逐债权人ABCDET现金表或跨单原款核销关系。,详见现状及来源代码；不代表生产已开放,新增跨商衔接清算表及现金来源/用途双向关联，允许同类增加行。A含非现金优惠减免；D/E必须链接真实可用现金、授权及新受领证据，B不能再算D；按权利人分账，财务独立复核，不无授权净额轧差。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/order-changes/finance.ts:74
+D:/wechat-miniapp-sub/apps/api/src/order-changes/finance.ts:76
+D:/wechat-miniapp-sub/apps/api/src/order-changes/finance.ts:78
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1224
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:229"
+04-08,04_解除协议_跨合作商换车_V2.0,旧押金净实收P/已确定扣款Q/必要保留H/应退、原义务人代退人持款授权/到账期限；新押金金额/收款方独立支付；四方抵转授权、到账与受领确认,,P028 / P029 / P030 / P031 / P058 / P059,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,DEPOSIT/DEPOSIT_ADJUSTMENT和DepositEntry只有实收/退款可复用；无跨商押金迁移、四方签署授权、实际受领与旧债解除机制。现旧单押金不能直接改orderId当作新商已收。,详见现状及来源代码；不代表生产已开放,默认走旧押金退款与新押金独立支付的两条流水；如批准抵转另建四方授权和执行单，关联旧余额、新收款账户、清偿范围、失败处理、实际到账/新商确认，在完成前保留旧退款义务。押金扣款与租金D须共用来源避免重复扣。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1011
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:64
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:104
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:41"
+04-09,04_解除协议_跨合作商换车_V2.0,无争议先退总额/主体/期限；原路失败通知及替代补退期限；每项暂留上限/持款人/证据/核定截止/最迟释放日/释放方式；争议主张和对方异议；财务已清/未决/后续责任,,P031 / P033 / P063 / P064 / P065,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,退款有审批/渠道成功和失败重试；终止表单已有合计保留款及自由文字期限，但没有逐案保留余额、释放日触发待办或跨主体责任；结算完成当前要求押金全部退清和无争议，不支持仅已列项目结清但未决事项继续跟踪。,详见现状及来源代码；不代表生产已开放,共用“退款与保留款”页新增单项保留/释放/补证/通知/升级处理待办，独立显示已清项目和保留争议；原路失败新增实名替代受领核验与完成凭证。开票/更正票据及后续事故责任作为人工待办，不可由签署自动标已完成。,新增跨合作商换车办理 / 旧解除与新订阅联动,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:12
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:175
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:57
+D:/wechat-miniapp-sub/apps/admin/src/termination-details-model.ts:20
+D:/wechat-miniapp-sub/apps/admin/src/usage-resources.ts:6"
+05-C1,05_补充协议_续期_V2.0,协议编号、模板V2.0、签署日期、附件关联主文书编号/附件版本/日期；甲本人签名、乙丙盖章、有权签署人、三方签署日期时间及附件确认时间,,P003 / P042 / P043 / P044 / P045 / P046 / P047 / P049 / P060,可复用来源 / 人工确认 / 签后事实 / 流程/规则调整,档案已有 contractNumber、模板/档案版本、signedOn；纸件逐方审核已有 signerName、signedOn、签署页和权限证据。电子打印有编号及三方签署区域。当前纸质 signedOn 只有日期，不能当作最后一方精确签署时间。,现有模型/旧文书入口可复用，当前完整电子办理页待接入,合同管理补充“签约成立/生效时点”和各方签署事件；版本、附件编号由系统生成并冻结。签名/盖章由真实签署产生。新电子签链路接入后从可信供应商签署事实取时间；不能用生成、客户确认或归档时间冒充。,合同中心 / 主体资料 / 订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:13
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:16
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:15
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:65
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:52"
+05-C2,05_补充协议_续期_V2.0,客户姓名/证件号/电话/联系地址/电子通知地址；出租方名称/统一信用代码/住所/法定代表人或授权签署人/电话/通知地址；宁达信用代码/住所/授权签署人/履约联系渠道,,P006,可复用来源 / 人工确认 / 字段/页面补齐,冻结客户快照有姓名手机号，商业条款有customerAddress；lessorSnapshot有名称代码地址电话，当前合作商简单页面有地址电话；代表姓名/身份/授权证据存在于旧组件和模型，未挂到现行简单入口。ArchiveParty目前只有姓名、类型、证件、电话、代码。新纸文换车/续期values未含证件号、代表姓名、全部电子通知渠道及完整平台资料；电子主合同可在私有PDF输入中解密身份，不能公开回传。,现有模型/旧文书入口可复用，当前完整电子办理页待接入,复用客户/合作商/平台档案，增加每方“文书通知渠道、对外联系人、有权签署代表及授权版本”维护及逐单冻结。只填缺失事实，不能把合作商联系人自动视为授权签署人，也不能把登记所有人当出租方。证件号按现有私有文书路径处理。,合同中心 / 主体资料 / 订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:2
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:13
+D:/wechat-miniapp-sub/apps/api/src/owner-signing/lessor.ts:44
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:13
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:35
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:41
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:30
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:63"
+05-01,05_补充协议_续期_V2.0,原合同名称/号、原订单/续期业务号；原起止/原到期日、原产品价格组成与里程规则；同车VIN车牌品牌车型年款登记所有人、续期出租权限依据及覆盖期限,,P007 / P008 / P009 / P010 / P011 / P051,可复用来源 / 人工确认,续期来源固定原合同链、原档案、当前stage/terms、assignment、vehicle、原/新产品、owner和合作范围；只允许同车/同实际出租方；产品和车档基本信息已有。纸文没有逐列输出登记所有人、年款、原基础费/里程费和权限文件索引。,详见现状及来源代码；不代表生产已开放,复用续期报价页添加原期来源只读对照和权限覆盖证据；把资产登记所有人与合作商分别冻结。原合同名称从正确版本取；没有新交还事实，禁止为续期造交付记录。,订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:24
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:27
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:75
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:87
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:22
+D:/wechat-miniapp-sub/apps/admin/src/asset-profile.tsx:58"
+05-02,05_补充协议_续期_V2.0,新增起止00:00/实际月数、原新衔接、产品名称已发布版本确认日期、本单最短订阅期限、报价有效期/预约前提,,P009 / P017 / P052,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,服务器从原段排他止日自动算新段并取产品months；不允许独立输入间隔。当前明确product.months>=12，没有minimumMonths与实际months分离；expiresAt有，预约前提只在产品conditions/自由说明。确认时间可从quote客户确认事实取。,详见现状及来源代码；不代表生产已开放,如采纳新版，产品和续期报价加入独立最短期限并冻结；正常连续续期继续自动衔接，存在间隔须新增受控方案明确占有/费用/责任。新增预约前提字段。三个月之类规则需要显式决策，不能只改文书数字或在12月商品中手填。,订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:70
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:74
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:88
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/types.ts:11
+D:/wechat-miniapp-sub/apps/admin/src/renewal-form.tsx:16"
+05-03,05_补充协议_续期_V2.0,最后一方签约生效时间、新增服务起算时间、实际办理/激活时间、资金未齐的通知及补正期限,,P013 / P014 / P015 / P039 / P052,可复用来源 / 字段/页面补齐 / 流程/规则调整 / 签后事实,服务段有startDate/endDate、scheduledAt/activatedAt，生效terms.effectiveAt固定新起日，且不会造新交付。当前必须财务排期后运营显式activate才启用阶段；纸签/归档与客户确认有不同状态，但未完整接入新电子三方签署生效事实。,详见现状及来源代码；不代表生产已开放,续期详情明确展示“已成立的补充协议”和“新增服务阶段”两条状态；签约时即承担的期前取消/退款义务不可等同APPLIED后才存在。资金未齐催告、补正、实际已开始但内部未激活等需按确认规则处理，不能任意把起日后推。,订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/order-renewals/activation.ts:16
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/activation.ts:28
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/activation.ts:38
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/effective.ts:15
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:52"
+05-04,05_补充协议_续期_V2.0,新增基础费/里程费/总月费、包含量/超里程价/赠送数；保险险种保额免赔拒赔、保养维修救援事故停驶替代车BaaS承担及相对原变化,,P017 / P018 / P019 / P020 / P028 / P029 / P030 / P052,可复用来源 / 人工确认 / 字段/页面补齐,v2产品快照和usagePricing/swapPolicy支持金额/里程/次数，新规则仅适用于新段；有保单覆盖核验。新增服务责任清单未逐项建模；续期terms默认沿用原commercialTerms，不足以表达保险/服务/BaaS变更的明确合意。,详见现状及来源代码；不代表生产已开放,续期页新增原/新服务责任清单及人工确认，基础费/里程费映射产品快照。保单事实与对客户责任承诺分别记录；若变更服务责任需进入续期正文快照，不在旧合同直接覆盖。,订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:80
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:82
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:83
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:25
+D:/wechat-miniapp-sub/apps/admin/src/renewal-facts.tsx:7"
+05-05,05_补充协议_续期_V2.0,新增每期序号/服务起止、基础费/里程费/总月费/公里/超额价/付款到期日、应付/实收/明确抵用/净应付退,,P011 / P032 / P054 / T1R2C1 / T1R2C2 / T1R2C3 / T1R2C4 / T1R2C5 / T1R2C6 / T1R3C1 / T1R3C2 / T1R3C3 / T1R3C4 / T1R3C5 / T1R3C6 / T1R4C1 / T1R4C2 / T1R4C3 / T1R4C4 / T1R4C5 / T1R4C6 / T1R5C1 / T1R5C2 / T1R5C3 / T1R5C4 / T1R5C5 / T1R5C6,可复用来源 / 字段/页面补齐 / 流程/规则调整 / 签后事实,periods有stageSequence与全局sequence、起止/dueDate/amount；finance生成独立未来段义务，提前只付首期。现dueDate=各期起日，不能体现新01独立每月付款日；现financialSchedule明确不挪用原期已收款，不提供经确认跨原/新增期现金抵用。,详见现状及来源代码；不代表生产已开放,动态输出全部新增期（不能只四行），结合产品拆分基础和里程费、真实付款/退款关联。若采用独立付款日需改统一账单规则；新增明确现金抵用时须来源核销/授权/双人复核，不能只填“可抵用”减少账单。,订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/order-service-stages/source.ts:29
+D:/wechat-miniapp-sub/apps/api/src/order-service-stages/source.ts:33
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/finance.ts:30
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:31
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:32
+D:/wechat-miniapp-sub/apps/admin/src/renewal-facts.tsx:7"
+05-06,05_补充协议_续期_V2.0,原赠送总/已用/到期未用、新赠送总/启用/失效；有效已购次数/里程购买凭证余额适用车辆产品原有效期条件；原押金金额/原实收日/持有及退款义务人,,P019 / P020 / P055,可复用来源 / 人工确认 / 字段/页面补齐 / 签后事实,新段gift、旧FREE到期、已购PAID保留原期限已有；已购里程原来源和余额也保留。原押金金额保持且真实本金核验，不重复收。持有人和退款义务人不在简单DepositEntry中；购买明细尚未全部映射续期附件。,详见现状及来源代码；不代表生产已开放,续期页增加权益及押金来源附件汇总，取真实购买约定和日期，缺权属/持有/退款主体需人工确认冻结；未发生的新段启用及原期到期未用数不能预填成最终实际结果。,订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/order-renewals/activation.ts:44
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/context.ts:80
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/finance.ts:73
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:26
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:28
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1011"
+05-07,05_补充协议_续期_V2.0,甲乙分别同意内容/时间、有权身份依据、最终真实合意时间、原始证据、丙核实结果/通知日、退款凭证,,P022 / P023 / P024 / P025 / P026 / P059,可复用来源 / 人工确认 / 字段/页面补齐 / 签后事实,专用取消已实现mutuallyAgreedAt、证据文件、核实人/时刻/note/hash、阻断新期/新款、全退与迟到款；规则已固定双方期前合意，无取消费，原期/原押金不动。不能把此项列为整流程缺失。现只存一个共同合意时间和核实自由说明，没有甲乙各自同意内容、代表权限、送达通知的独立字段。,详见现状及来源代码；不代表生产已开放,在现“未开始续期取消”页扩充双方意思表示/授权证据/通知送达明细，并映射履约后事实索引；保留真实期前合意与后来核实/归档分开，不能改用申请或开案时间。此取消文件应继续专用，不复用06期内终止。,订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/order-renewals/cancellation-policy.ts:2
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/cancellation-inputs.ts:6
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/cancellation-timing.ts:26
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/cancellation-timing.ts:33
+D:/wechat-miniapp-sub/apps/admin/src/renewal-cancellation.tsx:14
+D:/wechat-miniapp-sub/apps/admin/src/renewal-cancellation.tsx:32"
+05-08,05_补充协议_续期_V2.0,新增每笔成功收款日期/付款人/项目期间/金额路径凭证及合计；取消退款责任/办理人/期限、异常核验替代退款期限/逾期责任；原事故损伤违章费用争议/核实人期限/原押金保留依据金额,,P023 / P032 / P033 / P034 / P058 / P059,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整 / 签后事实,取消funding逐笔关联本新增段原收款并全退，成功/已退/剩余额和渠道凭证已有；现页面能发起专用全退及迟到款退款。没有明确到期/异常替代受领账户/逾期参数，也没有原期未决事项逐项保留与释放表。,详见现状及来源代码；不代表生产已开放,复用退款页新增本续期退款安排和期限；原期争议/押金保留独立清单，禁止抵减或延迟新增期应全退金额。A5成功流水在收款后补录，签署时仅确认规则和期限；A6无事项明确“无”。,订单详情 → 续期 / 未开始续期取消,"D:/wechat-miniapp-sub/apps/api/src/order-renewals/cancellation-types.ts:4
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/cancellation-types.ts:18
+D:/wechat-miniapp-sub/apps/admin/src/renewal-cancellation.tsx:30
+D:/wechat-miniapp-sub/apps/admin/src/renewal-cancellation.tsx:41
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:258
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:12"
+06-C1,06_终止协议_协商终止_V2.0,协议编号、模板V2.0、签署日期、附件关联主文书编号/附件版本/日期；甲本人签名、乙丙盖章、有权签署人、三方签署日期时间及附件确认时间,,P003 / P038 / P039 / P040 / P041 / P042 / P043 / P045 / P052 / P054 / P065,可复用来源 / 人工确认 / 签后事实 / 流程/规则调整,档案已有 contractNumber、模板/档案版本、signedOn；纸件逐方审核已有 signerName、signedOn、签署页和权限证据。电子打印有编号及三方签署区域。当前纸质 signedOn 只有日期，不能当作最后一方精确签署时间。,现有模型/旧文书入口可复用，当前完整电子办理页待接入,合同管理补充“签约成立/生效时点”和各方签署事件；版本、附件编号由系统生成并冻结。签名/盖章由真实签署产生。新电子签链路接入后从可信供应商签署事实取时间；不能用生成、客户确认或归档时间冒充。,合同中心 / 主体资料 / 订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:13
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:16
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:15
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/print.ts:65
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:52"
+06-C2,06_终止协议_协商终止_V2.0,客户姓名/证件号/电话/联系地址/电子通知地址；出租方名称/统一信用代码/住所/法定代表人或授权签署人/电话/通知地址；宁达信用代码/住所/授权签署人/履约联系渠道,,P006,可复用来源 / 人工确认 / 字段/页面补齐,冻结客户快照有姓名手机号，商业条款有customerAddress；lessorSnapshot有名称代码地址电话，当前合作商简单页面有地址电话；代表姓名/身份/授权证据存在于旧组件和模型，未挂到现行简单入口。ArchiveParty目前只有姓名、类型、证件、电话、代码。新纸文换车/续期values未含证件号、代表姓名、全部电子通知渠道及完整平台资料；电子主合同可在私有PDF输入中解密身份，不能公开回传。,现有模型/旧文书入口可复用，当前完整电子办理页待接入,复用客户/合作商/平台档案，增加每方“文书通知渠道、对外联系人、有权签署代表及授权版本”维护及逐单冻结。只填缺失事实，不能把合作商联系人自动视为授权签署人，也不能把登记所有人当出租方。证件号按现有私有文书路径处理。,合同中心 / 主体资料 / 订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:2
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/parties.ts:13
+D:/wechat-miniapp-sub/apps/api/src/owner-signing/lessor.ts:44
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:13
+D:/wechat-miniapp-sub/apps/admin/src/partners.tsx:35
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/offline-publish.ts:41
+D:/wechat-miniapp-sub/apps/api/src/order-renewals/offline-publish.ts:30
+D:/wechat-miniapp-sub/apps/api/src/electronic-documents/prepare.ts:63"
+06-01,06_终止协议_协商终止_V2.0,本合同/原合同号、全部补充文件、车辆VIN牌号原期；终止范围与保留事项；明确非正常到期/非未开始续期取消/非跨商解除,,P002 / P007 / P008 / P047,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,readTerminationContext及termination-chain能读取原精确纸档、已生效补充链、当前冻结车辆/原条款；但当前TERMINATION档案同时用于未交付已签取消和提前归还，没有新版06专用适用类别字段。,详见现状及来源代码；不代表生产已开放,合同管理增加终止文书适用分类和范围校验，06只路由期内三方协商终止；未交付取消、期前续期取消、跨商解除、正常到期应走对应文件。原有效补充链自动列，保留事项人工确认。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:45
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination-chain.ts:48
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/schemas.ts:7
+D:/wechat-miniapp-sub/apps/api/src/orders/cancellation-readiness.ts:81"
+06-02,06_终止协议_协商终止_V2.0,客户需求/出租方履约/平台履约/不可归责/混合原因、事实/提出人/各方意见证据；既有单方解除通知及送达；此前真实三方合意时间/内容/主体/证据,,P013 / P014 / P015 / P047,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,现reasonType只有客户申请、出租方或平台违约（合并）、协商一致、其他，另有reason文字；无逐方责任意见、原始通知/送达、事前合意及争议结构。当前默认条款仍含个人提前15日通知及1个月月费补偿，与06不预置通知天数/月租不同。,详见现状及来源代码；不代表生产已开放,终止安排页扩充原因多选或分类、逐方意见、证据和先前通知事实；费用不得仅按“客户申请”自动认定违约。默认补偿政策先确认是否改，再改模板和计算；人工填事实/责任，不由系统猜。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:8
+D:/wechat-miniapp-sub/apps/admin/src/termination-details-model.ts:3
+D:/wechat-miniapp-sub/apps/admin/src/termination-details-model.ts:8
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:32"
+06-03,06_终止协议_协商终止_V2.0,协议成立生效、原合同终止、租金起止、计划实际还车、退款期限、最终清理期限、服务月边界/各分项月费/总日数/末期计费日数,,P010 / P011 / P048,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整 / 签后事实,终止Details只有effectiveAt、计划returnAt、补退dueOn；实际收车来自receipt/handover，原期来自terms，但effectiveAt未作为独立租金截止/未来义务终止规则写入结算。ReturnSettlement只有returnedOn日期和完成状态，当前按实际还车期次处理。,详见现状及来源代码；不代表生产已开放,新增终止时间矩阵及明确终止范围，区分合同效力、占有、租金、归档和结清；受控应用已确认终止时点停止未来义务，保持清理债务和历史。计费截止不能用最后归档日或结算完成日替代。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:8
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:11
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:18
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:25
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1224"
+06-04,06_终止协议_协商终止_V2.0,末期实际日数计费、日内不足折算单位/规则、免租减租期间金额；拒收/协调失误延长、迟还占用/保管/运输费用责任,,P018 / P019 / P048,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,月边界/固定费用来源已有；return流程截断UsagePeriod并取消后期，不自动生成末期租金日内比例减免。既有终止默认文字有实际天数公式，但文字不是计算执行。不存在分钟/秒单位、免租区间和拒收期间的结构化计价。,详见现状及来源代码；不代表生产已开放,增加终止结算计算预览：原月边界、截止点、折算单位和取整规则、减免区间、应付前后及依据；分离正常租金、迟还实际损失和第三方费用，独立财务复核后生成/调整账款并关联文书。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:18
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:25
+D:/wechat-miniapp-sub/apps/api/src/applications/final-plan-defaults.ts:32
+D:/wechat-miniapp-sub/apps/admin/src/termination-details-form.tsx:14"
+06-05,06_终止协议_协商终止_V2.0,计划归还地点时刻、接收人/乙方授权/联系方式、平台协调人、无法接收/故障拖运/存放/费用责任；实际线上记录编号/核验时刻/异议,,P017 / P021 / P022 / P050,可复用来源 / 人工确认 / 字段/页面补齐 / 签后事实,已有计划returnAt/place、普通RETURN实物接收事件、线上证据/本人确认/异议修订，且实物接收不必等最终结算；接收权限和应急安排只有自由说明，没有独立接收授权/协调人结构。,详见现状及来源代码；不代表生产已开放,在现终止与还车页增加接收授权、联系和应急安排，自动引用实际接收及确认版本。客户未点确认时仍能如实记录接收，异议按原版本追加核实。法大大实名待接入后绑定真实状态，不默认已实名。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:9
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/vehicle-receipt.ts:14
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/vehicle-receipt.ts:38
+D:/wechat-miniapp-sub/apps/api/src/operations/online-handover.ts:61
+D:/wechat-miniapp-sub/apps/admin/src/field/OfflineReceipt.tsx:15"
+06-06,06_终止协议_协商终止_V2.0,里程起止读数/时间、当期额度、已购有效期适用量、超额单价金额；未用赠送/已购权益处理依据；后续事故保险维修违章联系人期限、争议条款确认,,P023 / P051,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,UsagePeriod/Segment和已购台账支持核验读数、当期额度、扣减、超额金额；现退订会冻结并到结清时使余包失效，通用例外退款仅支持完整未使用包全退。新文本要求逐笔适用原条件并列处理依据，不能笼统把所有未用权利写不退。,详见现状及来源代码；不代表生产已开放,结算页增加“权益退出处理”逐笔表，显示原购买条件、有效期、适用量、冻结/退款/保留和依据；部分已使用或其他协商退款需单独审批规则与执行。事故/保险/违章后续责任纳入未决待办，争议条款引用原有效版本并确认。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/usage/usage.service.ts:100
+D:/wechat-miniapp-sub/apps/api/src/usage/usage.service.ts:115
+D:/wechat-miniapp-sub/apps/api/src/vehicle-changes/segments.ts:17
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:73
+D:/wechat-miniapp-sub/apps/api/src/usage/refunds.ts:30
+D:/wechat-miniapp-sub/apps/admin/src/usage-resources.ts:6"
+06-07,06_终止协议_协商终止_V2.0,逐项费用名称/期间/依据、付款义务人与收款权利人、原应付/减免/最终A、成功B及流水、已退C及流水、D抵入来源/E转出授权、净T/净补退,,P025 / P056 / P057 / T1R2C1 / T1R2C2 / T1R2C3 / T1R2C4 / T1R2C5 / T1R2C6 / T1R2C7 / T1R3C1 / T1R3C2 / T1R3C3 / T1R3C4 / T1R3C5 / T1R3C6 / T1R3C7 / T1R4C1 / T1R4C2 / T1R4C3 / T1R4C4 / T1R4C5 / T1R4C6 / T1R4C7,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,账单/支付/退款真实A/B/C事实可查询，同单变更有PaymentAllocation；现终止仅人工填additionalPaymentAmount/refundAmount/settlementBasis，并不会执行资金动作。ReturnSettlement没有项目明细或债权人方向，无法可靠生成新T公式。,详见现状及来源代码；不代表生产已开放,将现合计终止安排扩为“逐项结算工作台”，动态费用行、真实款源、按权利人分账、减免和现金抵用授权，系统算T和补退。D/E同源同步核销、防重复，未决金额不得混入确认A；财务复核后形成独立账单/退款指令。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:11
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:105
+D:/wechat-miniapp-sub/apps/admin/src/termination-details-form.tsx:14
+D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1224
+D:/wechat-miniapp-sub/apps/api/src/order-changes/finance.ts:76
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:229"
+06-08,06_终止协议_协商终止_V2.0,补偿赔偿事实/性质/计算式金额、付款人/收款人/期限、是否抵销和对应项目；退款义务人/代退授权/代退人、原渠道/备用实名账户、无争议退/应补到期日/逾期基数标准起止；正文原路失败后【期限】,,P015 / P026 / P027 / P031 / P058,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,原路退款审批/渠道校验有；现终止表只有合计补款/退款日期，既无赔偿方向和抵销关联，又无备用实名账户、退款主体和资金持有证明、逾期参数。模板内“原路不能退款时多久”不能从系统状态自动推得。,详见现状及来源代码；不代表生产已开放,增加补偿/赔偿明细与明确抵销同意、资金执行安排及客户核验替代账户；到期提醒/失败处理/补退凭证与原请求关联。代退授权与财务内部双人复核并存，不将“乙方无须逐笔批准”理解为取消平台RBAC/退款双人审批。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:11
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:175
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:229
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:258
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:274"
+06-09,06_终止协议_协商终止_V2.0,押金义务主体、实收P/已退Q/确认扣抵K及依据授权、必要保留R/本次应退、到账截止；每项争议主张金额意见证据估算、保留金额/核查人/补证日/最迟释放日/释放后退款日/追索路径,,P028 / P062 / P063,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整,有押金实收/退回流水，终止表有合计retainedDepositAmount及文字安排，但无K扣抵账本或R逐项保留/释放/责任人。当前结算完成用押金实收减成功退款==0，不能表达合法K已扣抵或有R保留但其余已清；没有到期释放任务。,详见现状及来源代码；不代表生产已开放,新增押金处理子账：每项扣抵/保留绑定证据和明确同意、金额上限/期限/负责人，R到期复核释放并退款。押金K若作为现金D抵入必须同一流水只算一次；争议金额只在未决表，不记确认K。结清状态与未知/未决权利跟踪分开。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1011
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:64
+D:/wechat-miniapp-sub/apps/api/src/billing/billing.ts:104
+D:/wechat-miniapp-sub/apps/api/src/offline-documents/termination.ts:12
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:41
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:57"
+06-10,06_终止协议_协商终止_V2.0,已知具体争议逐项编号/事实/范围/最终金额/义务/期限/特别确认；最终清理目标日、实际收退款及流水核验日、未完成项目原因、后续责任,,P030 / P031 / P032 / P033 / P034 / P035 / P063 / P064,可复用来源 / 人工确认 / 字段/页面补齐 / 流程/规则调整 / 签后事实,现ReturnSettlement只有整案DISPUTED/解除挂起/resolutionNote/COMPLETED；未能逐项区分争议、已履行和后续留存事项，也没有“实际履行后才清偿免责”的逐项事实索引。,详见现状及来源代码；不代表生产已开放,共用未决事项工作台建立逐项状态、证据版本、核实负责人/截止、特别确认及实际履行事件；明确只结束已列明已履行项目，保留其他事项。目标日由人工约定，实际核验日由审核动作产生，未完成原因据实登记并生成待办。,订单详情 → 协商终止 / 还车结算,"D:/wechat-miniapp-sub/apps/api/prisma/schema.prisma:1224
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:57
+D:/wechat-miniapp-sub/apps/api/src/usage/returns.ts:57
+D:/wechat-miniapp-sub/apps/admin/src/usage-resources.ts:6
+D:/wechat-miniapp-sub/apps/admin/src/termination-details-model.ts:20"

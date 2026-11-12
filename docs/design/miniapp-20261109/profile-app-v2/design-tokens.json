@@ -1,0 +1,54 @@
+{
+  "status": "layout-approved; revised-appearance-awaiting-user-review",
+  "scope": "Personal profile visual proposal only; no application or backend changes",
+  "direction": "Existing Ninda bright-native app style; retain approved two-card layout",
+  "layout": "Two vertically stacked cards; no tabs; single-row identity fields",
+  "colors": {
+    "brand": "#F9BE00",
+    "ink": "#231815",
+    "muted": "#65615C",
+    "page": "#F5F6F7",
+    "surface": "#FFFFFF",
+    "divider": "#E9E7E3",
+    "controlBorder": "#DEDDD9",
+    "cardBorder": "#ECEBEA",
+    "textButton": "#5D4908"
+  },
+  "typographyPx": {
+    "navigation": 17,
+    "sectionHeading": 17,
+    "identityLabelAndValue": 16,
+    "identityWeight": 400,
+    "documentLabel": 15,
+    "documentAction": 14,
+    "caption": 12
+  },
+  "geometryPx": {
+    "pagePadding": 16,
+    "cardPadding": 16,
+    "cardGap": 16,
+    "cardRadius": 12,
+    "identityLabelColumn": 96,
+    "identityRowMinHeight": 44,
+    "minTouchTarget": 44,
+    "buttonRadius": 8
+  },
+  "states": {
+    "verified": "Three readonly rows; corner verified label; no certification CTA or consent checkbox; retain subdued status refresh",
+    "unverified": "Certification action belongs inside personal-information card; keep existing verification conditions and consent",
+    "documents": "Clickable short document labels; replace and remove inline; immediate persisted save with existing failure handling",
+    "regularCustomer": "Driving licence uses the same document-row layout when required",
+    "virtualAcceptance": "This proposal shows the existing virtual-acceptance customer's two identity documents; preserve existing test-scope notice at implementation"
+  },
+  "syntheticData": true,
+  "revision": 2,
+  "sourceStyles": [
+    "apps/miniprogram/src/app.wxss",
+    "apps/miniprogram/src/pages/profile/index.wxss",
+    "apps/miniprogram/src/pages/mine/index.wxss"
+  ],
+  "deliberateExceptions": [
+    "Verified badge retains #F9BE00 because the user rejected the previous pale-yellow appearance.",
+    "The identity fields remain three same-font readonly rows as approved."
+  ]
+}

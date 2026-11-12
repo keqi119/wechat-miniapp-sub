@@ -1,0 +1,25 @@
+export const fixedRoles = ['ADMIN', 'OPERATIONS', 'FINANCE', 'SUPPORT', 'FIELD'] as const;
+const residualResources = ['residual-observations','residual-imports','residual-curves','residual-forecasts'];
+const assetResources = ['vehicle-assets','baas-contracts','depreciation-policies','asset-cost-plans','asset-costs'];
+export const resources = ['advertising-copy','virtual-acceptance','electronic-documents','overdue-bills','collection-cases','asset-work-orders','vehicle-maintenance','asset-work-order-costs','asset-work-order-cost-lines',...residualResources,'vehicle-valuations',...assetResources,'license-plates','dashboard','workbench','staff','handover-tasks','field-tasks','vehicle-owners','partners','partner-revenue-rules','partner-settlements','insurance-policies','coverage-requirements','addon-products','products','goods','benefit-definitions','offline-archives','technical-acceptances','swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','users','audit-logs','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','payment-verifications','usage-periods','return-settlements','order-changes'];
+const operationsRead = ['advertising-copy','electronic-documents','asset-work-orders','vehicle-maintenance',...residualResources,'vehicle-valuations','license-plates','vehicle-assets','baas-contracts','asset-cost-plans','dashboard','workbench','handover-tasks','vehicle-owners','partners','partner-revenue-rules','insurance-policies','coverage-requirements','addon-products','products','goods','benefit-definitions','offline-archives','technical-acceptances','swap-credit-purchases','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','bills','payments','deposits','refunds','handovers','mileages','entitlements','services','notifications','legal-documents','files','enterprise-seals','seal-authorities','signature-policies','esign-approvals','usage-periods','return-settlements','order-changes'];
+const operationsWrite = ['advertising-copy','electronic-documents','asset-work-orders','vehicle-maintenance',...residualResources,'vehicle-valuations','license-plates','vehicle-assets','baas-contracts','asset-cost-plans','handover-tasks','vehicle-owners','partners','partner-revenue-rules','insurance-policies','coverage-requirements','addon-products','products','goods','benefit-definitions','offline-archives','technical-acceptances','usage-segments','model-definitions','vehicles','plans','customers','applications','orders','contracts','handovers','mileages','entitlements','services','notifications','legal-documents','files','esign-approvals','usage-periods','order-changes'];
+const financeRead = ['electronic-documents','overdue-bills','collection-cases','asset-work-orders','asset-work-order-costs','asset-work-order-cost-lines',...residualResources,'vehicle-valuations',...assetResources,'dashboard','workbench','partner-revenue-rules','partner-settlements','offline-archives','model-definitions','vehicles','plans','customers','orders','contracts','bills','payments','deposits','refunds','files','usage-periods','return-settlements','order-changes','swap-credit-purchases'];
+const financeWrite = ['collection-cases','asset-work-order-costs','asset-work-order-cost-lines','vehicle-valuations','depreciation-policies','asset-cost-plans','asset-costs','partner-revenue-rules','partner-settlements','bills','payments','deposits','refunds','files','usage-periods','return-settlements','order-changes','swap-credit-purchases'];
+const supportRead = ['electronic-documents','dashboard','workbench','model-definitions','vehicles','plans','customers','orders','contracts','handovers','entitlements','services','notifications','files'];
+
+export function allowed(role: string, resource: string, write: boolean) {
+  if (!fixedRoles.some(value => value === role) || !resources.includes(resource)) return false;
+  if (role === 'FIELD') return resource === 'field-tasks';
+  if (resource === 'field-tasks') return false;
+  if (['overdue-bills','audit-logs','dashboard','workbench'].includes(resource) && write) return false;
+  if (resource === 'vehicle-owners' && process.env.OWNER_WORKSPACE_ENABLED !== 'true' && process.env.MVP_V2_ENABLED !== 'true') return false;
+  if (role === 'ADMIN') return true;
+  if (role === 'OPERATIONS') return (write ? operationsWrite : operationsRead).includes(resource);
+  if (role === 'FINANCE') return (write ? financeWrite : financeRead).includes(resource);
+  return (write ? ['services','notifications','files'] : supportRead).includes(resource);
+}
+
+export function permissions(role: string) {
+  return resources.flatMap(resource => ['read','write'].filter(action => allowed(role, resource, action === 'write')).map(action => `${resource}.${action}`));
+}

@@ -22,7 +22,7 @@
       "path": "/admin/technical-acceptances/qa-tech/prepare-signature",
       "body": {
         "revision": 3,
-        "idempotencyKey": "ae161e10-0e16-4dfa-b0f0-2fe78fc7b907",
+        "idempotencyKey": "7c49fba3-2674-44fc-994e-28dd71b71fd0",
         "policyId": "qa-policy"
       }
     },
@@ -31,7 +31,7 @@
       "body": {
         "customerId": "qa-customer",
         "documentId": "qa-doc",
-        "idempotencyKey": "16b89a85-3d18-4b91-ba0c-2ee4a1365fd3"
+        "idempotencyKey": "3f986399-ae13-43d6-8dfe-858f8fa88375"
       }
     },
     {
@@ -39,28 +39,28 @@
       "body": {
         "customerId": "qa-customer",
         "documentId": "qa-doc",
-        "idempotencyKey": "16b89a85-3d18-4b91-ba0c-2ee4a1365fd3"
+        "idempotencyKey": "3f986399-ae13-43d6-8dfe-858f8fa88375"
       }
     },
     {
       "path": "/admin/technical-acceptances/qa-tech/stop",
       "body": {
         "revision": 3,
-        "idempotencyKey": "7c91f1e7-54b6-4910-9582-26b987458b2b"
+        "idempotencyKey": "1fdcb526-87d5-4532-b9d0-3a27fa2d6b34"
       }
     },
     {
       "path": "/admin/technical-acceptances/qa-tech/stop",
       "body": {
         "revision": 3,
-        "idempotencyKey": "7c91f1e7-54b6-4910-9582-26b987458b2b"
+        "idempotencyKey": "1fdcb526-87d5-4532-b9d0-3a27fa2d6b34"
       }
     },
     {
       "path": "/admin/technical-acceptances/qa-tech/retention-review",
       "body": {
         "revision": 3,
-        "idempotencyKey": "190d3ec6-5ac3-405b-bbf4-9390792e6b97",
+        "idempotencyKey": "88befd11-6bf8-4666-8026-d09927e5cf73",
         "legalHold": false,
         "reason": "QA 核对本验证期满且无未结争议或渠道在途"
       }
@@ -69,7 +69,7 @@
       "path": "/admin/technical-acceptances/qa-tech/purge",
       "body": {
         "revision": 3,
-        "idempotencyKey": "6cf7c374-0996-47d6-955c-fd1c95de0f1a",
+        "idempotencyKey": "e253bc9c-fbca-4412-a663-8b59aa73e4b6",
         "reason": "QA 人工释放后只清理本验证独立文件，不删除共用实名证书"
       }
     }

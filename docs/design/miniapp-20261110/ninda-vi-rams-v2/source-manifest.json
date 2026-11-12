@@ -1,0 +1,110 @@
+{
+  "status": "visual-proposal-awaiting-user-confirmation",
+  "createdAt": "2026-11-09T16:57:18.488Z",
+  "sourceFiles": [
+    {
+      "path": "apps/miniprogram/src/app.wxss",
+      "sha256": "a45f114c191c69da2ca9567decf1351f8d32e236c7d2760c4e95525c8e7f0e37"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/home/index.wxml",
+      "sha256": "51788e52c36eb735585ef353ee49108d3a64662fd33fdf97eec26b6a39bfe025"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/home/index.wxss",
+      "sha256": "df969590c077607c9b784da76d78aad4ed419bca5210f56d619385f23b5d58f5"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/catalog/index.wxml",
+      "sha256": "1871e26ee4a9d13bf2ab25e93cab5b1de6cdb9a1340c890ded3f127b527dabe2"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/catalog/index.wxss",
+      "sha256": "234851f7e07e26467c587353fb9b4d5d37872b484f51231134eb22d03bfa0ca2"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/use/index.wxml",
+      "sha256": "c9d930cb9ad5f5930bd9021231c4c9a5d6f7dc6c02a44f5666c65bb7efa3d67e"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/use/index.wxss",
+      "sha256": "262fc6e93b8f83203acf651f8b917d01fd592e010eaaed6cdae8008e8f7ac868"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/mine/index.wxml",
+      "sha256": "8754b7d700f161a7dc41576fcd7137c5c91a138f44cc8925495601aad26f0a02"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/mine/index.wxss",
+      "sha256": "a9fd59b5d3bcb82c5fc7365aaec81d8fe19a5b9da555fbcafa15a73344bbc97b"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/profile/index.wxml",
+      "sha256": "8a1a9da5d25ffb6954e627e3c59e9ae995dd53286ba36bb55e01df77e865a3e9"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/profile/index.wxss",
+      "sha256": "8688642bd96f79c0acccec7ba2656e1ceb3da133e962f7952cce9ab65cdb1769"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/records/index.wxml",
+      "sha256": "2330cd7eaa1de08ef28fadb527f744756e33f6e628eecec6d1fbab042ed43c4f"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/records/index.wxss",
+      "sha256": "f9d73707eebd81cfa62fa46dd912b7bf0911350f55f6c822db295b32e07703cd"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/record/index.wxml",
+      "sha256": "ca51426e0c3730ed5e3627ba1120de3d587c280180cf8711ecf12c4ccc938475"
+    },
+    {
+      "path": "apps/miniprogram/src/pages/record/index.wxss",
+      "sha256": "3e9d4ce2e89d54595855c1a366598b642edd174ae2c677785780d8beb22cf065"
+    }
+  ],
+  "pages": [
+    {
+      "name": "home",
+      "title": "首页",
+      "sourcePage": "home",
+      "tab": 0
+    },
+    {
+      "name": "catalog",
+      "title": "选车",
+      "sourcePage": "catalog",
+      "tab": 1
+    },
+    {
+      "name": "use",
+      "title": "用车",
+      "sourcePage": "use",
+      "tab": 2
+    },
+    {
+      "name": "mine",
+      "title": "我的",
+      "sourcePage": "mine",
+      "tab": 3
+    },
+    {
+      "name": "profile",
+      "title": "个人资料",
+      "sourcePage": "profile"
+    },
+    {
+      "name": "payments",
+      "title": "支付记录",
+      "sourcePage": "records"
+    },
+    {
+      "name": "bill",
+      "title": "账单详情",
+      "sourcePage": "record"
+    }
+  ],
+  "data": "Synthetic examples only; no backend or channel requests.",
+  "photoSource": "assets/photo-source.json",
+  "brandSource": "reference/source-manifest.json"
+}

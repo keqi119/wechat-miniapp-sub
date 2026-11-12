@@ -1,0 +1,26 @@
+{
+  "synthetic": true,
+  "order": {
+    "id": "synthetic-order",
+    "contractMode": "OFFLINE",
+    "status": "AWAITING_CONTRACT_REVIEW"
+  },
+  "amountExamples": [
+    0,
+    1,
+    10000
+  ],
+  "coverage": {
+    "ready": false,
+    "blockers": [
+      {
+        "code": "INSURANCE_REQUIREMENTS_MISSING",
+        "label": "保障要求待配置"
+      }
+    ]
+  },
+  "contract": {
+    "canSign": false,
+    "mode": "OFFLINE"
+  }
+}

@@ -4,7 +4,7 @@
   justify-content: space-between;
   gap: 20rpx;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid #e1e0d9;
+  border-bottom: 1rpx solid #e9e7e3;
   font-size: 26rpx;
 }
 .card .secondary,

@@ -3,6 +3,8 @@ import {hash,audit} from '../common/data';
 import {financeView} from '../order-changes/finance';
 import {reserveCredit} from './credits';
 import {shanghaiDay} from '../usage/rules';
+import {requireHistoricalPreparedQuoteAgreement} from '../order-changes/agreement-readiness';
+import {requireOfflineSwapFacts} from './offline-facts';
 export const recoveryFields=['plannedReturnAt','plannedDeliveryAt','handoverArrangement','downtimeArrangement','reason','expiresAt'];
 export const financeQuoteId=(q:any)=>q.snapshot.financeSourceQuoteId||q.id;
 export async function recoverSwapQuote(tx:any,change:any,active:any,input:any,actor:any){
@@ -20,13 +22,26 @@ export async function recoverSwapQuote(tx:any,change:any,active:any,input:any,ac
  const fields=Object.fromEntries(recoveryFields.map(k=>[k,input[k]])),snapshot={...s,...fields,document:null,previousQuoteId:active.id,recoveryFromQuoteId:active.contract?.status==='SIGNED'?active.id:active.snapshot.recoveryFromQuoteId||active.id,financeSourceQuoteId:financeQuoteId(active),affectedSequence:s.periods.find((p:any)=>p.startDate<=shanghaiDay(delivered)&&shanghaiDay(delivered)<p.endDate).sequence};
  const revision=((await tx.delayQuote.aggregate({where:{changeId:change.id},_max:{revision:true}}))._max.revision||0)+1;
  const quote=await tx.delayQuote.create({data:{changeId:change.id,revision,snapshot,fundsSnapshot:active.fundsSnapshot,commercialHash:hash({priorTermsHash:change.priorTermsHash,snapshot}),createdBy:actor.id}});
- await tx.vehicleHold.update({where:{id:hold.id},data:{quoteId:quote.id,expiresAt:new Date(input.expiresAt)}});const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId}});await reserveCredit(tx,order,await tx.usageAccount.findUniqueOrThrow({where:{orderId:order.id}}),change.id,delivered);
+ await tx.vehicleHold.update({where:{id:hold.id},data:{quoteId:quote.id,expiresAt:new Date(input.expiresAt)}});const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId}});await reserveCredit(tx,order,await tx.usageAccount.findUniqueOrThrow({where:{orderId:order.id}}),change.id,delivered,vehicle.id);
  await tx.orderChange.update({where:{id:change.id},data:{activeQuoteId:quote.id,status:'REVIEW_PENDING',returnHandoverId:ret?.status==='COMPLETED'?ret.id:null,deliveryHandoverId:null}});
 }
 
 export async function cancelRecovery(tx:any,change:any){
- const q=await tx.delayQuote.findUniqueOrThrow({where:{id:change.activeQuoteId}});if(!q.snapshot.recoveryFromQuoteId)return false;
+ const q=await tx.delayQuote.findUniqueOrThrow({where:{id:change.activeQuoteId}});
+ if(q.snapshot.pricingVersion===2&&q.snapshot.previousPreparedQuoteId){
+  ensure(!q.financePreparedAt&&!q.snapshot.financeSourceQuoteId,409,'RECOVERY_STATE','已经准备的净差方案不可直接撤销');
+  const order=await tx.order.findUniqueOrThrow({where:{id:change.orderId}});await requireOfflineSwapFacts(tx,order,change,new Date(),true);
+  const previous=await tx.delayQuote.findUniqueOrThrow({where:{id:q.snapshot.previousPreparedQuoteId}}),agreement=await requireHistoricalPreparedQuoteAgreement(tx,change.id,previous.id);
+  ensure(agreement.mode==='OFFLINE'&&previous.revision<q.revision&&previous.snapshot.pricingVersion===2&&previous.snapshot.targetVehicleId===q.snapshot.targetVehicleId,409,'RECOVERY_STATE','原已确认的线下安排不可恢复');
+  await tx.$queryRaw`SELECT id FROM "Vehicle" WHERE id=${change.targetVehicleId} FOR UPDATE`;
+  const vehicle=await tx.vehicle.findUniqueOrThrow({where:{id:change.targetVehicleId}}),hold=vehicle.holdId?await tx.vehicleHold.findUnique({where:{id:vehicle.holdId}}):null;
+  ensure(hold?.orderId===order.id&&hold.changeId===change.id&&hold.quoteId===q.id&&hold.status==='HELD',409,'VEHICLE_HOLD_MISMATCH','目标预留与待撤销报价不一致');
+  await tx.delayQuote.update({where:{id:q.id},data:{status:'REJECTED'}});await tx.delayQuote.update({where:{id:previous.id},data:{status:'CONFIRMED'}});
+  await tx.vehicleHold.update({where:{id:hold.id},data:{quoteId:previous.id,expiresAt:new Date(previous.snapshot.expiresAt)}});
+  await tx.orderChange.update({where:{id:change.id},data:{activeQuoteId:previous.id,status:change.returnHandoverId?'SWAP_RETURNED':'AWAITING_FINANCE'}});return true;
+ }
+ if(!q.snapshot.recoveryFromQuoteId)return false;
  const previous=await tx.delayQuote.findUniqueOrThrow({where:{id:q.snapshot.recoveryFromQuoteId},include:{contract:true}});ensure(previous.changeId===change.id&&previous.contract?.status==='SIGNED',409,'RECOVERY_STATE','原已签版本不可恢复');
  await tx.delayQuote.update({where:{id:q.id},data:{status:'REJECTED'}});const h=change.returnHandoverId?await tx.handover.findUnique({where:{id:change.returnHandoverId}}):null;
- await tx.orderChange.update({where:{id:change.id},data:{activeQuoteId:previous.id,status:h?.status==='COMPLETED'?'SWAP_RETURNED':'AWAITING_FINANCE'}});const vehicle=await tx.vehicle.findUniqueOrThrow({where:{id:change.targetVehicleId}});await tx.vehicleHold.update({where:{id:vehicle.holdId},data:{quoteId:previous.id}});await reserveCredit(tx,await tx.order.findUniqueOrThrow({where:{id:change.orderId}}),await tx.usageAccount.findUniqueOrThrow({where:{orderId:change.orderId}}),change.id,new Date(previous.snapshot.plannedDeliveryAt));return true;
+ await tx.orderChange.update({where:{id:change.id},data:{activeQuoteId:previous.id,status:h?.status==='COMPLETED'?'SWAP_RETURNED':'AWAITING_FINANCE'}});const vehicle=await tx.vehicle.findUniqueOrThrow({where:{id:change.targetVehicleId}});await tx.vehicleHold.update({where:{id:vehicle.holdId},data:{quoteId:previous.id}});await reserveCredit(tx,await tx.order.findUniqueOrThrow({where:{id:change.orderId}}),await tx.usageAccount.findUniqueOrThrow({where:{orderId:change.orderId}}),change.id,new Date(previous.snapshot.plannedDeliveryAt),vehicle.id);return true;
 }

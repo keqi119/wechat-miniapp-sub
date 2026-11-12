@@ -1,0 +1,81 @@
+{
+  "status": "USER_APPROVED_FORMAL_VERSION_PREPARED",
+  "confirmedBy": "宁达运营方（当前会话用户明确审定）",
+  "confirmedAt": "2026-10-27T13:31:51.416Z",
+  "platformLegalEntity": "上海宁达信息科技有限公司",
+  "approval": {
+    "sourceThreadId": "01a15dad-54f7-7aa2-8b9b-cb647c407a0f",
+    "userReplyExact": "确认这两份说明并发布",
+    "questionScope": "两份配套告知审阅稿制作正式版并发布",
+    "recordedAt": "2026-10-27T13:31:51.416Z"
+  },
+  "reviewManifest": {
+    "path": "docs/legal/drafts/ninda/offline-mvp-notices/diff-manifest.json",
+    "sha256": "bb578359cc8b9dee6e8f8005fd4328c45d61ee048ef51a28bca37355db23c30f"
+  },
+  "documents": [
+    {
+      "type": "usage-policy",
+      "version": 2,
+      "source": {
+        "type": "usage-policy",
+        "candidateVersion": 2,
+        "status": "DRAFT_PENDING_USER_REVIEW",
+        "markdownPath": "docs/legal/drafts/ninda/offline-mvp-notices/usage-policy.md",
+        "markdownSha256": "c81c4fee82f0f492e0cc99b987b8554bc6eba9a8624413fc0972b16e2b2a0b31",
+        "payloadPath": "docs/legal/drafts/ninda/offline-mvp-notices/usage-policy.payload.json",
+        "payloadSha256": "38fa1a6795760b2e7631fbfdf5f33684397cb81c9a1c79eb0258ed169e769e9b",
+        "contentUtf8Sha256": "a8f2f9c0bfc12aeb08e74f47bc955679850c0de3a2693ad357cdf9d5e44e0f03",
+        "apiCanonicalContentHash": "6101326d209a6526292335d2addcf13e90a19ee4d0fd19560fef329cb0c723e5",
+        "supportedVariablesUsed": [],
+        "confirmationMetadataPresent": false
+      },
+      "formal": {
+        "payloadPath": "docs/legal/versions/ninda/offline-mvp-notices-v2/usage-policy.payload.json",
+        "payloadSha256": "6d42b2f602984ee8f6c6706db073ace697598423453de5fbac8c0020f6a48a16",
+        "markdownPath": "docs/legal/versions/ninda/offline-mvp-notices-v2/usage-policy.md",
+        "markdownSha256": "81ece45b0751fa53347895dcdb059bdaf0865855a05751eb5f8c13dd95cb5279",
+        "contentSha256": "fae8c882e2361424d87ec9f5ba1d8ca0bc9e4310e8b6ac5e37b12e2ee9bc9f4d"
+      },
+      "changes": {
+        "removedDraftBodyNotice": true,
+        "removedDraftTitleSuffix": true,
+        "businessTermsChanged": false
+      }
+    },
+    {
+      "type": "owner-data-sharing",
+      "version": 2,
+      "source": {
+        "type": "owner-data-sharing",
+        "candidateVersion": 2,
+        "status": "DRAFT_PENDING_USER_REVIEW",
+        "markdownPath": "docs/legal/drafts/ninda/offline-mvp-notices/owner-data-sharing.md",
+        "markdownSha256": "bb1ac103b30156a2ded8f4cca20d532bf26172b4a1b393fae48d704270f8b62d",
+        "payloadPath": "docs/legal/drafts/ninda/offline-mvp-notices/owner-data-sharing.payload.json",
+        "payloadSha256": "404643899f8fc0591c5938b7f077a327abda5b704e91c33440244783c9849fb0",
+        "contentUtf8Sha256": "b9cc373b5639cf52d8ac86c373752aa3bdb55ad3bea1e76a8a7064e0dbea9ecd",
+        "apiCanonicalContentHash": "6a5a501e6307ae2ec5ce98df638fdfe2a725e91eb49a32d2c993bb329b181a62",
+        "supportedVariablesUsed": [
+          "lessorAddress",
+          "lessorCreditCode",
+          "lessorName",
+          "lessorPhone"
+        ],
+        "confirmationMetadataPresent": false
+      },
+      "formal": {
+        "payloadPath": "docs/legal/versions/ninda/offline-mvp-notices-v2/owner-data-sharing.payload.json",
+        "payloadSha256": "d1d75601b4d7e2e40564e763fcef25e56e7fe303512c1dac9c7f77b88d4d8897",
+        "markdownPath": "docs/legal/versions/ninda/offline-mvp-notices-v2/owner-data-sharing.md",
+        "markdownSha256": "4bafd09c03f7903302b2f803fbc1baf6020e89aa8584109c32a4fb2556898ec3",
+        "contentSha256": "3b62f9e175a66ec822a94a5a0bbe4b01aca90ac4abdc1ca06b8ec00e9c2624c2"
+      },
+      "changes": {
+        "removedDraftBodyNotice": true,
+        "removedDraftTitleSuffix": true,
+        "businessTermsChanged": false
+      }
+    }
+  ]
+}

@@ -35,7 +35,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 const report = { checks: [], errors: [], fixture: 'local chundian_dev / QA ACTIVE scenario; no signed or paid provider states', records: {} };
 page.on('pageerror', error => report.errors.push(error.message));
 const check = text => { report.checks.push(text); console.log(`PASS ${text}`); };
-const field = key => page.locator(`#field-${key}`);
+const field = key => page.locator(`[id$="-field-${key}"]:visible`);
 const origin = 'http://127.0.0.1:3100';
 async function login(username, password) { await page.getByLabel('工作账号', { exact: true }).fill(username); await page.getByLabel('登录密码', { exact: true }).fill(password); const pending = page.waitForResponse(r => r.url().endsWith('/api/admin/auth/login') && r.request().method() === 'POST'); await page.getByRole('button', { name: '进入工作台', exact: true }).click(); const response = await pending; assert.equal(response.ok(), true); const session = await response.json(); await page.getByRole('navigation', { name: '主导航' }).waitFor(); return session; }
 async function openModule(name) { if (await page.getByRole('dialog').isVisible()) await page.getByRole('button', { name: '关闭面板', exact: true }).click(); await page.getByRole('navigation').getByRole('button', { name, exact: true }).click(); await page.getByText('正在读取真实数据').waitFor({ state: 'hidden' }); }

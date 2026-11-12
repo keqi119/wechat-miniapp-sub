@@ -4,6 +4,8 @@ import type {Assignment} from './swap';
 export type UsageAccount = {
   orderId: string; orderStatus: string; policyVersion: string; startedOn: string | null; returnedOn: string | null;
   baseAllowanceKm: number; excessPriceAmount: number; packBalanceKm: number; packStatus: string;
+  servicePeriod?: {status:'CURRENT'|'NO_ACTIVE_PERIOD'|'ENDED';periodId:string|null};
+  initialPricing?: {policyVersion:string;baseAllowanceKm:number;excessPriceAmount:number};
   periods: Entity[]; packs: Array<{ id: string; km: number; amount: number; status: string; billId: string; remainingKm: number }>;
   ledger: Array<{ id: string; type: string; periodId?: string; packId?: string; deltaKm: number; createdAt: string }>;
   products: Array<{ id: string; version: number; km: number; amount: number }>;

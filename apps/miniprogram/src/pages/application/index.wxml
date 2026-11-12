@@ -44,19 +44,19 @@
     <block wx:else>
       <view class="contact-section"
         ><view class="eyebrow">02 / 联系方式</view
-        ><view class="section-title">留下联系资料</view
+        ><view class="section-title">核对个人资料</view
         ><view class="notice"
-          >联系方式使用当前认证手机号。提交后等待后台审核，最终费用以确认方案为准。</view
+          >使用已保存的姓名和认证手机号。需要修改请进入个人资料；提交后等待后台审核，最终费用以确认方案为准。</view
         ><view class="field"
-          ><view class="label">称呼</view
+          ><view class="label">姓名</view
           ><input
             class="input"
             value="{{name}}"
             placeholder="请输入姓名"
             bindinput="onName"
-            maxlength="30"
-            disabled="{{busy}}"
-            aria-label="称呼" /></view
+            maxlength="40"
+            disabled="{{true}}"
+            aria-label="已保存姓名" /></view
         ><view class="field"
           ><view class="label">认证手机号</view
           ><input
@@ -77,10 +77,9 @@
   <view class="field"><view class="label">地点名称（选填）</view><input class="input" value="{{locationName}}" maxlength="100" data-field="name" bindinput="onLocationInput" disabled="{{busy || locationChoosing || !locationEnabled}}" placeholder="例如：停车场入口"/></view>
   <view class="field"><view class="label">详细地址</view><textarea class="textarea" value="{{locationAddress}}" maxlength="500" data-field="address" bindinput="onLocationInput" disabled="{{busy || locationChoosing || !locationEnabled}}" placeholder="请填写城市、道路、门牌及交接入口"/></view>
   <button class="text-button" bindtap="clearLocation" disabled="{{busy || locationChoosing}}">清除本次地点</button>
-  <button wx:if="{{locationNotice}}" class="text-button" bindtap="toggleLocationNotice" disabled="{{busy || locationChoosing}}">{{locationNoticeOpen ? '收起' : '阅读'}}《交接地点选择说明》</button>
-  <view wx:if="{{locationNoticeOpen}}" class="notice">{{locationNotice.title}} · 版本 {{locationNotice.version}}<view style="white-space: pre-wrap">{{locationNotice.content}}</view></view>
+  <button wx:if="{{locationNotice}}" class="text-button" bindtap="toggleLocationNotice" disabled="{{busy || locationChoosing}}">阅读《交接地点选择说明》 →</button>
   <block wx:if="{{locationMapEnabled}}">
-    <checkbox-group bindchange="onLocationAccepted"><label class="acceptance"><checkbox value="location" checked="{{locationAccepted}}" disabled="{{busy || locationChoosing || !locationNoticeOpen}}" color="#B44919"/><text>我已阅读《交接地点选择说明》，同意本次通过微信地图选择交接地点，并在我提交申请或资料补充时保存确认的地点名称和地址。</text></label></checkbox-group>
+    <checkbox-group bindchange="onLocationAccepted"><label class="acceptance"><checkbox value="location" checked="{{locationAccepted}}" disabled="{{busy || locationChoosing || !locationNoticeOpen}}" color="#231815"/><text>我已阅读《交接地点选择说明》，同意本次通过微信地图选择交接地点，并在我提交申请或资料补充时保存确认的地点名称和地址。</text></label></checkbox-group>
     <button class="secondary" bindtap="chooseLocation" disabled="{{busy || locationChoosing || !locationAccepted}}" loading="{{locationChoosing}}">在地图中选择地点</button>
   </block>
   <view wx:else class="muted">当前可手动填写地址，地图选点暂未启用。</view>
@@ -104,11 +103,11 @@
             value="accepted"
             checked="{{accepted}}"
             disabled="{{busy}}"
-            color="#B44919"
+            color="#231815"
           /><text>我已阅读当前版本申请说明，并同意提交审核。</text></label
         ></checkbox-group
       ><button class="text-button terms-link" bindtap="openTerms">阅读申请说明 →</button>
-      <view class="notice">{{legal.title}} · 版本 {{legal.version}}</view><view class="muted">{{legal.content}}</view>
+      <view wx:if="{{profileRequired}}" class="notice"><view wx:for="{{profileBlockers}}" wx:key="code">{{item.message}}</view><button class="secondary" bindtap="openProfile">完善个人资料</button></view>
       <view wx:if="{{formError}}" class="form-error" role="alert">{{formError}}</view>
       <view class="sticky-actions"
         ><button

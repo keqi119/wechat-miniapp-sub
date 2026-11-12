@@ -1,0 +1,38 @@
+/* Retained module helpers; primary navigation lives in the inherited tree shell. */
+.app-shell{--brand:#1677ff;--ink:#172033}
+.sidebar nav{display:flex;flex-direction:column;gap:5px;padding-top:12px}
+.sidebar .nav-item{min-height:42px;font-size:14px}
+.module-context{margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:14px}
+.module-context>p{margin:0 0 12px;color:var(--muted);font-size:13px}
+.module-views{display:flex;gap:6px;flex-wrap:wrap}
+.module-views a{display:inline-flex;align-items:center;min-height:36px;padding:7px 12px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px;border:1px solid transparent}
+.module-views a:hover{border-color:var(--line);background:white}
+.module-views a[aria-current=page]{background:#1677ff;color:#172033;font-weight:700}
+.module-empty{padding:34px 22px;text-align:center;line-height:1.8;color:var(--muted)}
+.module-empty h2{font-size:17px;color:var(--ink);font-weight:600}
+.partner-permission-help{text-align:left}.partner-permission-help ul{padding-left:20px;margin:16px 0}.partner-permission-help .button{margin-top:10px}
+.module-record{padding:24px;line-height:1.8;overflow-wrap:anywhere}
+.module-record>.detail-values{margin:18px 0}
+.resource-panel .search-submit{white-space:nowrap;min-width:44px;font-size:12px}
+.workflow-note{display:flex;gap:12px;padding:14px 18px;background:#fafafa;border-left:3px solid #1677ff;margin-bottom:20px;font-size:13px;line-height:1.8}
+.workflow-note strong{flex-shrink:0}
+.settings-links{padding:20px;display:grid;gap:10px}
+.settings-links a{display:flex;justify-content:space-between;padding:14px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+.order-responsibility{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding-top:10px;line-height:1.6}
+.detail-tabs[aria-label="订单详情分区"]{overflow-x:auto;flex-wrap:nowrap}
+.detail-tabs[aria-label="订单详情分区"] button{flex-shrink:0}
+.detail-tab-panel>.button{margin:8px 8px 8px 0}
+.overview-banner{display:none}
+.page-heading h1{font-size:20px}
+.page-heading .eyebrow,.section-heading h2 span{display:none}
+@media(max-width:600px){.module-context{margin-bottom:16px}.module-views{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.module-views a{white-space:nowrap;flex-shrink:0}.workflow-note{flex-direction:column;gap:4px}.module-record{padding:18px}.resource-panel .table-toolbar{align-items:stretch}.resource-panel .table-pagination{gap:8px;flex-wrap:wrap}.resource-panel .table-pagination .button{padding:7px}.module-empty{padding:24px 16px}.page-heading h1{font-size:20px}}
+
+/* Compact navigation belongs in ResourceListLayout's title row. */
+.compact-module-views{flex-wrap:nowrap;gap:4px;align-items:center;min-width:0}
+.compact-module-views a,.module-view-group>summary{font-size:14px;min-height:36px;white-space:nowrap;padding:7px 10px}
+.module-view-group{position:relative;flex:none}
+.module-view-group>summary{list-style:none;cursor:pointer;border-radius:6px;display:flex;align-items:center}
+.module-view-group>summary::-webkit-details-marker{display:none}
+.module-view-group>summary.is-current{background:#1677ff;font-weight:650}
+.module-view-group>div{position:absolute;left:0;top:40px;min-width:180px;max-height:65vh;overflow:auto;display:flex;flex-direction:column;gap:2px;padding:6px;background:#ffffff;border:1px solid #f0f0f0;border-radius:8px;box-shadow:0 8px 24px #23181520;z-index:20}
+@media(max-width:800px){.compact-module-views{overflow:visible;flex-wrap:wrap;padding:0}.compact-module-views a,.module-view-group>summary{min-height:44px}.module-view-group>div{left:auto;right:0;max-width:90vw}}

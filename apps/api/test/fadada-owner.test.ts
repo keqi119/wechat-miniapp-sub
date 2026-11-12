@@ -1,9 +1,11 @@
+import './legacy-esign-mode';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {FadadaOwnerClient} from '../src/owner-signing/fadada-owner.client';
 import {FadadaHttpClient} from '../src/esign/fadada/fadada-http-client';
-import {MINIAPP_PROVIDER_API,MINIAPP_RETURN} from '../src/esign/native-signing';
+import {MINIAPP_PROVIDER_API,miniappReturnUrl} from '../src/esign/native-signing';
+import {ownerH5ReturnUrl} from '../src/common/platform-origins';
 
 const config:any={enabled:true,appId:'syntheticApp',appSecret:'syntheticSecret',baseUrl:MINIAPP_PROVIDER_API,apiVersion:'2.0',requestTimeoutMs:1000};
 const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jF4kAAAAASUVORK5CYII=';
@@ -11,7 +13,7 @@ const company={customerId:'OwnerAccountA',serialNo:'VerifyOwnerA',name:'测试�
 const verified=()=>({code:1,data:{transactionNo:company.serialNo,type:'2',company:{companyName:company.name,organization:company.creditCode,organizationType:'0',status:'4'},manager:{type:'1',status:'2',personName:'测试人',mobile:'13900000000',idCard:'syntheticId'}},msg:'success'});
 const grant={customerId:company.customerId,contractId:'GrantA',transactionId:'GrantTxA'};
 test('revocation requires the owner to open the provider page and does not claim that authorization is already cancelled',()=>{
- const {client,requests}=harness({});const result=client.createRevocationUrl(company.customerId),url=new URL(result.url);assert.equal(url.pathname,'/api2/cancel_extsign_auto_page.api');assert.equal(url.searchParams.get('customer_id'),company.customerId);assert.equal(url.searchParams.get('return_url'),MINIAPP_RETURN);assert.equal(requests.length,0);assert.equal('revoked' in result,false);
+ const {client,requests}=harness({});const result=client.createRevocationUrl(company.customerId),url=new URL(result.url);assert.equal(url.pathname,'/api2/cancel_extsign_auto_page.api');assert.equal(url.searchParams.get('customer_id'),company.customerId);assert.equal(url.searchParams.get('return_url'),miniappReturnUrl());assert.equal(requests.length,0);assert.equal('revoked' in result,false);
  const params=Object.fromEntries(url.searchParams);assert.equal(params.msg_digest,digest(config.appId,config.appSecret,params.timestamp,params));
 });
 test('enterprise certificate requires a current real-name certificate and rejects wrong account evidence',async()=>{
@@ -32,9 +34,24 @@ test('provider failure cannot register an account from misleading data',async()=
 test('company verification signs every business field except m_verified_way and binds native return',async()=>{
  const {client,requests}=harness({code:1,data:{transactionNo:company.serialNo,url:Buffer.from('https://realnameverify.fadada.com/verify?a=1').toString('base64')}});
  const result=await client.createVerification(company);const p=requests[0].params;
- assert.equal(p.is_mini_program,'3');assert.equal(p.cert_flag,'1');assert.equal(p.organization_type,'0');assert.equal(p.return_url,MINIAPP_RETURN);assert.equal(p.m_verified_way,'0');
+ assert.equal(p.is_mini_program,'3');assert.equal(p.cert_flag,'1');assert.equal(p.organization_type,'0');assert.equal(p.return_url,miniappReturnUrl());assert.equal(p.m_verified_way,'0');
  assert.deepEqual(JSON.parse(p.company_info),{company_name:company.name,credit_no:company.creditCode});
  assert.equal(p.msg_digest,digest(config.appId,config.appSecret,p.timestamp,p));assert.equal(result.url,'https://realnameverify16.fadada.com/verify?a=1');assert.equal(result.serialNo,company.serialNo);
+});
+test('legal H5 verification requires legal-only face flow and signs the fixed H5 return',async()=>{
+ const {client,requests}=harness({code:1,data:{transactionNo:company.serialNo,url:Buffer.from('https://realnameverify16.fadada.com/verify?a=1').toString('base64')}});
+ await client.createVerification({...company,channel:'owner-h5',legalRepresentative:{name:'测试法人',mobile:'13900000000'}} as any);const p=requests[0].params;
+ assert.equal(p.verified_way,'3');assert.equal(p.company_principal_type,'1');assert.equal(p.m_verified_way,'0');assert.equal(p.is_mini_program,undefined);
+ assert.equal(p.return_url,ownerH5ReturnUrl());assert.equal(new URL(p.return_url).pathname,'/owner/return/');assert.equal(p.page_modify,'2');
+ assert.deepEqual(JSON.parse(p.legal_info),{legal_name:'测试法人',legal_mobile:'13900000000'});
+ assert.equal(p.msg_digest,digest(config.appId,config.appSecret,p.timestamp,p));
+});
+test('H5 authorization and revocation URLs use fixed H5 context before digest calculation',async()=>{
+ const {runOwnerH5}=await import('../src/owner-signing/fadada-owner.client');
+ const {client}=harness({});
+ const urls=await runOwnerH5(async()=>[client.createAuthorizationUrl({...grant,signatureId:'SealA'}).url,client.createRevocationUrl(company.customerId).url]);
+ for(const value of urls){const p=Object.fromEntries(new URL(value).searchParams);assert.equal(p.return_url,ownerH5ReturnUrl());assert.equal(p.open_environment,'0');assert.equal(p.msg_digest,digest(config.appId,config.appSecret,p.timestamp,p,p.transaction_id));}
+ assert.equal(new URL(client.createAuthorizationUrl({...grant,signatureId:'SealA'}).url).searchParams.get('open_environment'),'4');
 });
 test('company verification rejects a foreign URL and missing verification transaction',async()=>{
  for(const data of [{transactionNo:'v',url:Buffer.from('https://evil.example/verify').toString('base64')},{url:Buffer.from('https://realnameverify16.fadada.com/verify').toString('base64')}])await assert.rejects(harness({code:1,data}).client.createVerification(company));
@@ -66,7 +83,7 @@ test('authorization must match the saved grant document and transaction, not ano
 });
 test('authorization URL includes exact company/seal/grant and does not make HTTP call or authorize itself',()=>{
  const {client,requests}=harness({});const result=client.createAuthorizationUrl({...grant,signatureId:'SealA'});const u=new URL(result.url),p=Object.fromEntries(u.searchParams);
- assert.equal(u.pathname,'/api2/before_authsign.api');assert.equal(p.customer_id,company.customerId);assert.equal(p.signature_id,'SealA');assert.equal(p.contract_id,'GrantA');assert.equal(p.auth_type,'1');assert.equal(p.open_environment,'4');assert.equal(p.return_url,MINIAPP_RETURN);assert.equal(p.msg_digest,digest(config.appId,config.appSecret,p.timestamp,p,p.transaction_id));assert.equal(requests.length,0);assert.equal('authorized' in result,false);
+ assert.equal(u.pathname,'/api2/before_authsign.api');assert.equal(p.customer_id,company.customerId);assert.equal(p.signature_id,'SealA');assert.equal(p.contract_id,'GrantA');assert.equal(p.auth_type,'1');assert.equal(p.open_environment,'4');assert.equal(p.return_url,miniappReturnUrl());assert.equal(p.msg_digest,digest(config.appId,config.appSecret,p.timestamp,p,p.transaction_id));assert.equal(requests.length,0);assert.equal('authorized' in result,false);
 });
 test('owner manual sign binds the correct enterprise seal and coordinates without auto-signing',()=>{
  const {client,requests}=harness({});const result=client.createManualSignUrl({customerId:company.customerId,signatureId:'SealA',contractId:'ContractA',transactionId:'OwnerSignA',title:'测试订阅合同',positions:[{pagenum:2,x:200,y:700}]});const u=new URL(result.url),p=Object.fromEntries(u.searchParams);
@@ -83,4 +100,41 @@ test('default owner transport forbids redirects of signed enterprise parameters'
  const original=globalThis.fetch;let redirect:unknown;
  globalThis.fetch=async(_url,init)=>{redirect=init?.redirect;return new Response(JSON.stringify({code:1,data:'OwnerAccountA'}),{status:200});};
  try{assert.equal((await new FadadaOwnerClient(config).registerEnterprise('OwnerLocalA')).customerId,'OwnerAccountA');assert.equal(redirect,'error');}finally{globalThis.fetch=original;}
+});
+
+async function legalGuardFixture(options:{verified?:boolean;profileRevision?:number;requestedBy?:string}={}){
+ const [{OwnerService},{OwnerAuthorizationService},{ownerMobileHash}]=await Promise.all([import('../src/owner-signing/owner.service'),import('../src/owner-signing/authorization'),import('../src/owner-h5/legal-representative')]);
+ const customerId='SyntheticLegal',ownerId='SyntheticOwner',phone='13900000000',profile={name:'合成法人',mobileHash:ownerMobileHash(phone),revision:options.profileRevision||1};
+ const account={providerCustomerId:'SyntheticProvider',verificationTransactionNo:'SyntheticVerification',managerCustomerId:customerId,realNameStatus:'VERIFIED',certStatus:'BOUND',certSerialNo:'SyntheticCert',consentSnapshot:{channel:'OWNER_LEGAL_H5',customerId,legalRevision:1,legalName:profile.name,legalMobileHash:profile.mobileHash}};
+ const member={id:'SyntheticMember',status:options.verified===false?'CLAIMED':'VERIFIED',verifiedAt:new Date(),verifiedSerialNo:account.verificationTransactionNo,customer:{id:customerId,mobile:phone},owner:{id:ownerId,status:'VERIFIED',esignAccount:account,legalRepresentative:profile}};
+ const grant={id:'SyntheticGrant',ownerId,requestedBy:options.requestedBy||customerId,providerCustomerId:account.providerCustomerId,providerContractId:'SyntheticContract',providerTransactionId:'SyntheticTransaction',certificateSerialNo:'SyntheticCert',revision:1,status:'AUTHORIZED',enabled:true};
+ const calls={mutations:0,provider:0};
+ const fake:any={ownerMember:{findUnique:async()=>member},ownerESignAccount:{findUnique:async()=>account},ownerAutoAuthority:{findFirst:async()=>grant,findUnique:async()=>grant,findUniqueOrThrow:async()=>grant,update:async()=>{calls.mutations++;return grant;},updateMany:async()=>{calls.mutations++;return{count:1};}},vehicleOwner:{update:async()=>member.owner},auditLog:{create:async()=>({})}};
+ fake.serial=async(operation:any)=>operation(fake);
+ const owners=new OwnerService(fake),authority=new OwnerAuthorizationService(fake,owners,{queryAuthorization:async()=>{calls.provider++;return{authorized:true};},queryCertificate:async()=>({bound:true,serialNo:'SyntheticCert'}),createRevocationUrl:()=>{calls.provider++;return{url:'https://textapi17.fadada.com/api2/cancel_extsign_auto_page.api'};},verifyCallback:()=>({transactionId:grant.providerTransactionId,providerContractId:grant.providerContractId,record:{}})} as any);
+ return{customerId,ownerId,owners,authority,grant,calls};
+}
+test('persisted H5 identity enforces profile revision for old signing access and callbacks without a global cutover',async t=>{
+ const originalSecret=process.env.SESSION_SECRET;process.env.SESSION_SECRET='synthetic-owner-test-secret-32-characters';t.after(()=>{if(originalSecret===undefined)delete process.env.SESSION_SECRET;else process.env.SESSION_SECRET=originalSecret;});
+ const saved=process.env.OWNER_LEGAL_H5_ONLY;delete process.env.OWNER_LEGAL_H5_ONLY;
+ try{
+  const f=await legalGuardFixture({profileRevision:2}),legalError=(e:any)=>e.getResponse?.().error?.code==='OWNER_LEGAL_NOT_VERIFIED';
+  await assert.rejects(f.owners.requireSigningMember(f.customerId,f.ownerId),legalError);
+  await assert.rejects(f.authority.callback({}),legalError);assert.deepEqual(f.calls,{mutations:0,provider:0});
+ }finally{if(saved===undefined)delete process.env.OWNER_LEGAL_H5_ONLY;else process.env.OWNER_LEGAL_H5_ONLY=saved;}
+});
+test('claimed legal H5 member cannot disable a grant or obtain account-wide revocation before provider proof',async t=>{
+ const originalSecret=process.env.SESSION_SECRET;process.env.SESSION_SECRET='synthetic-owner-test-secret-32-characters';t.after(()=>{if(originalSecret===undefined)delete process.env.SESSION_SECRET;else process.env.SESSION_SECRET=originalSecret;});
+ const {runOwnerH5}=await import('../src/owner-signing/fadada-owner.client'),f=await legalGuardFixture({verified:false}),legalError=(e:any)=>e.getResponse?.().error?.code==='OWNER_LEGAL_NOT_VERIFIED';
+ await assert.rejects(runOwnerH5(()=>f.authority.setEnabled(f.customerId,f.ownerId,f.grant.id,{enabled:false,revision:1,scopeHash:''})),legalError);
+ await assert.rejects(runOwnerH5(()=>f.authority.revoke(f.customerId,f.ownerId,f.grant.id)),legalError);
+ assert.deepEqual(f.calls,{mutations:0,provider:0});
+});
+test('persisted legal H5 account cannot refresh another requester grant without global cutover',async t=>{
+ const originalSecret=process.env.SESSION_SECRET;process.env.SESSION_SECRET='synthetic-owner-test-secret-32-characters';t.after(()=>{if(originalSecret===undefined)delete process.env.SESSION_SECRET;else process.env.SESSION_SECRET=originalSecret;});
+ const saved=process.env.OWNER_LEGAL_H5_ONLY;delete process.env.OWNER_LEGAL_H5_ONLY;
+ try{
+  const f=await legalGuardFixture({requestedBy:'OldRequester'});
+  await assert.rejects(f.authority.refresh(f.customerId,f.ownerId,f.grant.id),(e:any)=>e.getResponse?.().error?.code==='OWNER_AUTH_ACTOR');assert.deepEqual(f.calls,{mutations:0,provider:0});
+ }finally{if(saved===undefined)delete process.env.OWNER_LEGAL_H5_ONLY;else process.env.OWNER_LEGAL_H5_ONLY=saved;}
 });

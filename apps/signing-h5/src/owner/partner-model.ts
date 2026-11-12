@@ -1,0 +1,19 @@
+export type PartnerTab='workbench'|'vehicles'|'orders'|'settlements';
+export interface PartnerDetail {id:string;name:string;mode:'PARTNER_READONLY';accessVersion:number;status:string;subjectType?:'ENTERPRISE'|'INDIVIDUAL';admissionStatus?:string;address?:string;platformContactPhone?:string;cooperationMode?:string;vehicleCount?:number;companyAdmin?:{status:'BOUND';maskedMobile:string;bindingMethod:string;boundAt:string|null}}
+export interface ArchiveSummary {id:string;kind:string;status:string;canRead:boolean;currentApprovedVersionId:string|null;revision:number}
+export interface ArchiveFile {id:string;name:string;mimeType:string;size:number;position:number}
+export interface ArchiveVersion {id:string;version:number;status:string;signedOn?:string;contractNumber?:string;files:ArchiveFile[]}
+export interface ArchiveDetail extends ArchiveSummary {versions:ArchiveVersion[]}
+export interface PartnerOrder {orderId:string;mode:string;stage:string;stageText:string;vehicleTitle?:string;nextAction:{code:string;label:string;enabled:boolean};contracts:ArchiveSummary[];billing:{id:string;status:string;amount:number;paidAmount:number;dueDate:string}[];handovers:{id:string;type:string;status:string}[];parties:{role:string;name:string}[];capabilities:{canReadArchive:boolean;canFeedback:boolean}}
+export interface Settlement {id:string;status:string;periodStart:string;periodEnd:string;payableAmount:number;explanation:string;lines?:{id:string;orderId?:string;category:string;payableAmount:number;explanation:string}[];account?:{accountName?:string;bankName?:string;maskedNumber?:string;accountNumber?:string};feedback?:{id:string;status:string;message:string;resolution?:string}[]}
+export function maskedSettlementAccount(account:NonNullable<Settlement['account']>){const value=account.maskedNumber||account.accountNumber||'';return /^[*•xX]{1,64}\d{4}$/.test(value)?value:'尾号待核对';}
+const labels:Record<string,string>={AWAITING_CONTRACT_REVIEW:'待线下合同审核',AWAITING_PAYMENT:'待客户付款',AWAITING_HANDOVER:'待交车',ACTIVE:'用车中',SETTLING:'还车结算中',COMPLETED:'已完成',CANCELLED:'已取消',DRAFT:'待准备',SUBMITTED:'待复核',REJECTED:'待补充',ARCHIVED:'已归档',INVALIDATED:'已失效',APPROVED:'已复核，待付款',PAYMENT_RECORDED:'已登记实付，待核对',PAID:'已核对付款',OFFSET_REQUIRED:'待抵扣或追偿',PENDING:'待支付',OPEN:'待处理',RESOLVED:'已处理',VERIFIED:'已核验',PUBLISHED:'可订阅',UNPUBLISHED:'未上架',RESERVED:'订单占用',IN_USE:'使用中',DELIVERY:'交车',RETURN:'还车',CUSTOMER_CONFIRMED:'客户已确认查验',OBJECTION_SUBMITTED:'查验有异议'};
+export const partnerStatus=(value:string)=>labels[value]||'待核对';
+export const cooperationStatus=(value:string)=>({ACTIVE:'合作中',VERIFIED:'合作资料已核验',DRAFT:'合作登记中',SUSPENDED:'合作已暂停',TERMINATED:'合作已终止'}[value]||'待运营核对');
+export const archiveKind=(value:string)=>({OWNER_COOPERATION:'合作协议',RENTAL:'订单租赁合同',ORDER_AMENDMENT:'订单补充协议',DELIVERY_RECEIPT:'交车确认单',RETURN_RECEIPT:'还车确认单',TERMINATION:'终止协议'}[value]||'合同资料');
+export const partnerRelationship=(type?:string,relationship?:string)=>type==='INDIVIDUAL'&&relationship==='SELF'?'本人':relationship==='ENTERPRISE_REPRESENTATIVE'?'企业代表 / 经办人':'关系待核对';
+export const partnerMoney=(value:number)=>Number.isSafeInteger(value)?new Intl.NumberFormat('zh-CN',{style:'currency',currency:'CNY'}).format(value/100):'待核对';
+export const partnerDate=(value?:string)=>value?value.slice(0,10):'待核对';
+export function partnerRoute(hash:string,ownerId:string):{tab:PartnerTab;orderId?:string}{const m=/^#\/owners\/([A-Za-z0-9_-]+)\/(workbench|vehicles|orders|settlements)(?:\/([A-Za-z0-9_-]+))?$/.exec(hash);if(!m||m[1]!==ownerId||m[3]&&m[2]!=='orders')return{tab:'workbench'};return{tab:m[2] as PartnerTab,...(m[2]==='orders'&&m[3]?{orderId:m[3]}:{})};}
+function id(value:string){if(!/^[A-Za-z0-9_-]+$/.test(value))throw Error('记录入口已变化，请重新读取。');return value;}
+export const scopedArchiveFilePath=(ownerId:string,archiveId:string,versionId:string,fileId:string)=>`/owners/${id(ownerId)}/offline-archives/${id(archiveId)}/versions/${id(versionId)}/files/${id(fileId)}`;

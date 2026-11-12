@@ -1,0 +1,44 @@
+{
+  "status": "APPROVED",
+  "approvedAt": "2026-10-19T16:00:33.156Z",
+  "approvedBy": "宁达运营方（当前会话用户明确授权）",
+  "approvalStatement": "用户协议和隐私协议，请参考晓浪科技版本发布，注意主体更换即可。",
+  "contactInstruction": "仅使用 like@ndacar.com 邮箱",
+  "sourceThread": "01a1547a-f3ae-7301-a4f5-7d24e8e262f1",
+  "scope": [
+    "terms",
+    "privacy"
+  ],
+  "sourceVerification": "旧公开接口已只读核对，与本地来源正文逐字一致；不继承旧主体批准记录",
+  "editorialChanges": [
+    "品牌、运营主体及注册地址替换",
+    "联系方式改为已确认邮箱并移除旧电话、旧Gmail专属说明",
+    "新主体独立版本及本次授权日期；其余业务条款、期限、第三方名称和链接保持"
+  ],
+  "documents": [
+    {
+      "type": "terms",
+      "title": "宁达汽车小程序用户协议",
+      "file": "user-agreement-v1.md",
+      "source": "docs/legal/user-agreement.md",
+      "sourceVersion": 3,
+      "sourceId": "cmvc5ygy40001q901emupzodd",
+      "sourceHash": "c6e03eb6d66adb35b0c23a9de262dff29ec714c007dd7c74fe3a02b421a9f383",
+      "path": "docs/legal/versions/ninda/user-agreement-v1.md",
+      "version": 1,
+      "sha256": "66ba9b003e939bef3a4c58d9edde1029ccf915dff1a315782fa40fffc6a9bed4"
+    },
+    {
+      "type": "privacy",
+      "title": "宁达汽车小程序隐私政策",
+      "file": "privacy-policy-v1.md",
+      "source": "docs/legal/versions/location-update/privacy-policy-v3-location.md",
+      "sourceVersion": 5,
+      "sourceId": "cmvc5yh7a0004q901k6k9q5al",
+      "sourceHash": "257fb0698edc27e4d52a32b1ab9f4cbbc041f6c3ce9e840de3a4ebf9c7fc4f76",
+      "path": "docs/legal/versions/ninda/privacy-policy-v1.md",
+      "version": 1,
+      "sha256": "0082a7120cb50c3ea17e4cb097c07906b529598fdc7a0441ed9e6d091774cd40"
+    }
+  ]
+}

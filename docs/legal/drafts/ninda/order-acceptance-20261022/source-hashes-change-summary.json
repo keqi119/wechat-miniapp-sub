@@ -1,0 +1,378 @@
+{
+  "status": "DRAFT_PENDING_CONFIRMATION",
+  "published": false,
+  "createdOn": "2026-10-22",
+  "purpose": "宁达 ET5T 受控订单申请、签约、支付、还车验收所需五份正式文案候选稿；未经确认不发布。",
+  "operator": "上海宁达信息科技有限公司",
+  "contactEmail": "like@ndacar.com",
+  "combinedReviewFile": "output/text/宁达-订单验收正式文案审阅包-待确认-20261022.txt",
+  "combinedReviewSha256": "1e56744606d2cc2c0791c13147d8b18e0ffbaeab7c642145acc4e29284d22c40",
+  "sourceApprovedDocumentsDoNotConstituteNindaApproval": true,
+  "changesLimitedTo": [
+    "品牌：纯电主义 → 宁达汽车",
+    "运营/交接作业主体：上海晓浪网络科技有限公司 → 上海宁达信息科技有限公司",
+    "联系邮箱：keqi119@gmail.com → like@ndacar.com；移除旧客服电话及改写旧电话联系语句",
+    "移除旧主体批准日期与批准状态，使用宁达候选版本及实际发布生效说明"
+  ],
+  "semanticChangesRequiringConfirmation": [
+    "联系电话渠道改为邮箱，已落实用户仅使用 like@ndacar.com 的既有要求。",
+    "usage-policy 延续原稿的“服务提供方”称谓并换为宁达，未擅自改写实际出租企业的责任分工；它须作为具体最终方案附件由客户确认并随合同签署后适用。",
+    "owner-handover 仅将交接作业方换为宁达；出租方仍为逐单 lessorName/lessorCreditCode，宁达作业签章不替代出租方确认。"
+  ],
+  "unresolvedBusinessTerms": [],
+  "unresolvedTemplatePlaceholders": [
+    {
+      "type": "owner-handover",
+      "name": "orderNo",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "handoverType",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "handoverId",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "contractNo",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "lessorName",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "lessorCreditCode",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "customerName",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "actualTimeAndPlace",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "vehicleIdentification",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "readingKm",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "batteryLevel",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "accessoriesChecklist",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "conditionChecklist",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "openItems",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "attachmentManifest",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "manifestHash",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "customerResponse",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "objection",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "resolutionPlan",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "staffName",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "platformSignatureSlot",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    },
+    {
+      "type": "owner-handover",
+      "name": "customerSignatureSlot",
+      "handling": "生成逐单交接确认单时由实际记录填入；不是平台默认值或发布占位缺失。"
+    }
+  ],
+  "documents": [
+    {
+      "type": "application",
+      "version": 1,
+      "title": "宁达汽车订阅申请须知",
+      "draftFile": "docs/legal/drafts/ninda/order-acceptance-20261022/application-notice-v1.md",
+      "draftSha256": "ff8aa61cf02771043d89d093f93b79446dfd8a30a1bc5819b8ebe81dd0ec8224",
+      "status": "DRAFT_PENDING_CONFIRMATION",
+      "published": false,
+      "sourceApprovalManifest": "docs/legal/location-approval-manifest.json",
+      "sourceApprovalManifestSha256": "c82cb15a78644b5abbb2578713b303227ab40df3f1cd2508676c597c3774d499",
+      "sourceApprovedOn": "2026-10-17",
+      "sourceApprovalStatement": "已审阅，批准这三份文案",
+      "sourceApprovedDraft": "docs/legal/drafts/application-notice-v3-location.md",
+      "sourceApprovedDraftSha256": "8cbf113fcaa9d53b5d66cfdbbe47a8dfedc1bc64102371954ad1d4d58a61b1c9",
+      "sourceFinalFile": "docs/legal/versions/location-update/application-notice-v3-location.md",
+      "sourceFinalSha256": "ac1538cb48ce77f869c3cd2d8d11a66a21b80c460aa51dc8471affb5e1e9a776",
+      "sourceHashesVerified": true,
+      "bodyNumericTokensUnchangedExcludingRemovedOldPhoneAndEmail": true,
+      "placeholdersUnchanged": true,
+      "placeholders": [],
+      "changes": [
+        {
+          "from": "正式文本 v3.0｜2026-10-17 已批准｜生效日期以实际发布为准",
+          "to": "宁达文本 v1.0｜生效日期以实际发布记录为准",
+          "reason": "移除旧主体的批准日期/批准状态；宁达版本尚待用户确认，实际生效以发布为准。"
+        },
+        {
+          "from": "纯电主义",
+          "to": "宁达汽车",
+          "count": 1,
+          "reason": "品牌更换"
+        },
+        {
+          "from": "上海晓浪网络科技有限公司",
+          "to": "上海宁达信息科技有限公司",
+          "count": 1,
+          "reason": "平台运营/交接作业主体更换；不更改出租方占位符"
+        },
+        {
+          "from": "客服电话 +86 18616570212，联系邮箱 keqi119@gmail.com",
+          "to": "联系邮箱 like@ndacar.com",
+          "count": 1,
+          "reason": "移除旧电话，改用宁达已指定邮箱"
+        },
+        {
+          "from": "可通过客服电话申请人工联系",
+          "to": "可通过联系邮箱 like@ndacar.com 申请人工联系",
+          "count": 1,
+          "reason": "联系渠道从旧客服电话改为宁达邮箱"
+        }
+      ]
+    },
+    {
+      "type": "credit-verification",
+      "version": 1,
+      "title": "人工核验芝麻分及押金规则说明",
+      "draftFile": "docs/legal/drafts/ninda/order-acceptance-20261022/manual-credit-verification-v1.md",
+      "draftSha256": "cbbc4e5f8643ac688fcd9e227c17160078df9baa7cc4c41b19789cbbd98cff6b",
+      "status": "DRAFT_PENDING_CONFIRMATION",
+      "published": false,
+      "sourceApprovalManifest": "docs/legal/credit-approval-manifest.json",
+      "sourceApprovalManifestSha256": "cd8178247d6daffaf18c3fe70a5150d4a2dbba71fb4989157878f3776e28f575",
+      "sourceApprovedOn": "2026-10-16",
+      "sourceApprovalStatement": "已审阅，批准这三份文本",
+      "sourceApprovedDraft": "docs/legal/drafts/manual-credit-verification-v1.md",
+      "sourceApprovedDraftSha256": "55ac6de89375f1c2ab03d82bc1619be2a7703ad23e8d71fb93640e70e61674bc",
+      "sourceFinalFile": "docs/legal/versions/credit-update/manual-credit-verification-v1.md",
+      "sourceFinalSha256": "551c3fc531f20d7fbb8fde068f10cb383c8d99fdc5434fcf3f065e9d91eea068",
+      "sourceHashesVerified": true,
+      "bodyNumericTokensUnchangedExcludingRemovedOldPhoneAndEmail": true,
+      "placeholdersUnchanged": true,
+      "placeholders": [],
+      "changes": [
+        {
+          "from": "正式文本 v1.0｜2026-10-16 经运营主体确认；生效日期以实际发布为准。",
+          "to": "宁达文本 v1.0｜生效日期以实际发布记录为准。",
+          "reason": "移除旧主体的批准日期/批准状态；宁达版本尚待用户确认，实际生效以发布为准。"
+        },
+        {
+          "from": "上海晓浪网络科技有限公司",
+          "to": "上海宁达信息科技有限公司",
+          "count": 2,
+          "reason": "平台运营/交接作业主体更换；不更改出租方占位符"
+        },
+        {
+          "from": "客服电话 +86 18616570212，隐私联系邮箱 keqi119@gmail.com",
+          "to": "隐私联系邮箱 like@ndacar.com",
+          "count": 1,
+          "reason": "移除旧电话，改用宁达已指定邮箱"
+        },
+        {
+          "from": "您可以通过客服电话提出",
+          "to": "您可以通过联系邮箱 like@ndacar.com 提出",
+          "count": 1,
+          "reason": "联系渠道从旧客服电话改为宁达邮箱"
+        }
+      ]
+    },
+    {
+      "type": "usage-policy",
+      "version": 1,
+      "title": "订阅里程、权益及退订结算规则",
+      "draftFile": "docs/legal/drafts/ninda/order-acceptance-20261022/usage-policy-v1.md",
+      "draftSha256": "ca90c9cfca32489f3f9c68b1917e3189759b4b3f55abc3c981a90ac445f75179",
+      "status": "DRAFT_PENDING_CONFIRMATION",
+      "published": false,
+      "sourceApprovalManifest": "docs/legal/usage-approval-manifest.json",
+      "sourceApprovalManifestSha256": "feba0f1ee46acc1cc500f28fbaea528f10e2bce533d120feeb151c10f6526744",
+      "sourceApprovedOn": "2026-10-16",
+      "sourceApprovalStatement": "已审阅，批准三份条款",
+      "sourceApprovedDraft": "docs/legal/drafts/usage-policy-v1.md",
+      "sourceApprovedDraftSha256": "82956b22079ea05684589b9f598b04b2653d3cd750b916ab636a94abeb3738dd",
+      "sourceFinalFile": "docs/legal/versions/usage-update/usage-policy-v1.md",
+      "sourceFinalSha256": "3299366929cdaff10d811f94b9c9e3835da95ae7468b0dc34d84fe96b85d5b3f",
+      "sourceHashesVerified": true,
+      "bodyNumericTokensUnchangedExcludingRemovedOldPhoneAndEmail": true,
+      "placeholdersUnchanged": true,
+      "placeholders": [],
+      "changes": [
+        {
+          "from": "正式文本 v1.0｜2026-10-16 经运营主体确认。经运营主体批准、作为具体最终方案附件由客户确认并随合同签署后适用；不单方面改变已有合同。",
+          "to": "宁达文本 v1.0｜生效日期以实际发布记录为准。经运营主体批准、作为具体最终方案附件由客户确认并随合同签署后适用；不单方面改变已有合同。",
+          "reason": "移除旧主体的批准日期/批准状态；宁达版本尚待用户确认，实际生效以发布为准。"
+        },
+        {
+          "from": "上海晓浪网络科技有限公司",
+          "to": "上海宁达信息科技有限公司",
+          "count": 1,
+          "reason": "平台运营/交接作业主体更换；不更改出租方占位符"
+        },
+        {
+          "from": "电话：+86 18616570212；邮箱：keqi119@gmail.com",
+          "to": "联系邮箱：like@ndacar.com",
+          "count": 1,
+          "reason": "移除旧电话，改用宁达已指定邮箱"
+        }
+      ]
+    },
+    {
+      "type": "handover-location",
+      "version": 1,
+      "title": "交接地点选择说明",
+      "draftFile": "docs/legal/drafts/ninda/order-acceptance-20261022/handover-location-notice-v1.md",
+      "draftSha256": "1cad87fbadea30ccf009071fb90733826d51d74cf5e084d96bc8709f5b91a736",
+      "status": "DRAFT_PENDING_CONFIRMATION",
+      "published": false,
+      "sourceApprovalManifest": "docs/legal/location-approval-manifest.json",
+      "sourceApprovalManifestSha256": "c82cb15a78644b5abbb2578713b303227ab40df3f1cd2508676c597c3774d499",
+      "sourceApprovedOn": "2026-10-17",
+      "sourceApprovalStatement": "已审阅，批准这三份文案",
+      "sourceApprovedDraft": "docs/legal/drafts/handover-location-notice-v1.md",
+      "sourceApprovedDraftSha256": "2df33f327b38ae2f30d3e523b0470970ee8745cf12faabc1505963ed54fa14be",
+      "sourceFinalFile": "docs/legal/versions/location-update/handover-location-notice-v1.md",
+      "sourceFinalSha256": "be20281dc9dc9f5594a51c919dc11ea022a9076b8886092cf1aa78a2a688548e",
+      "sourceHashesVerified": true,
+      "bodyNumericTokensUnchangedExcludingRemovedOldPhoneAndEmail": true,
+      "placeholdersUnchanged": true,
+      "placeholders": [],
+      "changes": [
+        {
+          "from": "正式文本 v1.0｜2026-10-17 已批准｜生效日期以实际发布为准",
+          "to": "宁达文本 v1.0｜生效日期以实际发布记录为准",
+          "reason": "移除旧主体的批准日期/批准状态；宁达版本尚待用户确认，实际生效以发布为准。"
+        },
+        {
+          "from": "上海晓浪网络科技有限公司",
+          "to": "上海宁达信息科技有限公司",
+          "count": 1,
+          "reason": "平台运营/交接作业主体更换；不更改出租方占位符"
+        },
+        {
+          "from": "可联系客服电话 +86 18616570212",
+          "to": "可联系邮箱 like@ndacar.com",
+          "count": 1,
+          "reason": "移除旧电话，改用宁达已指定邮箱"
+        }
+      ]
+    },
+    {
+      "type": "owner-handover",
+      "version": 1,
+      "title": "企业车主车辆交接确认单",
+      "draftFile": "docs/legal/drafts/ninda/order-acceptance-20261022/owner-handover-v1.md",
+      "draftSha256": "c9b939a7f1bb279b2e37a5fc8214615d671f6e585274d6a1c451e1f8f3a6ec9d",
+      "status": "DRAFT_PENDING_CONFIRMATION",
+      "published": false,
+      "sourceApprovalManifest": "docs/legal/owner-followup-approval-manifest.json",
+      "sourceApprovalManifestSha256": "770b3548912db04f279036689adef1cca2cb70d578377f9194c1d891af1cb215",
+      "sourceApprovedOn": "2026-10-17",
+      "sourceApprovalStatement": "批准三份模板，逐单内容另行确认",
+      "sourceApprovedDraft": "docs/legal/drafts/owner-handover-v1.md",
+      "sourceApprovedDraftSha256": "ca4fa5189f0512c418661a974612c6330d34a3c5c85b770ce16179db0bc67db1",
+      "sourceFinalFile": "docs/legal/versions/owner-signing/owner-handover-v1.md",
+      "sourceFinalSha256": "3ebc9e885c92ecd389c11317d09b961543e849274ff622d3384839a0275e9bfc",
+      "sourceHashesVerified": true,
+      "bodyNumericTokensUnchangedExcludingRemovedOldPhoneAndEmail": true,
+      "placeholdersUnchanged": true,
+      "placeholders": [
+        "orderNo",
+        "handoverType",
+        "handoverId",
+        "contractNo",
+        "lessorName",
+        "lessorCreditCode",
+        "customerName",
+        "actualTimeAndPlace",
+        "vehicleIdentification",
+        "readingKm",
+        "batteryLevel",
+        "accessoriesChecklist",
+        "conditionChecklist",
+        "openItems",
+        "attachmentManifest",
+        "manifestHash",
+        "customerResponse",
+        "objection",
+        "resolutionPlan",
+        "staffName",
+        "platformSignatureSlot",
+        "customerSignatureSlot"
+      ],
+      "changes": [
+        {
+          "from": "审定版 v1.0｜2026-10-17｜已获用户批准；逐单事实及金额须相关方另行确认。",
+          "to": "宁达文本 v1.0｜生效日期以实际发布记录为准；逐单事实及金额须相关方另行确认。",
+          "reason": "移除旧主体的批准日期/批准状态；宁达版本尚待用户确认，实际生效以发布为准。"
+        },
+        {
+          "from": "上海晓浪网络科技有限公司",
+          "to": "上海宁达信息科技有限公司",
+          "count": 2,
+          "reason": "平台运营/交接作业主体更换；不更改出租方占位符"
+        },
+        {
+          "from": "晓浪依本单",
+          "to": "宁达依本单",
+          "count": 1,
+          "reason": "主体简称更换"
+        }
+      ]
+    }
+  ]
+}

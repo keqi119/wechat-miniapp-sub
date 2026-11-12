@@ -1,3 +1,4 @@
+import './legacy-esign-mode';
 import '../src/common/config';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,6 +19,7 @@ import {OwnerContractGateway} from '../src/owner-signing/gateway';
 import {SignatureService} from '../src/orders/signature.service';
 import {FadadaOwnerClient} from '../src/owner-signing/fadada-owner.client';
 import {resolveDelayTemplate} from '../src/contract/delay-template';
+import {platformLegalEntity} from '../src/common/platform-legal-entity';
 let db:Db,writer:ContractPdfArtifactWriterService,prepare:OwnerContractPreparation,gateway:OwnerContractGateway,admin:any,f:any,tenant:any,contract:any,task:any;
 const settings:any={enabled:true,signingEnabled:true,baseUrl:MINIAPP_PROVIDER_API,apiVersion:'2.0',appId:'synthetic',appSecret:'syntheticSecret',identityEncryptionKey:Buffer.alloc(32,8).toString('base64'),cjkFontPath:'C:/Windows/Fonts/simhei.ttf',requestTimeoutMs:1000};
 let uploads=0,seals=0,downloadSource=false,badProof=false;const remote=new Map<string,boolean>(),pdfs=new Map<string,Buffer>();
@@ -38,6 +40,8 @@ after(async()=>{delete process.env.OWNER_CONTRACTS_ENABLED;await db?.$disconnect
 test('preparation binds actual enterprise and tenant, preserves source bytes and requires PDF review before upload',async()=>{
  task=await prepare.prepare(admin.id,contract.id);assert.equal(task.status,'PREPARED');assert.equal(uploads,0);assert.equal((await prepare.prepare(admin.id,contract.id)).sourceFileId,task.sourceFileId);
  const stored=await db.ownerSigningTask.findUniqueOrThrow({where:{id:task.id},include:{parties:true}});assert.equal(stored.parties.find(p=>p.role==='OWNER')?.providerCustomerId,f.seal.providerCustomerId);assert.notEqual(stored.parties[0].providerCustomerId,stored.parties[1].providerCustomerId);
+ assert.deepEqual((stored.snapshot as any).delegate,{id:'PLATFORM_OPERATOR',name:platformLegalEntity()});assert.equal((stored.snapshot as any).documentKind,'SUBSCRIPTION_WITH_FEES');assert.equal((stored.snapshot as any).template.type,'owner-rental-contract');
+ const legacySnapshot={...(stored.snapshot as any)};delete legacySnapshot.delegate;delete legacySnapshot.documentKind;await db.ownerSigningTask.update({where:{id:task.id},data:{snapshot:legacySnapshot}});await prepare.prepare(admin.id,contract.id);assert.equal((await db.ownerSigningTask.findUniqueOrThrow({where:{id:task.id}})).snapshot?.['delegate'],undefined);await db.ownerSigningTask.update({where:{id:task.id},data:{snapshot:stored.snapshot!}});
  await assert.rejects(gateway.customerSign(tenant.id,contract.id),code('OWNER_REVIEW_REQUIRED'));assert.equal(uploads,0);
  await prepare.review(admin.id,task.id,{sourceSha256:task.sourceSha256,documentHash:task.documentHash,accepted:true});
 });
@@ -68,14 +72,49 @@ async function freshTask(){
  const original=await db.ownerSigningTask.findUniqueOrThrow({where:{id:task.id}});const c=await db.contract.create({data:{orderId:contract.orderId,customerId:tenant.id,documentHash:hash(randomUUID()),sourceFileId:original.sourceFileId,status:'PENDING'}});
  const t=await db.ownerSigningTask.create({data:{ownerId:f.owner.id,customerId:tenant.id,kind:'SUBSCRIPTION',resourceId:c.id,documentHash:c.documentHash,sourceFileId:original.sourceFileId,sourceSha256:original.sourceSha256,providerContractId:randomUUID().replaceAll('-',''),snapshot:original.snapshot!,ownerSealId:f.seal.id,reviewedBy:admin.id,reviewedAt:new Date(),uploadedAt:new Date(),status:'READY',parties:{create:[{role:'OWNER',providerCustomerId:f.seal.providerCustomerId,providerSignatureId:f.seal.providerSignatureId,transactionId:randomUUID().replaceAll('-','')},{role:'CUSTOMER',providerCustomerId:(await db.eSignAccount.findUniqueOrThrow({where:{customerId:tenant.id}})).providerCustomerId!,transactionId:randomUUID().replaceAll('-',''),attemptedAt:new Date(),status:'SUBMITTING'}]}}});await db.contract.update({where:{id:c.id},data:{providerTaskId:t.id}});await db.order.update({where:{id:c.orderId},data:{status:'AWAITING_SIGNATURE'}});pdfs.set(t.providerContractId,await writer.readVerified(t.sourceFileId,t.sourceSha256));return{t,c};
 }
+test('manual-only rollout permits customer and owner entries without opening automatic sealing',async()=>{
+ const {t,c}=await freshTask(),oldSigning=settings.signingEnabled;settings.signingEnabled=false;process.env.OWNER_MANUAL_CONTRACTS_ENABLED='true';
+ try{
+  assert.ok((await gateway.customerSign(tenant.id,c.id)).url);
+  const cp=await db.ownerSigningParty.findUniqueOrThrow({where:{taskId_role:{taskId:t.id,role:'CUSTOMER'}}});remote.set(cp.transactionId,true);await gateway.query(t.id,false);
+  process.env.OWNER_AUTO_SIGNING_ENABLED='true';const before=seals;assert.equal((await gateway.query(t.id,true)).status,'PENDING');assert.equal(seals,before);assert.equal((await db.ownerSigningTask.findUniqueOrThrow({where:{id:t.id}})).ownerDispatchAt,null);
+  assert.ok((await gateway.ownerSign(f.customer.id,f.owner.id,t.id)).url);assert.equal(seals,before);
+ }finally{settings.signingEnabled=oldSigning;delete process.env.OWNER_MANUAL_CONTRACTS_ENABLED;delete process.env.OWNER_AUTO_SIGNING_ENABLED;}
+});
+test('owner manual dispatch rejects customer without verified signing evidence and leaves no dispatch intent',async()=>{
+ const {t}=await freshTask();await assert.rejects(gateway.ownerSign(f.customer.id,f.owner.id,t.id),code('OWNER_CUSTOMER_SIGNATURE_REQUIRED'));
+ assert.equal((await db.ownerSigningTask.findUniqueOrThrow({where:{id:t.id}})).ownerDispatchAt,null);
+});
+test('manual continuation only reopens a proven absent original transaction, never unknown or rejected results',async()=>{
+ const {t}=await freshTask(),cp=await db.ownerSigningParty.findUniqueOrThrow({where:{taskId_role:{taskId:t.id,role:'CUSTOMER'}}});remote.set(cp.transactionId,true);await gateway.query(t.id,false);
+ const first=await gateway.ownerSign(f.customer.id,f.owner.id,t.id),party=await db.ownerSigningParty.findUniqueOrThrow({where:{taskId_role:{taskId:t.id,role:'OWNER'}}});
+ const resumed=await gateway.ownerSign(f.customer.id,f.owner.id,t.id);assert.equal(new URL(resumed.url!).searchParams.get('transaction_id'),new URL(first.url!).searchParams.get('transaction_id'));
+ remote.set(party.transactionId,false);await assert.rejects(gateway.ownerSign(f.customer.id,f.owner.id,t.id),code('SIGNATURE_RESULT_UNKNOWN'));
+ const saved=api.querySignResult;api.querySignResult=async(i:any)=>{if(i.transactionId!==party.transactionId)return saved(i);const raw={code:1,data:{result:'3001'}};recordFadadaQuery(raw,i);return{raw,status:'FAILED',resultCode:'3001'};};
+ try{await assert.rejects(gateway.ownerSign(f.customer.id,f.owner.id,t.id),code('SIGNATURE_STATE'));}finally{api.querySignResult=saved;}
+ remote.delete(party.transactionId);await assert.rejects(gateway.ownerSign(f.customer.id,f.owner.id,t.id),code('SIGNATURE_STATE'));
+ assert.equal((await db.ownerSigningParty.findUniqueOrThrow({where:{id:party.id}})).transactionId,party.transactionId);
+});
+test('customer manual continuation also rejects an unknown original signing result',async()=>{
+ const {t,c}=await freshTask(),party=await db.ownerSigningParty.findUniqueOrThrow({where:{taskId_role:{taskId:t.id,role:'CUSTOMER'}}});remote.set(party.transactionId,false);
+ await assert.rejects(gateway.customerSign(tenant.id,c.id),code('SIGNATURE_RESULT_UNKNOWN'));
+ assert.equal((await db.ownerSigningParty.findUniqueOrThrow({where:{id:party.id}})).transactionId,party.transactionId);
+});
+test('verified customer signature survives later absent results and cannot obtain another manual entry',async()=>{
+ const {t,c}=await freshTask(),party=await db.ownerSigningParty.findUniqueOrThrow({where:{taskId_role:{taskId:t.id,role:'CUSTOMER'}}});remote.set(party.transactionId,true);await gateway.query(t.id,false);
+ remote.delete(party.transactionId);await assert.rejects(gateway.customerSign(tenant.id,c.id),code('SIGNER_ALREADY_SIGNED'));await gateway.query(t.id,false);
+ const saved=await db.ownerSigningParty.findUniqueOrThrow({where:{id:party.id}});assert.equal(saved.status,'SIGNED');assert.ok(saved.verifiedAt&&saved.queryEvidenceHash);
+});
 test('generic file settlement cannot bypass actual owner signature proof',async()=>{
  const {t,c}=await freshTask(),file=await db.storedFile.findUniqueOrThrow({where:{id:task.sourceFileId}});await assert.rejects(new SignatureService(db).settleContract(c.id,{status:'SIGNED',documentHash:c.documentHash,taskId:t.id,signedFileId:file.id}),code('OWNER_ARCHIVE_PROOF'));
 });
 test('unknown automatic signature outcome retains one owner transaction and recovers by query without re-sealing',async()=>{
  process.env.OWNER_AUTO_SIGNING_ENABLED='true';const {t}=await freshTask(),snapshot=t.snapshot as any,cp=await db.ownerSigningParty.findUniqueOrThrow({where:{taskId_role:{taskId:t.id,role:'CUSTOMER'}}});remote.set(cp.transactionId,true);
  const scope={...f.scope,templateId:snapshot.template.id,templateVersion:snapshot.template.version,templateHash:snapshot.template.hash};await db.ownerAutoAuthority.create({data:{ownerId:f.owner.id,sealId:f.seal.id,providerCustomerId:f.seal.providerCustomerId,providerSignatureId:f.seal.providerSignatureId,certificateSerialNo:snapshot.lessor.certificateSerialNo,providerContractId:randomUUID(),providerTransactionId:randomUUID(),requestedBy:f.customer.id,idempotencyKey:randomUUID(),requestHash:hash(scope),scope,scopeHash:hash(scope),consentSnapshot:{synthetic:true},status:'AUTHORIZED',enabled:true,checkedAt:new Date()}});
- const saved=api.autoSealContract;let attempted=0;api.autoSealContract=async(i:any)=>{attempted++;remote.set(i.transactionId,true);throw new Error('synthetic transport timeout after provider acceptance');};
- try{await assert.rejects(gateway.query(t.id,true),/synthetic transport timeout/);const stored=await db.ownerSigningTask.findUniqueOrThrow({where:{id:t.id}});assert.ok(stored.ownerDispatchAt);assert.equal(stored.ownerMode,'AUTO');const result=await gateway.query(t.id,true);assert.equal(result.status,'SIGNED');assert.equal(attempted,1);}finally{api.autoSealContract=saved;delete process.env.OWNER_AUTO_SIGNING_ENABLED;await db.ownerAutoAuthority.updateMany({where:{ownerId:f.owner.id},data:{enabled:false}});}
+ const saved=api.autoSealContract;let attempted=0;api.autoSealContract=async()=>{attempted++;throw new Error('query must not re-dispatch a historical signature');};
+ const ownerParty=await db.ownerSigningParty.findUniqueOrThrow({where:{taskId_role:{taskId:t.id,role:'OWNER'}}});
+ await db.ownerSigningTask.update({where:{id:t.id},data:{ownerMode:'AUTO',ownerDispatchAt:new Date()}});await db.ownerSigningParty.update({where:{id:ownerParty.id},data:{status:'UNKNOWN',attemptedAt:new Date()}});
+ try{assert.equal((await gateway.query(t.id,true)).status,'PENDING');assert.equal(attempted,0);remote.set(ownerParty.transactionId,true);const result=await gateway.query(t.id,true);assert.equal(result.status,'SIGNED');assert.equal(attempted,0);assert.equal((await db.ownerSigningParty.findUniqueOrThrow({where:{id:ownerParty.id}})).transactionId,ownerParty.transactionId);}finally{api.autoSealContract=saved;delete process.env.OWNER_AUTO_SIGNING_ENABLED;await db.ownerAutoAuthority.updateMany({where:{ownerId:f.owner.id},data:{enabled:false}});}
 });
 test('unknown upload is recovered by matching existing remote source instead of a second upload',async()=>{
  const {t,c}=await freshTask();await db.ownerSigningTask.update({where:{id:t.id},data:{uploadedAt:null,status:'PREPARED'}});const cp=await db.ownerSigningParty.findUniqueOrThrow({where:{taskId_role:{taskId:t.id,role:'CUSTOMER'}}});await db.ownerSigningParty.update({where:{id:cp.id},data:{attemptedAt:null}});

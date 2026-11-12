@@ -14,8 +14,8 @@
     ><button class="secondary" bindtap="openUse">返回用车</button></view
   ><block wx:else
     ><view class="notice"
-      >提交后由工作人员受理、联系和派单。如遇紧急危险，请先使用当地紧急求助渠道。</view
-    ><view class="card"
+      >{{type === "benefit" ? "提交后由工作人员受理。申请不等于已使用次数，预占与使用以实际履约记录为准。" : "提交后由工作人员受理、联系和派单。如遇紧急危险，请先使用当地紧急求助渠道。"}}</view
+    ><view wx:if="{{entitlement}}" class="card"><view class="section-title">{{entitlement.title}}</view><view>{{entitlement.description}}</view><view class="muted">{{entitlement.provider}} · {{entitlement.conditions}}</view><view wx:if="{{entitlement.kind === 'COUNT'}}">可用 {{entitlement.availableQuantity}} {{entitlement.unit}}</view></view><view class="card"
       ><view class="label">当前车辆</view><view>{{subscription.vehicleName}}</view
       ><view class="divider" /><view class="field"
         ><view class="label">具体位置</view

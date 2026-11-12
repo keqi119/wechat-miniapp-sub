@@ -1,0 +1,42 @@
+import {randomUUID} from 'node:crypto';
+export const woActor={id:'ops',role:'OPERATIONS',authVersion:1},woFinance={id:'finance',role:'FINANCE',authVersion:1};
+export const woNow=new Date('2026-10-31T03:00:00Z');
+export const woCommand=(revision=0)=>({revision,idempotencyKey:randomUUID()});
+export const woError=(expected:string)=>(error:any)=>error.getResponse?.().error?.code===expected;
+export const woInput=(extra:any={})=>({...woCommand(),vehicleId:'vehicle',vehicleRevision:3,kind:'REPAIR',priority:'NORMAL',title:'真实维修',description:'实际情况说明',occurredAt:'2026-10-30T10:00:00+08:00',sourceServiceRequestId:null,relatedWorkOrderId:null,costConfirmationRequired:true,noCostReason:null,accident:null,...extra});
+const clone=<T>(value:T):T=>structuredClone(value);
+function matches(row:any,where:any):boolean{return !where||Object.entries(where).every(([key,value]:any)=>{
+ if(key==='OR')return value.some((part:any)=>matches(row,part));if(key==='AND')return value.every((part:any)=>matches(row,part));if(key==='NOT')return !matches(row,value);
+ if(key.includes('_')&&row[key]===undefined)return matches(row,value);const actual=row[key];
+ if(value&&typeof value==='object'&&!(value instanceof Date))return Object.entries(value).every(([op,wanted]:any)=>op==='in'?wanted.includes(actual):op==='notIn'?!wanted.includes(actual):op==='not'?(wanted&&typeof wanted==='object'?!matches({v:actual},{v:wanted}):actual!==wanted):op==='gte'?actual>=wanted:op==='gt'?actual>wanted:op==='lte'?actual<=wanted:op==='lt'?actual<wanted:op==='contains'?String(actual).toLowerCase().includes(String(wanted).toLowerCase()):op==='mode'?true:op==='has'?actual.includes(wanted):matches(actual||{},value));return actual instanceof Date?actual.getTime()===new Date(value).getTime():actual===value;
+});}
+export function workOrderFixture(){
+ let sequence=0,tables:Record<string,any[]>={adminUser:[{...woActor,name:'运营',active:true},{...woFinance,name:'财务',active:true},{id:'admin',name:'管理员',role:'ADMIN',active:true,authVersion:1},{id:'support',name:'客服',role:'SUPPORT',active:true,authVersion:1},{id:'field',name:'现场',role:'FIELD',active:true,authVersion:1}],vehicle:[{id:'vehicle',title:'车辆一',vin:'SYNTHETIC',plateNumber:null,revision:3,mileageKm:100,status:'IN_USE',createdAt:woNow,updatedAt:woNow},{id:'other',title:'车辆二',revision:2,mileageKm:0,status:'PUBLISHED'}],assetWorkOrder:[],assetWorkOrderEvent:[],vehicleOperationalRestriction:[],vehicleMaintenanceSchedule:[],assetWorkOrderCost:[],assetCostPlan:[],assetCostEntry:[],assetRecoveryRecord:[],assetManualPaymentRecord:[],serviceRequest:[],order:[],vehicleAssignment:[],handover:[],mileage:[],archiveCommand:[],auditLog:[],vehicleDocumentFile:[],assetPrivateFile:[],storedFile:[]};
+ tables.orderChange=[];
+ const writes:any[]=[],reads:any[]=[],locks:string[]=[],tx:any={};
+ for(const table of Object.keys(tables)){
+  tx[table]={findMany:async(args:any={})=>{reads.push({table,args:clone(args)});let rows=tables[table].filter(row=>matches(row,args.where));if(args.orderBy){const sorts=Array.isArray(args.orderBy)?args.orderBy:[args.orderBy];rows=[...rows].sort((a,b)=>{for(const sort of sorts)for(const [field,direction]of Object.entries(sort)){const result=a[field]<b[field]?-1:a[field]>b[field]?1:0;if(result)return direction==='desc'?-result:result;}return 0;});}return rows.slice(args.skip||0,args.take===undefined?undefined:(args.skip||0)+args.take).map(row=>{const result=clone(row);if(table==='assetPrivateFile'&&args.include?.file)result.file=clone(tables.storedFile.find(file=>file.id===row.fileId));return result;});},findFirst:async(args:any={})=>(await tx[table].findMany({...args,take:1}))[0]||null,findUnique:async(args:any)=>tx[table].findFirst(args),findUniqueOrThrow:async(args:any)=>{const row=await tx[table].findFirst(args);if(!row)throw new Error('missing '+table);return row;},count:async(args:any={})=>tables[table].filter(row=>matches(row,args.where)).length,
+   create:async({data}:any)=>{const row={id:table+'-'+(++sequence),revision:0,eventSequence:0,createdAt:woNow,updatedAt:woNow,...(table==='assetWorkOrder'?{status:'PENDING',assignedStaffId:null,providerName:null,contact:null,scheduledAt:null,solution:null,submissionSnapshot:null,submissionEvidenceFileIds:[],submittedBy:null,submittedAt:null,submittedRevision:null,acceptanceSnapshot:null,acceptanceEvidenceFileIds:[],acceptedBy:null,acceptedAt:null,acceptedRevision:null,acceptedEventId:null,closedBy:null,closedAt:null,cancelledBy:null,cancelledAt:null,cancelReason:null,accidentAt:null,accidentLocation:null,accidentDescription:null,insurerName:null,claimNumber:null,claimStatus:null}:{}),...clone(data)};tables[table].push(row);writes.push({table,action:'create',data:clone(data)});return clone(row);},
+   updateMany:async({where,data}:any)=>{const rows=tables[table].filter(row=>matches(row,where));for(const row of rows){for(const [key,value]of Object.entries(data)as any)row[key]=value&&typeof value==='object'&&'increment'in value?(row[key]||0)+value.increment:clone(value);writes.push({table,action:'update',data:clone(data)});}return{count:rows.length};},update:async({where,data}:any)=>{await tx[table].updateMany({where,data});return tx[table].findFirst({where});},upsert:async({where,create,update}:any)=>await tx[table].findFirst({where})?tx[table].update({where,data:update}):tx[table].create({data:create})};
+ }
+ tx.$executeRaw=async(strings:TemplateStringsArray,...values:any[])=>{locks.push(strings.join('?')+':'+values.join(','));return 0;};tx.$queryRaw=async(strings:TemplateStringsArray,...values:any[])=>{locks.push(strings.join('?')+':'+values.join(','));return[];};
+ let pending=Promise.resolve();const serial=<T>(fn:(tx:any)=>Promise<T>):Promise<T>=>{const operation=pending.then(async()=>{const before=clone(tables),length=writes.length;try{return await fn(tx);}catch(error){tables=before;writes.splice(length);throw error;}});pending=operation.then(()=>{},()=>{});return operation;};
+ const seed=(table:string,row:any)=>tables[table].push(clone(row));
+ const attach=(workOrderId:string,id='file-'+randomUUID())=>{const sha256='a'.repeat(64);seed('storedFile',{id,name:'维修依据.pdf',mimeType:'application/pdf',size:10,sha256,purpose:'asset-work-order',customerId:null,adminId:woActor.id,fieldTaskId:null});seed('assetPrivateFile',{fileId:id,kind:'WORK_ORDER',baasContractId:null,depreciationPolicyId:null,costEntryId:null,licensePlateId:null,observationId:null,valuationReviewId:null,workOrderId,workOrderCostId:null,sha256,uploadedBy:woActor.id});return id;};
+ return{tx,serial,writes,reads,locks,rows:(table:string)=>tables[table],seed,attach};
+}
+/** Real production swap shapes: the old assignment keeps its original changeId;
+ * only the incoming assignment receives this changeId. */
+export function seedWorkOrderSwap(f:ReturnType<typeof workOrderFixture>){
+ const start=new Date('2026-09-01T00:00:00Z'),swapAt=new Date('2026-10-01T00:00:00Z');
+ f.seed('order',{id:'swap-order',customerId:'customer',vehicleId:'vehicle',currentAssignmentId:'incoming'});
+ f.seed('serviceRequest',{id:'swap-source',orderId:'swap-order',customerId:'customer'});
+ f.seed('orderChange',{id:'swap-change',kind:'VEHICLE_CHANGE',orderId:'swap-order',customerId:'customer',targetVehicleId:'vehicle',status:'APPLIED',returnHandoverId:'swap-return',deliveryHandoverId:'swap-delivery',actualCompletedAt:swapAt});
+ f.seed('vehicleAssignment',{id:'outgoing',orderId:'swap-order',customerId:'customer',vehicleId:'other',changeId:null,startAt:start,endAt:swapAt,status:'CLOSED',deliveryHandoverId:'initial-delivery',returnHandoverId:'swap-return',startReadingKm:10,endReadingKm:60});
+ f.seed('vehicleAssignment',{id:'incoming',orderId:'swap-order',customerId:'customer',vehicleId:'vehicle',changeId:'swap-change',startAt:swapAt,endAt:null,status:'ACTIVE',deliveryHandoverId:'swap-delivery',returnHandoverId:null,startReadingKm:100,endReadingKm:null});
+ const common={orderId:'swap-order',customerId:'customer',status:'COMPLETED'};
+ f.seed('handover',{...common,id:'initial-delivery',vehicleId:'other',assignmentId:'outgoing',changeId:null,type:'DELIVERY',actualAt:start,readingKm:10});
+ f.seed('handover',{...common,id:'swap-return',vehicleId:'other',assignmentId:'outgoing',changeId:'swap-change',type:'SWAP_RETURN',actualAt:swapAt,readingKm:60});
+ f.seed('handover',{...common,id:'swap-delivery',vehicleId:'vehicle',assignmentId:'incoming',changeId:'swap-change',type:'SWAP_DELIVERY',actualAt:swapAt,readingKm:100});
+ return{start,swapAt};
+}

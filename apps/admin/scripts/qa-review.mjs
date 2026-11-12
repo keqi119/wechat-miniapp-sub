@@ -38,7 +38,7 @@ try {
   await page.getByRole('dialog').waitFor();
   if (['SUBMITTED', 'NEEDS_INFO', 'IN_REVIEW'].includes(application.status)) {
     await page.getByRole('button', { name: '受理审核', exact: true }).click();
-    await page.locator('#field-note').fill('QA 合成资料已核验，进入最终方案流程；无真实交易。');
+    await page.locator('[id$="-field-note"]:visible').fill('QA 合成资料已核验，进入最终方案流程；无真实交易。');
     const review = page.waitForResponse(r => r.url().endsWith(`/applications/${applicationId}/review`));
     await page.getByRole('button', { name: '受理审核', exact: true }).click();
     const response = await review; assert.equal(response.ok(), true); assert.equal((await response.json()).status, 'IN_REVIEW');
@@ -46,11 +46,11 @@ try {
     check('application review and latest state reread');
   }
   await page.getByRole('button', { name: '发布最终方案', exact: true }).click();
-  assert.equal(await page.locator('#field-revision').getAttribute('readonly'), '');
-  assert.equal(await page.locator('#field-monthlyFeeAmount').inputValue(), '2999.29');
-  await page.locator('#field-depositAmount').fill('6000.50');
-  await page.locator('#field-startDate').fill('2026-11-01');
-  await page.locator('#field-firstDueDate').fill('2026-11-01');
+  assert.equal(await page.locator('[id$="-field-revision"]:visible').getAttribute('readonly'), '');
+  assert.equal(await page.locator('[id$="-field-monthlyFeeAmount"]:visible').inputValue(), '2999.29');
+  await page.locator('[id$="-field-depositAmount"]:visible').fill('6000.50');
+  await page.locator('[id$="-field-startDate"]:visible').fill('2026-11-01');
+  await page.locator('[id$="-field-firstDueDate"]:visible').fill('2026-11-01');
   const commercialTerms = {
     vehicleIdentification: 'QA 合成车辆识别信息 TESTVIN0000000001', permittedUse: 'QA 仅供验收，不用于真实驾驶或交易', conditionDisclosure: 'QA 合成车况披露，无实际交付车辆', customerAddress: 'QA 合成联系地址，上海验收路1号',
     mileageCarryRule: 'QA 本验收方案里程不结转', excessMileageCalculation: 'QA 按结构化超里程单价计算，不产生真实收费', usageCosts: 'QA 用于验证费用责任条款展示，无实际用车支出', insuranceDetails: 'QA 合成保险说明，不对应任何真实保险或保单',

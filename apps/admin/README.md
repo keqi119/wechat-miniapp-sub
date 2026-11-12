@@ -1,4 +1,4 @@
-# 纯电主义运营后台
+# 宁达汽车运营后台
 
 React + TypeScript + Vite 静态后台。业务数据只取自独立 API，不包含演示数据或失败时的 Mock 回退。
 
@@ -14,7 +14,7 @@ pnpm --filter @chundian/admin test
 
 开发地址 `http://127.0.0.1:3100`，`/api` 代理到 `http://127.0.0.1:3101`。构建产物在 `apps/admin/dist`。部署需把非静态资源路径回退到 `index.html`。
 
-`VITE_API_BASE_URL` 是公开的 API 基地址。开发默认同域 `/api`（经上述本地代理）；生产构建默认精确批准地址 `https://mini-api.subauto.keybox.cloud/api`，无需额外传环境变量。显式非空 `VITE_API_BASE_URL` 始终优先，供已批准的其他环境使用。正式后台站点不代理 `/api`，不能用同域默认代替独立 API。请勿将密码、私钥或供应商密钥放入任何 `VITE_*` 变量。跨域后台需在 API 配置精确的 `ADMIN_ORIGIN` 并允许携带 Cookie。
+`VITE_API_BASE_URL` 是公开的 API 基地址。开发默认同域 `/api`（经上述本地代理）；生产构建默认精确批准地址 `https://api.evsub.ndacar.com/api`，无需额外传环境变量。显式非空 `VITE_API_BASE_URL` 始终优先，供已批准的其他环境使用。正式后台站点不代理 `/api`，不能用同域默认代替独立 API。请勿将密码、私钥或供应商密钥放入任何 `VITE_*` 变量。跨域后台需在 API 配置精确的 `ADMIN_ORIGIN` 并允许携带 Cookie。
 
 构建后可运行 `node apps/admin/scripts/qa-api-target.mjs`，用本地实际 dist 和全部拦截的网络验证会话检查/登录请求目标及 `credentials: include`；可传显式 API 基地址验证覆盖构建。测试不访问真实 API、不使用真实账号。
 

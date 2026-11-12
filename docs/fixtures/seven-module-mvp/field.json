@@ -1,0 +1,18 @@
+{
+  "synthetic": true,
+  "entry": "/field.html",
+  "role": "FIELD",
+  "task": {
+    "id": "synthetic-task",
+    "assigneeId": "synthetic-field-staff",
+    "version": 1,
+    "materialGeneration": 1,
+    "status": "ASSIGNED"
+  },
+  "actions": [
+    "INSPECT",
+    "UPLOAD_PAPER_RECEIPT",
+    "RECORD_PHYSICAL_RETURN"
+  ],
+  "globalSearch": false
+}

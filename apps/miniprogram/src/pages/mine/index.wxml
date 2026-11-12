@@ -1,18 +1,21 @@
-<view class="page bottom-space"
-  ><view class="eyebrow">ACCOUNT / 我的</view
-  ><view class="title">你的订阅档案。</view
+<view class="page bottom-space main-tab-page {{mainTabMotion}}"
+  ><view class="eyebrow">账户与服务</view
+  ><view class="title">我的订阅档案</view
   ><view wx:if="{{loading}}" class="empty">正在读取账户信息…</view
-  ><view wx:elif="{{error}}" class="empty"
-    ><view>{{error}}</view><button wx:if="{{authRequired}}" class="primary" bindtap="openLogin">登录账户</button><button class="secondary" bindtap="reload">重新加载</button></view
+  ><view wx:elif="{{!authenticated}}" class="card"
+    ><view class="section-title">尚未登录</view
+    ><view class="muted">{{error || '登录后办理订阅与用车服务。'}}</view
+    ><button class="primary" bindtap="openLogin">登录账户</button></view
   ><block wx:else
-    ><view class="card identity"
-      ><view class="profile-mark">人</view
+    ><view class="card identity identity-entry" data-url="/pages/profile/index" bindtap="open" role="button" aria-label="打开个人资料：{{profile.name || '个人资料'}}，{{profile.mobile || '查看本人资料'}}"
+      ><view class="profile-mark"><image src="/assets/person-active.png" mode="aspectFit" aria-hidden="true" /></view
       ><view class="identity-text"
-        ><view class="section-title">{{profile.name || '访客'}}</view
-        ><view class="muted">{{profile.mobile || '请先登录'}}</view></view
-      ><button class="text-button" data-url="/pages/profile/index" bindtap="open"
-        >编辑</button
+        ><view class="section-title">{{profile.name || '个人资料'}}</view
+        ><view class="muted">{{profile.mobile || '查看本人资料'}}</view></view><text class="identity-arrow muted" aria-hidden="true">→</text
       ></view
+    ><view wx:if="{{error}}" class="empty"
+      ><view>{{error}}</view><button wx:if="{{authRequired}}" class="primary" bindtap="openLogin">登录账户</button><button class="secondary" bindtap="reload">重新加载</button></view
+    ><block wx:else
     ><view class="notice">订阅、合同和账单均以当前账户的服务端记录为准。</view
     ><view class="card"
       ><button class="menu-row" bindtap="openApplication"
@@ -32,14 +35,5 @@
         bindtap="openRecords"
         ><text>{{item.title}}</text><text class="muted">→</text></button
       ></view
-    ></block
-  ><view class="card"
-    ><button class="menu-row" data-url="/pages/legal/index?type=privacy" bindtap="open"
-      ><text>隐私说明</text><text class="muted">→</text></button
-    ><button class="menu-row" data-url="/pages/legal/index?type=terms" bindtap="open"
-      ><text>服务与费用说明</text><text class="muted">→</text></button
-    ><button class="menu-row" data-url="/pages/settings/index" bindtap="open"
-      ><text>账户设置</text><text class="muted">→</text></button
-    ></view
-  ></view
->
+    ></block></block
+  ></view>

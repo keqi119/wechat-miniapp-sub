@@ -1,0 +1,277 @@
+{
+  "classification": "SYNTHETIC_REVIEW_NOT_APPROVED",
+  "font": "C:\\Windows\\Fonts\\Deng.ttf",
+  "fontSha256": "e051009b42b454352a90ae0c9b8adb58bbdbcd168768750b35bc3357510de141",
+  "originalArtifactsUnchanged": true,
+  "sourceFactsSha256": "36635e1151801bd0aba16f929c9ea7d10491ba8a6aa7739412090ec0d206aadf",
+  "templateRawSha256": "e7fab549049a0cb7cf4508f09e635c9829bcd47efb56afe203e64ec8819d2301",
+  "samples": [
+    {
+      "id": "delay",
+      "title": "01 · 未交付延期",
+      "bodyHash": "9ba1eda856d2ed8ac9c02c9f376223334612c606e0d463293ea9a0f0dad440dc",
+      "bodyRawSha256": "9a8136ece31b3a75b9552f90e15a7b5dbbaf9805cbb468dc91669261ccc25cee",
+      "templateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6",
+      "templateRawSha256": "e7fab549049a0cb7cf4508f09e635c9829bcd47efb56afe203e64ec8819d2301",
+      "originalContractNumber": "SYNTHETIC-RENTAL-2026-D01",
+      "amendmentContractNumber": "SYNTHETIC-AMENDMENT-DELAY",
+      "printSnapshotHash": "db98415802e6896c28fa522b58839c24e5d24343170b581e1b820ce085324d2e",
+      "rawPdfSha256": "a852d7725f37993359a07198126a83e05d6c9425e1cccfe54e03486e39bb549d",
+      "signers": [
+        {
+          "role": "CUSTOMER",
+          "label": "承租人",
+          "name": "原签约客户",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        },
+        {
+          "role": "OWNER",
+          "label": "出租方",
+          "name": "原出租方",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        },
+        {
+          "role": "PLATFORM",
+          "label": "平台服务方",
+          "name": "平台主体",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        }
+      ],
+      "contextSource": "ArchiveContextService.resolve -> resolveAmendmentContext",
+      "sourceBodyUnchanged": true,
+      "fixtureMethod": "offlineDelayFixture",
+      "confirmation": "Actual confirm/customerAct against in-memory mock persistence only; no real approval/customer action",
+      "archiveState": "Synthetic DRAFT print input only; no new archival/review evidence fabricated",
+      "pdf": "delay.pdf",
+      "pdfSha256": "3041e293caa89f1859ebc19f7c27f1b0ba3208769ff2f754c9ec584dac2d55d2",
+      "pageCount": 4,
+      "rendererPageCount": 3,
+      "sourceBodyVerifiedInFinalPdf": true,
+      "allThreeBlankSignatureBoxes": true,
+      "allRendererFooters": true,
+      "pages": [
+        {
+          "path": "pages/delay-1.png",
+          "sha256": "fbfe0c1e7dd83178f897af70739529f2a8f8cae75f6c5fb837decd29a3ccbdb9"
+        },
+        {
+          "path": "pages/delay-2.png",
+          "sha256": "99a51947db309db22d9af54ec933cac15b34a0a6a3d95ad96333b5edb77e81c6"
+        },
+        {
+          "path": "pages/delay-3.png",
+          "sha256": "afc4dcaca2835b83a13033e40e360dab32b70fbcd3e228944fdce75413b76618"
+        },
+        {
+          "path": "pages/delay-4.png",
+          "sha256": "3cdd29908328ed2f2ad6a907c87e54e2f6fd7924e8366a7fa11d8b9cff569283"
+        }
+      ]
+    },
+    {
+      "id": "swap-same-price",
+      "title": "02A · 同价换车",
+      "bodyHash": "bff4f674e0b3371a1ef0e9a28cda0cfb25baae2710cfe970633ae0eebe9afd51",
+      "bodyRawSha256": "774f8da4e7e15c7477a674bc7dd09602c0ca7d7177a96c8dc8624902204cf47c",
+      "templateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6",
+      "templateRawSha256": "e7fab549049a0cb7cf4508f09e635c9829bcd47efb56afe203e64ec8819d2301",
+      "originalContractNumber": "SYNTHETIC-RENTAL-2026-S01",
+      "amendmentContractNumber": "SYNTHETIC-AMENDMENT-SWAP-SAME-PRICE",
+      "printSnapshotHash": "15964c43e11a7d747df7c93cfe2a8ca1112efedcacbee01e7078c8b90b9237cc",
+      "rawPdfSha256": "ae0fd60a6d3c33acf12261a4efaa790e1db8121b2a56f936ccff00cc8c601e84",
+      "signers": [
+        {
+          "role": "CUSTOMER",
+          "label": "承租人",
+          "name": "原签约客户",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        },
+        {
+          "role": "OWNER",
+          "label": "出租方",
+          "name": "原出租方",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        },
+        {
+          "role": "PLATFORM",
+          "label": "平台服务方",
+          "name": "平台主体",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        }
+      ],
+      "contextSource": "ArchiveContextService.resolve -> resolveAmendmentContext",
+      "sourceBodyUnchanged": true,
+      "fixtureMethod": "offlineSwapFixture + swapV2Input",
+      "confirmation": "Actual confirm/customerAct against in-memory mock persistence only; no real approval/customer action",
+      "archiveState": "Synthetic DRAFT print input only; no new archival/review evidence fabricated",
+      "pdf": "swap-same-price.pdf",
+      "pdfSha256": "b470d4ae55190e1ba4fc285a3b2d21ad4941b20d325312315f3094ce05455c3d",
+      "pageCount": 4,
+      "rendererPageCount": 3,
+      "sourceBodyVerifiedInFinalPdf": true,
+      "allThreeBlankSignatureBoxes": true,
+      "allRendererFooters": true,
+      "pages": [
+        {
+          "path": "pages/swap-same-price-1.png",
+          "sha256": "50ed01229e88dd8490453748e8c2ede85ec299cc83dcffaee9e5a0fd79149e84"
+        },
+        {
+          "path": "pages/swap-same-price-2.png",
+          "sha256": "7a06aa6e1d86bfa09feb79e4ad1c2ac0940ef118e12890d0b099970b68a65ff3"
+        },
+        {
+          "path": "pages/swap-same-price-3.png",
+          "sha256": "91ed5b832c0084471c37647be17ae515644608cd7ab2c0e3121ae570065d7cdf"
+        },
+        {
+          "path": "pages/swap-same-price-4.png",
+          "sha256": "ee366c718ec9841ffb0a0699a3a7aeff81c17f82dc97f51255d3be2c55761630"
+        }
+      ]
+    },
+    {
+      "id": "swap-upgrade",
+      "title": "02B · 升级换车",
+      "bodyHash": "516fb6f4b2c76aeda38196ee6cf972dd5d03b405c0e0d15cd6437461c07fd45b",
+      "bodyRawSha256": "666b31de909ed0278863e208c3161ec45e3ee291523768883b3528f07779693c",
+      "templateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6",
+      "templateRawSha256": "e7fab549049a0cb7cf4508f09e635c9829bcd47efb56afe203e64ec8819d2301",
+      "originalContractNumber": "SYNTHETIC-RENTAL-2026-S02",
+      "amendmentContractNumber": "SYNTHETIC-AMENDMENT-SWAP-UPGRADE",
+      "printSnapshotHash": "aa73cf9623481904818abf5af5abd5707eba28b820c8ba1810baa357ed372582",
+      "rawPdfSha256": "1f81f215b8696f0a6fa1769a84b31adf446d66e26b890051b151edf76069092c",
+      "signers": [
+        {
+          "role": "CUSTOMER",
+          "label": "承租人",
+          "name": "原签约客户",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        },
+        {
+          "role": "OWNER",
+          "label": "出租方",
+          "name": "原出租方",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        },
+        {
+          "role": "PLATFORM",
+          "label": "平台服务方",
+          "name": "平台主体",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        }
+      ],
+      "contextSource": "ArchiveContextService.resolve -> resolveAmendmentContext",
+      "sourceBodyUnchanged": true,
+      "fixtureMethod": "offlineSwapFixture + swapV2Input",
+      "confirmation": "Actual confirm/customerAct against in-memory mock persistence only; no real approval/customer action",
+      "archiveState": "Synthetic DRAFT print input only; no new archival/review evidence fabricated",
+      "pdf": "swap-upgrade.pdf",
+      "pdfSha256": "e6f33659d5b82f172961d567577dddf6e242c71497ab828d25c4eabe2cb6f8a9",
+      "pageCount": 4,
+      "rendererPageCount": 3,
+      "sourceBodyVerifiedInFinalPdf": true,
+      "allThreeBlankSignatureBoxes": true,
+      "allRendererFooters": true,
+      "pages": [
+        {
+          "path": "pages/swap-upgrade-1.png",
+          "sha256": "4afe2cf8c3767e316b4c60237f1ea34b0c1d6e55391d13257d44c47ae5df75ae"
+        },
+        {
+          "path": "pages/swap-upgrade-2.png",
+          "sha256": "4207e3c5cfc8439e2425b7de8e058519f3012cc560ccd3f74e1105b490d6cb90"
+        },
+        {
+          "path": "pages/swap-upgrade-3.png",
+          "sha256": "72d6e6ec994e4c413c30d766267df13fee43c402a299b8774f770ff8fba590cf"
+        },
+        {
+          "path": "pages/swap-upgrade-4.png",
+          "sha256": "4f96c18f40454ca48feefffd72d141e4f29e1b80bedbf3cfc5e05ccee52995a1"
+        }
+      ]
+    },
+    {
+      "id": "renewal",
+      "title": "03 · 同车续期",
+      "bodyHash": "b99d5517bba2925c2b697a60ba29bc9e61afda47509d968cb3d5fd3ae3d0726a",
+      "bodyRawSha256": "b212a0af4133116150f0d0f6cece6ba7c00273404115de899be1f9f6312889a0",
+      "templateHash": "c4ba05103e4ef0281ec37ed97d30dc58a07b1e93bb8433514d7e0976430152b6",
+      "templateRawSha256": "e7fab549049a0cb7cf4508f09e635c9829bcd47efb56afe203e64ec8819d2301",
+      "originalContractNumber": "SYNTHETIC-RENTAL-2026-R01",
+      "amendmentContractNumber": "SYNTHETIC-AMENDMENT-RENEWAL",
+      "printSnapshotHash": "78d4652487f951d3125a017abc39933e7bf3d0ae62842084fb70b85ddafe4ec6",
+      "rawPdfSha256": "6e17468169f68feb3c6068cd43b564db6260c2188609920ec14eb7a27eac908d",
+      "signers": [
+        {
+          "role": "CUSTOMER",
+          "label": "承租人",
+          "name": "原签约客户",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        },
+        {
+          "role": "OWNER",
+          "label": "出租方",
+          "name": "原出租方",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        },
+        {
+          "role": "PLATFORM",
+          "label": "平台服务方",
+          "name": "平台主体",
+          "source": "order.finalPlanSnapshot.partiesSnapshot (in-memory fixture)"
+        }
+      ],
+      "contextSource": "ArchiveContextService.resolve -> resolveAmendmentContext",
+      "sourceBodyUnchanged": true,
+      "fixtureMethod": "renewalFixture + actual OrderRenewalsService preview/create/quotes/review/publish using in-memory tx",
+      "confirmation": "Actual confirm/customerAct against in-memory mock persistence only; no real approval/customer action",
+      "archiveState": "Synthetic DRAFT print input only; no new archival/review evidence fabricated",
+      "pdf": "renewal.pdf",
+      "pdfSha256": "110ab1878d76ef9078b6dc7782a97a6b4b331d5ec7b1a94604cf4cbc7ea13af3",
+      "pageCount": 5,
+      "rendererPageCount": 4,
+      "sourceBodyVerifiedInFinalPdf": true,
+      "allThreeBlankSignatureBoxes": true,
+      "allRendererFooters": true,
+      "pages": [
+        {
+          "path": "pages/renewal-1.png",
+          "sha256": "2d585b3f8f44d612a5023d45b1ffe12e16f58c5ea825895610a399c0c269d9cd"
+        },
+        {
+          "path": "pages/renewal-2.png",
+          "sha256": "effab86b9eb39b3d5890a8a4109c175e91b5561cf3d0cf4fb32f929ef2ef0d9b"
+        },
+        {
+          "path": "pages/renewal-3.png",
+          "sha256": "1e589a6a8de9a8b4d77bfbe4bbf140815819a2876dc450fdc3bde9f769c8a1b6"
+        },
+        {
+          "path": "pages/renewal-4.png",
+          "sha256": "78be141bcb66361dd255edaa01dcf5aab692f564a076b080fdc8366f0b734b6e"
+        },
+        {
+          "path": "pages/renewal-5.png",
+          "sha256": "62cb17a99d8acff0b1b9c349701c07476c8514c05f8a64028c2fad160b3f1a21"
+        }
+      ]
+    }
+  ],
+  "visualReview": {
+    "reviewedPages": 17,
+    "method": "Every final PDF page rendered by Poppler and individually inspected through view_image",
+    "missingGlyphs": false,
+    "clippingOrOverlap": false,
+    "allSignatureBoxesVisible": true,
+    "allFootersVisible": true,
+    "productionLayoutNotes": [
+      "Renderer prints frozen Markdown # / ## markers as literal text.",
+      "The same-price and upgrade change-facts heading ends renderer page 1; its paragraph begins renderer page 2. This minor existing pagination limitation is retained and reported; no hidden reflow of source body."
+    ],
+    "passedForSyntheticReview": true,
+    "notFormalTemplateApproval": true
+  },
+  "note": "Cover and top-margin review labels are outside the renderer body. No source/template/business edits. Complete original body text extracted and checked after PDF composition."
+}

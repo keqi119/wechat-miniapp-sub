@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { creditDeposit, creditReady, creditVerificationPayload, creditPlanInitial, creditDepositPreview, creditReviewMessage } from './credit.ts';
 import { resources, actionAllowed } from './resources.ts';
-import { serializeForm } from './form.ts';
+import { serializeForm, fieldsForAction } from './form.ts';
 
 const review = { applicationId: 'a1', creditRevision: 2, ruleVersion: 'ZHIMA_MANUAL_V1', status: 'VERIFIED', canConsent: false, canWithdraw: true, canVerify: true, canFinalize: true, depositMultiplier: 1, document: { id: 'doc1', type: 'credit-verification', version: 1, title: '信用核验说明', content: '经批准说明' }, consent: { id: 'consent1', status: 'ACCEPTED', documentId: 'doc1', version: 1, acceptedAt: '2026-10-16T00:00:00Z', withdrawnAt: null }, verification: { id: 'cv1', band: 'B700_749', verifiedBy: 'operator', verifiedAt: '2026-10-16T01:00:00Z', consentId: 'consent1' } };
 
@@ -79,4 +79,40 @@ test('scoped acceptance preview shows one fen without changing the real credit t
   assert.equal(creditDepositPreview({ monthlyFeeAmount: '0.01', pricingMode: 'V1_ONE_FEN' }, initial), '0.01');
   assert.equal(creditDepositPreview({ monthlyFeeAmount: '0.01', pricingMode: 'STANDARD' }, initial), '0.00');
   assert.match(creditDepositPreview({ monthlyFeeAmount: '0.01', pricingMode: 'V1_ONE_FEN' }, { ...initial, acceptancePricingScope: undefined }), /未授权/);
+});
+test('acceptance is offered before review or after supplements, never as a repeat action while reviewing', () => {
+  const action = { label: '受理审核', path: 'review', fixed: { decision: 'IN_REVIEW' } };
+  assert.equal(actionAllowed('applications', action, {id:'a',status:'IN_REVIEW'}), false);
+  assert.equal(actionAllowed('applications', action, {id:'a',status:'SUBMITTED'}), true);
+  assert.equal(actionAllowed('applications', action, {id:'a',status:'NEEDS_INFO'}), true);
+  assert.equal(actionAllowed('applications', {label:'要求补件',path:'review',fixed:{decision:'NEEDS_INFO'}}, {id:'a',status:'IN_REVIEW'}), true);
+});
+
+test('one-yuan mode is offered only for its scoped application and previews 100 cents without changing the credit band', () => {
+  const offer={mode:'V2_ONE_YUAN',monthlyFeeAmount:100,depositAmount:100,months:12,startDate:'2026-11-01',firstDueDate:'2026-11-01',reference:'synthetic-yuan-scope',description:'本单1元验收报价'};
+  const scoped={...review,acceptancePricing:offer};
+  const entity={id:review.applicationId,creditReview:scoped};
+  const action=resources.find(r=>r.key==='applications')!.actions!.find(a=>a.path==='final-plan')!;
+  const fields=fieldsForAction('applications',action,entity);
+  assert.deepEqual(fields.find(f=>f.key==='pricingMode')?.options?.map(o=>o[0]),['STANDARD','V2_ONE_YUAN']);
+  const initial=creditPlanInitial(entity,scoped);
+  assert.equal(creditDepositPreview({monthlyFeeAmount:'1',pricingMode:'V2_ONE_YUAN'},initial),'1.00');
+  assert.match(creditDepositPreview({monthlyFeeAmount:'1',pricingMode:'V1_ONE_FEN'},initial),/未授权/);
+  for(const wrong of [{...scoped,applicationId:'other'},{...scoped,acceptancePricing:{...offer,depositAmount:1}}])assert.equal(fieldsForAction('applications',action,{...entity,creditReview:wrong}).some(f=>f.key==='pricingMode'),false);
+  const past={...entity,finalPlan:{pricingMode:'V2_ONE_YUAN',monthlyFeeAmount:100,depositAmount:100}};
+  assert.equal(creditPlanInitial(past,review).pricingMode,'V2_ONE_YUAN');
+  assert.match(creditDepositPreview({monthlyFeeAmount:'1',pricingMode:'V2_ONE_YUAN'},creditPlanInitial(past,review)),/未授权/);
+  assert.deepEqual(fieldsForAction('applications',action,{...past,creditReview:review}).find(f=>f.key==='pricingMode')?.options?.map(o=>o[0]),['STANDARD']);
+});
+
+test('a selected acceptance mode cannot silently become ordinary pricing when refresh revokes or replaces the offer',()=>{
+  const action=resources.find(r=>r.key==='applications')!.actions!.find(a=>a.path==='final-plan')!;
+  const revoked=fieldsForAction('applications',action,{id:review.applicationId,creditReview:review}).filter(f=>f.key==='pricingMode');
+  for(const mode of ['V1_ONE_FEN','V2_ONE_YUAN']){
+    assert.throws(()=>serializeForm(revoked,{pricingMode:mode}),/验收报价授权/);
+    const previous=fieldsForAction('applications',action,{id:review.applicationId,creditReview:review,finalPlan:{pricingMode:mode}}).filter(f=>f.key==='pricingMode');
+    assert.throws(()=>serializeForm(previous,{pricingMode:mode}),/验收报价授权/);
+  }
+  const different=fieldsForAction('applications',action,{id:review.applicationId,creditReview:{...review,acceptancePricing:{mode:'V1_ONE_FEN',monthlyFeeAmount:1,depositAmount:1,months:12,startDate:'2026-11-01',firstDueDate:'2026-11-01',reference:'other-mode',description:'合成'}}}).filter(f=>f.key==='pricingMode');
+  assert.throws(()=>serializeForm(different,{pricingMode:'V2_ONE_YUAN'}),/验收报价授权/);
 });

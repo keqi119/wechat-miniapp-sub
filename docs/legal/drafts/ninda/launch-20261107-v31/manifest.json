@@ -1,0 +1,312 @@
+[
+  {
+    "artifact": "01",
+    "kind": "SUBSCRIPTION",
+    "status": "DRAFT",
+    "sha256": "4f7d1ae3580ee153512b5c598c61e1da323e31fcdcb41ea8e1af4b809da27467",
+    "source": {
+      "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+      "zipEntry": "01_汽车订阅合同_三方_V3.1.docx",
+      "docxSha256": "282b3a15b95936363e5f039f046ed1777744261ffa570b576edbde0d428d5328",
+      "textSha256": "04dc2d09f7e7528c0dcd1d181f3ce819a0cf16559d1330a20ca1a926f1403b83"
+    },
+    "markers": 10,
+    "changes": [
+      {
+        "operation": "remove-reviewer-paragraph",
+        "loc": "P003",
+        "original": {
+          "type": "paragraph",
+          "loc": "P003",
+          "alignment": "left",
+          "runs": [
+            {
+              "text": "审定模板。带入标记用于说明数据来源，正式文件应显示真实值；法定签署区及明确允许后续形成的履约事实除外，不签署关键交易要素空白的合同。",
+              "bold": false,
+              "italic": false,
+              "underline": false
+            }
+          ]
+        }
+      },
+      {
+        "operation": "mapped-values-only",
+        "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+      },
+      {
+        "operation": "signature-layout",
+        "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+      }
+    ]
+  },
+  {
+    "artifact": "02-main",
+    "kind": "COOPERATION",
+    "status": "DRAFT",
+    "sha256": "9fc0b582a70668d5d5c26c0315aab2c41e0c32a300cc5a1049bea39c7fa078d5",
+    "source": {
+      "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+      "zipEntry": "02_车辆合作协议_V3.1.docx",
+      "docxSha256": "47c4c611f64aa3d43f09ea3d5593413326111257bb3cafa11b147da951496270",
+      "textSha256": "5ca502368de250924064fc7a7437e4c2059cedc062143a851123933171fc4017"
+    },
+    "markers": 8,
+    "changes": [
+      {
+        "operation": "remove-reviewer-paragraph",
+        "loc": "P003",
+        "original": {
+          "type": "paragraph",
+          "loc": "P003",
+          "alignment": "left",
+          "runs": [
+            {
+              "text": "审定模板。带入标记用于说明数据来源，正式文件应显示真实值；法定签署区及明确允许后续形成的履约事实除外，不签署关键交易要素空白的合同。",
+              "bold": false,
+              "italic": false,
+              "underline": false
+            }
+          ]
+        }
+      },
+      {
+        "operation": "mapped-values-only",
+        "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+      },
+      {
+        "operation": "signature-layout",
+        "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+      },
+      {
+        "operation": "split-independent-grant",
+        "boundary": "P079",
+        "reason": "Separate signatures; grant must render immutable agreement and attachment-one facts"
+      },
+      {
+        "operation": "reviewed-fixed-expression",
+        "locations": [
+          "P071",
+          "P072"
+        ],
+        "reason": "P071 replace ratio review instruction with actual owner ratio; P072 replace single review minimum with exact per-product minima, each at least three months."
+      },
+      {
+        "operation": "visible-fixed-template-appendix",
+        "reason": "Append complete approved 01 fixed clauses preserving bold and tables; label future order fields/signature controls without customer data. Bind exact approved content hash and raw UTF-8 byte SHA256; also embed exact bytes. Grant copies immutable main agreement reference and attachment-one scope."
+      },
+      {
+        "operation": "explicit-exceptions",
+        "reason": "Only actual agreed cooperation exceptions are added after P073; no blank exception fields."
+      }
+    ]
+  },
+  {
+    "artifact": "02-grant",
+    "kind": "COOPERATION_GRANT",
+    "status": "DRAFT",
+    "sha256": "5c4f56d11d488fc1bfc76ef25948ea52d342bb946454ad695055e6ab474db573",
+    "source": {
+      "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+      "zipEntry": "02_车辆合作协议_V3.1.docx",
+      "docxSha256": "47c4c611f64aa3d43f09ea3d5593413326111257bb3cafa11b147da951496270",
+      "textSha256": "5ca502368de250924064fc7a7437e4c2059cedc062143a851123933171fc4017"
+    },
+    "markers": 2,
+    "changes": [
+      {
+        "operation": "mapped-values-only",
+        "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+      },
+      {
+        "operation": "signature-layout",
+        "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+      },
+      {
+        "operation": "split-independent-grant",
+        "boundary": "P079",
+        "reason": "Separate signatures; grant must render immutable agreement and attachment-one facts"
+      },
+      {
+        "operation": "reviewed-fixed-expression",
+        "locations": [
+          "P071",
+          "P072"
+        ],
+        "reason": "P071 replace ratio review instruction with actual owner ratio; P072 replace single review minimum with exact per-product minima, each at least three months."
+      },
+      {
+        "operation": "visible-fixed-template-appendix",
+        "reason": "Append complete approved 01 fixed clauses preserving bold and tables; label future order fields/signature controls without customer data. Bind exact approved content hash and raw UTF-8 byte SHA256; also embed exact bytes. Grant copies immutable main agreement reference and attachment-one scope."
+      },
+      {
+        "operation": "explicit-exceptions",
+        "reason": "Only actual agreed cooperation exceptions are added after P073; no blank exception fields."
+      }
+    ]
+  },
+  {
+    "artifact": "03",
+    "kind": "VEHICLE_SWAP",
+    "status": "DRAFT",
+    "sha256": "9d6433818e3d723cf67a0b1685f04d987fc73dad8c57ba12452edbfae112f150",
+    "source": {
+      "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+      "zipEntry": "03_补充协议_换车_V3.1.docx",
+      "docxSha256": "90ccea1866938ced8649d5d5724fd567348c489a6e7de2563dd37063f314faea",
+      "textSha256": "48000f56541546a06f04e1217c312c711675bed67d75a1bca8056b7c8ba0e168"
+    },
+    "markers": 7,
+    "changes": [
+      {
+        "operation": "remove-reviewer-paragraph",
+        "loc": "P003",
+        "original": {
+          "type": "paragraph",
+          "loc": "P003",
+          "alignment": "left",
+          "runs": [
+            {
+              "text": "审定模板。带入标记用于说明数据来源，正式文件应显示真实值；法定签署区及明确允许后续形成的履约事实除外，不签署关键交易要素空白的合同。",
+              "bold": false,
+              "italic": false,
+              "underline": false
+            }
+          ]
+        }
+      },
+      {
+        "operation": "mapped-values-only",
+        "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+      },
+      {
+        "operation": "signature-layout",
+        "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+      }
+    ]
+  },
+  {
+    "artifact": "04",
+    "kind": "PRE_DELIVERY_CANCELLATION",
+    "status": "DRAFT",
+    "sha256": "d3bd9636cb30fe4e1cdbeef15c3416e92b5264dc52db238ed50239caf6bc6f5b",
+    "source": {
+      "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+      "zipEntry": "04_解除协议_交付前取消_V3.1.docx",
+      "docxSha256": "47c003fea794b227bed9030e53444fb4a78d78eae83d83214bf1c09d161cec4f",
+      "textSha256": "89232806cbfe79279b54c98b772ea2181a076626d87fd097ffc4ff19ec8526ce"
+    },
+    "markers": 6,
+    "changes": [
+      {
+        "operation": "remove-reviewer-paragraph",
+        "loc": "P003",
+        "original": {
+          "type": "paragraph",
+          "loc": "P003",
+          "alignment": "left",
+          "runs": [
+            {
+              "text": "审定模板。带入标记用于说明数据来源，正式文件应显示真实值；法定签署区及明确允许后续形成的履约事实除外，不签署关键交易要素空白的合同。",
+              "bold": false,
+              "italic": false,
+              "underline": false
+            }
+          ]
+        }
+      },
+      {
+        "operation": "mapped-values-only",
+        "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+      },
+      {
+        "operation": "signature-layout",
+        "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+      }
+    ]
+  },
+  {
+    "artifact": "05",
+    "kind": "RENEWAL",
+    "status": "DRAFT",
+    "sha256": "3aa99b300438cd42dc86803150c150d52aacac89397dcc457afb9a10dc781217",
+    "source": {
+      "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+      "zipEntry": "05_补充协议_续期_V3.1.docx",
+      "docxSha256": "6b5d682ddefe3c69e0bf9922e328704fc64983221b6223af84669606f9810327",
+      "textSha256": "352d0a0c87c0a1c45a0dfbfc824d6bc028b4d7da13143af1231ab9cde44382d9"
+    },
+    "markers": 8,
+    "changes": [
+      {
+        "operation": "remove-reviewer-paragraph",
+        "loc": "P003",
+        "original": {
+          "type": "paragraph",
+          "loc": "P003",
+          "alignment": "left",
+          "runs": [
+            {
+              "text": "审定模板。带入标记用于说明数据来源，正式文件应显示真实值；法定签署区及明确允许后续形成的履约事实除外，不签署关键交易要素空白的合同。",
+              "bold": false,
+              "italic": false,
+              "underline": false
+            }
+          ]
+        }
+      },
+      {
+        "operation": "mapped-values-only",
+        "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+      },
+      {
+        "operation": "signature-layout",
+        "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+      },
+      {
+        "operation": "optional-exception",
+        "location": "T1R4C2",
+        "reason": "Preserve unchanged contact/deposit/general-term sentence; append only an explicitly supplied exception, no empty exception field."
+      }
+    ]
+  },
+  {
+    "artifact": "06",
+    "kind": "EARLY_TERMINATION",
+    "status": "DRAFT",
+    "sha256": "8b8cc699020876d07515b8776144d7836cbc7d6d2a9b85f82c97470cebf57f58",
+    "source": {
+      "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+      "zipEntry": "06_终止协议_协商终止_V3.1.docx",
+      "docxSha256": "063a7f9c2987a8540d1304cdc99fe5e41d28fd3a032e1e13d6968ecfaaac8895",
+      "textSha256": "3a304762bccf390652b971553c96683af091c580ee4e9bf359d1b4647d1ee1b4"
+    },
+    "markers": 6,
+    "changes": [
+      {
+        "operation": "remove-reviewer-paragraph",
+        "loc": "P003",
+        "original": {
+          "type": "paragraph",
+          "loc": "P003",
+          "alignment": "left",
+          "runs": [
+            {
+              "text": "审定模板。带入标记用于说明数据来源，正式文件应显示真实值；法定签署区及明确允许后续形成的履约事实除外，不签署关键交易要素空白的合同。",
+              "bold": false,
+              "italic": false,
+              "underline": false
+            }
+          ]
+        }
+      },
+      {
+        "operation": "mapped-values-only",
+        "reason": "Replace every mapped block/parameter with server-resolved frozen facts; signature controls move to dedicated role-labelled seal page. Preserve substantive fixed text, table order and bold runs."
+      },
+      {
+        "operation": "signature-layout",
+        "reason": "Move generic signature note and role controls together to dedicated seal page; remove duplicated text-only role rows and heading from body. No signature or timestamp fabricated."
+      }
+    ]
+  }
+]

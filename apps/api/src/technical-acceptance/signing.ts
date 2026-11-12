@@ -6,13 +6,13 @@ import {ensure} from '../common/errors';
 import {TechnicalAcceptanceService} from './service';
 import {TECHNICAL_KIND,technicalEnabled,retentionDue,lockTechnical} from './rules';
 import {claimSigning,finishSigning,failSigning,recoverSigning} from '../orders/signature-preparation';
-import {MINIAPP_RETURN,runNativeSigning} from '../esign/native-signing';
+import {miniappReturnUrl,runNativeSigning} from '../esign/native-signing';
 @Injectable()
 export class TechnicalAcceptanceSigning{
  constructor(@Inject(Db)private db:Db,@Inject(ESignGateway)private gateway:ESignGateway,@Inject(TechnicalAcceptanceService)private service:TechnicalAcceptanceService){}
  async sign(id:string,customerId:string,input:any){await this.service.owned(id,customerId);ensure(technicalEnabled(),503,'TECHNICAL_SIGNING_DISABLED','本次技术验收签署尚未开放');
  const prepared=await this.db.serial(async tx=>{const r=await lockTechnical(tx,id);ensure(r?.customerId===customerId,404,'NOT_FOUND','验收文件不存在');ensure(!r.stoppedAt&&!r.purgedAt&&!r.purgeStartedAt&&r.confirmedAt&&['DRAFT','PENDING'].includes(r.status),409,'ACCEPTANCE_STATE','本次验收不可发起签署');await this.service.action(tx,r,customerId,'SIGN',input);return claimSigning(tx,TECHNICAL_KIND,r);});
- try{const r=prepared.item,customer=await this.db.customer.findUniqueOrThrow({where:{id:customerId}});const result=await runNativeSigning(()=>this.gateway.create({contractId:id,customerId,kind:TECHNICAL_KIND,documentHash:r.documentHash,customerName:'',mobile:customer.mobile,returnUrl:MINIAPP_RETURN}));await finishSigning(this.db,TECHNICAL_KIND,r,prepared.leaseUntil,result.taskId);return result;}catch(error){await failSigning(this.db,TECHNICAL_KIND,prepared.item,prepared.leaseUntil);throw error;}
+ try{const r=prepared.item,customer=await this.db.customer.findUniqueOrThrow({where:{id:customerId}});const result=await runNativeSigning(()=>this.gateway.create({contractId:id,customerId,kind:TECHNICAL_KIND,documentHash:r.documentHash,customerName:'',mobile:customer.mobile,returnUrl:miniappReturnUrl()}));await finishSigning(this.db,TECHNICAL_KIND,r,prepared.leaseUntil,result.taskId);return result;}catch(error){await failSigning(this.db,TECHNICAL_KIND,prepared.item,prepared.leaseUntil);throw error;}
  }
  async sync(id:string,customerId:string,input:any){await this.service.owned(id,customerId);await this.db.serial(async tx=>{const r=await lockTechnical(tx,id);ensure(!r.purgedAt&&!r.purgeStartedAt,409,'ACCEPTANCE_STATE','资料已进入清理');await this.service.action(tx,r,customerId,'SYNC',input);});const recovered=await recoverSigning(this.db,TECHNICAL_KIND,id,customerId);if(recovered.item.providerTaskId&&!recovered.pendingPreparation){const event=await this.gateway.query(recovered.item.providerTaskId);await this.settle(id,{...event,taskId:recovered.item.providerTaskId});}return this.service.view(id,false,customerId);}
  async settle(id:string,event:{taskId:string;documentHash:string;status:'PENDING'|'SIGNED'|'REJECTED'|'EXPIRED';signedFileId?:string}){

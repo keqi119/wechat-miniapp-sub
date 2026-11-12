@@ -23,7 +23,7 @@ const cases = [
   {name:'technical-purged-read-only',value:detail({status:'PURGED',retentionStatus:'PURGED',document:null,sourceFileId:null,canConfirm:false,canStop:false}),text:'独立验证资料已清理',confirm:false,sign:false},
   {name:'technical-purged-historical-signed',value:detail({status:'PURGED',retentionStatus:'PURGED',document:null,signatureStatus:'SIGNED',sourceFileId:null,signedFileId:null,canConfirm:false,canStop:false}),text:'历史记录保留双方签署事实',confirm:false,sign:false},
   {name:'technical-settings-assigned',route:'settings',assigned:true,text:'查看本份全文与真实签署结果'},
-  {name:'technical-settings-none',route:'settings',assigned:false,text:'电子签署实名准备'},
+  {name:'technical-settings-none',route:'settings',assigned:false,text:'本人实名与签署'},
 ];
 const compiled=compile(),generate=vm.runInNewContext('(function(global){'+compiled.wxml+'})({})',{window:{},console}),definitions={};
 for(const route of ['technical-acceptance','settings'])vm.runInNewContext(fs.readFileSync(path.join(root,'src/pages',route,'index.js'),'utf8'),{require:()=>({}),Page:v=>{definitions[route]=v;}});

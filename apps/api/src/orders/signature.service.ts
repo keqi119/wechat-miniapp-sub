@@ -11,9 +11,11 @@ export class SignatureService {
   async settleContract(contractId: string, event: VerifiedSignature) {
     return this.db.serial(async tx => {
       const item = await tx.contract.findUnique({ where: { id: contractId } }); ensure(item, 404, 'NOT_FOUND', '合同不存在');
+      ensure(item.executionMode==='ESIGN',409,'ESIGN_MODE_MISMATCH','本合同不接受旧签署任务回调');
       if(item.kind==='AMENDMENT'){await lockOrder(tx,item.orderId);const quote=await tx.delayQuote.findUnique({where:{id:item.delayQuoteId!},include:{change:true}});ensure(quote&&(item.status==='SIGNED'||quote.change.activeQuoteId===quote.id&&['AWAITING_SIGNATURE','AWAITING_FINANCE','SWAP_RETURNED','APPLIED'].includes(quote.change.status)),409,'AMENDMENT_STATE','补充协议不是当前有效变更');}
       ensure(item.documentHash === event.documentHash && (!event.taskId || item.providerTaskId === event.taskId), 409, 'DOCUMENT_MISMATCH', '签署任务或文档不匹配');
       const order=await tx.order.findUniqueOrThrow({where:{id:item.orderId}});
+      ensure(order.contractMode==='ESIGN',409,'ESIGN_MODE_MISMATCH','本订单不接受旧签署任务回调');
       if(['SUBSCRIPTION','AMENDMENT'].includes(item.kind)&&(order.finalPlanSnapshot as any).lessorSnapshot&&event.status==='SIGNED'){
         const task=await tx.ownerSigningTask.findUnique({where:{id:item.providerTaskId||''},include:{parties:true}}),file=event.signedFileId?await tx.storedFile.findUnique({where:{id:event.signedFileId}}):null;
         ensure(task&&task.status==='ARCHIVED'&&task.kind===item.kind&&task.resourceId===item.id&&task.customerId===item.customerId&&task.ownerId===(order.finalPlanSnapshot as any).lessorSnapshot.ownerId&&task.documentHash===item.documentHash&&task.sourceFileId===item.sourceFileId&&task.signedFileId===event.signedFileId&&task.ownerDispatchAt&&task.archivedAt&&file?.sha256===task.signedPdfHash&&task.signedPdfHash!==task.sourceSha256&&file.customerId===item.customerId&&task.parties.length===2&&['OWNER','CUSTOMER'].every(role=>task.parties.some(p=>p.role===role&&p.status==='SIGNED'&&p.attemptedAt&&p.verifiedAt&&p.queryEvidenceHash)),409,'OWNER_ARCHIVE_PROOF','实际出租方与客户的签署归档证据尚未核验');
@@ -32,6 +34,7 @@ export class SignatureService {
   async settleHandover(handoverId: string, event: VerifiedSignature) {
     return this.db.serial(async tx => {
       const item = await tx.handover.findUnique({ where: { id: handoverId } }); ensure(item, 404, 'NOT_FOUND', '交接单不存在');
+      ensure(item.executionMode==='ESIGN'&&item.confirmationMode!=='ONLINE_RECORD',409,'ESIGN_MODE_MISMATCH','本交接采用线上事实记录，不接受合同签署回调');
       ensure(item.manifestHash === event.documentHash && (!event.taskId || item.providerTaskId === event.taskId), 409, 'DOCUMENT_MISMATCH', '签署任务或文档不匹配');
       if (item.signatureStatus === 'SIGNED') return { status: item.signatureStatus, documentHash: item.manifestHash, signedFileId: item.signedFileId };
       ensure(item.status === 'CUSTOMER_CONFIRMED' && item.providerTaskId && item.signatureStatus === 'PENDING', 409, 'SIGNATURE_STATE', '交接单未完成事实确认或签署任务已终止');

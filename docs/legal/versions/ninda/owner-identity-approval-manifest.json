@@ -1,0 +1,16 @@
+{
+  "status": "APPROVED",
+  "approvedAt": "2026-10-20T05:05:37.110Z",
+  "approvedBy": "宁达运营方（当前会话用户明确确认）",
+  "approvalStatement": "确认发布该企业认证说明",
+  "scope": [
+    "owner-identity"
+  ],
+  "sourcePath": "docs/legal/drafts/ninda/owner-identity-v1.md",
+  "reviewedDraftSha256": "cd6cbc0d163eb2e8ba1ae167295d03355f0a9ab09493c96a4b91689886c2cc2f",
+  "formalPath": "docs/legal/versions/ninda/owner-identity-v1.md",
+  "formalSha256": "3b454daa468dc1088eb912f8629b9751ce47fbccb721c093fde7b77ab84b7405",
+  "editorialChangesAfterApproval": [
+    "仅将草稿状态行更新为正式发布状态；正文保持一致"
+  ]
+}

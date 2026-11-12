@@ -1,3 +1,4 @@
+import './legacy-esign-mode';
 import '../src/common/config';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';

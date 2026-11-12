@@ -1,19 +1,25 @@
 .brand-line {
-  padding: 28rpx 0 36rpx;
-  border-bottom: 1rpx solid #d9d9d1;
+  padding: 28rpx 0;
+  border-bottom: 2rpx solid #231815;
 }
+.brand-lockup { display: flex; align-items: center; gap: 18rpx; }
+.brand-wordmark { width: 296rpx; height: 71rpx; flex-shrink: 0; }
+.brand-symbol { position: relative; width: 84rpx; height: 84rpx; overflow: hidden; border-radius: 8rpx; background: #fcc900; flex-shrink: 0; }
+.brand-image { position: absolute; width: 216rpx; height: 324rpx; left: -66rpx; top: -102rpx; }
+.brand-english { display: block; margin-top: 2rpx; font-size: 18rpx; letter-spacing: 3rpx; font-weight: 600; }
 .brand {
   font-size: 32rpx;
   font-weight: 650;
   letter-spacing: 2rpx;
 }
 .city {
-  font-size: 23rpx;
+  font-size: 24rpx;
   color: #696b64;
 }
 .hero {
   padding: 66rpx 0 56rpx;
 }
+.hero .eyebrow { display: inline-block; background: #fcc900; color: #231815; padding: 7rpx 14rpx; font-weight: 650; }
 .hero-title {
   font-size: 86rpx;
   line-height: 1.18;
@@ -22,41 +28,31 @@
   margin: 28rpx 0;
 }
 .hero-copy {
+  overflow-wrap: anywhere;
   color: #62655c;
   font-size: 29rpx;
   line-height: 1.8;
 }
 .hero-button {
   margin-top: 36rpx;
-  display: flex;
+  display: inline-flex;
   justify-content: space-between;
 }
 .hero-caption,
 .price-caption {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #74766e;
   line-height: 1.6;
   margin-top: 18rpx;
 }
-.next-card {
-  margin-top: 30rpx;
-  padding: 30rpx;
-  background: #e9e9df;
-  border-left: 5rpx solid #b44919;
-}
-.next-card .section-title {
-  margin: 16rpx 0;
-}
-.next-card button {
-  margin-top: 24rpx;
-}
+.home-page .text-button, .home-page .secondary, .home-page .faq-trigger { min-height: 44px; }
 .section-heading {
   margin: 20rpx 0;
 }
 .vehicle-preview {
   border: 1rpx solid #dcdcd4;
   margin-bottom: 26rpx;
-  background: #fbfaf7;
+  background: #ffffff;
 }
 .photo-surface {
   position: relative;
@@ -77,7 +73,7 @@
   position: absolute;
   top: 20rpx;
   left: 20rpx;
-  font-size: 21rpx;
+  font-size: 24rpx;
   background: #f6f6f0;
   padding: 8rpx 14rpx;
 }
@@ -104,13 +100,13 @@
   display: flex;
   gap: 24rpx;
   padding: 23rpx 0;
-  border-top: 1rpx solid #d9d9d1;
+  border-top: 1rpx solid #e9e7e3;
   font-size: 29rpx;
   line-height: 1.6;
 }
 .step-number {
-  font-size: 23rpx;
-  color: #b44919;
+  font-size: 24rpx;
+  color: #715300;
   font-variant-numeric: tabular-nums;
   padding-top: 5rpx;
 }
@@ -118,8 +114,8 @@
   font-size: 24rpx;
 }
 .faq {
-  border-top: 1rpx solid #d9d9d1;
-  border-bottom: 1rpx solid #d9d9d1;
+  border-top: 1rpx solid #e9e7e3;
+  border-bottom: 1rpx solid #e9e7e3;
   margin-top: 32rpx;
 }
 .faq-trigger {
@@ -139,7 +135,21 @@
 }
 .footer-note {
   padding: 48rpx 0 20rpx;
-  font-size: 23rpx;
-  color: #777a71;
+  font-size: 24rpx;
+  color: #65615c;
   letter-spacing: 3rpx;
 }
+
+/* Bright native 2026-11-02 */
+.brand-line{padding:16rpx 0 24rpx;border-bottom:0}
+.brand-lockup{gap:16rpx}.brand-symbol{width:68rpx;height:68rpx;border-radius:16rpx}.brand-image{width:175rpx;height:262rpx;left:-54rpx;top:-83rpx}
+.brand{font-size:32rpx;letter-spacing:0}.brand-english{font-size:20rpx;letter-spacing:2rpx;color:#65615c}.city{font-size:24rpx;color:#65615c}
+.hero{padding:32rpx;background:#ffffff;border-radius:24rpx;margin:12rpx 0 32rpx;border:1rpx solid #e1e1de}
+.hero .eyebrow{background:#fcc900;border-radius:8rpx;font-size:24rpx;letter-spacing:0;padding:6rpx 12rpx}
+.hero-title{font-size:54rpx;line-height:1.35;font-weight:600;letter-spacing:-1rpx;margin:22rpx 0 18rpx}.hero-copy{font-size:28rpx;line-height:1.7;color:#65615c}
+.hero-button{margin-top:26rpx}.hero-caption,.price-caption{font-size:24rpx;color:#65615c;margin-top:18rpx}
+.section-heading{margin:24rpx 0 16rpx}.section-heading .section-title{margin:0}
+.vehicle-preview{border:1rpx solid #e1e1de;border-radius:24rpx;background:#ffffff;overflow:hidden;margin-bottom:24rpx}.photo-surface{height:320rpx;background:#eef0f0}.photo-status{font-size:24rpx;background:#fffffff0;border-radius:8rpx}
+.preview-body{padding:28rpx 30rpx}.vehicle-name{font-size:34rpx;min-width:0;overflow-wrap:anywhere}.vehicle-meta{font-size:24rpx;margin:10rpx 0 20rpx}
+.process{margin-top:36rpx;background:#ffffff;border-radius:24rpx;padding:30rpx}.process .section-title{font-size:34rpx;margin:10rpx 0 24rpx}.step{border-color:#e9e7e3;padding:22rpx 0;font-size:28rpx;gap:20rpx}.step-number{font-size:24rpx;color:#231815}.step .muted{font-size:24rpx}
+.faq{background:#ffffff;border:1rpx solid #e1e1de;border-radius:24rpx;padding:0 28rpx;margin-top:24rpx}.faq-trigger{font-size:28rpx;min-height:96rpx;gap:14rpx}.faq-content{font-size:26rpx}.footer-note{font-size:24rpx;letter-spacing:0;color:#65615c;padding:32rpx 0 12rpx}

@@ -1,0 +1,2 @@
+import type {Field} from './resources';
+export function vehicleFormFields(mode:'create'|'edit',fields:Field[]):Field[]{return fields.filter(field=>mode!=='create'||field.key!=='plateNumber').map(field=>field.key==='vin'?{...field,label:'车辆识别代码（VIN）',required:mode==='create',readOnly:mode==='edit',submit:mode==='create',hint:mode==='create'?'17位大写VIN是车辆唯一业务标识，保存后不可通过普通编辑更换。':'VIN是车辆唯一业务标识，普通编辑不可更换；换牌请从牌照档案办理。'}:field.key==='plateNumber'?{...field,readOnly:true,submit:false,hint:'当前牌号只读，请到车辆管理中的牌照档案办理绑定、移动或解绑；历史订单保留原车牌。'}:field);}

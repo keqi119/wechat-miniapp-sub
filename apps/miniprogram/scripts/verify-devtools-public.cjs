@@ -19,7 +19,7 @@ function bounded(work,ms=18000){let timer;return Promise.race([work,new Promise(
   if(report.domainCheck.effectiveUrlCheck!==true)throw new Error('urlCheck must stay enabled');
   mini=await bounded(automator.connect({wsEndpoint:'ws://127.0.0.1:9420'}));mini.on('exception',event=>report.exceptions.push(event));
   for(const endpoint of ['/health','/public/vehicles',...['terms','privacy','application','subscription','handover'].map(type=>'/public/legal/'+type)]){
-    const response=await bounded(mini.evaluate(async url=>await new Promise(resolve=>wx.request({url,method:'GET',timeout:10000,success:r=>resolve({statusCode:r.statusCode,data:r.data}),fail:e=>resolve({errMsg:e.errMsg})})),'https://mini-api.subauto.keybox.cloud/api'+endpoint));
+    const response=await bounded(mini.evaluate(async url=>await new Promise(resolve=>wx.request({url,method:'GET',timeout:10000,success:r=>resolve({statusCode:r.statusCode,data:r.data}),fail:e=>resolve({errMsg:e.errMsg})})),'https://api.evsub.ndacar.com/api'+endpoint));
     const row={endpoint,statusCode:response.statusCode,errMsg:response.errMsg};
     if(endpoint==='/health')row.status=response.data?.status;
     else if(endpoint==='/public/vehicles'){row.items=response.data?.items?.length;row.total=response.data?.total;row.emptyInventoryExpected=row.items===0&&row.total===0;}

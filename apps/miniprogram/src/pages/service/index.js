@@ -1,5 +1,6 @@
 const services = require('../../services/index');
 const { load, go, toastError } = require('../../utils/page');
+const {entitlementView}=require('../../utils/offline-order');
 Page({
   data: {
     type: 'rescue',
@@ -16,15 +17,23 @@ Page({
     submitted: null,
   },
   onLoad(options) {
-    this.invalidType = options.type && !['rescue', 'accident'].includes(options.type);
-    const type = options.type === 'accident' ? 'accident' : 'rescue';
-    this.setData({ type, title: type === 'accident' ? '事故报案' : '道路救援' });
+    this.invalidType = options.type && !['rescue', 'accident','benefit'].includes(options.type);
+    const type = ['accident','benefit'].includes(options.type) ? options.type : 'rescue';
+    this.orderId=options.orderId||'';this.entitlementId=options.entitlementId||'';
+    this.setData({ type, title: type === 'benefit'?'权益服务':type === 'accident' ? '事故报案' : '道路救援' });
     wx.setNavigationBarTitle({ title: this.data.title });
     this.reload();
   },
   reload() {
     return load(this, async () => {
       if (this.invalidType) throw new Error('无法识别服务类型，请从用车页重新进入。');
+      if(this.data.type==='benefit'){
+        if(!this.orderId||!this.entitlementId)throw Error('请从订单权益重新进入。');
+        const [benefits,order]=await Promise.all([services.getOrderEntitlements(this.orderId),services.getRecord('orders',this.orderId)]);
+        const entitlement=benefits.map(entitlementView).find(e=>e.id===this.entitlementId);
+        if(!entitlement?.canRequest)throw Error('此权益暂不可申请服务，请刷新订单或联系平台。');
+        return{entitlement,subscription:{id:order.id,orderId:order.id,vehicleName:order.orderDetail?.vehicle?.title||order.title||'本单车辆'},mobile:(services.getContext().profile||{}).mobile||''};
+      }
       const dashboard = await services.getDashboard();
       return {
         subscription: dashboard.subscription || null,
@@ -84,6 +93,8 @@ Page({
     if (!/^1[3-9]\d{9}$/.test(mobile)) return toastError(new Error('请填写 11 位手机号'));
     this.setData({ busy: true });
     try {
+      const fingerprint=JSON.stringify({type:this.data.type,location,description,mobile,orderId:this.data.subscription.orderId||this.data.subscription.id,entitlementId:this.entitlementId||'',fileIds:this.data.attachments.map(f=>f.id)});
+      if(this._submitFingerprint!==fingerprint){this._submitFingerprint=fingerprint;this._submitKey=services.idempotencyKey('service');}
       const submitted = await services.submitService({
         type: this.data.type,
         location,
@@ -91,10 +102,12 @@ Page({
         mobile,
         attachments: this.data.attachments,
         orderId: this.data.subscription.orderId || this.data.subscription.id,
+        ...(this.data.type==='benefit'?{entitlementId:this.entitlementId}:{}),
         idempotencyKey: this._submitKey || (this._submitKey = services.idempotencyKey('service')),
       });
       this.setData({ submitted });
     } catch (error) {
+      if(error.statusCode===409)await this.reload();
       toastError(error);
     } finally {
       this.setData({ busy: false });

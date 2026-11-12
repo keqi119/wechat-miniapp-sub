@@ -1,0 +1,75 @@
+{
+  "scope": "Synthetic, local visual proposal only. Not a WeChat runtime or production acceptance.",
+  "viewports": [
+    {
+      "viewportWidth": 320,
+      "overflow": false,
+      "cards": 2,
+      "tabs": 0,
+      "identityTypography": [
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)"
+      ],
+      "uniformTypography": true,
+      "overflowingFields": 0,
+      "inlineActions": true,
+      "parallelAccountActions": true,
+      "touchTargets": true,
+      "verificationColor": "rgb(249, 190, 0)",
+      "screenWidth": 320
+    },
+    {
+      "viewportWidth": 390,
+      "overflow": false,
+      "cards": 2,
+      "tabs": 0,
+      "identityTypography": [
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)"
+      ],
+      "uniformTypography": true,
+      "overflowingFields": 0,
+      "inlineActions": true,
+      "parallelAccountActions": true,
+      "touchTargets": true,
+      "verificationColor": "rgb(249, 190, 0)",
+      "screenWidth": 390
+    },
+    {
+      "viewportWidth": 430,
+      "overflow": false,
+      "cards": 2,
+      "tabs": 0,
+      "identityTypography": [
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)",
+        "-apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif|16px|400|24px|rgb(35, 24, 21)"
+      ],
+      "uniformTypography": true,
+      "overflowingFields": 0,
+      "inlineActions": true,
+      "parallelAccountActions": true,
+      "touchTargets": true,
+      "verificationColor": "rgb(249, 190, 0)",
+      "screenWidth": 390
+    }
+  ],
+  "contrastRatios": {
+    "textOnWhite": 17.31,
+    "captionOnWhite": 5.79,
+    "verifiedOnBrandYellow": 10.22
+  },
+  "javascriptErrors": [],
+  "externalRequests": []
+}

@@ -1,0 +1,288 @@
+{
+  "status": "USER_APPROVED_FORMAL_VERSION_PREPARED",
+  "version": 1,
+  "platformLegalEntity": "上海宁达信息科技有限公司",
+  "contactEmail": "like@ndacar.com",
+  "confirmedBy": "宁达运营方（当前会话用户明确审定）",
+  "confirmedAt": "2026-10-27T13:12:33.582Z",
+  "approval": {
+    "source": "Current conversation explicit user confirmation, relayed by the root agent to this delegated task",
+    "sourceThreadId": "01a15dad-54f7-7aa2-8b9b-cb647c407a0f",
+    "userReplyExact": "确认按审阅稿制作正式版",
+    "questionContextSummary": "五份线下合同审阅包；已说明审定后用于生产发布",
+    "questionContextIsVerbatim": false,
+    "approvalRecordedAt": "2026-10-27T13:12:33.582Z"
+  },
+  "sourceReviewManifest": {
+    "path": "docs/legal/drafts/ninda/offline-mvp/review-manifest.json",
+    "sha256": "2b9d2920b45ddb60b51013ae5e35cd5019bc3aac0cb64be426dc87e7240c6b49"
+  },
+  "sourceReviewReadmeSha256": "ef8ceef2693b2a1a5ad2221bcc79f6e438b022ed6110c598e9acdd98f7bcddf2",
+  "readmeSha256": "28e4ddd209893082d9a168553d636f449932dab7397d453e37c0031744ed5bfd",
+  "templates": [
+    {
+      "slug": "owner-cooperation",
+      "type": "OFFLINE_OWNER_COOPERATION",
+      "version": 1,
+      "archiveKind": "OWNER_COOPERATION",
+      "subjectType": "OWNER",
+      "requiredSigners": [
+        "OWNER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "ownerName",
+        "platformName"
+      ],
+      "source": {
+        "markdownPath": "docs/legal/drafts/ninda/offline-mvp/owner-cooperation.md",
+        "markdownSha256": "80dfd748cef62f9f0dfe9115f85699c75b9bee0a4196cc81b2a7c83eb19d428f",
+        "templateJsonPath": "docs/legal/drafts/ninda/offline-mvp/owner-cooperation.template.json",
+        "templateJsonSha256": "b7b7272bf099db473e0672dda27b810144c3233e324920a962ab5b6ca91e93a8",
+        "bodySha256": "ed44fd665e3ca7671cd237ebaaddc87dc64edc6ba1177829316d4393ced5f967",
+        "legalContentSha256": "7be9b717dea08baf5dc6d26d01d9e6916b685237bb92a7133938b3ea7cae7a2d"
+      },
+      "formal": {
+        "markdownPath": "docs/legal/versions/ninda/offline-mvp-v1/owner-cooperation.md",
+        "markdownSha256": "81df9b59f9d485a82d2aa87c8526747adc410db72e2da54d02ac141f48b8b0df",
+        "templateJsonPath": "docs/legal/versions/ninda/offline-mvp-v1/owner-cooperation.template.json",
+        "templateJsonSha256": "791fb7f4dd9c43cf76ed96d130cedbd10cfc218e8515a7dd6ed5b01f8c7d2198",
+        "bodySha256": "3f569dbd4dbc232fcd40eb2a7876bdecd45031b733f6a13f72bcf684dd618219",
+        "legalContentUtf8Sha256": "58813c1cad24d48b13e39d4390f551785f0246cb12754a0334eb73def0d34a67",
+        "apiCanonicalContentHash": "75a865e4a0c202cd8ecd84caab6ab1db186a8387907dd5bec7aab54763240d72"
+      },
+      "changes": {
+        "removedDraftBodyNotice": true,
+        "removedTitleSuffix": "（审阅草稿）",
+        "selfReferenceReplacement": {
+          "from": "本草稿",
+          "to": "本协议",
+          "occurrences": 0
+        },
+        "businessTermsChanged": false,
+        "requiredSignersChanged": false
+      },
+      "validation": {
+        "actualPrintModel": "PASS",
+        "markdownMatchesJsonBody": true,
+        "unresolvedVariables": 0
+      }
+    },
+    {
+      "slug": "rental",
+      "type": "OFFLINE_RENTAL",
+      "version": 1,
+      "archiveKind": "RENTAL",
+      "subjectType": "ORDER",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "customerName",
+        "ownerName",
+        "platformName"
+      ],
+      "source": {
+        "markdownPath": "docs/legal/drafts/ninda/offline-mvp/rental.md",
+        "markdownSha256": "8577ce24f6f87b28379b272a83065ab5f58d1114f9d57c0f1001652e000f812f",
+        "templateJsonPath": "docs/legal/drafts/ninda/offline-mvp/rental.template.json",
+        "templateJsonSha256": "e5a3c044a68f383240a3ef3057999ff04e6bfb00010031f2467dc985c6bd6f9d",
+        "bodySha256": "2d0684ee8ef47341d9e3d90d3d839a37f08a004f9b8ae8e8dce89534797df1db",
+        "legalContentSha256": "ce3eb8fc85ef9d4bc1175411dbd12d53eb4cd3516532c440afe362f10e650e73"
+      },
+      "formal": {
+        "markdownPath": "docs/legal/versions/ninda/offline-mvp-v1/rental.md",
+        "markdownSha256": "74c87aea153b040659b38606c5a32bdc98108a4ad95673b8d733a2eb277eb906",
+        "templateJsonPath": "docs/legal/versions/ninda/offline-mvp-v1/rental.template.json",
+        "templateJsonSha256": "d485c94333bdb2a6cb2db1cbfa4bd6d6b13fd91ccf293a657d769be488ff3b69",
+        "bodySha256": "b16dbf4652a8a14ca77a2da7fffacf2dc19bc5c783a7285ff0bd20333fabb65f",
+        "legalContentUtf8Sha256": "7d2cea67d15401e84e0e4b2522ddafb2dcf4cd4e1e71b510728004f4c868052d",
+        "apiCanonicalContentHash": "b9be702551a721b6113d61254df1e6439661babb0df03ee80f1f24ca663f13ee"
+      },
+      "changes": {
+        "removedDraftBodyNotice": true,
+        "removedTitleSuffix": "（审阅草稿）",
+        "selfReferenceReplacement": {
+          "from": "本草稿",
+          "to": "本合同",
+          "occurrences": 3
+        },
+        "businessTermsChanged": false,
+        "requiredSignersChanged": false
+      },
+      "validation": {
+        "actualPrintModel": "PASS",
+        "markdownMatchesJsonBody": true,
+        "unresolvedVariables": 0
+      }
+    },
+    {
+      "slug": "delivery-receipt",
+      "type": "OFFLINE_DELIVERY_RECEIPT",
+      "version": 1,
+      "archiveKind": "DELIVERY_RECEIPT",
+      "subjectType": "HANDOVER",
+      "requiredSigners": [
+        "CUSTOMER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "customerName",
+        "platformName"
+      ],
+      "source": {
+        "markdownPath": "docs/legal/drafts/ninda/offline-mvp/delivery-receipt.md",
+        "markdownSha256": "6c9c1e6d439a8fe226b7d74c4523f8c00140ac20d5862903832c4486e7daf8f3",
+        "templateJsonPath": "docs/legal/drafts/ninda/offline-mvp/delivery-receipt.template.json",
+        "templateJsonSha256": "0ce52cc8732f3b828e63a6edab401a092767f200bc313a39d89e92a099f18b07",
+        "bodySha256": "11b774ee8ee662125cde76d54a36cf5c9457c369bf6fe850486b2ebdfcd36e3a",
+        "legalContentSha256": "1f727e4041c56697d9d43de2195b32916944a066ae77b23ed6b872adadb536a1"
+      },
+      "formal": {
+        "markdownPath": "docs/legal/versions/ninda/offline-mvp-v1/delivery-receipt.md",
+        "markdownSha256": "e95f2fd28dfd50a8ec263ba008c3dba232f4f8b16b7d60e4dd9372d40f0ff383",
+        "templateJsonPath": "docs/legal/versions/ninda/offline-mvp-v1/delivery-receipt.template.json",
+        "templateJsonSha256": "c53e2cef37bcdd9782a1d5cdea3414ea8bfb66a17412c24edf100223f5c080e0",
+        "bodySha256": "a2ddc14c38503d6fdf31f2524569b8c403bd1a031dc43e99363a0eef92d7c029",
+        "legalContentUtf8Sha256": "c8266dd8f895d2fe956ceb7640a89f862e172a5e64be1200847f179348457810",
+        "apiCanonicalContentHash": "481300fc08bd5e1b09d11661dedf00a74667fdc9093f5d852030b5c590dadfa0"
+      },
+      "changes": {
+        "removedDraftBodyNotice": true,
+        "removedTitleSuffix": "（审阅草稿）",
+        "selfReferenceReplacement": {
+          "from": "本草稿",
+          "to": "本协议",
+          "occurrences": 0
+        },
+        "businessTermsChanged": false,
+        "requiredSignersChanged": false
+      },
+      "validation": {
+        "actualPrintModel": "PASS",
+        "markdownMatchesJsonBody": true,
+        "unresolvedVariables": 0
+      }
+    },
+    {
+      "slug": "return-receipt",
+      "type": "OFFLINE_RETURN_RECEIPT",
+      "version": 1,
+      "archiveKind": "RETURN_RECEIPT",
+      "subjectType": "HANDOVER",
+      "requiredSigners": [
+        "CUSTOMER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "customerName",
+        "platformName"
+      ],
+      "source": {
+        "markdownPath": "docs/legal/drafts/ninda/offline-mvp/return-receipt.md",
+        "markdownSha256": "c9f0a5865ca926fb125b672a55d644fc6f86c0b9e8a7a5adc261448ca865d274",
+        "templateJsonPath": "docs/legal/drafts/ninda/offline-mvp/return-receipt.template.json",
+        "templateJsonSha256": "ab5ad53cceeb5ede61a260267d16d9fe5a0be937fa706f9b9140fb0996b0f14c",
+        "bodySha256": "d1df6bb851eeb8f2572346617b7466e6653886513a2e3a8001f3521eb4e5a5cb",
+        "legalContentSha256": "7923ebc8cce05913b69c56e51d1537b68bedf8dd99454c73dafc00c78f44a875"
+      },
+      "formal": {
+        "markdownPath": "docs/legal/versions/ninda/offline-mvp-v1/return-receipt.md",
+        "markdownSha256": "9f601649583aae24c5c9eaa5d398bae8e75ada9a7c351abc694d91778e9d8b10",
+        "templateJsonPath": "docs/legal/versions/ninda/offline-mvp-v1/return-receipt.template.json",
+        "templateJsonSha256": "2ea0efc62495c88e98861b986665ea7ac2833dd14a8ebfe9468df5556f8769ac",
+        "bodySha256": "8cb803bd423066452495653f33039d505542e1db14c304cd25392bf4b6d4d97e",
+        "legalContentUtf8Sha256": "c265718faa5246665b683bc973153118e86252db5404606c660d1feb91e7184e",
+        "apiCanonicalContentHash": "acbc068291f9420222d28f104edc6b1aee7c1ffc27cd77287f28c8d9f6198649"
+      },
+      "changes": {
+        "removedDraftBodyNotice": true,
+        "removedTitleSuffix": "（审阅草稿）",
+        "selfReferenceReplacement": {
+          "from": "本草稿",
+          "to": "本协议",
+          "occurrences": 0
+        },
+        "businessTermsChanged": false,
+        "requiredSignersChanged": false
+      },
+      "validation": {
+        "actualPrintModel": "PASS",
+        "markdownMatchesJsonBody": true,
+        "unresolvedVariables": 0
+      }
+    },
+    {
+      "slug": "termination",
+      "type": "OFFLINE_TERMINATION",
+      "version": 1,
+      "archiveKind": "TERMINATION",
+      "subjectType": "ORDER",
+      "requiredSigners": [
+        "CUSTOMER",
+        "OWNER",
+        "PLATFORM"
+      ],
+      "usedVariables": [
+        "contractNumber",
+        "customerName",
+        "ownerName",
+        "platformName"
+      ],
+      "source": {
+        "markdownPath": "docs/legal/drafts/ninda/offline-mvp/termination.md",
+        "markdownSha256": "90c269dbd69b89346f86be8876bcce82228048557c4ab758df86be6f751c020c",
+        "templateJsonPath": "docs/legal/drafts/ninda/offline-mvp/termination.template.json",
+        "templateJsonSha256": "711fd74e531d85bf18db18e2285c60bdd78ea7b537096290c23ea1f25855027f",
+        "bodySha256": "4753f2044607a4263bd7b4d4cdacfa3c6a2740e5fb3e481dc6c8a913df66fde9",
+        "legalContentSha256": "6a5c353f2197a35bb74a879ad8d22a1b367b08880c9d21c081c1c873ef045b74"
+      },
+      "formal": {
+        "markdownPath": "docs/legal/versions/ninda/offline-mvp-v1/termination.md",
+        "markdownSha256": "2d4cb6f888ecc8694b73a22d0d2e65aefc7f4ba7ab096d5740fd1d4cc33a7eb3",
+        "templateJsonPath": "docs/legal/versions/ninda/offline-mvp-v1/termination.template.json",
+        "templateJsonSha256": "43bededd9bdfbdd83a8d83f8566a925516ea2dc9039c600ae069411c44a6884a",
+        "bodySha256": "28070cc6e66b14cc29dac7baac340d3fce25710bdbf4d7884fd24e451fa6800a",
+        "legalContentUtf8Sha256": "6bd6b72a45e6619082141517b52b14793cf93c0619c4e6e86599973678872429",
+        "apiCanonicalContentHash": "cc9b9dc1bd36766e85462fe07951fd92e9fdc866f55ebc307e6b59dbdad3f054"
+      },
+      "changes": {
+        "removedDraftBodyNotice": true,
+        "removedTitleSuffix": "（审阅草稿）",
+        "selfReferenceReplacement": {
+          "from": "本草稿",
+          "to": "本协议",
+          "occurrences": 1
+        },
+        "businessTermsChanged": false,
+        "requiredSignersChanged": false
+      },
+      "validation": {
+        "actualPrintModel": "PASS",
+        "markdownMatchesJsonBody": true,
+        "unresolvedVariables": 0
+      }
+    }
+  ],
+  "validation": {
+    "actualPrintModel": "apps/api/dist/offline-documents/print.js",
+    "actualPrintModelSha256": "fb24546f29d2fd35619784940ad9bfe9034f4909e43b33ea7cfef61535c55ab8",
+    "sourcePrintModelSha256": "9d91a14016f06a84254bcc1a8279ca1c088b358771027f91df8a978189a9a620",
+    "templatesPassed": 5,
+    "unresolvedVariables": 0,
+    "markdownJsonBodyConsistency": true,
+    "approvedSourceHashesVerified": true,
+    "exactAllowedTransformOnly": true,
+    "originalDraftsPreserved": true,
+    "syntheticInputOnlyInMemory": true,
+    "pdfLayoutReviewed": false
+  },
+  "productionPublishedByThisTask": false,
+  "realSignaturesOrTransactionsPerformed": false
+}

@@ -1,0 +1,119 @@
+{
+  "screens": 7,
+  "layouts": [
+    {
+      "page": "home",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "page": "catalog",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "page": "use",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "page": "mine",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "page": "profile",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "page": "payments",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "page": "bill",
+      "width": 320,
+      "passed": true
+    },
+    {
+      "page": "home",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "page": "catalog",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "page": "use",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "page": "mine",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "page": "profile",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "page": "payments",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "page": "bill",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "page": "home",
+      "width": 430,
+      "passed": true
+    },
+    {
+      "page": "catalog",
+      "width": 430,
+      "passed": true
+    },
+    {
+      "page": "use",
+      "width": 430,
+      "passed": true
+    },
+    {
+      "page": "mine",
+      "width": 430,
+      "passed": true
+    },
+    {
+      "page": "profile",
+      "width": 430,
+      "passed": true
+    },
+    {
+      "page": "payments",
+      "width": 430,
+      "passed": true
+    },
+    {
+      "page": "bill",
+      "width": 430,
+      "passed": true
+    }
+  ],
+  "jsErrors": [],
+  "externalRequests": [],
+  "productFilesChangedDuringProposal": false,
+  "contrast": {
+    "whiteOnInk": 17.31,
+    "inkOnYellow": 11.12,
+    "mutedOnWhite": 6.14
+  },
+  "scope": "Local visual proposal only; not WeChat device verification"
+}

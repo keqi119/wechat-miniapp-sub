@@ -1,0 +1,70 @@
+import 'reflect-metadata';
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {hash} from '../src/common/data';
+import {createHandoverRecord,publishHandoverRecord} from '../src/operations/handover-records';
+import {WorkflowsController} from '../src/operations/workflows';
+import {createSwapHandover,completeSwapHandover} from '../src/vehicle-changes/handovers';
+import {PaymentReconciliationService} from '../src/billing/reconciliation';
+import {qualificationEvidence,QualificationService,customerProfileHash} from '../src/customers/qualifications';
+import {qualificationSubmitInput} from '../src/customers/types';
+import {OfflineCancellationController,readOfflineCancellationFacts,submitOfflineCancellation,reviewOfflineCancellation} from '../src/offline-documents/cancellation';
+import {currentPhysicalReceipt,recordPhysicalReceipt} from '../src/offline-documents/vehicle-receipt';
+
+const actor={id:'operator',role:'OPERATIONS',authVersion:0},finance={id:'finance',role:'FINANCE',authVersion:0};
+const denied=(e:any)=>e.getStatus?.()===403&&e.getResponse?.().error?.code==='ASSET_FILE_ROUTE_REQUIRED';
+const mapping=(ids=['private'])=>({count:async({where}:any)=>where.fileId.in.filter((id:string)=>ids.includes(id)).length});
+const file=(purpose='evidence')=>({id:'private',adminId:'uploader',customerId:null,purpose,name:'asset-cost.pdf',mimeType:'application/pdf',size:10,sha256:'a'.repeat(64)});
+function base(){let writes=0,cached:any=null;const tx:any={vehicleOperationalRestriction:{count:async()=>0},electronicFileQuarantine:{count:async()=>0},vehicleInspectionFile:{count:async()=>0},vehicleDocumentFile:{count:async()=>0},assetPrivateFile:mapping(),$queryRaw:async()=>[],adminUser:{findUnique:async({where}:any)=>({...where,role:where.id==='finance'?'FINANCE':'OPERATIONS',active:true,authVersion:0})},storedFile:{count:async(query:any)=>query?.where?.purpose==='vehicle-inspection'?0:1,findMany:async()=>[file()]},archiveCommand:{findUnique:async()=>cached,create:async()=>{writes++;}},auditLog:{create:async()=>{writes++;}},notification:{create:async()=>{}}};return{tx,write:()=>writes++,writes:()=>writes,cache:(v:any)=>cached=v};}
+function handoverFixture(){
+ const f=base(),order={id:'order',customerId:'customer',vehicleId:'vehicle',contractMode:'OFFLINE',status:'AWAITING_HANDOVER',confirmedMileageKm:0,finalPlanSnapshot:{commercialTerms:{vehicleIdentification:'EV'}}},item:any={id:'handover',orderId:'order',customerId:'customer',executionMode:'OFFLINE',type:'DELIVERY',status:'DRAFT',fileIds:['private'],responseFileIds:[],manifestHash:'manifest',revision:0};
+ Object.assign(f.tx,{legalDocument:{findFirst:async()=>({id:'online-terms',version:1,title:'已批准线上交接约定',content:'合成约定',confirmedBy:'reviewer',confirmedAt:new Date(),publishedAt:new Date()})},order:{findUnique:async()=>order,update:async()=>order},orderChange:{count:async()=>0},vehicle:{findUnique:async()=>({id:'vehicle',status:'RESERVED',reservedOrderId:'order',mileageKm:0})},handover:{count:async()=>0,findFirst:async()=>item,findUnique:async()=>item,findUniqueOrThrow:async()=>item,create:async({data}:any)=>{f.write();return{id:'created',...data};},update:async({data}:any)=>{f.write();return{...item,...data};}}});
+ return{...f,order,item,controller:new WorkflowsController(Object.assign(f.tx,{serial:async(fn:any)=>fn(f.tx)}),{} as any,{} as any)};
+}
+test('handover creation cannot borrow admin-owned private files and ordinary evidence still creates',async()=>{
+ const f=handoverFixture(),input={orderId:'order',type:'DELIVERY',actualAt:'2026-01-01T10:00:00+08:00',readingKm:10,fileIds:['private'],checklist:[]};await assert.rejects(createHandoverRecord(f.tx,input,actor.id),denied);assert.equal(f.writes(),0);f.tx.assetPrivateFile=mapping([]);assert.equal((await createHandoverRecord(f.tx,input,actor.id)).id,'created');
+});
+test('publishing and customer metadata block contaminated historical handover attachments',async()=>{
+ const f=handoverFixture();f.item.type='RETURN';await assert.rejects(publishHandoverRecord(f.tx,'handover',actor.id),denied);f.item.status='PUBLISHED';await assert.rejects(f.controller.getHandover('handover',{customer:{id:'customer'}}),denied);assert.equal(f.writes(),0);
+});
+test('handover response and completed command cache replay revalidate mapped historical evidence',async()=>{
+ const f=handoverFixture(),input={manifestHash:'manifest',readFileIds:['private'],reason:'',fileIds:[],idempotencyKey:'response-key'};Object.assign(f.item,{status:'CUSTOMER_CONFIRMED',responseKey:input.idempotencyKey,customerResponse:'CONFIRM',responseReason:''});await assert.rejects(f.controller.confirmHandover('handover',input,{customer:{id:'customer'}}),denied);
+ const command={revision:0,idempotencyKey:'complete-cache'};f.cache({requestHash:hash(command),resultSnapshot:{...f.item,status:'COMPLETED'}});await assert.rejects(f.controller.complete('handover',{admin:actor},command),denied);assert.equal(f.writes(),0);
+});
+test('service and mileage idempotent reads cannot return an asset attachment after mapping changes',async()=>{
+ const f=base(),serviceInput={type:'rescue',orderId:'order',location:'site',description:'help',mobile:'13800000000',fileIds:['private'],idempotencyKey:'service-key'},mileageInput={orderId:'order',readingKm:10,recordedAt:'2026-01-01T02:00:00Z',fileIds:['private'],idempotencyKey:'mileage-key'};
+ f.tx.serviceRequest={findUnique:async()=>({...serviceInput,customerId:'customer',requestHash:hash(serviceInput)})};f.tx.mileage={findUnique:async()=>({...mileageInput,recordedAt:new Date(mileageInput.recordedAt)})};const controller=new WorkflowsController({serial:async(fn:any)=>fn(f.tx)} as any,{} as any,{} as any);await assert.rejects(controller.service(serviceInput,{customer:{id:'customer'}}),denied);await assert.rejects(controller.mileage(mileageInput,{customer:{id:'customer'}}),denied);assert.equal(f.writes(),0);
+});
+function swapFixture(){
+ const f=base(),at=new Date('2026-01-10T02:00:00Z'),change={id:'change',kind:'VEHICLE_CHANGE',orderId:'order',customerId:'customer',activeQuoteId:'quote',status:'AWAITING_FINANCE'},order={id:'order',customerId:'customer',contractMode:'ESIGN',status:'ACTIVE',currentAssignmentId:'assignment'},assignment={id:'assignment',orderId:'order',customerId:'customer',status:'ACTIVE',vehicleId:'vehicle',startAt:new Date('2026-01-01'),startReadingKm:0},quote={id:'quote',snapshot:{originalAssignmentId:'assignment',plannedReturnAt:at.toISOString(),oldVehicleIdentification:'EV',periods:[],depositRefundAmount:0,depositAmount:0},contract:{status:'SIGNED'},financePreparedAt:at};
+ Object.assign(f.tx,{orderChange:{findUnique:async()=>change,update:async()=>{f.write();}},order:{update:async()=>order,findUniqueOrThrow:async()=>order},delayQuote:{findUniqueOrThrow:async()=>quote},vehicleAssignment:{findUnique:async()=>assignment,findUniqueOrThrow:async()=>assignment},vehicle:{findUnique:async()=>({id:'vehicle',reservedOrderId:'order',status:'IN_USE',mileageKm:0})},serviceObligation:{findMany:async()=>[{sequence:1,startDate:at,endDate:at,dueDate:at,allocations:[],amount:0,chargeAmount:0}]},bill:{findMany:async()=>[]},refund:{findMany:async()=>[]},usageSegment:{aggregate:async()=>({_max:{endReadingKm:0}})},usagePeriod:{count:async()=>0},handover:{findUniqueOrThrow:async()=>({id:'done',orderId:'order',status:'COMPLETED',fileIds:['private']}),create:async({data}:any)=>{f.write();return{id:'swap-handover',...data};}}});return{...f,change,at};
+}
+test('swap creation and completed replay reject private files without creating a handover',async()=>{
+ const f=swapFixture(),input={side:'RETURN',actualAt:f.at.toISOString(),readingKm:10,fileIds:['private'],checklist:[]};await assert.rejects(createSwapHandover(f.tx,f.change,input,actor),denied);assert.equal(f.writes(),0);await assert.rejects(completeSwapHandover(f.tx,{id:'done',orderId:'order',status:'COMPLETED',fileIds:['private']},actor.id),denied);f.tx.assetPrivateFile=mapping([]);assert.equal((await createSwapHandover(f.tx,f.change,input,actor)).id,'swap-handover');
+});
+function reconciliationFixture(){
+ const f=base(),payment={id:'payment',customerId:'customer',billId:'bill',amount:100,providerTransactionId:'verified',status:'SUCCEEDED',reconciliationRequired:true,revision:0,bill:{id:'bill',orderId:'order',type:'SUBSCRIPTION'},refunds:[{status:'SUCCEEDED',amount:100}]},record={id:'review',paymentId:'payment',evidenceFileIds:['private'],status:'SUBMITTED',submittedBy:'submitter'};
+ Object.assign(f.tx,{payment:{findUnique:async()=>payment,findUniqueOrThrow:async()=>payment,update:async()=>{f.write();return{revision:1};}},paymentReconciliation:{findMany:async()=>[record],findUnique:async()=>record,count:async()=>0,create:async({data}:any)=>{f.write();return{id:'review',...data};}}});return{...f,record,service:new PaymentReconciliationService()};
+}
+test('financial evidence submit, list, review and cached result cannot legitimize private files with forged evidence purpose',async()=>{
+ const f=reconciliationFixture(),input={revision:0,idempotencyKey:'finance-submit',resolution:'REFUNDED',note:'verified',evidenceFileIds:['private']};await assert.rejects(f.service.submit(f.tx,finance,'payment',input),denied);await assert.rejects(f.service.list(f.tx,finance,'payment'),denied);await assert.rejects(f.service.review(f.tx,finance,'payment','review',{revision:0,idempotencyKey:'finance-review',decision:'REJECTED',note:'reviewed'}),denied);
+ f.cache({requestHash:hash(input),resultSnapshot:f.record});await assert.rejects(f.service.submit(f.tx,finance,'payment',input),denied);assert.equal(f.writes(),0);f.cache(null);f.tx.assetPrivateFile=mapping([]);assert.equal((await f.service.submit(f.tx,finance,'payment',input)).id,'review');
+});
+function qualificationFixture(){
+ const f=base(),customer={id:'customer',name:'Person',mobile:'13800000000',drivingYears:5,profile:{city:'Shanghai'},legalIdentityFileId:null},record={id:'qualification',customerId:'customer',revision:1,status:'SUBMITTED',identityFileIds:['private'],drivingLicenseFileIds:['private']};Object.assign(f.tx,{customer:{findUnique:async()=>customer},customerQualificationVersion:{findFirst:async()=>record,findMany:async()=>[record]}});return{...f,customer,record,service:new QualificationService()};
+}
+test('qualification acceptance, historical list and cached submission reject admin private evidence',async()=>{
+ const f=qualificationFixture();await assert.rejects(qualificationEvidence(f.tx,'customer',f.record),denied);await assert.rejects(f.service.list(f.tx,actor,'customer'),denied);const input=qualificationSubmitInput.parse({revision:0,idempotencyKey:'qualification-key',profileHash:customerProfileHash(f.customer),verificationSource:'MANUAL',identityFileIds:['private'],drivingLicenseFileIds:['private'],identityLongTerm:true,drivingLicenseLongTerm:true});f.cache({requestHash:hash(input),resultSnapshot:f.record});await assert.rejects(f.service.submit(f.tx,actor,'customer',input),denied);assert.equal(f.writes(),0);f.tx.assetPrivateFile=mapping([]);assert.equal((await qualificationEvidence(f.tx,'customer',f.record)).files.length,1);
+});
+function cancellationFixture(){
+ const f=base(),order={id:'order',contractMode:'OFFLINE',status:'AWAITING_PAYMENT',finalPlanSnapshot:{commercialHash:'commercial'}},record:any={id:'review',orderId:'order',revision:0,status:'SUBMITTED',paperStatus:'UNSIGNED',businessSnapshotHash:'commercial',evidenceFileIds:['private']};Object.assign(f.tx,{order:{findUnique:async()=>order,findUniqueOrThrow:async()=>order},offlineCancellationReview:{findFirst:async()=>record,findMany:async()=>[record],create:async({data}:any)=>{f.write();return{id:'new',...data};},update:async()=>{f.write();return record;}},archiveVersion:{count:async()=>0},documentArchive:{findFirst:async()=>null},archiveFeedback:{findMany:async()=>[]}});return{...f,order,record};
+}
+test('cancellation evidence submit and historical facts/list/review reject private files',async()=>{
+ const f=cancellationFixture(),input={paperStatus:'UNSIGNED',reason:'confirmed',evidenceFileIds:['private'],revision:0,idempotencyKey:'cancel-submit'};await assert.rejects(submitOfflineCancellation(f.tx,actor,'order',input),denied);await assert.rejects(readOfflineCancellationFacts(f.tx,f.order),denied);await assert.rejects(new OfflineCancellationController({serial:async(fn:any)=>fn(f.tx)} as any).list('order',{admin:actor}),denied);await assert.rejects(reviewOfflineCancellation(f.tx,actor,'order',{reviewId:'review',revision:0,decision:'APPROVED',reason:'confirmed',idempotencyKey:'cancel-review'}),denied);assert.equal(f.writes(),0);f.tx.assetPrivateFile=mapping([]);assert.equal((await readOfflineCancellationFacts(f.tx,f.order)).review.id,'review');
+});
+test('cancellation command replay revalidates cached evidence without writing a new review',async()=>{
+ const f=cancellationFixture(),input={paperStatus:'UNSIGNED',reason:'confirmed',evidenceFileIds:['private'],revision:0,idempotencyKey:'cancel-cache'};f.cache({requestHash:hash(input),resultSnapshot:f.record});await assert.rejects(submitOfflineCancellation(f.tx,actor,'order',input),denied);assert.equal(f.writes(),0);
+});
+test('physical receipt new input, historical facts and idempotent replay reject private evidence',async()=>{
+ const f=base(),input={receivedAt:'2026-01-01T10:00:00+08:00',readingKm:10,storageLocation:'site',evidenceFileIds:['private'],revision:0,idempotencyKey:'receipt-key'},handover={id:'handover',orderId:'order',executionMode:'OFFLINE',type:'RETURN'},event={id:'receipt',evidenceFileIds:['private'],requestHash:hash({handoverId:'handover',...input})};Object.assign(f.tx,{handover:{findUnique:async()=>handover},order:{findUniqueOrThrow:async()=>({id:'order',contractMode:'OFFLINE'})},vehicleReceiptEvent:{findUnique:async()=>event,findFirst:async()=>event}});await assert.rejects(currentPhysicalReceipt(f.tx,'order'),denied);await assert.rejects(recordPhysicalReceipt(f.tx,actor,'handover',input),denied);assert.equal(f.writes(),0);f.tx.assetPrivateFile=mapping([]);assert.equal((await recordPhysicalReceipt(f.tx,actor,'handover',input)).id,'receipt');
+});

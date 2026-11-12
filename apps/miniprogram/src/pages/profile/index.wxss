@@ -1,22 +1,81 @@
-.card {
-  margin-top: 32rpx;
-}
-.field:last-child {
-  margin-bottom: 0;
-}
+.profile-page{padding:24rpx 32rpx calc(48rpx + env(safe-area-inset-bottom))}
+.profile-page .title{font-size:44rpx;letter-spacing:-1rpx;margin:12rpx 0}
+.profile-page>.muted{font-size:25rpx;margin-bottom:30rpx}
+.profile-page .card{padding:28rpx;margin:24rpx 0;border-radius:16rpx;border-color:#e8e4da}
+.profile-page .section-title{font-size:32rpx;font-weight:600;margin:0 0 12rpx}
+.login-methods{display:flex;border-bottom:1rpx solid #e9e7e3;margin-bottom:28rpx;gap:16rpx}
+.profile-page .login-method{flex:1;min-width:0;min-height:48px;margin:0;padding:12rpx 0;background:transparent;color:#65615c;border-radius:0;font-size:27rpx;font-weight:400;border-bottom:5rpx solid transparent}
+.profile-page .login-method.is-selected{color:#231815;border-bottom-color:#fcc900;font-weight:600}
+.login-method-description{font-size:26rpx;padding:12rpx 0 28rpx}
+.sms-login-fields{padding-top:4rpx}
+.sms-login-actions{display:grid;gap:16rpx;margin-top:20rpx}.sms-login-actions button{width:100%;margin:0}
+.profile-page .login-consent{align-items:center;gap:0;margin:6rpx 0;flex-wrap:nowrap;white-space:nowrap;font-size:12px;line-height:1.5}
+.login-card .consent-choice{gap:2px;flex-shrink:0}.login-card .consent-choice checkbox{width:24px;transform:scale(.75);transform-origin:left center}
+.profile-page .login-consent>.consent-link{font-size:12px;white-space:nowrap;flex:none;padding:0;min-width:0}.profile-page .login-consent>text{flex:none}
+.login-hint{font-size:24rpx;margin:6rpx 0 16rpx}
+.consent-choice{display:flex;align-items:center;gap:12rpx;min-height:44px}
+.profile-page .consent-link{display:inline-flex;margin:0;padding:0;color:#725c26;text-decoration:underline;flex:0 1 auto;min-height:44px;white-space:normal;text-align:left}
+.accepted-legal{display:flex;align-items:center;flex-wrap:wrap;gap:0;font-size:24rpx;color:#65615c}
+.login-card>.primary{margin-top:16rpx}
+.card-heading{display:flex;justify-content:space-between;align-items:center;gap:16rpx;margin-bottom:16rpx}.card-heading .section-title{margin:0}
+.status-tag{flex-shrink:0;padding:5rpx 14rpx;border-radius:8rpx;background:#ffe477;color:#231815;font-size: 24rpx;font-weight:500}
+.profile-mobile{display:flex;align-items:center;justify-content:space-between;gap:12rpx;margin:20rpx 0 8rpx;font-size:27rpx}
+.profile-field-grid{display:grid;grid-template-columns:minmax(0,1fr) 170rpx;gap:20rpx}
+.profile-page .field{min-width:0;margin:20rpx 0}.profile-page .label{font-size:26rpx;font-weight:500}
+.profile-page .input{min-width:0;width:100%;font-size:27rpx;padding:16rpx 18rpx;height:84rpx;min-height:42px;background:#f8f7f3;border-color:#e8e4da}
+.section-divider{border-top:1rpx solid #e8e4da;padding-top:28rpx;margin-top:22rpx}.subsection-title{font-size:29rpx;font-weight:600;margin-bottom:10rpx}
+.profile-page .small{font-size: 24rpx;line-height:1.65}
+.document-slot{padding:22rpx 0;border-bottom:1rpx solid #eeeae1}.document-row{display:flex;justify-content:space-between;align-items:center;gap:18rpx}
+.document-label{min-width:0}.document-label .label{margin:0}.document-state{font-size: 24rpx;color:#8a8980;margin-top:3rpx}.document-ready{color:#625536}
+.document-upload.secondary{flex-shrink:0;width:auto;min-width:112rpx;min-height:44px;margin:0;padding:12rpx 22rpx;font-size:25rpx;background:#f5f2e8;border:1rpx solid #dcd6c6;border-radius:8rpx}
+.document-selected{margin-top:6rpx;display:flex;align-items:center;gap:12rpx}.file-name{min-width:0;flex:1;overflow-wrap:anywhere;word-break:break-all;line-height:1.5}.document-actions{display:flex;flex-shrink:0;gap:16rpx}
+.profile-page .text-button{font-size:24rpx;min-height:44px;padding:8rpx 0;display:flex;align-items:center;background:transparent}.save-actions{margin-top:26rpx}.save-actions .text-button{justify-content:center;width:100%}
+.profile-page .primary,.profile-page .secondary{font-size:27rpx;min-height:44px;border-radius:10rpx}.profile-page .notice{margin:18rpx 0;font-size:24rpx;padding:18rpx}
+.settings-legal{border-top:1rpx solid #e8e4da;margin-top:22rpx;padding-top:10rpx;display:flex;flex-wrap:wrap;column-gap:24rpx}.settings-legal .text-button{white-space:normal;text-align:left;font-size: 24rpx}
+.consent-row{display:flex;align-items:flex-start;gap:12rpx;margin:22rpx 0;font-size:24rpx;line-height:1.7}.consent-row text{flex:1;min-width:0}.consent-row checkbox{flex-shrink:0}
+.query-identity{justify-content:center;width:100%;margin-top:12rpx}.notice,.muted{white-space:pre-wrap;overflow-wrap:anywhere}.location-hint{margin-top:18rpx}
+.settings-payment{margin-top:28rpx}.settings-contact{display:flex;align-items:center;justify-content:center;gap:12rpx;margin:24rpx 0 8rpx;font-size:25rpx}
+.settings-icon-button{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;background:transparent;color:#231815;font-size:36rpx;line-height:1}
+.settings-logout.secondary{margin:0;min-height:44px;background:transparent;border:1rpx solid #dcd6c6;font-size:25rpx}.setting-heading{padding-top:32rpx}
+.profile-feedback{position:fixed;left:24rpx;right:24rpx;bottom:calc(24rpx + env(safe-area-inset-bottom));z-index:1000;background:#231f17;color:#fffdf5;border:1rpx solid #51462e;border-top:6rpx solid #ffdb55;border-radius:16rpx;box-shadow:0 12rpx 40rpx rgba(0,0,0,.22);padding:10rpx 24rpx 24rpx}
+.feedback-header{display:flex;align-items:center;justify-content:space-between;gap:24rpx;min-height:44px}.feedback-title{font-size:25rpx;font-weight:600;color:#ffe477}
+.feedback-close{display:flex;align-items:center;justify-content:flex-end;min-width:44px;min-height:44px;padding:0;background:transparent;color:#fffdf5;font-size:24rpx}
+.feedback-scroll{max-height:38vh;overscroll-behavior:contain}.feedback-message{font-size:27rpx;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;padding:4rpx 0}
 
-.page {
-  padding-bottom: calc(64rpx + env(safe-area-inset-bottom));
-}
-.card {
-  margin-top: 24rpx;
-  margin-bottom: 24rpx;
-}
-.notice {
-  margin-top: 24rpx;
-  margin-bottom: 24rpx;
-}
-.row .section-title {
-  margin-top: 0;
-  margin-bottom: 0;
-}
+/* Bright native 2026-11-02: keep document actions readable on narrow screens. */
+.profile-page .card{border-radius:24rpx;border-color:#e1e1de;padding:30rpx}.profile-page .title{font-size:48rpx}.profile-page>.muted{font-size:26rpx}.profile-page .input{font-size:30rpx;background:#ffffff;border-color:#cccac7;border-radius:16rpx;height:96rpx}.profile-page .label{font-size:28rpx}.profile-page .primary,.profile-page .secondary{border-radius:16rpx;font-size:28rpx}.card-heading{flex-wrap:wrap}.status-tag{background:#fcc900;color:#231815}.document-upload.secondary{background:#ffffff;border-color:#cccac7}.document-slot,.section-divider,.settings-legal{border-color:#e9e7e3}.document-state{color:#65615c}.settings-logout.secondary{border-color:#cccac7;background:#ffffff}
+
+.document-row{flex-wrap:wrap;gap:8rpx}.document-label.text-button{flex:1;min-width:90px;white-space:normal;text-align:left;align-items:flex-start;flex-direction:column;word-break:break-word}.document-actions{gap:12rpx;flex-wrap:wrap}.document-actions .text-button{min-width:44px;justify-content:center}.profile-identity-section{margin-top:20rpx}.profile-page .document-label[disabled]{opacity:1;color:#65615c}
+
+.profile-footer{display:flex;gap:16rpx;margin:24rpx 0 8rpx}.profile-footer button{flex:1;min-width:0;min-height:44px;margin:0;font-size:25rpx}.profile-footer .settings-contact{margin:0;background:#ffffff;border:1rpx solid #cccac7}
+
+/* Approved 2026-11-10: app-native styling, two cards and three identity rows. */
+.profile-page>.muted{margin-bottom:40rpx}
+.profile-page .profile-card{margin:0 0 32rpx;padding:32rpx;border:1rpx solid #e1e1de;border-radius:24rpx}
+.profile-card .card-heading{min-height:52rpx;margin-bottom:20rpx;flex-wrap:nowrap;gap:24rpx}
+.profile-card .card-heading .section-title{font-size:34rpx;line-height:1.4;margin:0}
+.profile-statuses{display:flex;align-items:center;justify-content:flex-end;gap:8rpx;flex-wrap:wrap}
+.profile-card .identity-verified{background:#fcc900;color:#231815;padding:6rpx 14rpx;border-radius:8rpx;font-size:24rpx;line-height:1.5;white-space:nowrap}
+.profile-info-row{display:grid;grid-template-columns:192rpx minmax(0,1fr);align-items:center;gap:16rpx;min-height:44px;padding:8rpx 0}
+.profile-info-label,.profile-info-value{margin:0;padding:0;min-width:0;font-size:32rpx;font-weight:400;line-height:1.6;color:#231815}
+.profile-info-label{white-space:nowrap}
+.profile-info-value{overflow-wrap:anywhere;word-break:break-word;font-variant-numeric:tabular-nums}
+.profile-info-value.profile-info-note{font-size:24rpx;color:#65615c}
+.profile-page .profile-info-input{font-size:32rpx;height:88rpx;min-height:44px;padding:12rpx 16rpx}
+.profile-identity-footer{display:flex;align-items:center;justify-content:space-between;gap:16rpx;min-height:44px;margin-top:16rpx;padding-top:8rpx;border-top:1rpx solid #e9e7e3}
+.profile-page .identity-refresh{flex-shrink:0;justify-content:flex-end;min-width:64px;min-height:44px;font-size:26rpx;color:#231815}
+.profile-identity-section{margin-top:28rpx;padding-top:24rpx;border-top:1rpx solid #e9e7e3}
+.profile-card .document-slot{padding:12rpx 0;border-bottom:0}
+.profile-card .document-slot+.document-slot{border-top:1rpx solid #e9e7e3}
+.profile-card .document-row{min-height:128rpx;flex-wrap:nowrap;gap:16rpx}
+.profile-card .document-label.text-button{min-width:0;min-height:58px;justify-content:center;font-size:30rpx;line-height:1.6;color:#231815}
+.profile-card .document-state{font-size:24rpx;line-height:1.6;color:#65615c;margin-top:6rpx}
+.profile-card .document-actions{flex-wrap:nowrap;gap:12rpx}
+.profile-card .document-upload.secondary{min-width:44px;min-height:44px;padding:12rpx 14rpx;border-radius:16rpx;background:#ffffff;border:1rpx solid #cccac7;font-size:28rpx;font-weight:500}
+.profile-card .document-actions .text-button{min-width:44px;min-height:44px;font-size:28rpx;color:#231815}
+.profile-card .documents-note{padding-top:24rpx;border-top:1rpx solid #e9e7e3}
+.profile-card .driving-years-field{margin:12rpx 0 24rpx}
+.profile-footer{gap:16rpx;margin:0 0 8rpx}
+.profile-footer .secondary{min-height:48px;font-size:30rpx;font-weight:500;border-radius:16rpx;padding:16rpx 28rpx}
+.profile-legal-footer{display:flex;justify-content:center;align-items:center;gap:24rpx;margin-top:16rpx;color:#65615c;font-size:24rpx}
+.profile-legal-footer .text-button{min-height:44px;padding:0 8rpx;font-size:24rpx;color:#231815}

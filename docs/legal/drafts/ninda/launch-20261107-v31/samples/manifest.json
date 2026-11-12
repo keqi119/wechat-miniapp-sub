@@ -1,0 +1,198 @@
+[
+  {
+    "id": "01",
+    "sampleOnly": true,
+    "file": "01.pdf",
+    "sha256": "dd878cd426bd31d0798c43af5d23f9212b5e8c1f5cd98c7aa32a09df7aa5a0b8",
+    "pageCount": 10,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 9,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 9,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 9,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  },
+  {
+    "id": "02-main",
+    "sampleOnly": true,
+    "file": "02-main.pdf",
+    "sha256": "655b9594ef40185f7d707ce2ee534e8f2861c37cb64ec65002158fa709feb152",
+    "pageCount": 19,
+    "positions": {
+      "OWNER": [
+        {
+          "pagenum": 18,
+          "x": 607.82,
+          "y": 324.24
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 18,
+          "x": 607.82,
+          "y": 585.13
+        }
+      ]
+    }
+  },
+  {
+    "id": "02-grant",
+    "sampleOnly": true,
+    "file": "02-grant.pdf",
+    "sha256": "1bd919daa2022980042144ee6684ee85e85b043d6d08523c867b1cfa3cbd1dbd",
+    "pageCount": 14,
+    "positions": {
+      "OWNER": [
+        {
+          "pagenum": 13,
+          "x": 607.82,
+          "y": 324.24
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 13,
+          "x": 607.82,
+          "y": 585.13
+        }
+      ]
+    }
+  },
+  {
+    "id": "03",
+    "sampleOnly": true,
+    "file": "03.pdf",
+    "sha256": "427b4dfa629b71a3e8ed7a90cdebd8c57a44128d2d1dc4f7204ba802e45eb5fd",
+    "pageCount": 6,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 5,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  },
+  {
+    "id": "04",
+    "sampleOnly": true,
+    "file": "04.pdf",
+    "sha256": "99c157062ec775750bec8cc5931166dd11c61ce337a2314fff6832503603f065",
+    "pageCount": 4,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  },
+  {
+    "id": "05",
+    "sampleOnly": true,
+    "file": "05.pdf",
+    "sha256": "50a0b281eb00fc9c2df69af926f3f1c3ede129d0b1df4a06df762dafab7dfb19",
+    "pageCount": 4,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  },
+  {
+    "id": "06",
+    "sampleOnly": true,
+    "file": "06.pdf",
+    "sha256": "3e894a277377ad7ee7f774477fe4582b7b53ad7f972a3d17884b88fb684b9538",
+    "pageCount": 4,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 3,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,16 @@
+const services=require('../../services/index');
+const {go,confirm}=require('../../utils/page');
+Page({
+ data:{loading:true,error:'',view:null,accepted:false,amountAccepted:false,amountReason:'',showAmountForm:false,busy:false,message:''},
+ onLoad(options){this.orderId=options.orderId||'';this.kind=options.kind||'';this.reload();},
+ onShow(){if(this._started&&!this.data.busy)this.reload();},
+ onUnload(){this._disposed=true;this._generation=(this._generation||0)+1;this._view=null;},
+ async reload(){if(this._disposed)return;this._started=true;const generation=this._generation=(this._generation||0)+1,session=services.renewalSessionStamp();this._view=null;this.setData({loading:true,error:'',view:null,accepted:false,amountAccepted:false,amountReason:'',showAmountForm:false});try{const view=await services.getContractPlan(this.orderId,this.kind);if(this._disposed||generation!==this._generation||session!==services.renewalSessionStamp())return;this._view=view;this._session=session;this.setData({view,loading:false,showAmountForm:!!view.settlement?.canConfirm});wx.setNavigationBarTitle({title:view.title});}catch(e){if(!this._disposed&&generation===this._generation)this.setData({loading:false,error:e.message});}},
+ accept(e){if(!this.data.busy&&this.data.view?.canConfirm)this.setData({accepted:e.detail.value.includes('plan')});},
+ async submit(){if(this.data.busy||this.data.loading||!this.data.accepted||!this._view?.canConfirm)return;const view=this._view,session=this._session;this.setData({busy:true,error:'',message:''});try{if(!await confirm('确认本版本方案？','请核对协商事项和金额。确认后仍须本人阅读并签署完整电子协议，实际资金与车辆交还另行办理。'))return;if(this._disposed||session!==services.renewalSessionStamp()||view!==this._view)throw Error('会话或方案已变化，请重新读取');await services.confirmContractPlan(view);if(this._disposed||session!==services.renewalSessionStamp())return;await this.reload();this.setData({message:'方案已确认，请在合同与协议中查看签署进度。'});}catch(e){if(!this._disposed)this.setData({error:e.message,accepted:false});}finally{if(!this._disposed)this.setData({busy:false});}},
+ amountAccept(e){if(!this.data.busy)this.setData({amountAccepted:e.detail.value.includes('amount')});},
+ amountReason(e){if(!this.data.busy)this.setData({amountReason:e.detail.value});},
+ openAmountForm(){if(!this.data.busy)this.setData({showAmountForm:true,amountAccepted:false,amountReason:''});},
+ async respondAmount(e){const decision=e.currentTarget.dataset.decision;if(this.data.busy||this.data.loading||!this._view?.settlement||!this.data.amountReason.trim()||decision==='CONFIRM'&&!this.data.amountAccepted)return;const view=this._view,session=this._session;this.setData({busy:true,error:''});try{if(!await confirm(decision==='OBJECT'?'提交本次金额异议？':'确认实际结算金额？','将保存本次实际还车和逐期金额的核对意见，资金仍由财务核实办理。'))return;if(this._disposed||session!==services.renewalSessionStamp()||view!==this._view)throw Error('会话或结算已变化');await services.respondExitAmounts(view,decision,this.data.amountReason);if(this._disposed||session!==services.renewalSessionStamp())return;await this.reload();this.setData({message:'核对意见已保存，资金由财务继续办理。'});}catch(e){if(!this._disposed)this.setData({error:e.message,amountAccepted:false});}finally{if(!this._disposed)this.setData({busy:false});}},
+ openContracts(){go('/pages/electronic-contracts/index?orderId='+encodeURIComponent(this.orderId));}
+});

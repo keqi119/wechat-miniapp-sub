@@ -20,3 +20,17 @@ test-results/
 __pycache__/
 docs/evidence/wechat-domain-confirmation.jpg
 .DS_Store
+
+# Local working material and generated acceptance evidence (never source inputs).
+/tmp/
+/output/
+/docs/evidence/
+/apps/admin/src/.qa-seven-module/
+/apps/admin/qa/
+/apps/signing-h5/qa/
+/apps/miniprogram/evidence/
+/docs/legal/**/*.png
+/docs/legal/**/*.jpg
+/docs/legal/**/*.jpeg
+/docs/legal/**/*.pdf
+/docs/legal/**/*.docx

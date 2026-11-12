@@ -1,5 +1,6 @@
 import {ensure} from '../common/errors';
 import {electronicDocumentKinds} from './types';
+import {PLATFORM_SIGNING_GRANTEE,platformAutoDocumentKinds} from '../owner-signing/platform-scope';
 import type {ElectronicAction,ElectronicDocumentKind,ElectronicTaskFacts,SignerRole,SigningContext,SigningModes,SigningPartyInput} from './types';
 
 export const electronicHash=(value:unknown):value is string=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
@@ -20,8 +21,11 @@ export function electronicIdentityReady(p:SigningPartyInput,now:Date):boolean{
   return Number.isFinite(at)&&p?.identityVerified===true&&['INDIVIDUAL','ENTERPRISE'].includes(p.subjectType)&&electronicId(p.providerCustomerId)&&Number.isSafeInteger(p.identityVersion)&&p.identityVersion>0&&electronicHash(p.identityHash)&&!!cert&&electronicId(cert.serialNo)&&cert.status==='VALID'&&electronicInstant(cert.validFrom)<=at&&electronicInstant(cert.validUntil)>at&&fresh(cert.checkedAt,now)&&(p.subjectType!=='ENTERPRISE'||electronicId(p.signatureId));
 }
 export function electronicAutoAuthorityReady(p:SigningPartyInput,context:SigningContext,now:Date):boolean{
+  if(context.signaturePolicy==='MANUAL_ONLY')return false;
   const a=p.autoAuthority,at=now.getTime();
-  return p.subjectType==='ENTERPRISE'&&!!a&&electronicId(a.id)&&a.subjectId===p.subjectId&&a.providerCustomerId===p.providerCustomerId&&a.signatureId===p.signatureId&&a.delegateSubjectId===context.platformSubjectId&&a.enabled===true&&a.providerStatus==='AUTHORIZED'&&a.granteeVerified===true&&electronicHash(a.businessEvidenceHash)&&electronicHash(a.channelEvidenceHash)&&electronicInstant(a.validFrom)<=at&&electronicInstant(a.validUntil)>at&&fresh(a.checkedAt,now,60_000)&&Array.isArray(a.documentKinds)&&a.documentKinds.includes(context.kind)&&(a.cooperationVersionIds===null||Array.isArray(a.cooperationVersionIds)&&!!context.cooperationVersionId&&a.cooperationVersionIds.includes(context.cooperationVersionId))&&(a.vehicleIds===null||Array.isArray(a.vehicleIds)&&context.vehicleIds.every(id=>a.vehicleIds!.includes(id)));
+  if(context.autoSigningPolicyVersion===3&&a?.policyVersion!==3)return false;
+  const delegateReady=a?.policyVersion===3?a.platformSubjectId===context.platformSubjectId&&a.delegateSubjectId===PLATFORM_SIGNING_GRANTEE.id&&electronicHash(a.applicationBinding)&&platformAutoDocumentKinds.includes(context.kind as any):a?.delegateSubjectId===context.platformSubjectId;
+  return p.role!=='CUSTOMER'&&p.subjectType==='ENTERPRISE'&&!!a&&electronicId(a.id)&&a.subjectId===p.subjectId&&a.providerCustomerId===p.providerCustomerId&&a.signatureId===p.signatureId&&delegateReady&&a.enabled===true&&a.providerStatus==='AUTHORIZED'&&a.granteeVerified===true&&electronicHash(a.businessEvidenceHash)&&electronicHash(a.channelEvidenceHash)&&electronicInstant(a.validFrom)<=at&&electronicInstant(a.validUntil)>at&&fresh(a.checkedAt,now,60_000)&&Array.isArray(a.documentKinds)&&a.documentKinds.includes(context.kind)&&(a.cooperationVersionIds===null||Array.isArray(a.cooperationVersionIds)&&!!context.cooperationVersionId&&a.cooperationVersionIds.includes(context.cooperationVersionId))&&(a.vehicleIds===null||Array.isArray(a.vehicleIds)&&context.vehicleIds.every(id=>a.vehicleIds!.includes(id)));
 }
 function assertContext(parties:SigningPartyInput[],context:SigningContext){
   assertElectronicParties(parties,context.kind);
@@ -32,9 +36,10 @@ function assertContext(parties:SigningPartyInput[],context:SigningContext){
 export function selectSigningModes(parties:SigningPartyInput[],now:Date,context:SigningContext):SigningModes{
   assertContext(parties,context);
   ensure(parties.every(p=>electronicIdentityReady(p,now)),409,'ELECTRONIC_IDENTITY_REQUIRED','请先完成各方实名、证书及印章核验');
-  const companies=parties.filter(p=>p.subjectType==='ENTERPRISE');
-  const automatic=companies.every(p=>electronicAutoAuthorityReady(p,context,now));
-  return {modes:Object.fromEntries(parties.map(p=>[p.role,p.subjectType==='ENTERPRISE'&&automatic?'AUTO':'MANUAL'])),reasonCodes:automatic?[]:['ELECTRONIC_AUTO_AUTHORITY_REQUIRED']};
+  const cooperation=context.kind.startsWith('COOPERATION');
+  const companies=parties.filter(p=>p.subjectType==='ENTERPRISE'&&(!cooperation||p.role==='PLATFORM'));
+  const automatic=companies.length>0&&(context.kind==='SUBSCRIPTION'||companies.every(p=>p.autoAuthority?.policyVersion===3))&&companies.every(p=>electronicAutoAuthorityReady(p,context,now));
+  return {modes:Object.fromEntries(parties.map(p=>[p.role,p.subjectType==='ENTERPRISE'&&(!cooperation||p.role==='PLATFORM')&&automatic?'AUTO':'MANUAL'])),reasonCodes:automatic?[]:['ELECTRONIC_AUTO_AUTHORITY_REQUIRED']};
 }
 export function nextSigningAction(task:ElectronicTaskFacts,now:Date):ElectronicAction{
   if(['WITHDRAWN','DECLINED','EXPIRED','RETIRED'].includes(task.status))return{kind:'NONE',reason:task.status};
@@ -50,12 +55,14 @@ export function nextSigningAction(task:ElectronicTaskFacts,now:Date):ElectronicA
   if(['REQUESTED','UNKNOWN'].includes(task.uploadStatus))return{kind:'QUERY_UPLOAD'};
   if(task.uploadStatus==='NOT_STARTED')return parties.every(p=>p.status==='PENDING')?{kind:'UPLOAD'}:blocked('ELECTRONIC_TASK_INVALID');
   if(task.uploadStatus!=='UPLOADED')return blocked('ELECTRONIC_TASK_INVALID');
+  const enrich=parties.find(p=>p.status==='SIGNED'&&p.requiresEvidenceEnrichment);if(enrich)return{kind:'QUERY',role:enrich.role};
   if(pendingIndex>=0){
     if(task.filingStatus!=='NOT_STARTED')return blocked('ELECTRONIC_PREMATURE_FILING');
     const party=parties[pendingIndex];
     if(['ISSUED','UNKNOWN'].includes(party.status))return{kind:'QUERY',role:party.role};
     if(['DECLINED','EXPIRED'].includes(party.status))return{kind:'NONE',reason:party.status};
     if(!electronicIdentityReady(party,now))return blocked('ELECTRONIC_IDENTITY_REQUIRED');
+    if(party.mode==='AUTO'&&(party.subjectType!=='ENTERPRISE'||party.role==='CUSTOMER'||task.kind==='COOPERATION_GRANT'||(task.kind.startsWith('COOPERATION')&&party.role==='OWNER')||(task.kind!=='SUBSCRIPTION'&&party.autoAuthority?.policyVersion!==3)))return blocked('ELECTRONIC_MANUAL_REQUIRED');
     if(party.mode==='AUTO'&&!electronicAutoAuthorityReady(party,task.context,now))return blocked('ELECTRONIC_AUTO_AUTHORITY_REQUIRED');
     return{kind:'SIGN',role:party.role,mode:party.mode};
   }

@@ -33,3 +33,5 @@
   margin-top: 0;
   margin-bottom: 0;
 }
+
+.legal-body{display:block;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 28rpx}.legal-body:last-child{margin-bottom:0}

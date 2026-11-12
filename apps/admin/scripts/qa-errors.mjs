@@ -56,7 +56,7 @@ try {
   await page.route('**/api/admin/applications/*/final-plan', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'REVISION_CONFLICT', message: 'QA 最终方案已更新，请刷新' }, requestId: 'qa-request-409' }) }));
   await page.getByRole('button', { name: '发布最终方案', exact: true }).click();
   await page.getByText('QA 最终方案已更新，请刷新', { exact: true }).waitFor();
-  assert.equal(await page.locator('#field-monthlyFeeAmount').inputValue(), '2999.29');
+  assert.equal(await page.locator('[id$="-field-monthlyFeeAmount"]:visible').inputValue(), '2999.29');
   await page.screenshot({ path: resolve(out, 'application-version-conflict.png'), fullPage: true }); check('409 version conflict preserves entered form and requests reload');
   await page.unroute('**/api/admin/applications/*/final-plan');
   await page.getByRole('button', { name: '关闭面板', exact: true }).click();

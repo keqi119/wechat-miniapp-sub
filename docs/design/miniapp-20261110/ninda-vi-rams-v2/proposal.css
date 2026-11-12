@@ -1,0 +1,55 @@
+/* Review prototype only. Does not load into the mini program. */
+:root {
+  --nd-yellow: #fcc900;
+  --nd-ink: #231815;
+  --nd-muted: #65615c;
+  --nd-page: #f5f6f7;
+  --nd-surface: #fff;
+  --nd-line: #e1e1de;
+  --nd-control-line: #cccac7;
+}
+body { background: var(--nd-page); color: var(--nd-ink); }
+.page .primary, .page .search-button {
+  background: var(--nd-ink); color: #fff; border-color: var(--nd-ink);
+  box-shadow: none;
+}
+.page .secondary { color: var(--nd-ink); background: #fff; border-color: var(--nd-control-line); box-shadow: none; }
+.page .text-button, .page .record-link, .page .back-link,
+.page .document-actions .text-button, .page .identity-refresh,
+.page .profile-legal-footer .text-button { color: var(--nd-ink); }
+.page .card, .page .hero, .page .vehicle-preview, .page .catalog-card,
+.page .record-card, .page .service-tile, .page .addon-entry {
+  background: #fff; border-color: var(--nd-line); box-shadow: none;
+}
+.page .tag, .page .identity-verified, .page .status-pill,
+.page .hero .eyebrow, .page .photo-status {
+  color: var(--nd-ink); background: var(--nd-yellow); border-color: transparent;
+}
+.page .brand-chip.is-selected { background: var(--nd-yellow); color: var(--nd-ink); border-color: var(--nd-yellow); }
+.page .brand-chip:not(.is-selected) { background:#fff; color:var(--nd-muted); border-color:var(--nd-control-line); }
+.page .notice, .page .next-card { background:#fff; color:var(--nd-ink); border-color:var(--nd-line); border-left-color:var(--nd-yellow); }
+.page .muted, .page .eyebrow, .page .city, .page .hero-copy,
+.page .hero-caption, .page .price-caption, .page .document-state { color: var(--nd-muted); }
+.page .hero .eyebrow { color: var(--nd-ink); }
+.page .input, .page .textarea, .page .search-input { background:#fff; border-color:var(--nd-control-line); color:var(--nd-ink); }
+.page .profile-mark { background:var(--nd-yellow); color:var(--nd-ink); }
+.page .timeline-dot.done, .page .step-number { background:var(--nd-yellow); color:var(--nd-ink); }
+.page .tile-number, .page .addon-entry-name, .page .addon-entry-note, .page .next-step-label { color:var(--nd-ink); }
+.page .photo-surface, .page .vehicle-photo { background:#f0f1f1; }
+.page .photo-surface wx-image img, .page .vehicle-photo wx-image img { object-fit:cover!important; }
+.page .view-label { color:#fff; background:var(--nd-ink); }
+.page .next-step { background:#f5f6f7; color:var(--nd-ink); }
+.page .addon-entry-note { background:#f5f6f7; }
+.page .profile-mark { font-size:0!important; background:var(--nd-yellow) url('assets/person-active.png') center / 24px 24px no-repeat; }
+.page .section-title, .page .record-title { color:var(--nd-ink); }
+.page .title, .page .hero-title { letter-spacing:-.5px; }
+.brand-lockup { min-width:0; }
+.vi-lockup { display:block; width:148px; height:auto; object-fit:contain; }
+wx-button[disabled] { opacity:.42; cursor:default; }
+
+/* The active destination groups its icon and label on one brand-colour surface. */
+.native-tabs { height:88px; padding:8px 8px 22px; }
+.native-tabs a { margin:0 7px; padding:6px 0; gap:2px; justify-content:center; border-radius:12px; }
+.native-tabs a.active { background:var(--nd-yellow); }
+.native-tabs a.active img { background:transparent; outline:none; border-radius:0; }
+

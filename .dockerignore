@@ -4,6 +4,8 @@
 .superpowers
 **/node_modules
 **/dist
+**/.artifacts
+*.log
 **/var
 **/test-results
 **/qa

@@ -19,7 +19,7 @@ function build({ source = path.join(ROOT, 'src'), destination = path.join(ROOT, 
   if (errors.length) throw new Error(errors.join('\n'));
   const compiled = compile(source);
   const config = require(path.join(source, 'config.js'));
-  if (config.mode !== 'api' || config.apiBase !== 'https://mini-api.subauto.keybox.cloud') throw new Error('Production must target the approved independent HTTPS API.');
+  if (config.mode !== 'api' || config.apiBase !== 'https://api.evsub.ndacar.com') throw new Error('Production must target the approved independent HTTPS API.');
   // Windows DevTools can keep a directory handle open for an imported project.
   // Keep that root and replace its contents after validating the output boundary.
   if (fs.existsSync(output)) for (const entry of fs.readdirSync(output)) fs.rmSync(path.join(output, entry), { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });

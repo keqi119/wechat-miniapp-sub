@@ -1,0 +1,64 @@
+{
+  "status": "ALL_FOUR_PUBLISHED",
+  "release": "20261110-advertising-copy-v1",
+  "approvalSha256": "d06f61734d3304f05df09403235a04856147e00d529d127aba9f58ca21357479",
+  "completedAt": "2026-11-10T15:50:11.775Z",
+  "items": [
+    {
+      "artifact": "03",
+      "id": "cmwav9due001fpk015v1628va",
+      "type": "ELECTRONIC_V31_VEHICLE_SWAP",
+      "version": 1,
+      "status": "PUBLISHED",
+      "contentHash": "dca93fe222525380df892a11bc8bc26d5741439bc4faec0340313f09a61e84b3",
+      "templateSha256": "9d6433818e3d723cf67a0b1685f04d987fc73dad8c57ba12452edbfae112f150",
+      "sampleSha256": "427b4dfa629b71a3e8ed7a90cdebd8c57a44128d2d1dc4f7204ba802e45eb5fd",
+      "confirmedAt": "2026-11-10T15:50:12.629Z",
+      "publishedAt": "2026-11-10T15:50:12.629Z",
+      "verifiedAt": "2026-11-10T15:50:11.344Z"
+    },
+    {
+      "artifact": "04",
+      "id": "cmwav9dz6001jpk01c55tfphh",
+      "type": "ELECTRONIC_V31_PRE_DELIVERY_CANCELLATION",
+      "version": 1,
+      "status": "PUBLISHED",
+      "contentHash": "188b085fbc5face544da82cb76566a907bd44f537703e8ba3e06e1e057ca707c",
+      "templateSha256": "d3bd9636cb30fe4e1cdbeef15c3416e92b5264dc52db238ed50239caf6bc6f5b",
+      "sampleSha256": "99c157062ec775750bec8cc5931166dd11c61ce337a2314fff6832503603f065",
+      "confirmedAt": "2026-11-10T15:50:12.773Z",
+      "publishedAt": "2026-11-10T15:50:12.773Z",
+      "verifiedAt": "2026-11-10T15:50:11.461Z"
+    },
+    {
+      "artifact": "05",
+      "id": "cmwav9e2g001npk01mswcafpl",
+      "type": "ELECTRONIC_V31_RENEWAL",
+      "version": 1,
+      "status": "PUBLISHED",
+      "contentHash": "1a284d557a690f62125439c9976db012d65cc04702033da1d28ff24113bab96a",
+      "templateSha256": "3aa99b300438cd42dc86803150c150d52aacac89397dcc457afb9a10dc781217",
+      "sampleSha256": "50a0b281eb00fc9c2df69af926f3f1c3ede129d0b1df4a06df762dafab7dfb19",
+      "confirmedAt": "2026-11-10T15:50:12.921Z",
+      "publishedAt": "2026-11-10T15:50:12.921Z",
+      "verifiedAt": "2026-11-10T15:50:11.633Z"
+    },
+    {
+      "artifact": "06",
+      "id": "cmwav9e77001rpk01ign9uv6w",
+      "type": "ELECTRONIC_V31_EARLY_TERMINATION",
+      "version": 1,
+      "status": "PUBLISHED",
+      "contentHash": "f5d688af0fd99c8a9310dfa4d8d1e88a65e8cd5757d78ca02a747932e005794c",
+      "templateSha256": "2d271debdf864b6e6845cce9e16fdf5abc7aa451fedad84106300bffe30d9916",
+      "sampleSha256": "501f87a8878d634faf0f6ad2ce900c2a30eee7be8ad524ab89f06a9920156d6a",
+      "confirmedAt": "2026-11-10T15:50:13.073Z",
+      "publishedAt": "2026-11-10T15:50:13.073Z",
+      "verifiedAt": "2026-11-10T15:50:11.774Z"
+    }
+  ],
+  "productionCutoverPerformed": false,
+  "realSigningOrPaymentInvoked": false,
+  "verifiedEvidence": ".runtime/electronic-production-20261110/legal-publication-verified.json",
+  "verifiedEvidenceSha256": "ad22b8212349a70962103e5ebc59c2fc614664f1f58bf0d0af1ea775f480859b"
+}

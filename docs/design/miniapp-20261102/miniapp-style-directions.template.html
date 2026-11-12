@@ -1,0 +1,290 @@
+<div id="ninda-style-study">
+  <div class="study-label">宁达订阅 · 小程序设计提案 <span>合成价格与记录 · 非线上交易</span></div>
+  <div class="viz-carousel viz-dotted-background" aria-label="三种微信小程序设计风格" data-previous-label="上一种风格" data-next-label="下一种风格">
+    <section data-variant="明朗原生" aria-label="明朗原生设计">
+      <div class="study-stage" data-direction="native"></div>
+    </section>
+    <section data-variant="静奢出行" aria-label="静奢出行设计" hidden>
+      <div class="study-stage" data-direction="premium"></div>
+    </section>
+    <section data-variant="轻盈城市" aria-label="轻盈城市设计" hidden>
+      <div class="study-stage" data-direction="city"></div>
+    </section>
+  </div>
+  <div class="study-attribution">车型示意图：<a href="https://commons.wikimedia.org/wiki/File:(CHN-Guangdong)_Showcar_Nio_ET5_No-plate_2024-05-25.jpg" target="_blank" rel="noopener noreferrer">S5A-0043 / Wikimedia Commons</a> · <a href="https://creativecommons.org/licenses/by/2.0/" target="_blank" rel="noopener noreferrer">CC BY 2.0</a> · 已缩放、压缩与画面裁切，非库存实拍</div>
+</div>
+<style>
+#ninda-style-study { width:100%; }
+#ninda-style-study .study-label { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;color:var(--foreground);font-size:14px;font-weight:500;padding-right:92px; }
+#ninda-style-study .study-label span,#ninda-style-study .study-attribution { color:var(--muted-foreground);font-size:12px;font-weight:400; }
+#ninda-style-study .study-attribution { margin-top:12px;line-height:1.6; }
+#ninda-style-study .study-stage { padding:20px 8px 24px;min-height:1160px;box-sizing:border-box; }
+#ninda-style-study .study-stage:has([data-handover-state] option[value="pending"]:checked) { min-height:1340px; }
+#ninda-style-study .direction-heading { display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 auto 14px;max-width:390px;color:var(--foreground); }
+#ninda-style-study .direction-heading strong { font-size:18px;font-weight:500; }
+#ninda-style-study .direction-heading span { font-size:12px;color:var(--muted-foreground); }
+#ninda-style-study .demo-controls { display:flex;gap:6px;flex-wrap:wrap;max-width:390px;margin:0 auto 12px; }
+#ninda-style-study .state-control { max-width:390px;margin:0 auto 12px;display:flex;gap:12px;align-items:center;color:var(--foreground);font-size:12px; }
+#ninda-style-study .state-control select { flex:1;min-width:0; }
+#ninda-style-study .nd-app { color-scheme:light;--nd-bg:#F5F6F7;--nd-surface:#FFF;--nd-ink:#231815;--nd-muted:#65615C;--nd-accent:#F9BE00;--nd-on:#231815;--nd-line:#E9E7E3;--nd-soft:#FFF5D3;--nd-radius:12px;--nd-positive:#216E4D;background:var(--nd-bg);color:var(--nd-ink);width:100%;max-width:390px;min-height:812px;margin:auto;box-shadow:0 14px 40px #14221B13,0 0 0 1px #22222214;border-radius:24px;overflow:clip;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;font-size:15px;line-height:1.5;display:flex;flex-direction:column;position:relative; }
+#ninda-style-study .nd-app[data-kind="premium"] { --nd-bg:#F1EFEA;--nd-surface:#FFFEFA;--nd-ink:#242724;--nd-muted:#62645D;--nd-accent:#263B35;--nd-on:#FFF;--nd-line:#DFDED6;--nd-soft:#E9E5DA;--nd-radius:4px; }
+#ninda-style-study .nd-app[data-kind="city"] { --nd-bg:#EFF5F2;--nd-surface:#FFF;--nd-ink:#183D34;--nd-muted:#51685F;--nd-accent:#246B57;--nd-on:#FFF;--nd-line:#D7E5DD;--nd-soft:#DFEDE4;--nd-radius:22px; }
+#ninda-style-study .nd-app * { box-sizing:border-box; }
+#ninda-style-study .nd-app button,#ninda-style-study .nd-app input { font:inherit; }
+#ninda-style-study .nd-app button { border:0;color:inherit;background:none; }
+#ninda-style-study .nd-app p,#ninda-style-study .nd-app h1,#ninda-style-study .nd-app h2,#ninda-style-study .nd-app h3 { margin:0; }
+#ninda-style-study .nd-app h1 { font-size:26px;line-height:1.3;font-weight:600;letter-spacing:-.5px; }
+#ninda-style-study .nd-app h2 { font-size:19px;line-height:1.4;font-weight:600; }
+#ninda-style-study .nd-app h3 { font-size:16px;line-height:1.4;font-weight:600; }
+#ninda-style-study .nd-app small { font-size:12px; }
+#ninda-style-study .nd-statusbar { display:flex;justify-content:space-between;padding:12px 22px 2px;font-size:12px;font-weight:600; }
+#ninda-style-study .nd-device-icons { display:flex;gap:5px;align-items:center; }
+#ninda-style-study .nd-device-icons svg { width:14px;height:14px; }
+#ninda-style-study .nd-nav { min-height:48px;display:grid;grid-template-columns:44px 1fr 88px;gap:4px;align-items:center;padding:0 14px 4px; }
+#ninda-style-study .nd-brand { font-weight:600;font-size:15px; }
+#ninda-style-study .nd-wordmark { font-size:18px;font-weight:750;letter-spacing:-1px; }
+#ninda-style-study .nd-wordmark b { background:#F9BE00;color:#231815;padding:0 3px;margin-right:3px; }
+#ninda-style-study .nd-nav button { min-width:44px;min-height:44px;display:grid;place-items:center;padding:0; }
+#ninda-style-study .nd-capsule { height:30px;border:1px solid #8A8A8A45;border-radius:18px;display:flex;align-items:center;justify-content:space-around;gap:6px; }
+#ninda-style-study .nd-capsule .nd-separator { height:16px;width:1px;background:#8A8A8A45; }
+#ninda-style-study .nd-capsule svg { width:19px;height:19px; }
+#ninda-style-study .nd-main { flex:1;display:flex;flex-direction:column;min-width:0; }
+#ninda-style-study .nd-content { padding:18px 18px 20px; }
+#ninda-style-study .nd-muted { color:var(--nd-muted); }
+#ninda-style-study .nd-eyebrow { font-size:12px;letter-spacing:1px;color:var(--nd-muted);margin-bottom:5px; }
+#ninda-style-study .nd-row { display:flex;gap:10px;align-items:center;justify-content:space-between; }
+#ninda-style-study .nd-stack { display:flex;flex-direction:column;gap:14px; }
+#ninda-style-study .nd-card { background:var(--nd-surface);border-radius:var(--nd-radius);padding:18px; }
+#ninda-style-study .nd-space { margin-top:20px; }
+#ninda-style-study .nd-space-sm { margin-top:10px; }
+#ninda-style-study .nd-rule { border:0;border-top:1px solid var(--nd-line);margin:14px 0; }
+#ninda-style-study .nd-primary { width:100%;min-height:48px;background:var(--nd-accent)!important;color:var(--nd-on)!important;border-radius:8px;font-weight:600!important;padding:11px 16px; }
+#ninda-style-study .nd-primary:disabled { opacity:.45; }
+#ninda-style-study .nd-secondary { width:100%;min-height:44px;background:var(--nd-surface)!important;border:1px solid var(--nd-line)!important;border-radius:8px;padding:9px 12px; }
+#ninda-style-study .nd-text-button { min-height:44px;text-align:left;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0; }
+#ninda-style-study .nd-text-button svg { width:16px;height:16px;flex:none; }
+#ninda-style-study .nd-price { font-size:30px;font-weight:650;line-height:1.2;letter-spacing:-.7px;font-variant-numeric:tabular-nums; }
+#ninda-style-study .nd-price small { font-size:13px;font-weight:400;letter-spacing:0;color:var(--nd-muted); }
+#ninda-style-study .nd-search { background:var(--nd-surface);border:1px solid var(--nd-line);border-radius:9px;padding:0 12px;display:flex;align-items:center;gap:8px;min-height:44px;margin-top:18px; }
+#ninda-style-study .nd-search input { border:0;outline-offset:4px;background:transparent;min-width:0;width:100%;font-size:14px;color:var(--nd-ink); }
+#ninda-style-study .nd-search svg { width:17px;height:17px;color:var(--nd-muted); }
+#ninda-style-study .nd-filters { display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 18px; }
+#ninda-style-study .nd-filters button { min-height:44px;border-radius:7px;padding:7px 14px;font-size:13px; }
+#ninda-style-study .nd-filters button[aria-pressed="true"] { background:var(--nd-accent);color:var(--nd-on);font-weight:600; }
+#ninda-style-study .nd-vehicle { border-radius:var(--nd-radius);background:var(--nd-surface);overflow:hidden; }
+#ninda-style-study .nd-photo { display:block;width:100%;height:192px;object-fit:cover;object-position:center 59%; }
+#ninda-style-study .nd-image-wrap { position:relative; }
+#ninda-style-study .nd-image-tag { position:absolute;top:12px;left:12px;font-size:12px;padding:4px 9px;background:#FFFFFFEE;border-radius:4px;color:#2D4034; }
+#ninda-style-study .nd-vehicle-text { padding:17px; }
+#ninda-style-study .nd-tag { display:inline-flex;align-items:center;gap:5px;font-size:12px;background:var(--nd-soft);padding:3px 8px;border-radius:4px; }
+#ninda-style-study .nd-facts { display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:7px;color:var(--nd-muted);font-size:12px; }
+#ninda-style-study .nd-fees-glance { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:13px 0 16px;font-size:12px;color:var(--nd-muted); }
+#ninda-style-study .nd-fees-glance b { display:block;color:var(--nd-ink);font-size:14px;font-weight:500; }
+#ninda-style-study p.nd-footer-note { margin-top:13px;color:var(--nd-muted);font-size:12px; }
+#ninda-style-study .nd-app p.nd-space-sm { margin-top:10px; }
+#ninda-style-study .nd-steps { display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--nd-muted); }
+#ninda-style-study .nd-steps b { display:block;color:var(--nd-ink);font-size:13px;font-weight:500;margin-top:5px; }
+#ninda-style-study .nd-tabbar { background:var(--nd-surface);border-top:1px solid var(--nd-line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 18px;margin-top:auto; }
+#ninda-style-study .nd-tabbar button { min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;color:var(--nd-muted); }
+#ninda-style-study .nd-tabbar button svg { width:21px;height:21px; }
+#ninda-style-study .nd-tabbar button[aria-current="page"] { color:var(--nd-ink);font-weight:600; }
+#ninda-style-study .nd-tabbar button[aria-current="page"] .nd-tab-icon { background:var(--nd-soft);border-radius:12px;padding:2px 14px;margin-top:-2px; }
+#ninda-style-study .nd-app[data-kind="native"] .nd-tabbar button[aria-current="page"] .nd-tab-icon { background:#F9BE00; }
+#ninda-style-study .nd-app[data-kind="premium"] .nd-primary { border-radius:3px; }
+#ninda-style-study .nd-app[data-kind="premium"] .nd-tabbar { background:#263B35;border:0; }
+#ninda-style-study .nd-app[data-kind="premium"] .nd-tabbar button { color:#C9D1CA; }
+#ninda-style-study .nd-app[data-kind="premium"] .nd-tabbar button[aria-current="page"] { color:#FFF; }
+#ninda-style-study .nd-app[data-kind="premium"] .nd-tabbar button[aria-current="page"] .nd-tab-icon { background:#3C5148; }
+#ninda-style-study .nd-premium-cover { background:#202A27;color:#F5F2EB;padding-top:18px; }
+#ninda-style-study .nd-premium-head { padding:0 22px 18px;display:flex;align-items:end;justify-content:space-between;gap:10px; }
+#ninda-style-study .nd-premium-head .nd-eyebrow { color:#C2C9C0;letter-spacing:2px; }
+#ninda-style-study .nd-premium-head h1 { font-size:32px;font-weight:500;letter-spacing:1px; }
+#ninda-style-study .nd-premium-cover .nd-photo { height:286px;object-position:51% 62%; }
+#ninda-style-study .nd-premium-body { margin:-1px 0 0;padding:22px 24px 20px;background:var(--nd-surface); }
+#ninda-style-study .nd-premium-body h2 { font-size:25px;font-weight:500;letter-spacing:.5px; }
+#ninda-style-study .nd-premium-caption { display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#C2C9C0;padding:9px 22px 13px; }
+#ninda-style-study .nd-premium-footer { padding:15px 24px;color:var(--nd-muted);font-size:12px;display:flex;justify-content:space-between; }
+#ninda-style-study .nd-city-greeting { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px; }
+#ninda-style-study .nd-city-greeting h1 { font-size:28px;line-height:1.3; }
+#ninda-style-study .nd-sun { width:46px;height:46px;flex:none;border-radius:50%;background:#F7D979;color:#3D4A34;display:grid;place-items:center; }
+#ninda-style-study .nd-sun svg { width:25px;height:25px; }
+#ninda-style-study .nd-app[data-kind="city"] .nd-primary { border-radius:24px; }
+#ninda-style-study .nd-city-vehicle { border-radius:22px;background:var(--nd-surface);padding:16px; }
+#ninda-style-study .nd-city-vehicle .nd-photo { border-radius:15px;height:168px;margin:12px 0; }
+#ninda-style-study .nd-city-plans { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px; }
+#ninda-style-study .nd-city-plan { background:var(--nd-soft);padding:14px 10px;border-radius:14px; }
+#ninda-style-study .nd-city-plan .nd-price { font-size:24px;margin-top:5px; }
+#ninda-style-study .nd-city-plan small { font-size:12px; }
+#ninda-style-study .nd-service-row { display:flex;align-items:center;gap:11px;padding:16px 0; }
+#ninda-style-study .nd-service-row svg { width:22px;height:22px;color:var(--nd-accent); }
+#ninda-style-study .nd-plan { display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--nd-line)!important;border-radius:var(--nd-radius);padding:14px;width:100%;min-height:76px;text-align:left;background:var(--nd-surface)!important; }
+#ninda-style-study .nd-plan[aria-pressed="true"] { border:2px solid var(--nd-accent)!important;padding:13px;background:var(--nd-soft)!important; }
+#ninda-style-study .nd-plan strong { font-size:21px;font-weight:600; }
+#ninda-style-study .nd-plan small { display:block;font-size:12px;color:var(--nd-muted); }
+#ninda-style-study .nd-plan-name { display:flex;align-items:center;gap:7px; }
+#ninda-style-study .nd-plan-mark { width:16px;height:16px;border:1px solid var(--nd-muted);border-radius:50%;display:grid;place-items:center;font-size:11px; }
+#ninda-style-study .nd-plan[aria-pressed="true"] .nd-plan-mark { border-color:var(--nd-ink);background:var(--nd-ink);color:var(--nd-surface); }
+#ninda-style-study .nd-detail-photo { height:150px; }
+#ninda-style-study .nd-app[data-kind="premium"] .nd-detail-photo { height:205px; }
+#ninda-style-study .nd-fee-line { display:flex;align-items:start;justify-content:space-between;gap:12px;padding:9px 0; }
+#ninda-style-study .nd-fee-line small { display:block;color:var(--nd-muted); }
+#ninda-style-study .nd-fee-line b { white-space:nowrap;font-weight:500;font-variant-numeric:tabular-nums; }
+#ninda-style-study .nd-dock { padding:14px 18px 24px;margin-top:auto;background:var(--nd-surface);border-top:1px solid var(--nd-line); }
+#ninda-style-study .nd-bill-intro { padding:4px 0 18px; }
+#ninda-style-study .nd-bill-intro h1 { margin:4px 0 9px; }
+#ninda-style-study .nd-paid { display:inline-flex;align-items:center;gap:5px;color:var(--nd-positive);font-size:12px; }
+#ninda-style-study .nd-paid svg { width:16px;height:16px; }
+#ninda-style-study .nd-bill-total { font-size:42px;line-height:1.15;font-weight:600;letter-spacing:-1px;margin:10px 0; }
+#ninda-style-study .nd-bill-title { display:flex;align-items:start;justify-content:space-between;gap:8px; }
+#ninda-style-study .nd-bill-title h3 { font-size:16px; }
+#ninda-style-study .nd-bill-summary { margin-top:10px;font-size:13px;color:var(--nd-muted); }
+#ninda-style-study .nd-receipt { background:var(--nd-surface);margin:18px 22px 10px;padding:25px 20px 22px;box-shadow:0 7px 20px #1D2A2210; }
+#ninda-style-study .nd-receipt-top { text-align:center;border-bottom:1px solid var(--nd-ink);padding-bottom:20px;margin-bottom:13px; }
+#ninda-style-study .nd-receipt-top h1 { font-size:24px;font-weight:500;margin:5px 0 15px; }
+#ninda-style-study .nd-receipt .nd-bill-total { font-size:40px;font-weight:500; }
+#ninda-style-study .nd-receipt-footer { border-top:1px solid var(--nd-ink);margin-top:12px;padding-top:15px;font-size:12px;color:var(--nd-muted); }
+#ninda-style-study .nd-city-month { display:flex;gap:14px;align-items:center;padding:4px 0 20px; }
+#ninda-style-study .nd-calendar { background:var(--nd-accent);color:#FFF;border-radius:16px;text-align:center;width:64px;flex:none;padding:8px;font-size:12px; }
+#ninda-style-study .nd-calendar b { display:block;font-size:29px;font-weight:500;line-height:1.1; }
+#ninda-style-study .nd-city-paid { border-radius:22px;background:var(--nd-accent);color:#FFF;padding:20px; }
+#ninda-style-study .nd-city-paid .nd-bill-total { font-size:40px; }
+#ninda-style-study .nd-city-paid .nd-paid { color:#FFF; }
+#ninda-style-study .nd-city-list { background:var(--nd-surface);border-radius:20px;padding:5px 17px; }
+#ninda-style-study .nd-handover-status { display:flex;align-items:center;gap:13px;margin-bottom:17px; }
+#ninda-style-study .nd-status-icon { display:grid;place-items:center;background:var(--nd-soft);width:48px;height:48px;border-radius:50%;flex:none; }
+#ninda-style-study .nd-status-icon svg { width:26px;height:26px; }
+#ninda-style-study .nd-handover-status h1 { font-size:24px;margin-bottom:3px; }
+#ninda-style-study .nd-handover-status p { font-size:12px;color:var(--nd-muted); }
+#ninda-style-study .nd-timeline { padding:2px 0; }
+#ninda-style-study .nd-timeline-item { position:relative;margin-left:6px;padding:0 0 17px 22px;border-left:1px solid var(--nd-line);font-size:14px; }
+#ninda-style-study .nd-timeline-item:last-child { border-left:0;padding-bottom:0; }
+#ninda-style-study .nd-timeline-item::before { content:'';position:absolute;top:6px;left:-4px;width:7px;height:7px;border-radius:50%;background:var(--nd-accent); }
+#ninda-style-study .nd-timeline-item small { display:block;color:var(--nd-muted);margin-top:3px; }
+#ninda-style-study .nd-evidence { width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;text-align:left;border-top:1px solid var(--nd-line)!important;padding:10px 0; }
+#ninda-style-study .nd-evidence span:first-child { display:flex;align-items:center;gap:8px; }
+#ninda-style-study .nd-evidence svg { width:18px;height:18px;flex:none; }
+#ninda-style-study .nd-evidence small { color:var(--nd-muted); }
+#ninda-style-study .nd-check { display:flex;gap:9px;align-items:start;font-size:13px;line-height:1.55;margin:14px 0; }
+#ninda-style-study .nd-check input { width:18px;height:18px;flex:none;margin:1px 0;accent-color:var(--nd-accent); }
+#ninda-style-study .nd-complete-banner { padding:22px;text-align:center;background:var(--nd-accent);color:var(--nd-on); }
+#ninda-style-study .nd-complete-banner svg { display:block;width:34px;height:34px;margin:0 auto 8px; }
+#ninda-style-study .nd-complete-banner h1 { font-size:26px;font-weight:500;margin-bottom:6px; }
+#ninda-style-study .nd-complete-banner p { font-size:12px;opacity:.92; }
+#ninda-style-study .nd-city-handover { background:var(--nd-soft);padding:20px;border-radius:24px;margin-bottom:15px; }
+#ninda-style-study .nd-compact-car { display:flex;gap:12px;align-items:center;padding:15px 0; }
+#ninda-style-study .nd-compact-car img { width:86px;height:60px;object-fit:cover;border-radius:8px; }
+#ninda-style-study .nd-profile-rows { margin-top:22px; }
+#ninda-style-study .nd-profile-rows button { width:100%;min-height:56px;border-bottom:1px solid var(--nd-line); }
+#ninda-style-study .nd-empty { padding:50px 18px;text-align:center;color:var(--nd-muted); }
+#ninda-style-study .nd-modal-layer { position:absolute;inset:0;background:#13241DB0;display:flex;align-items:end;z-index:4; }
+#ninda-style-study .nd-modal { width:100%;background:var(--nd-surface);color:var(--nd-ink);padding:20px 20px 28px;border-radius:20px 20px 0 0; }
+#ninda-style-study .nd-modal .nd-photo { height:210px;border-radius:10px; }
+#ninda-style-study .nd-modal-close { width:44px;min-height:44px;display:grid;place-items:center; }
+#ninda-style-study .nd-modal-close svg { width:20px;height:20px; }
+#ninda-style-study .nd-modal h2 { margin-bottom:14px; }
+#ninda-style-study .nd-modal p { font-size:14px;margin-bottom:10px; }
+#ninda-style-study .nd-feedback { padding:10px 18px;background:var(--nd-soft);font-size:13px; }
+@media(max-width:380px) {
+  #ninda-style-study .study-stage { padding:12px 0 24px;min-height:1240px; }
+  #ninda-style-study .study-stage:has([data-handover-state] option[value="pending"]:checked) { min-height:1420px; }
+  #ninda-style-study .nd-app { border-radius:16px;min-height:865px; }
+  #ninda-style-study .nd-content { padding:15px 14px 18px; }
+  #ninda-style-study .nd-app h1 { font-size:24px; }
+  #ninda-style-study .nd-premium-body { padding:18px; }
+  #ninda-style-study .nd-receipt { margin:12px 14px; }
+  #ninda-style-study .nd-fees-glance { gap:6px; }
+}
+</style>
+<script>
+(() => {
+  const root = document.getElementById('ninda-style-study');
+  const photo = '__CAR_DATA_URI__';
+  const kinds = {
+    native:{name:'明朗原生',caption:'黄白品牌 · 费用先行'},
+    premium:{name:'静奢出行',caption:'车辆大图 · 克制排版'},
+    city:{name:'轻盈城市',caption:'柔和留白 · 用车服务'}
+  };
+  const plans=[{name:'12个月订阅',months:12,base:3999,mileage:300,fee:4299},{name:'24个月订阅',months:24,base:3699,mileage:300,fee:3999}];
+  const states=Object.fromEntries(Object.keys(kinds).map(k=>[k,{page:'catalog',plan:0,handover:'completed',read:[],agree:false,filter:'all',query:'',modal:null,notice:''}]));
+  const money=n=>'¥'+n.toLocaleString('zh-CN');
+  const icon=n=>`<i data-lucide="${n}" aria-hidden="true"></i>`;
+  const action=(text,act,cls='nd-primary',extra='')=>`<button type="button" class="${cls} cursor-interaction" data-action="${act}" ${extra}>${text}</button>`;
+  const image=(cls='nd-photo')=>`<img class="${cls}" src="${photo}" alt="蔚来 ET5 同代车型示意图，非具体库存实拍">`;
+  const paid=()=>`<span class="nd-paid">${icon('circle-check')}已支付</span>`;
+  const facts=()=>`<div class="nd-facts"><span>2022款 · 轿车</span><span>6.7万公里</span><span>上海</span></div>`;
+  const glance=()=>`<div class="nd-fees-glance"><span>履约押金<b>¥6,000</b></span><span>包含里程<b>1,500 km / 月</b></span></div>`;
+  const route=()=>`<div class="nd-steps"><span>01<b>选择方案</b></span><span>02<b>提交资料</b></span><span>03<b>审核后办理</b></span></div>`;
+  const photoTag=()=>`<div class="nd-image-wrap">${image()}<span class="nd-image-tag">可申请 · 2个方案</span></div>`;
+  const amountLine=(label,n,sub='')=>`<div class="nd-fee-line"><div>${label}${sub?`<small>${sub}</small>`:''}</div><b>${money(n)}</b></div>`;
+  function filters(s){return `<div class="nd-filters" aria-label="车型筛选">${[['all','全部'],['sedan','轿车'],['suv','SUV']].map(([v,t])=>action(t,'filter','',`data-value="${v}" aria-pressed="${s.filter===v}"`)).join('')}</div>`;}
+  function catalog(k,s){
+    const available=s.filter!=='suv'&&(!s.query||/蔚来|ET5|et5|轿车|上海/.test(s.query));
+    const empty=`<div class="nd-empty"><h3>暂无匹配车辆</h3><p class="nd-space-sm">换个条件再看看。</p>${action('查看全部车辆','reset','nd-secondary nd-space')}</div>`;
+    if(k==='premium') return `<div class="nd-premium-cover"><div class="nd-premium-head"><div><div class="nd-eyebrow">宁达 · 纯电订阅</div><h1>好车，从容选。</h1></div><small>上海</small></div>${image()}<div class="nd-premium-caption"><span>车型示意</span><span>01 / ET5</span></div></div><div class="nd-premium-body"><div class="nd-row"><h2>蔚来 ET5</h2><span class="nd-tag">可申请</span></div>${facts()}<hr class="nd-rule"><div class="nd-row"><div class="nd-price">¥3,999 <small>/ 月起</small></div><small class="nd-muted">2个订阅方案</small></div>${glance()}${action('查看订阅方案　→','vehicle')}<p class="nd-footer-note">起价对应24个月方案，充换电自付。</p></div><div class="nd-premium-footer"><span>清楚的费用</span><span>适合自己的期限</span></div>`;
+    if(k==='city') return `<div class="nd-content"><div class="nd-city-greeting"><div><div class="nd-eyebrow">上海 · 宁达订阅</div><h1>让每一天，<br>轻松出发。</h1></div><div class="nd-sun">${icon('sun')}</div></div>${filters(s)}${available?`<div class="nd-city-vehicle"><div class="nd-row"><h2>蔚来 ET5</h2><span class="nd-tag">可申请</span></div>${facts()}${image()}<div class="nd-city-plans">${plans.map(p=>`<div class="nd-city-plan"><small>${p.name}</small><div class="nd-price">${money(p.fee)}</div><small>/ 月 · 含里程包</small></div>`).join('')}</div>${glance()}${action('看看适合我的方案','vehicle')}</div><div class="nd-service-row">${icon('clipboard-check')}<div><h3>先了解，再申请</h3><small class="nd-muted">充换电自付，具体条件在方案中说明。</small></div></div>`:empty}</div>`;
+    return `<div class="nd-content"><div class="nd-row"><h1>选一台，刚刚好。</h1><small class="nd-muted">上海</small></div><label class="nd-search">${icon('search')}<input aria-label="搜索品牌或车型" placeholder="搜索品牌或车型" value="" data-search="true"><button type="button" data-action="search" class="cursor-interaction" style="min-height:44px;white-space:nowrap">搜索</button></label>${filters(s)}${available?`<div class="nd-vehicle">${photoTag()}<div class="nd-vehicle-text"><div class="nd-row"><h2>蔚来 ET5</h2><small class="nd-muted">2个方案</small></div>${facts()}<hr class="nd-rule"><div class="nd-price">¥3,999 <small>/ 月起</small></div>${glance()}${action('查看订阅方案','vehicle')}<p class="nd-footer-note">起价对应24个月方案，充换电自付。</p></div></div><div class="nd-space">${route()}</div>`:empty}</div>`;
+  }
+  function vehicle(k,s){const p=plans[s.plan];return `${image('nd-photo nd-detail-photo')}<div class="nd-content nd-stack"><div><div class="nd-row"><h1>蔚来 ET5</h1><span class="nd-tag">可申请</span></div>${facts()}</div><div><h3>选择订阅方案</h3><div class="nd-stack nd-space-sm">${plans.map((q,i)=>action(`<span class="nd-plan-name"><span class="nd-plan-mark">${s.plan===i?'✓':''}</span><span>${q.name}<small>每月1,500公里 · 赠换车1次</small></span></span><span><strong>${money(q.fee)}</strong><small>/ 月</small></span>`,'plan','nd-plan',`data-value="${i}" aria-pressed="${s.plan===i}"`)).join('')}</div></div><div class="nd-card"><h3>每月费用</h3>${amountLine('基础使用费',p.base)}${amountLine('里程包月费',p.mileage,'每月1,500公里，超出 ¥1.50 / km')}<hr class="nd-rule">${amountLine('月费合计',p.fee)}${amountLine('履约押金',6000,'一次性缴纳，不计入月费')}</div><p class="nd-muted" style="font-size:12px">充换电自付。额外换车服务费 ¥800 / 次，升级差价另计；具体条件由审核确认的方案约定。</p></div><div class="nd-dock">${action('查看申请说明','application')}</div>`;}
+  function bill(k){
+    const rent=`<div class="nd-bill-title"><div><h3>首期订阅月费</h3><small class="nd-muted">2026.11.01 — 11.30</small></div>${paid()}</div>${amountLine('基础使用费',3999)}${amountLine('里程包月费',300,'每月包含1,500公里')}<hr class="nd-rule">${amountLine('本期合计',4299)}`;
+    const deposit=`<div class="nd-bill-title"><h3>履约押金</h3>${paid()}</div>${amountLine('一次性押金',6000,'押金与租金分别记账')}`;
+    if(k==='premium') return `<div class="nd-receipt"><div class="nd-receipt-top"><div class="nd-eyebrow">宁达订阅 · 费用记录</div><h1>十一月账单</h1><small class="nd-muted">本期已支付</small><div class="nd-bill-total">¥10,299</div>${paid()}</div>${rent}<hr class="nd-rule">${deposit}<div class="nd-receipt-footer"><div class="nd-row"><span>支付方式</span><span>微信支付</span></div><div class="nd-row nd-space-sm"><span>支付日期</span><span>2026.11.01</span></div></div></div><div class="nd-content"><p class="nd-muted" style="font-size:12px">示例订单 · 12个月方案 · 本期无待付金额</p>${action('查看交接记录　→','handover','nd-text-button nd-space-sm')}</div>`;
+    if(k==='city') return `<div class="nd-content nd-stack"><div class="nd-city-month"><div class="nd-calendar"><span>2026</span><b>11</b></div><div><h1>本月账单</h1><small class="nd-muted">蔚来 ET5 · 12个月方案</small></div></div><div class="nd-city-paid"><div class="nd-row"><span>本期已支付</span>${paid()}</div><div class="nd-bill-total">¥10,299</div><small>首期月费 ¥4,299 + 押金 ¥6,000</small></div><div class="nd-city-list"><div style="padding:13px 0">${rent}</div><hr class="nd-rule"><div style="padding:5px 0 13px">${deposit}</div></div><div class="nd-service-row">${icon('circle-check')}<div><h3>本期已结清</h3><small class="nd-muted">2026.11.01 · 微信支付</small></div></div>${action('查看交接记录','handover','nd-secondary')}</div>`;
+    return `<div class="nd-content nd-stack"><div class="nd-bill-intro"><div class="nd-eyebrow">示例订单 · 12个月方案</div><h1>账单明细</h1><div class="nd-row"><div><small class="nd-muted">本期已支付</small><div class="nd-bill-total">¥10,299</div></div><span class="nd-paid">${icon('circle-check')}已结清</span></div><p class="nd-muted" style="font-size:12px">首期月费与履约押金分别列明</p></div><div class="nd-card">${rent}</div><div class="nd-card">${deposit}</div><div class="nd-row"><small class="nd-muted">2026.11.01 · 微信支付</small>${action('交接记录 →','handover','nd-text-button')}</div></div>`;
+  }
+  function evidence(s){return `<div class="nd-card"><div class="nd-row"><h3>交接证据</h3><small class="nd-muted">版本 1</small></div><div class="nd-compact-car">${image()}<div><h3>蔚来 ET5</h3><small class="nd-muted">交车里程 66,706 km</small></div></div>${action(`<span>${icon('image')}车辆查验照片</span><small>${s.read.includes('photo')?'已查看':'查看'}　›</small>`,'evidence','nd-evidence',`data-value="photo"`)}${action(`<span>${icon('clipboard-list')}现场查验清单</span><small>${s.read.includes('checklist')?'已查看':'查看'}　›</small>`,'evidence','nd-evidence',`data-value="checklist"`)}${action(`<span>${icon('file-text')}线上交接约定</span><small>${s.read.includes('terms')?'已查看':'查看'}　›</small>`,'evidence','nd-evidence',`data-value="terms"`)}</div>`;}
+  function timeline(s){return `<div class="nd-timeline"><div class="nd-timeline-item">现场证据已提交<small>2026.11.01 14:20</small></div><div class="nd-timeline-item">${s.handover==='pending'?'等待本人确认':'本人已确认'}<small>${s.handover==='pending'?'请阅读当前版本的证据与约定':'2026.11.01 14:35'}</small></div><div class="nd-timeline-item">${s.handover==='completed'?'平台已核对实际交付':'等待平台核对实际交付'}<small>${s.handover==='completed'?'2026.11.01 14:45':'客户确认后，由平台办理'}</small></div></div>`;}
+  function handover(k,s){
+    const title={pending:'请确认交接事实',confirmed:'本人已确认',completed:'车辆交接已完成'}[s.handover];
+    const description={pending:'先阅读证据与约定，再提交本人意见。',confirmed:'意见已留存，等待平台核对实际交付。',completed:'本人确认与实际交付记录均已留存。'}[s.handover];
+    const sym=s.handover==='completed'?'circle-check':s.handover==='confirmed'?'clock-3':'clipboard-check';
+    let head=`<div class="nd-handover-status"><div class="nd-status-icon">${icon(sym)}</div><div><h1>${title}</h1><p>${description}</p></div></div>`;
+    if(k==='premium')head=`<div class="nd-complete-banner">${icon(sym)}<h1>${title}</h1><p>${description}</p></div>`;
+    if(k==='city')head=`<div class="nd-city-handover">${head}<small>交车 · 上海服务点 · 2026.11.01</small></div>`;
+    const response=s.handover==='pending'?`<div class="nd-card"><h3>本人交接意见</h3><label class="nd-check"><input type="checkbox" data-agree="true" ${s.agree?'checked':''} ${s.read.length<3?'disabled':''}><span>我已阅读全部交接证据与本版本线上交接约定。</span></label><small class="nd-muted">已查看 ${s.read.length}/3 项。提出异议不表示同意交付。</small>${action('确认交接事实','confirm','nd-primary nd-space-sm',s.agree?'':'disabled')}${action('提出异议','dispute','nd-text-button')}</div>`:`<div class="nd-card"><span class="nd-paid">${icon(s.handover==='completed'?'circle-check':'clock-3')}${s.handover==='completed'?'记录可随时查阅':'已提交，无需重复确认'}</span><p class="nd-footer-note">${s.handover==='completed'?'当前版本为已完成记录。':'交付状态以平台核对的实际结果为准。'}</p></div>`;
+    return `${k==='premium'?head:''}<div class="nd-content nd-stack">${k!=='premium'?head:''}${evidence(s)}<div class="nd-card"><h3 style="margin-bottom:16px">办理记录</h3>${timeline(s)}</div>${response}</div>`;
+  }
+  function use(k){return `<div class="nd-content nd-stack"><div><div class="nd-eyebrow">我的订阅</div><h1>每一天，安心用车。</h1></div><div class="nd-vehicle">${image()}<div class="nd-vehicle-text"><div class="nd-row"><h2>蔚来 ET5</h2><span class="nd-tag">用车中</span></div><p class="nd-muted nd-space-sm" style="font-size:13px">12个月方案 · 月费 ¥4,299</p></div></div><div class="nd-card"><div class="nd-row"><h3>本月账单</h3>${paid()}</div><p class="nd-muted nd-space-sm" style="font-size:13px">首期月费与押金已支付</p>${action('查看账单明细　→','bill','nd-text-button')}</div><div class="nd-card"><h3>车辆交接</h3>${action('查看交接记录　→','handover','nd-text-button')}</div></div>`;}
+  function mine(){return `<div class="nd-content"><div class="nd-eyebrow">宁达订阅</div><h1>我的</h1><p class="nd-muted nd-space-sm">示例客户 · 个人账户</p><div class="nd-card nd-space"><div class="nd-row"><h3>资料审核</h3><span class="nd-tag">资料已审核</span></div><p class="nd-footer-note">运营已审核证件资料；未进行线上实名认证。</p></div><div class="nd-profile-rows">${action('我的订单　→','use','nd-text-button')}${action('账单与付款记录　→','bill','nd-text-button')}${action('交接记录　→','handover','nd-text-button')}</div></div>`;}
+  function home(k,s){return `<div class="nd-content nd-stack"><div class="nd-eyebrow">宁达 · 纯电订阅</div><h1>把好车，<br>放进你的日常。</h1><div class="nd-vehicle">${image()}<div class="nd-vehicle-text"><h2>选一台适合自己的车</h2><p class="nd-footer-note">同车多方案，费用与期限清楚可选。</p>${action('开始选车','catalog','nd-primary nd-space')}</div></div><div class="nd-card"><h3>已有订阅</h3>${action('前往用车服务　→','use','nd-text-button')}</div>${route()}</div>`;}
+  function tabbar(page){const entries=[['home','house','首页'],['catalog','car-front','选车'],['use','key-round','用车'],['mine','user-round','我的']];return `<nav class="nd-tabbar" aria-label="小程序主导航">${entries.map(([p,ic,t])=>action(`<span class="nd-tab-icon">${icon(ic)}</span><span>${t}</span>`,p,'',page===p?'aria-current="page"':'')).join('')}</nav>`;}
+  function modal(s){if(!s.modal)return '';
+    let title='',content='';
+    if(s.modal==='photo'){title='车辆查验照片';content=image()+`<p class="nd-muted nd-space-sm">车型照片仅用于展示证据阅读样式，非真实交接照片。</p>`;}
+    if(s.modal==='checklist'){title='现场查验清单';content=`${amountLine('交车里程',66706).replace('¥66,706','66,706 km')}<div class="nd-fee-line"><span>外观与随车物品</span><b>已记录</b></div><p>示例清单：核对车辆外观、随车钥匙及附件。具体结果以现场提交的证据为准。</p>`;}
+    if(s.modal==='terms'){title='线上交接约定 · 演示摘要';content=`<p>客户阅读当前证据并确认交接事实后，由平台核对实际交接完成，留存双方记录。</p><p>如有异议，可提交说明；修订后的证据需重新确认。主合同及费用约定不因此改变。</p><p class="nd-muted">本段仅展示阅读体验。正式页面使用已批准的完整约定文本。</p>`;}
+    if(s.modal==='application'){title='提交申请前';const p=plans[s.plan];content=`<p>已选择：${p.name}，${money(p.fee)} / 月，押金 ¥6,000。</p><p>下一步填写申请资料，由运营审核后确认最终方案；本原型不会创建真实申请。</p>`;}
+    if(s.modal==='dispute'){title='提出交接异议';content=`<p>正式流程可填写异议并提交后台处理。当前设计示意保留原状态，不表示同意完成交接。</p>`;}
+    return `<div class="nd-modal-layer"><section class="nd-modal" role="dialog" aria-modal="true" aria-label="${title}"><div class="nd-row"><h2>${title}</h2>${action(icon('x'),'close','nd-modal-close','aria-label="关闭"')}</div>${content}${action('返回','close','nd-primary nd-space-sm')}</section></div>`;
+  }
+  function render(k){const stage=root.querySelector(`[data-direction="${k}"]`),s=states[k];const mainPage=['home','catalog','use','mine'].includes(s.page);
+    const currentMode=['bill','handover'].includes(s.page)?s.page:'catalog';
+    const body=s.page==='catalog'?catalog(k,s):s.page==='vehicle'?vehicle(k,s):s.page==='bill'?bill(k):s.page==='handover'?handover(k,s):s.page==='mine'?mine():s.page==='home'?home(k,s):use(k);
+    stage.innerHTML=`<div class="direction-heading"><strong>${kinds[k].name}</strong><span>${kinds[k].caption}</span></div><div class="demo-controls" aria-label="预览页面">${[['catalog','选车'],['bill','账单'],['handover','交接']].map(([p,t])=>`<button type="button" class="btn ${currentMode===p?'btn-primary':''}" data-mode="${p}" aria-pressed="${currentMode===p}">${t}</button>`).join('')}</div>${s.page==='handover'?`<label class="state-control">演示状态<select class="form-select" data-handover-state="true" aria-label="交接演示状态">${[['completed','已完成 · 只读'],['confirmed','本人已确认 · 待平台完成'],['pending','待本人确认']].map(([v,t])=>`<option value="${v}" ${s.handover===v?'selected':''}>${t}</option>`).join('')}</select></label>`:''}<div class="nd-app" data-kind="${k}" aria-label="${kinds[k].name}小程序样稿"><div class="nd-statusbar"><span>9:41</span><span class="nd-device-icons">${icon('signal')}${icon('wifi')}${icon('battery-full')}</span></div><header class="nd-nav">${mainPage?`<div class="nd-wordmark"><b>宁</b></div>`:action(icon('chevron-left'),'back','','aria-label="返回上一页"')}<span class="nd-brand">${s.page==='vehicle'?'车辆详情':s.page==='bill'?'账单明细':s.page==='handover'?'车辆交接':'宁达订阅'}</span><div class="nd-capsule" aria-label="微信胶囊示意">${icon('ellipsis')}<span class="nd-separator"></span>${icon('circle-dot')}</div></header>${s.notice?`<div class="nd-feedback" role="status">${s.notice}</div>`:''}<main class="nd-main">${body}</main>${mainPage?tabbar(s.page):s.page==='vehicle'?'':`<div class="nd-dock">${action('返回用车','use','nd-secondary')}</div>`}${modal(s)}</div>`;
+    const search=stage.querySelector('[data-search]');if(search)search.value=s.query;
+    if(s.modal){for(const el of stage.querySelector('.nd-app').children){if(!el.classList.contains('nd-modal-layer'))el.inert=true;}}
+    if(globalThis.lucide)globalThis.lucide.createIcons({attrs:{width:18,height:18}});
+  }
+  function save(){if(window.openai?.setWidgetState){window.openai.setWidgetState({modelContent:null,privateContent:{pages:Object.fromEntries(Object.entries(states).map(([k,v])=>[k,{page:v.page,plan:v.plan,handover:v.handover}]))}}).catch(()=>{});}}
+  function applySaved(snapshot){const saved=snapshot?.privateContent?.pages;if(!saved)return;for(const k of Object.keys(kinds)){const v=saved[k];if(!v)continue;if(['home','catalog','vehicle','use','mine','bill','handover'].includes(v.page))states[k].page=v.page;if([0,1].includes(v.plan))states[k].plan=v.plan;if(['completed','confirmed','pending'].includes(v.handover))states[k].handover=v.handover;render(k);}}
+  Object.keys(kinds).forEach(render);applySaved(window.openai?.widgetState);
+  window.addEventListener('openai:set_globals',e=>applySaved(e.detail?.globals?.widgetState));
+  root.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const stage=b.closest('[data-direction]');if(!stage)return;const k=stage.dataset.direction,s=states[k];
+    if(b.dataset.mode){s.page=b.dataset.mode;s.notice='';render(k);save();return;}
+    const a=b.dataset.action;if(!a)return;
+    if(['home','catalog','vehicle','use','mine','bill','handover'].includes(a)){s.page=a;s.notice='';}
+    if(a==='back'){s.page=s.page==='vehicle'?'catalog':'use';s.notice='';}
+    if(a==='plan')s.plan=Number(b.dataset.value);
+    if(a==='filter')s.filter=b.dataset.value;
+    if(a==='search')s.query=stage.querySelector('[data-search]').value.trim();
+    if(a==='reset'){s.query='';s.filter='all';}
+    if(a==='evidence'){s.modal=b.dataset.value;if(!s.read.includes(s.modal))s.read.push(s.modal);}
+    if(['application','dispute'].includes(a))s.modal=a;
+    if(a==='close')s.modal=null;
+    if(a==='confirm'&&s.agree&&s.read.length===3){s.handover='confirmed';s.agree=false;s.notice='演示：本人确认已留存，等待平台核对实际完成。';}
+    render(k);save();if(s.modal)stage.querySelector('.nd-modal-close')?.focus();
+  });
+  root.addEventListener('change',e=>{const stage=e.target.closest('[data-direction]');if(!stage)return;const k=stage.dataset.direction,s=states[k];if(e.target.matches('[data-handover-state]')){s.handover=e.target.value;s.agree=false;s.read=[];s.notice='';render(k);save();}if(e.target.matches('[data-agree]')){s.agree=e.target.checked;const b=stage.querySelector('[data-action="confirm"]');if(b)b.disabled=!s.agree;}});
+  root.addEventListener('keydown',e=>{const stage=e.target.closest('[data-direction]');if(!stage)return;const k=stage.dataset.direction,s=states[k];if(e.key==='Escape'&&s.modal){s.modal=null;render(k);}if(e.key==='Tab'&&s.modal){const buttons=[...stage.querySelectorAll('.nd-modal button')],first=buttons[0],last=buttons[buttons.length-1];if(e.shiftKey&&e.target===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&e.target===last){e.preventDefault();first.focus();}}if(e.key==='Enter'&&e.target.matches('[data-search]')){s.query=e.target.value.trim();render(k);}});
+})();
+</script>

@@ -1,0 +1,636 @@
+{
+  "schema": "NINDA_V31_TEMPLATE",
+  "artifact": "04",
+  "kind": "PRE_DELIVERY_CANCELLATION",
+  "status": "DRAFT",
+  "source": {
+    "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+    "zipEntry": "04_解除协议_交付前取消_V3.1.docx",
+    "docxSha256": "47c003fea794b227bed9030e53444fb4a78d78eae83d83214bf1c09d161cec4f",
+    "textSha256": "89232806cbfe79279b54c98b772ea2181a076626d87fd097ffc4ff19ec8526ce"
+  },
+  "nodes": [
+    {
+      "type": "paragraph",
+      "loc": "P001",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "解除协议",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P002",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "交付前取消  三方汽车订阅合同未履行部分的解除与结算",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P004",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "本次交易摘要",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "loc": "T1",
+      "widths": [
+        1944,
+        7906
+      ],
+      "rows": [
+        [
+          {
+            "loc": "T1R1C1",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R1C1",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "原合同与三方",
+                    "bold": true,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          },
+          {
+            "loc": "T1R1C2",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R1C2",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "【自动带入：本次协议及业务编号、原合同和订单编号、三方真实身份识别及有效联系渠道；有效补充文件关联】。无需另建同义资料。",
+                    "bold": false,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          }
+        ],
+        [
+          {
+            "loc": "T1R2C1",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R2C1",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "取消范围",
+                    "bold": true,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          },
+          {
+            "loc": "T1R2C2",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R2C2",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "【自动带入：原车车牌及VIN、取消原因与已确认责任、实际从未交付的核验事实】。仅取消尚未开始的续期不使用本协议。",
+                    "bold": false,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          }
+        ],
+        [
+          {
+            "loc": "T1R3C1",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R3C1",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "已知结算及例外",
+                    "bold": true,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          },
+          {
+            "loc": "T1R3C2",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R3C2",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "【自动带入：签前已知的成功收退、已确认项目及金额、无争议应补退、具体费用依据；仅有例外时显示明确协商条件】。未来退款结果不预记。",
+                    "bold": false,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          }
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P005",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第一条 当事人和本次事项",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P006",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "1.1 甲方为原《汽车订阅合同》的订阅客户，乙方为原车辆合作商及实际出租方，丙方为上海宁达信息科技有限公司。三方身份、企业资格、通知渠道及有权签署身份从原合同和本次核验资料带入，并在本协议签署文本中显示；除确有变化并经核验外，不另行重复采集。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P007",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "1.2 本次交易摘要在本协议首页集中呈现，与正文一体签署；已确认内容在签署前固定，未来交接、到账等事实不预填。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P008",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "1.3 本协议仅适用于原订阅车辆从未实际交付、三方协商取消的情形。已交付后提前结束使用《终止协议》；仅取消尚未开始的新增续期，依续期补充协议处理。本协议不办理跨车辆合作商换车，也不代替新车辆订阅合同。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P009",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第二条 解除效力",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P010",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "2.1 本协议经甲方本人及乙、丙方有权主体有效签署后成立并生效，原合同尚未履行的订阅供车及未来租金义务同时解除。甲方提出取消后应及时通知、配合核实理由和结算，不得将单方申请、停止付款、审批或退款状态视为已达成三方解除合意；解除成立前的原约定及各方法定权利仍依法适用，不虚构未交付期间租金。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P011",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "2.2 如三方在本协议签署前已经真实达成解除合意，本次摘要应据实说明合意内容及可核验依据，解除效力依法依该真实合意认定；不得倒填电子签时间或虚构交车、还车事实。未交付期间不计算订阅租金，不因内部退款尚未完成而启动租期。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P012",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "2.3 解除不影响已经发生的合法债权债务、退款、赔偿、信息保护和争议处理条款。任何一方依法或依有效约定享有的单方解除权，不以另外两方签署本协议为行使前提；本协议不当然撤回此前有效通知或免除已发生责任。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P013",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第三条 原因与费用责任",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P014",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "3.1 因甲方个人原因取消的，甲方应承担此前已经明确说明并有效约定、确已完成的独立服务费用，以及有证据证明且依法应由甲方承担的必要损失；应及时告知取消以避免继续发生可避免支出。乙丙可提供预约、实际调运或其他真实履行凭证说明损失及减损，甲方应就具体异议配合核查，不因单方称未用车而否定全部已实际发生的合法请求。尚未提供的服务、可避免支出和依法不得转嫁的营销提成不计入，不默认收取准备费或没收押金。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P015",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "3.2 本协议不将已交付后的一个月月租提前退租补偿直接套用于从未交付的取消。确有适用于交付前取消的有效具体约定或依法成立的损失请求时，应在本次事项摘要中说明依据及最终协商金额，依法保留请求调整违约金等权利；未明确确认的争议金额不得记作甲方承认的债务。",
+          "bold": true,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P016",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "3.3 因乙方无法按约供车、车辆不符要求或其他乙方违约取消的，由乙方承担其退款及依法成立的赔偿责任；丙方仅按其自身明确承诺、行为与实际损失的因果关系承担相应责任，不因介绍、代收或协调当然替乙方、保险人或其他第三方负担债务。法定退款及经营方违约不适用甲方个人原因取消费用。混合原因或不可归责情形按真实原因、过错及法律处理；主张损失应提供依据，防止扩大，不重复获偿。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P017",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第四条 账目与退款",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P018",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.1 结算以原合同有效价格、真实成功收退款记录及本协议明确费用为依据。签署前已知的租金、押金、独立服务费及补偿按项目和权利人生成明细，显示依据、实收、已退、本次应退或应补；无项目显示无或零，不要求人工另建逐笔流水表。账单、审批及签署不等于资金到账，预计退款不得预记为退款成功。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P019",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.2 预付但未履行的租金应退；押金扣除有合法依据且已明确确定的应付款后退还余额。甲方没有实际接收使用车辆，不以未来可能发生的车损、违章或尚未发生的维修为由预留押金。费用仍有争议的单列处理，不扣留全部无争议款。依法抵销或经明确同意扣抵的项目须关联同一债务，不能重复追收。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P020",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.3 解除已生效且本次无争议退款金额确认后，相关退款义务人应在三个工作日内发起无争议应退款的原路退款，并提供可核验的受理凭据；实际到账时间依支付机构处理。乙方及丙方应及时提供依据、核对并确认无争议金额，不得以内部审批、全部结清或个别争议无限期推迟起算。退款失败应及时通知、查明并补正后继续办理，不将发起记录记作已到账；因其自身原因迟延的责任不免除。",
+          "bold": true,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P021",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.4 乙方为其应退租金、押金等款项的责任人，丙方为自身应退收费的责任人。丙方代收且仍实际控制的到期应退款，乙方授权丙方按约直接退还，无须逐笔再次批准；乙方应及时补足依法应由其承担的退款资金，不以内部分润、对账或发票手续延迟客户退款。丙方未实际控制且无自身过错的乙方债务，除法律规定或另有明确债务承担外，不由丙方垫资或担保；丙方自身占款、错付和迟延责任不免除。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P022",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.5 原付款渠道可用时原路退款；确实不能原路退的，乙丙及时说明，甲方应及时提供并配合核验本人合法受领账户，不指定未经核实的他人账户或仅凭聊天变更收款人。因甲方提供错误资料、拒绝必要核验或不配合导致客观无法办理的相应迟延，按原因及过错认定，不归责于已经适当履行义务的乙丙，不影响具备条件部分先退。甲方应按已有效约定的期限支付明确应补款，具体异议及时提出；本协议不新增自动扣款授权。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P023",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第五条 证据与持续义务",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P024",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "5.1 实名资料用于核验身份，企业签署仍须具备有效权限；登录、实名认证或点击确认本身不当然等于可靠电子签名或企业用印授权。取消申请、通知及到达凭据、三方协商、原合同和真实支付记录依法保存，可作为认定事实的证据，各方可以提出相反证据。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P025",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "5.2 后续实际签署时间、退款状态及到账凭证在发生后另行关联本协议和原订单保存，不提前填值，不覆盖已生成的待签或已签文件；需要改变已确认解除条件或金额的，应形成新的明确合意及一致版本。丙方提供完整签后文本及相关结算记录的查阅保存途径。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P026",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "5.3 签署本协议或接受无争议退款，不概括放弃未知、未列明或依法不得放弃的权利。对已知具体争议确需一次性和解的，应在摘要中明确争议范围、金额、履行义务及期限；仅在合法约定范围和相应义务实际履行后发生清偿效果。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P027",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第六条 违约与争议",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P028",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "6.1 各方按约履行退款、补款及协助义务，甲方应如实提交取消及结算所需现有证据、及时核对明细并履行无争议到期义务，不以个人内部流程、未收额外提醒或普通账目异议一概拒绝已明确应付款。违约方依法承担相应责任并合理减损；因可归责违约实际发生的必要合理维权费用，依原有效约定、因果关系及法律承担，不按内部定额自动收费。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P029",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "6.2 通知沿用原合同已确认渠道，变更及时核验并通知；涉及乙方义务的，丙方应及时转交，不以内部收件代替依法应向有权接收方送达。原合同合法有效的争议解决约定继续适用，未有效约定的，依法向有管辖权的人民法院起诉。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P030",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "6.3 三方通过本协议签署区确认正文和同时呈现的事项摘要。签署身份和实际时间以真实有效的电子签记录为准，企业自动用印仍须具备相应独立授权；本协议不扩张原有授权范围。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P031",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "签署栏",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P032",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "签署涵盖正文及同时固定的交易摘要和附件。以下为电子签署控制区，真实身份、权限及签署时间由有效签署证据确定，不另设手填日期。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P033",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "甲方 订阅客户 本人签名    【电子签署区】",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P034",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "乙方 车辆合作商 企业签章    【电子签署区】",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P035",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "丙方 上海宁达信息科技有限公司 企业签章    【电子签署区】",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "04:T1R1C2:0",
+      "loc": "T1R1C2",
+      "token": "【自动带入：本次协议及业务编号、原合同和订单编号、三方真实身份识别及有效联系渠道；有效补充文件关联】",
+      "category": "BLOCK",
+      "binding": "document.referencesAndParties",
+      "required": true
+    },
+    {
+      "id": "04:T1R2C2:0",
+      "loc": "T1R2C2",
+      "token": "【自动带入：原车车牌及VIN、取消原因与已确认责任、实际从未交付的核验事实】",
+      "category": "BLOCK",
+      "binding": "cancellation.facts",
+      "required": true
+    },
+    {
+      "id": "04:T1R3C2:0",
+      "loc": "T1R3C2",
+      "token": "【自动带入：签前已知的成功收退、已确认项目及金额、无争议应补退、具体费用依据；仅有例外时显示明确协商条件】",
+      "category": "BLOCK",
+      "binding": "cancellation.financialTerms",
+      "required": true
+    },
+    {
+      "id": "04:P033:0",
+      "loc": "P033",
+      "token": "【电子签署区】",
+      "category": "SIGNATURE",
+      "binding": "CUSTOMER",
+      "required": true
+    },
+    {
+      "id": "04:P034:0",
+      "loc": "P034",
+      "token": "【电子签署区】",
+      "category": "SIGNATURE",
+      "binding": "OWNER",
+      "required": true
+    },
+    {
+      "id": "04:P035:0",
+      "loc": "P035",
+      "token": "【电子签署区】",
+      "category": "SIGNATURE",
+      "binding": "PLATFORM",
+      "required": true
+    }
+  ]
+}

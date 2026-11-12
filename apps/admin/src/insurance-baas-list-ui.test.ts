@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {fileURLToPath} from 'node:url';
+import {build} from 'vite';
+import {chromium,expect,type Browser} from '@playwright/test';
+
+test('BaaS list distinguishes actual due costs, ungenerated plans and missing summaries',async()=>{
+ const entry=`import React from 'react';import {createRoot} from 'react-dom/client';import {api} from '/src/core';import {BaasPage} from '/src/asset-baas';api.setSession({user:{id:'operator',role:'OPERATIONS',permissions:['*']},csrfToken:'local'});createRoot(document.getElementById('root')).render(React.createElement(BaasPage));`;
+ const built=await build({configFile:false,root:fileURLToPath(new URL('..',import.meta.url)),logLevel:'silent',define:{'import.meta.env.VITE_API_BASE_URL':JSON.stringify('/api')},plugins:[{name:'baas-list-summary',resolveId:id=>id==='virtual:baas-list-summary'?id:undefined,load:id=>id==='virtual:baas-list-summary'?entry:undefined}],build:{write:false,minify:false,rolldownOptions:{input:'virtual:baas-list-summary'}}});const out=(Array.isArray(built)?built[0]:built) as {output:{type:string;code?:string}[]},script=out.output.find(item=>item.type==='chunk')!.code!;
+ const server=createServer((req,res)=>{res.setHeader('Content-Type',req.url==='/entry.js'?'text/javascript':'text/html');res.end(req.url==='/entry.js'?script:'<html><body><div id="root"></div><script type="module" src="/entry.js"></script></body></html>');});await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));const origin=`http://127.0.0.1:${(server.address() as {port:number}).port}`;let browser:Browser|undefined;
+ const common={vehicle:{id:'vehicle',title:'实际车型',plateNumber:'沪A00001'},status:'ACTIVE',provider:'实际出租方',rentalAmount:123400,billingCycle:'QUARTERLY',effectiveFrom:'2026-01-01',effectiveTo:null,paymentDayOfMonth:15};const items=[{...common,id:'actual',contractNumber:'ACTUAL',nextDueDate:'2026-01-15',unpaidCostCount:2,scheduledCostCount:3,costPlanCount:5},{...common,id:'none',contractNumber:'NONE',nextDueDate:null,unpaidCostCount:0,scheduledCostCount:0,costPlanCount:0},{...common,id:'unknown',contractNumber:'UNKNOWN'}];
+ try{try{browser=await chromium.launch({headless:true});}catch(error){if(!(error instanceof Error)||!error.message.includes("Executable doesn't exist"))throw error;browser=await chromium.launch({channel:'chrome',headless:true});}const page=await browser.newPage();await page.route('**/*',async route=>{const url=new URL(route.request().url());assert.equal(url.origin,origin);if(!url.pathname.startsWith('/api/'))return route.continue();assert.equal(route.request().method(),'GET');if(url.pathname==='/api/admin/baas-contracts/filter-options')return route.fulfill({json:{providers:[],brands:[],models:[],lessees:[]}});return route.fulfill({json:{items,total:3,page:1,pageSize:12}});});await page.goto(origin+'/#baas-contracts');
+ for(const label of ['付款日','下笔应付日','待付款成本'])await expect(page.getByRole('columnheader',{name:label,exact:true})).toBeVisible();
+ const actual=page.getByRole('row').filter({hasText:'ACTUAL'});await expect(actual).toContainText('15 日');await expect(actual).toContainText('2026-01-15');await expect(actual).toContainText('2 笔');await expect(actual).toContainText('3 笔待确认');await expect(actual).toContainText('季付');
+ await expect(page.getByRole('row').filter({hasText:'NONE'})).toContainText('未生成成本计划');await expect(page.getByRole('row').filter({hasText:'UNKNOWN'})).toContainText('未提供');await expect(page.getByText('已结清',{exact:true})).toHaveCount(0);
+ }finally{await browser?.close();await new Promise<void>(resolve=>server.close(()=>resolve()));}
+});

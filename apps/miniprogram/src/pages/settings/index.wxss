@@ -1,55 +1,6 @@
 .setting-heading {
   margin-top: 40rpx;
 }
-.scenario-option {
-  display: block;
-  width: 100%;
-  background: #fffefa;
-  border: 1rpx solid #d9d8d0;
-  text-align: left;
-  padding: 28rpx;
-  margin-bottom: 16rpx;
-  font-size: 30rpx;
-  line-height: 1.6;
-  border-radius: 6rpx;
-}
-.scenario-option.selected {
-  border: 2rpx solid #252723;
-  background: #eaeae3;
-}
-.scenario-option .muted {
-  font-size: 25rpx;
-  margin-top: 10rpx;
-}
-.fault-options {
-  display: flex;
-  gap: 12rpx;
-}
-.fault-option {
-  flex: 1;
-  font-size: 25rpx;
-  background: #eaeae3;
-  padding: 22rpx 8rpx;
-  line-height: 1.5;
-  border: 1rpx solid #d9d8d0;
-  border-radius: 6rpx;
-}
-.fault-option.selected {
-  background: #252723;
-  color: #fffefa;
-}
-.fault-help {
-  font-size: 25rpx;
-  line-height: 1.7;
-  margin-top: 20rpx;
-}
-.return-home {
-  margin-top: 44rpx;
-}
-.reset {
-  margin-top: 20rpx;
-}
-
 .page {
   padding-bottom: calc(64rpx + env(safe-area-inset-bottom));
 }
@@ -61,7 +12,54 @@
   margin-top: 24rpx;
   margin-bottom: 24rpx;
 }
-.row .section-title {
+.settings-card-header,
+.settings-contact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+.settings-card-header .section-title,
+.settings-section-title {
   margin-top: 0;
+}
+.settings-card-header .section-title {
   margin-bottom: 0;
+}
+.settings-card-header {
+  margin-bottom: 24rpx;
+}
+.settings-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  color: #231815;
+  font-size: 40rpx;
+  line-height: 1;
+}
+.settings-legal {
+  margin-top: 24rpx;
+}
+.settings-contact {
+  justify-content: flex-end;
+  margin-top: 32rpx;
+}
+.settings-contact text {
+  overflow-wrap: anywhere;
+}
+.settings-retry {
+  min-height: 44px;
+}
+.settings-payment {
+  margin: 32rpx 0;
+}
+.settings-logout {
+  margin-top: 32rpx;
 }

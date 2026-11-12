@@ -1,3 +1,5 @@
+import {assertMaterialsCurrent} from '../owner-signing/identity-materials';
+import {HttpException} from '@nestjs/common';
 import {ensure} from '../common/errors';
 import {audit} from '../common/data';
 import {canonicalHash} from '../customers/types';
@@ -16,11 +18,12 @@ export async function requireElectronicCustomerIdentity(tx:any,customerId:string
  return{customer,account,snapshot:evidence.snapshot};
 }
 function certificate(account:any,now:Date){
- ensure(account?.certStatus==='BOUND'&&account.certSerialNo&&electronicHash(account.certEvidenceHash)&&account.certValidFrom instanceof Date&&account.certValidUntil instanceof Date&&account.certValidFrom<=now&&account.certValidUntil>now&&current(account.certCheckedAt,now),409,'ELECTRONIC_CERTIFICATE_REQUIRED','签署证书缺少当前有效期核验，请重新核验法大大证书');
- return{serialNo:account.certSerialNo,status:'VALID',validFrom:account.certValidFrom.toISOString(),validUntil:account.certValidUntil.toISOString(),checkedAt:account.certCheckedAt.toISOString()};
+ ensure(account?.certStatus==='BOUND'&&electronicHash(account.certSubjectHash)&&account.certSerialNo&&electronicHash(account.certEvidenceHash)&&account.certValidFrom instanceof Date&&account.certValidUntil instanceof Date&&account.certValidFrom<=now&&account.certValidUntil>now&&current(account.certCheckedAt,now),409,'ELECTRONIC_CERTIFICATE_REQUIRED','签署证书缺少当前有效期核验，请重新核验法大大证书');
+ return{subjectHash:account.certSubjectHash,serialNo:account.certSerialNo,status:'VALID',validFrom:account.certValidFrom.toISOString(),validUntil:account.certValidUntil.toISOString(),checkedAt:account.certCheckedAt.toISOString()};
 }
 export async function requireElectronicOwnerActor(tx:any,customerId:string,ownerId:string,now=new Date()){
  const context=await requireOwnerLegalRepresentative(tx,customerId,ownerId),{owner,member,profile}=context,a=owner.esignAccount,c=(a?.consentSnapshot??{}) as Record<string,unknown>;
+ assertMaterialsCurrent(owner,profile,a,customerId);
  ensure(member.status==='VERIFIED'&&owner.status==='VERIFIED'&&member.verifiedAt&&member.verifiedAt<=now&&a?.realNameStatus==='VERIFIED'&&a.managerCustomerId===customerId&&a.verifiedAt&&a.verifiedAt<=now&&current(a.checkedAt,now)&&(!a.leaseUntil||a.leaseUntil<=now)&&a.verificationTransactionNo===member.verifiedSerialNo&&c?.ownerId===ownerId&&c.customerId===customerId&&c.legalRevision===profile.revision&&c.legalName===profile.name&&c.legalMobileHash===profile.mobileHash&&c.channel===(owner.subjectType==='INDIVIDUAL'?'OWNER_PERSONAL_H5':'OWNER_LEGAL_H5'),409,'ELECTRONIC_OWNER_IDENTITY_REQUIRED','请由当前登记本人重新核验合作商身份和签署权限');
  if(owner.subjectType==='INDIVIDUAL'){
   const personal=await requireElectronicCustomerIdentity(tx,customerId,now);
@@ -33,7 +36,7 @@ export async function bindIndividualOwnerIdentity(tx:any,customerId:string,owner
  const {owner,member,profile}=await requireOwnerLegalRepresentative(tx,customerId,ownerId),personal=await requireElectronicCustomerIdentity(tx,customerId,now);
  ensure(owner.subjectType==='INDIVIDUAL'&&owner.name===personal.customer.name&&profile.name===personal.customer.name,409,'ELECTRONIC_OWNER_IDENTITY_REQUIRED','仅登记自然人本人可绑定该合作商');certificate(personal.account,now);
  const a=personal.account,consentSnapshot={channel:'OWNER_PERSONAL_H5',ownerId,customerId,legalRevision:profile.revision,legalName:profile.name,legalMobileHash:profile.mobileHash,identityVersion:a.identityVersion,identityHash:a.verifiedIdentityHash};
- const data={providerCustomerId:a.providerCustomerId,managerCustomerId:customerId,verificationTransactionNo:a.verificationTransactionNo,realNameStatus:'VERIFIED',certStatus:a.certStatus,certSerialNo:a.certSerialNo,certValidFrom:a.certValidFrom,certValidUntil:a.certValidUntil,certEvidenceHash:a.certEvidenceHash,certCheckedAt:a.certCheckedAt,evidenceHash:a.verifiedIdentityHash,consentSnapshot,consentedAt:now,verifiedAt:a.verifiedAt,checkedAt:a.checkedAt,leaseToken:null,leaseUntil:null};
+ const data={providerCustomerId:a.providerCustomerId,managerCustomerId:customerId,verificationTransactionNo:a.verificationTransactionNo,realNameStatus:'VERIFIED',certStatus:a.certStatus,certSerialNo:a.certSerialNo,certValidFrom:a.certValidFrom,certValidUntil:a.certValidUntil,certEvidenceHash:a.certEvidenceHash,certSubjectHash:a.certSubjectHash,certCheckedAt:a.certCheckedAt,evidenceHash:a.verifiedIdentityHash,consentSnapshot,consentedAt:now,verifiedAt:a.verifiedAt,checkedAt:a.checkedAt,leaseToken:null,leaseUntil:null};
  await tx.ownerESignAccount.upsert({where:{ownerId},create:{ownerId,...data},update:data});await tx.ownerMember.update({where:{id:member.id},data:{status:'VERIFIED',verifiedAt:now,verifiedSerialNo:a.verificationTransactionNo}});await tx.vehicleOwner.update({where:{id:ownerId},data:{status:'VERIFIED'}});
  await audit(tx,customerId,'ELECTRONIC_PERSONAL_OWNER_BOUND','vehicle-owners',ownerId,{identityVersion:a.identityVersion,identityHash:a.verifiedIdentityHash},'CUSTOMER');return{verified:true};
 }
@@ -70,4 +73,21 @@ export async function resolveSigningParties(tx:any,archiveVersionId:string,now=n
   ensure(electronicIdentityReady(resolved,now),409,'ELECTRONIC_IDENTITY_REQUIRED','签署实名条件尚未齐备');result.push(resolved);
  }
  return result;
+}
+
+/** Source resolution reads only non-secret enterprise identity references; no provider calls. */
+export async function readEnterpriseIdentitySource(tx:any,ownerId:string){
+ return tx.vehicleOwner.findUnique({where:{id:ownerId},select:{id:true,revision:true,status:true,name:true,subjectType:true,creditCode:true,address:true,contactPhone:true,ordinaryContactPhone:true,contactRevision:true,contractProfile:true,esignAccount:{select:{realNameStatus:true,checkedAt:true,managerCustomerId:true,evidenceHash:true,providerCustomerId:true,consentSnapshot:true}},legalRepresentative:{select:{id:true,revision:true,name:true,evidenceHash:true}}}});
+}
+
+/** Same current identity/authority rules as dispatch, without manufacturing an archive. */
+export async function preparationSigningParties(tx:any,source:any,now=new Date()){
+ const result:SigningPartyInput[]=[];
+ for(const role of requiredSignerRoles(source.kind)){
+  const p=source.parties.find((p:any)=>p.role===role);ensure(p,409,'ELECTRONIC_PARTIES_MISMATCH');
+  try{const party=role==='CUSTOMER'?await personalParty(tx,p.partyId,p.partyId,role,now):await ownerParty(tx,p.partyId,role,now);
+  if(party.subjectType==='ENTERPRISE')party.autoAuthority=await readAutomaticSigningAuthority(tx,party,source.context,now);
+  result.push(party);
+  }catch(error){if(!(error instanceof HttpException))throw error;throw new HttpException({error:{...(error.getResponse() as any).error,signingRole:role,subjectId:p.partyId}},error.getStatus());}
+ }return result;
 }

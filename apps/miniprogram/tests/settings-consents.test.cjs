@@ -10,7 +10,7 @@ function setup() {
   const calls = [], links = [], notices = [];
   const context = () => ({ authenticated: !!customerId, customer: customerId ? { id: customerId } : null, profile: { name: '合成客户' }, consents: [] });
   const services = {
-    getContext: context, getLoginDocuments: async () => docs, refreshContext: async () => context(),
+    getProfile:async()=>({revision:0,name:"合成客户",files:{legacy:[]},readiness:{readyForApplication:false}}),previewLegalDocument:doc=>'/pages/legal/index?preview='+doc.id+'-v'+doc.version,getContext: context, getLoginDocuments: async () => docs, refreshContext: async () => context(),
     getTechnicalAcceptances: async () => [], getPaymentVerifications: async () => [],
     getESignReadiness: async () => ({ realNameStatus: 'UNKNOWN' }), getSigningConfig: async () => ({}),
     loginWechat: async (...args) => { calls.push(['wechat', ...args]); },
@@ -19,9 +19,9 @@ function setup() {
     acceptConsents: async (...args) => { calls.push(['accept', ...args]); },
     logout: async () => { customerId = null; token = null; },
   };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../src/pages/settings/index.js'), 'utf8'), {
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../src/pages/profile/index.js'), 'utf8'), {
     Page: value => { definition = value; },
-    require: id => id.includes('services') ? services : id.includes('config') ? { storageKey: 'session' } : { toastError: e => notices.push(e.message), go: url => links.push(url), confirm: async () => true },
+    require: id => id.includes('handover-location') ? require('../src/utils/handover-location') : id.includes('services') ? services : id.includes('config') ? { storageKey: 'session' } : { toastError: e => notices.push(e.message), go: url => links.push(url), confirm: async () => true },
     wx: { getStorageSync: () => token ? { token } : null }, setInterval: () => 1, clearInterval() {},
   });
   const p = { ...definition, data: structuredClone(definition.data), setData(value) { Object.assign(this.data, value); } };
@@ -56,9 +56,9 @@ test('two independent choices submit exact current versions, and withdrawing eit
 test('opening links never opts in, returning to the same documents preserves deliberate choices, changed text clears them', async () => {
   const env = setup(); await env.p.refresh();
   env.p.openLegal({ currentTarget: { dataset: { type: 'terms' } } });
-  assert.equal(env.links[0], '/pages/legal/index?type=terms');
+  assert.equal(env.links[0], '/pages/legal/index?preview='+env.p.data.legalDocuments[0].id+'-v'+env.p.data.legalDocuments[0].version);
   assert.equal(env.p.data.termsAccepted, false);
-  env.choose('terms'); env.p.onHide(); await env.p.refresh();
+  env.choose('terms'); env.p.onHide?.(); await env.p.refresh();
   assert.equal(env.p.data.termsAccepted, true); assert.equal(env.p.data.privacyAccepted, false);
   env.choose('privacy'); env.setDocs(initialDocs().map(d => d.type === 'terms' ? { ...d, content: '发生变化的正文' } : d));
   await env.p.refresh(); assert.equal(env.p.data.termsAccepted, false); assert.equal(env.p.data.privacyAccepted, false);
@@ -94,7 +94,7 @@ test('unavailable or still-loading documents invalidate old selection and never 
 test('only the selected agreement changes, busy and unknown events cannot change any consent', async () => {
   const env = setup(); await env.p.refresh(); env.choose('terms');
   assert.equal(env.p.data.termsAccepted, true); assert.equal(env.p.data.privacyAccepted, false);
-  env.choose('identityAccepted'); assert.equal(env.p.data.identityAccepted, false);
+  const snapshot = structuredClone(env.p.data); env.choose('unknown'); assert.deepEqual(structuredClone(env.p.data), snapshot);
   env.p.setData({ busy: true }); env.choose('privacy'); env.choose('terms', false);
   assert.equal(env.p.data.termsAccepted, true); assert.equal(env.p.data.privacyAccepted, false);
 });
@@ -119,12 +119,12 @@ test('a session change without page refresh cannot submit or reselect with the p
   }
 });
 
-test('401 after documents load clears old choices and document readiness without erasing a newer session response', async () => {
+test('401 after documents load clears old choices and reloads public agreements for a new login', async () => {
   const env = setup(); env.setSession('a', 'token-a'); await env.p.refresh(); env.choose('terms'); env.choose('privacy');
   env.services.refreshContext = async () => { env.setSession(null, null); throw new Error('会话已失效'); };
   await env.p.refresh();
   assert.equal(env.p.data.termsAccepted, false); assert.equal(env.p.data.privacyAccepted, false);
-  assert.equal(env.p.data.legalDocumentsReady, false);
+  assert.equal(env.p.data.legalDocumentsReady, true);
   assert.equal(env.p.data.authenticated, false);
   await env.p.phoneLogin({ detail: { code: 'synthetic-code' } }); assert.equal(env.calls.length, 0);
 });

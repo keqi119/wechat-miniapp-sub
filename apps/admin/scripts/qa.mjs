@@ -18,7 +18,7 @@ const networkFailures = [];
 page.on('requestfailed', request => { const url = new URL(request.url()); networkFailures.push({ url: url.origin + url.pathname, error: request.failure()?.errorText }); });
 const result = { checks: [], errors, networkFailures, records: {} };
 const check = message => { result.checks.push(message); console.log(`PASS ${message}`); };
-const field = key => page.locator(`#field-${key}`);
+const field = key => page.locator(`[id$="-field-${key}"]:visible`);
 async function save(resource) {
   const response = page.waitForResponse(r => r.url().endsWith(`/api/admin/${resource}`) && r.request().method() === 'POST');
   await page.getByRole('button', { name: '保存资料', exact: true }).click();

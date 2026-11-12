@@ -1,3 +1,6 @@
+import './legacy-esign-mode';
+import {seedTrustedCustomerProfile} from './customer-profile-fixture';
+import { randomUUID } from 'node:crypto';
 import { fixtureUsagePolicy, seedUsageLegal } from './usage-fixtures';
 import { initializeUsage, shanghaiDay } from '../src/usage/rules';
 import '../src/common/config';
@@ -14,8 +17,8 @@ import { BillingController, BillingService } from '../src/billing/billing';
 import { AuthController } from '../src/auth/auth.controller';
 import { CreditReviewController } from '../src/applications/credit-review';
 let db: Db, workflows: WorkflowsController;
-const admin = {admin:{id:'completion-operator',role:'ADMIN'}};
-before(async()=>{assert.ok(process.env.TEST_DATABASE_URL?.includes('_test'));db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});await seedUsageLegal(db);workflows=new WorkflowsController(db,unavailableESign,new SignatureService(db));});
+const admin = {admin:{id:'completion-'+randomUUID(),role:'ADMIN',authVersion:0}};
+before(async()=>{assert.ok(process.env.TEST_DATABASE_URL?.includes('_test'));db=new Db({datasourceUrl:process.env.TEST_DATABASE_URL});process.env.NEW_ORDER_CONTRACT_MODE='ESIGN';process.env.ESIGN_NEW_REQUESTS_ENABLED='true';await db.adminUser.create({data:{id:admin.admin.id,username:admin.admin.id,name:'合成流程管理员',role:'ADMIN',passwordHash:'synthetic-test-only'}});await seedUsageLegal(db);workflows=new WorkflowsController(db,unavailableESign,new SignatureService(db));});
 after(async()=>{await db?.$disconnect();});
 async function fixture(status: any='AWAITING_HANDOVER') {
   const key=`${Date.now()}-${Math.random()}`;
@@ -54,6 +57,7 @@ test('objection resolution creates a fresh unsigned handover while preserving im
 });
 test('NEEDS_INFO amendments change the application snapshot and preserve prior profile in audit',async()=>{
   const f=await fixture();await db.application.update({where:{id:f.application.id},data:{status:'NEEDS_INFO'}});
+  await seedTrustedCustomerProfile(db,f.customer.id,{name:'补件客户',drivingYears:4});
   const applications=new ApplicationsController(db);
   const updated=await applications.amend(f.application.id,{profile:{name:'补件客户',drivingYears:4,fileIds:[]},note:'已补全',idempotencyKey:'amend-request-key'},f.request);
   assert.equal(updated.status,'IN_REVIEW');assert.equal((updated.profile as any).name,'补件客户');
@@ -71,7 +75,8 @@ test('extra fee requires different reviewer and approved immutable evidence befo
  const input={orderId:f.order.id,type:'EXTRA_FEE',amount:5500,dueDate:'2026-11-20',description:'清洁费用',fileIds:[],idempotencyKey:'fee-review-0001'};
  const bill=await bills.createBill(input,admin);assert.equal(bill.status,'DRAFT');assert.equal((await bills.createBill(input,admin)).id,bill.id);
  await assert.rejects(()=>bills.publish(bill.id,admin));await assert.rejects(()=>bills.reviewBill(bill.id,{decision:'APPROVED',note:'核对'},admin));
- const reviewed=await bills.reviewBill(bill.id,{decision:'APPROVED',note:'已核对'}, {admin:{id:'other-finance'}});assert.equal(reviewed.status,'REVIEWED');
+ const reviewer=await db.adminUser.create({data:{username:'fee-reviewer-'+randomUUID(),name:'合成财务复核人',role:'FINANCE',passwordHash:'synthetic-test-only'}});
+ const reviewed=await bills.reviewBill(bill.id,{decision:'APPROVED',note:'已核对'}, {admin:reviewer});assert.equal(reviewed.status,'REVIEWED');
  assert.equal((await bills.publish(bill.id,admin)).status,'PENDING');
  await assert.rejects(()=>bills.createBill({...input,amount:5501},admin));
 });
@@ -91,11 +96,17 @@ test('login persists exact current terms/privacy and application rejects a diffe
  const f=await fixture();await db.vehicle.update({where:{id:f.vehicle.id},data:{status:'PUBLISHED',reservedOrderId:null}});
  const input={vehicleId:f.vehicle.id,subscriptionPlanId:f.plan.id,profile:{name:'测试'},idempotencyKey:'wrong-legal-0001',consents:[{documentId:docs[1].id,version:docs[1].version}]};
  await assert.rejects(()=>new ApplicationsController(db).submit(input,{customer:login.customer}));
+ await seedTrustedCustomerProfile(db,login.customer.id,{name:'测试'});
  const correct=await new ApplicationsController(db).submit({...input,consents:[{documentId:docs[2].id,version:docs[2].version}]},{customer:login.customer});assert.equal(correct.status,'SUBMITTED');
 });
 
 test('verified contract and first payments advance order to handover only once both are ready',async()=>{
  const f=await fixture('AWAITING_SIGNATURE');const contract=await db.contract.findFirstOrThrow({where:{orderId:f.order.id}});await db.contract.update({where:{id:contract.id},data:{status:'PENDING',providerTaskId:'task-'+f.order.id}});
+ const bill=await db.bill.findFirstOrThrow({where:{orderId:f.order.id,type:'SUBSCRIPTION',sequence:1}});
+ await db.bill.update({where:{id:bill.id},data:{status:'PENDING',paidAmount:0}});
+ const receipt=await db.payment.create({data:{billId:bill.id,customerId:f.customer.id,amount:bill.amount,status:'PENDING',idempotencyKey:randomUUID()}});
+ await new BillingService(db,unavailablePayment).settle(receipt.id,{status:'SUCCEEDED',amount:bill.amount,transactionId:'synthetic-completion-'+receipt.id});
+ assert.equal((await db.order.findUniqueOrThrow({where:{id:f.order.id}})).status,'AWAITING_SIGNATURE');
  const file=await db.storedFile.create({data:{customerId:f.customer.id,name:'signed.pdf',mimeType:'application/pdf',size:5,sha256:'test',storagePath:'test',purpose:'contract'}});
  await new SignatureService(db).settleContract(contract.id,{status:'SIGNED',documentHash:contract.documentHash,taskId:'task-'+f.order.id,signedFileId:file.id});
  assert.equal((await db.order.findUniqueOrThrow({where:{id:f.order.id}})).status,'AWAITING_HANDOVER');
@@ -138,10 +149,10 @@ test('final commercial terms are mandatory, reject placeholders and change the i
  const c=await credits.consent(f.application.id,{documentId:creditDoc.id,version:creditDoc.version,decision:'ACCEPT',idempotencyKey:'terms-credit-consent'},f.request);
  const verified=await credits.verify(f.application.id,{consentId:c.consent!.id,creditRevision:c.creditRevision,band:'GE750',customerPresented:true,idempotencyKey:'terms-credit-verify'},admin);
  const terms=Object.fromEntries(['vehicleIdentification','permittedUse','conditionDisclosure','customerAddress','mileageCarryRule','excessMileageCalculation','usageCosts','insuranceDetails','maintenanceRule','serviceCoverage','handoverArrangement','earlyTerminationRule','depositRefundRule','otherFees'].map(key=>[key,'测试正式约定：'+key]));
- const input={creditVerificationId:verified.verification!.id,revision:0,monthlyFeeAmount:10000,depositAmount:0,months:12,mileagePerMonthKm:1500,excessMileagePriceAmount:150,energyDescription:'自费',benefits:[],conditions:'测试约定',startDate:'2026-11-01',firstDueDate:'2026-11-01'};
+ const input={idempotencyKey:'commercial-terms-plan-v1',creditVerificationId:verified.verification!.id,revision:0,monthlyFeeAmount:10000,depositAmount:0,months:12,mileagePerMonthKm:1500,excessMileagePriceAmount:150,energyDescription:'自费',benefits:[],conditions:'测试约定',startDate:'2026-11-01',firstDueDate:'2026-11-01'};
  await assert.rejects(()=>applications.finalPlan(f.application.id,input,admin));await assert.rejects(()=>applications.finalPlan(f.application.id,{...input,commercialTerms:{...terms,depositRefundRule:'待确认'}},admin));
  const first=await applications.finalPlan(f.application.id,{...input,commercialTerms:terms},admin);assert.deepEqual(first.finalPlan.commercialTerms,terms);
- const revised=await applications.finalPlan(f.application.id,{...input,revision:1,commercialTerms:{...terms,depositRefundRule:'双方约定七日内结算'}},admin);assert.notEqual(revised.commercialHash,first.commercialHash);
+ const revised=await applications.finalPlan(f.application.id,{...input,idempotencyKey:'commercial-terms-plan-v2',revision:1,commercialTerms:{...terms,depositRefundRule:'双方约定七日内结算'}},admin);assert.notEqual(revised.commercialHash,first.commercialHash);
 });
 
 test('signed cancellation requires full refund and archived termination, and pending payment cannot release vehicle',async()=>{
@@ -149,6 +160,6 @@ test('signed cancellation requires full refund and archived termination, and pen
  const payment=await db.payment.create({data:{billId:bill.id,customerId:f.customer.id,amount:bill.amount,status:'PENDING',idempotencyKey:'cancel-pending-key'}});
  await assert.rejects(()=>actions.cancel(f.order.id,{reason:'取消'},admin));await db.payment.update({where:{id:payment.id},data:{status:'SUCCEEDED'}});await db.refund.create({data:{paymentId:payment.id,customerId:f.customer.id,amount:bill.amount,status:'SUCCEEDED',requestedBy:'requester',approvedBy:'reviewer',reason:'取消退款'}});
  await assert.rejects(()=>actions.cancel(f.order.id,{reason:'已退款'},admin));
- const file=await db.storedFile.create({data:{adminId:'completion-operator',name:'双方签署终止协议.pdf',mimeType:'application/pdf',size:20,sha256:'termination',storagePath:'fixture',purpose:'evidence'}});
+ const file=await db.storedFile.create({data:{adminId:admin.admin.id,name:'双方签署终止协议.pdf',mimeType:'application/pdf',size:20,sha256:'termination',storagePath:'fixture',purpose:'evidence'}});
  assert.equal((await actions.cancel(f.order.id,{reason:'双方协议终止',terminationFileId:file.id},admin)).status,'CANCELLED');assert.equal((await db.vehicle.findUniqueOrThrow({where:{id:f.vehicle.id}})).reservedOrderId,null);
 });

@@ -1,6 +1,6 @@
 import { createDecipheriv, createSign, createVerify, randomBytes, X509Certificate } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { PaymentGateway } from '../common/gateways';
+import { PaymentGateway, parsePaymentSuccessTime } from '../common/gateways';
 import { ensure, fail } from '../common/errors';
 
 export interface WechatPaySettings {
@@ -37,9 +37,10 @@ export class WechatPaymentGateway extends PaymentGateway {
     this.verify(raw, Object.fromEntries(response.headers.entries()));
     let result: any = {}; try { result = raw ? JSON.parse(raw) : {}; } catch { fail(502, 'PAYMENT_RESPONSE_INVALID', '支付服务响应无效'); }
     if (!response.ok) {
+      if(result.code==='USER_ACCOUNT_ABNORMAL'&&method==='POST'&&path==='/v3/refund/domestic/refunds')fail(409,'REFUND_USER_ACCOUNT_ABNORMAL','渠道签名响应确认客户原收款账户异常，请先查询原退款身份');
       if (result.code === 'ORDER_NOT_EXIST') fail(404, 'PAYMENT_ORDER_NOT_EXIST', '渠道尚未查到该支付单，请用原支付单重试');
       if (result.code === 'ORDERCLOSED') fail(409, 'PAYMENT_ALREADY_CLOSED', '渠道支付单已经关闭');
-      if (result.code === 'RESOURCE_NOT_EXISTS' && path.startsWith('/v3/refund/')) fail(404, 'REFUND_NOT_FOUND', '渠道尚未查到该退款单');
+      if (result.code === 'RESOURCE_NOT_EXISTS' && path.startsWith('/v3/refund/')) fail(404, method === 'GET' ? 'REFUND_NOT_FOUND' : 'REFUND_ORIGINAL_ORDER_NOT_FOUND', '渠道未查到指定原始记录');
       fail(502, 'PAYMENT_PROVIDER_ERROR', `微信支付暂未受理（${/^[A-Z_]{1,60}$/.test(result.code) ? result.code : response.status}），请查询状态后重试`);
     }
     return result;
@@ -60,25 +61,26 @@ export class WechatPaymentGateway extends PaymentGateway {
     const status = ({ SUCCESS: 'SUCCEEDED', REFUND: 'SUCCEEDED', NOTPAY: 'PENDING', USERPAYING: 'PENDING', CLOSED: 'CLOSED', REVOKED: 'CLOSED', PAYERROR: 'FAILED' } as const)[data.trade_state as string as 'SUCCESS'];
     ensure(status, 502, 'PAYMENT_STATE_INVALID', '支付状态暂无法识别');
     ensure(status !== 'SUCCEEDED' || typeof data.transaction_id === 'string', 400, 'PAYMENT_TRANSACTION_MISSING', '支付凭据缺失');
-    return { paymentId: data.out_trade_no as string, status: status as 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CLOSED', transactionId: data.transaction_id as string | undefined, amount: data.amount.total as number, payerOpenId: data.payer?.openid as string | undefined };
+    return { paymentId: data.out_trade_no as string, status: status as 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CLOSED', transactionId: data.transaction_id as string | undefined, amount: data.amount.total as number, payerOpenId: data.payer?.openid as string | undefined, ...(status==='SUCCEEDED'?{succeededAt:parsePaymentSuccessTime(data.success_time,new Date(this.clock()))?.toISOString()}:{}) };
   }
   async query(paymentId: string) { identifier(paymentId); return this.transaction(await this.request('GET', `/v3/pay/transactions/out-trade-no/${encodeURIComponent(paymentId)}?mchid=${encodeURIComponent(this.settings.merchantId)}`), paymentId); }
   async close(paymentId: string) { identifier(paymentId); await this.request('POST', `/v3/pay/transactions/out-trade-no/${encodeURIComponent(paymentId)}/close`, { mchid: this.settings.merchantId }); }
-  private refundResult(data: any, expectedId: string, fromNotification = false) {
+  private refundResult(data: any, expectedId: string, fromNotification = false, evidenceSource:'REQUEST'|'QUERY'|'CALLBACK' = 'REQUEST') {
     ensure(data.out_refund_no === expectedId && typeof data.refund_id === 'string', 400, 'REFUND_ID_MISMATCH', '退款单号不匹配');
     // The official refund notification omits currency; query/create responses include it.
     const currencyValid = data.amount?.currency === 'CNY' || (fromNotification && data.amount?.currency === undefined);
     ensure(cents(data.amount?.refund) && cents(data.amount?.total) && data.amount.refund <= data.amount.total && currencyValid, 400, 'REFUND_AMOUNT_INVALID', '退款金额无效');
     const states: Record<string, 'SUCCEEDED' | 'PROCESSING' | 'FAILED'> = { SUCCESS: 'SUCCEEDED', PROCESSING: 'PROCESSING', CLOSED: 'FAILED', ABNORMAL: 'PROCESSING' };
     ensure(states[data.status], 502, 'REFUND_STATE_INVALID', '退款状态暂无法识别');
-    return { status: states[data.status]!, providerRefundId: data.refund_id as string, refundId: expectedId, paymentId: data.out_trade_no as string, amount: data.amount.refund as number, totalAmount: data.amount.total as number };
+    const destination = typeof data.user_received_account==='string'&&data.user_received_account.includes('商户')?'MERCHANT':typeof data.user_received_account==='string'&&(/银行.*(卡|微银通)/.test(data.user_received_account)||/^(支付用户|用户经营账户)/.test(data.user_received_account))?'CUSTOMER':'UNKNOWN';
+    return { channel:data.channel as string|undefined,userReceivedAccount:data.user_received_account as string|undefined,receiptDestination:destination as 'CUSTOMER'|'MERCHANT'|'UNKNOWN',nativeStatus:data.status as 'SUCCESS'|'PROCESSING'|'CLOSED'|'ABNORMAL',evidenceSource,acceptedAt:fromNotification?undefined:parsePaymentSuccessTime(data.create_time,new Date(this.clock()))?.toISOString(),status: states[data.status]==='SUCCEEDED'&&destination!=='CUSTOMER'?'PROCESSING' as const:states[data.status]!, providerRefundId: data.refund_id as string, refundId: expectedId, paymentId: data.out_trade_no as string, amount: data.amount.refund as number, totalAmount: data.amount.total as number, ...(states[data.status]==='SUCCEEDED'?{succeededAt:parsePaymentSuccessTime(data.success_time,new Date(this.clock()))?.toISOString()}:{}) };
   }
   async refund(input: { refundId: string; paymentId: string; amount: number; totalAmount: number; reason: string }) {
     identifier(input.refundId); identifier(input.paymentId); ensure(cents(input.amount) && cents(input.totalAmount) && input.amount <= input.totalAmount, 400, 'REFUND_AMOUNT_INVALID', '退款金额无效');
     const result = this.refundResult(await this.request('POST', '/v3/refund/domestic/refunds', { out_trade_no: input.paymentId, out_refund_no: input.refundId, reason: boundedText(input.reason, 80), notify_url: this.settings.refundNotifyUrl, amount: { refund: input.amount, total: input.totalAmount, currency: 'CNY' } }), input.refundId);
     ensure(result.paymentId === input.paymentId && result.amount === input.amount && result.totalAmount === input.totalAmount, 400, 'REFUND_MISMATCH', '退款信息不匹配'); return result;
   }
-  async queryRefund(refundId: string) { identifier(refundId); return this.refundResult(await this.request('GET', `/v3/refund/domestic/refunds/${encodeURIComponent(refundId)}`), refundId); }
+  async queryRefund(refundId: string) { identifier(refundId); return this.refundResult(await this.request('GET', `/v3/refund/domestic/refunds/${encodeURIComponent(refundId)}`), refundId, false, 'QUERY'); }
   decodeNotification(raw: string, headers: Record<string, string | string[] | undefined>) {
     this.configured(); this.verify(raw, headers);
     const event = JSON.parse(raw); ensure(event.id && event.resource?.algorithm === 'AEAD_AES_256_GCM', 400, 'PAYMENT_RESOURCE_INVALID', '支付通知格式无效');
@@ -89,7 +91,7 @@ export class WechatPaymentGateway extends PaymentGateway {
     const data = JSON.parse(Buffer.concat([decipher.update(encrypted.subarray(0, -16)), decipher.final()]).toString('utf8'));
     if (String(event.event_type).startsWith('REFUND.')) {
       ensure(data.mchid === this.settings.merchantId, 400, 'PAYMENT_IDENTITY_MISMATCH', '支付主体不匹配');
-      return { kind: 'refund' as const, eventId: String(event.id), ...this.refundResult({ ...data, status: data.refund_status }, data.out_refund_no, true) };
+      return { kind: 'refund' as const, eventId: String(event.id), ...this.refundResult({ ...data, status: data.refund_status }, data.out_refund_no, true, 'CALLBACK') };
     }
     ensure(event.event_type === 'TRANSACTION.SUCCESS' && data.trade_state === 'SUCCESS', 400, 'PAYMENT_EVENT_INVALID', '支付通知类型无效');
     return { kind: 'payment' as const, eventId: String(event.id), ...this.transaction(data) };

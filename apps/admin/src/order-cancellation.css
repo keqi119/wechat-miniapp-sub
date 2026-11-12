@@ -1,0 +1,17 @@
+.order-cancellation-trial { min-width: 0; }
+.order-cancellation-trial .order-cancel-heading { margin-bottom: 12px; }
+.order-cancel-sequence { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin: 0 0 18px; }
+.order-cancel-sequence button { display: flex; align-items: center; gap: 9px; text-align: left; border: 1px solid var(--border,#f0f0f0); background: transparent; color: inherit; padding: 11px 12px; border-radius: 6px; min-width: 0; cursor: pointer; }
+.order-cancel-sequence button[aria-selected="true"] { border-color: #595959; background: #fafafa; }
+.order-cancel-sequence button:disabled { opacity: .55; cursor: not-allowed; }
+.order-cancel-sequence button > b { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 50%; background: #f0f0f0; font-size: 12px; }
+.order-cancel-sequence button[aria-selected="true"] > b { background: #8c8c8c; color: #172033; }
+.order-cancel-sequence button strong,.order-cancel-sequence button small { display: block; }
+.order-cancel-sequence button strong { font-size: 14px; }
+.order-cancel-sequence button small { font-size: 12px; color: #595959; margin-top: 3px; }
+.order-cancellation-trial .order-cancel-panel { margin: 0; padding: 0; }
+.order-cancellation-trial .order-cancel-panel > h3 { margin: 0 0 8px; }
+.order-cancel-stage-note { margin: 0 0 18px; color: #595959; line-height: 1.6; }
+.order-cancel-stage-finished { margin: 12px 0; padding: 12px 14px; border-left: 3px solid #595959; background: #fafafa; }
+.order-cancellation-trial .order-cancel-attention { margin-top: 20px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+@media(max-width:800px) { .order-cancel-sequence { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; } .order-cancel-sequence button { padding: 9px; } }

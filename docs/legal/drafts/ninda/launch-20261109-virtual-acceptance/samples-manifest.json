@@ -1,0 +1,126 @@
+[
+  {
+    "id": "01",
+    "sampleOnly": true,
+    "notApprovedForSigning": true,
+    "sha256": "fe42978354b9ef8d2deb969fbed833af1cd87112033e1ede2fc2a5f552ff0bad",
+    "pageCount": 11,
+    "positions": {
+      "CUSTOMER": [
+        {
+          "pagenum": 10,
+          "x": 607.82,
+          "y": 283.94
+        }
+      ],
+      "OWNER": [
+        {
+          "pagenum": 10,
+          "x": 607.82,
+          "y": 504.52
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 10,
+          "x": 607.82,
+          "y": 765.41
+        }
+      ]
+    },
+    "templateSha256": "4f7d1ae3580ee153512b5c598c61e1da323e31fcdcb41ea8e1af4b809da27467",
+    "templateContentHash": "7bf7f3062a460e8217a93b24471663716a200501506e7e04d37a0d63b0b912bc",
+    "wrapperVersion": "NINDA_INITIAL_VIRTUAL_WRAPPER_V1",
+    "wrapperHash": "8a6f363defd78d1e83d2b6e3b0f8ae2e8695e5c56dccd39cb72c5846d6ff6f4c",
+    "notice": "仅用于实名、电子签、支付与归档验证，不形成真实车辆租赁或交付义务",
+    "virtualAcceptance": {
+      "schema": "NINDA_VIRTUAL_ACCEPTANCE_V1",
+      "scopeId": "SAMPLE-VIRTUAL-SCOPE",
+      "configurationHash": "e6d32e9addca0d1f2d770787a62231b2643bf18fb9bb0f548fb798e0c419fc11",
+      "ownerId": "SAMPLE-OWNER",
+      "customerId": "SAMPLE-CUSTOMER",
+      "platformId": "SAMPLE-PLATFORM",
+      "templateHash": "7bf7f3062a460e8217a93b24471663716a200501506e7e04d37a0d63b0b912bc",
+      "noticeHash": "d753eb35b9745125d9956fb9681f43044d754c0cbf290ab8830a744abf288f5d",
+      "wrapperHash": "8a6f363defd78d1e83d2b6e3b0f8ae2e8695e5c56dccd39cb72c5846d6ff6f4c"
+    }
+  },
+  {
+    "id": "02-main",
+    "sampleOnly": true,
+    "notApprovedForSigning": true,
+    "sha256": "02210d6bf76d9b76421b27c742c954f592c8101a23cfa07e93456dd37e29bc1b",
+    "pageCount": 17,
+    "positions": {
+      "OWNER": [
+        {
+          "pagenum": 16,
+          "x": 607.82,
+          "y": 324.24
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 16,
+          "x": 607.82,
+          "y": 585.13
+        }
+      ]
+    },
+    "templateSha256": "9fc0b582a70668d5d5c26c0315aab2c41e0c32a300cc5a1049bea39c7fa078d5",
+    "templateContentHash": "89db22691ca29047d4d7ad13f699c919f406f931e606d92f9af5111cc3573ec8",
+    "wrapperVersion": "NINDA_INITIAL_VIRTUAL_WRAPPER_V1",
+    "wrapperHash": "8a6f363defd78d1e83d2b6e3b0f8ae2e8695e5c56dccd39cb72c5846d6ff6f4c",
+    "notice": "仅用于实名、电子签、支付与归档验证，不形成真实车辆租赁或交付义务",
+    "virtualAcceptance": {
+      "schema": "NINDA_VIRTUAL_ACCEPTANCE_V1",
+      "scopeId": "SAMPLE-VIRTUAL-SCOPE",
+      "configurationHash": "e6d32e9addca0d1f2d770787a62231b2643bf18fb9bb0f548fb798e0c419fc11",
+      "ownerId": "SAMPLE-OWNER",
+      "customerId": "SAMPLE-CUSTOMER",
+      "platformId": "SAMPLE-PLATFORM",
+      "templateHash": "89db22691ca29047d4d7ad13f699c919f406f931e606d92f9af5111cc3573ec8",
+      "noticeHash": "d753eb35b9745125d9956fb9681f43044d754c0cbf290ab8830a744abf288f5d",
+      "wrapperHash": "8a6f363defd78d1e83d2b6e3b0f8ae2e8695e5c56dccd39cb72c5846d6ff6f4c"
+    }
+  },
+  {
+    "id": "02-grant",
+    "sampleOnly": true,
+    "notApprovedForSigning": true,
+    "sha256": "1f8f1ff6438fcd1f244c0063643c940ad0f0d04a911994de8df8593da3ae3e8f",
+    "pageCount": 12,
+    "positions": {
+      "OWNER": [
+        {
+          "pagenum": 11,
+          "x": 607.82,
+          "y": 324.24
+        }
+      ],
+      "PLATFORM": [
+        {
+          "pagenum": 11,
+          "x": 607.82,
+          "y": 585.13
+        }
+      ]
+    },
+    "templateSha256": "5c4f56d11d488fc1bfc76ef25948ea52d342bb946454ad695055e6ab474db573",
+    "templateContentHash": "48edf4d6793582788135bbb35f9c7377b3a245ca22d4caa3aec25889185a11f1",
+    "wrapperVersion": "NINDA_INITIAL_VIRTUAL_WRAPPER_V1",
+    "wrapperHash": "8a6f363defd78d1e83d2b6e3b0f8ae2e8695e5c56dccd39cb72c5846d6ff6f4c",
+    "notice": "仅用于实名、电子签、支付与归档验证，不形成真实车辆租赁或交付义务",
+    "virtualAcceptance": {
+      "schema": "NINDA_VIRTUAL_ACCEPTANCE_V1",
+      "scopeId": "SAMPLE-VIRTUAL-SCOPE",
+      "configurationHash": "e6d32e9addca0d1f2d770787a62231b2643bf18fb9bb0f548fb798e0c419fc11",
+      "ownerId": "SAMPLE-OWNER",
+      "customerId": "SAMPLE-CUSTOMER",
+      "platformId": "SAMPLE-PLATFORM",
+      "templateHash": "48edf4d6793582788135bbb35f9c7377b3a245ca22d4caa3aec25889185a11f1",
+      "noticeHash": "d753eb35b9745125d9956fb9681f43044d754c0cbf290ab8830a744abf288f5d",
+      "wrapperHash": "8a6f363defd78d1e83d2b6e3b0f8ae2e8695e5c56dccd39cb72c5846d6ff6f4c"
+    }
+  }
+]

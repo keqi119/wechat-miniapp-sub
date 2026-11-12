@@ -1,0 +1,31 @@
+{
+  "status": "FROZEN_FOR_USER_SAMPLE_REVIEW_NOT_SIGNING_APPROVED",
+  "wrapperVersion": "NINDA_INITIAL_VIRTUAL_WRAPPER_V1",
+  "wrapperHash": "8a6f363defd78d1e83d2b6e3b0f8ae2e8695e5c56dccd39cb72c5846d6ff6f4c",
+  "documents": [
+    {
+      "document": "01",
+      "file": "01.pdf",
+      "sha256": "fe42978354b9ef8d2deb969fbed833af1cd87112033e1ede2fc2a5f552ff0bad",
+      "pageCount": 11,
+      "noticeOnAllPages": true
+    },
+    {
+      "document": "02-main",
+      "file": "02-main.pdf",
+      "sha256": "02210d6bf76d9b76421b27c742c954f592c8101a23cfa07e93456dd37e29bc1b",
+      "pageCount": 17,
+      "noticeOnAllPages": true
+    },
+    {
+      "document": "02-grant",
+      "file": "02-grant.pdf",
+      "sha256": "1f8f1ff6438fcd1f244c0063643c940ad0f0d04a911994de8df8593da3ae3e8f",
+      "pageCount": 12,
+      "noticeOnAllPages": true
+    }
+  ],
+  "sourceData": "Synthetic sample data; company names only match the selected test roles. No real identity, signature or payment result is asserted.",
+  "userApproval": null,
+  "actualSigningAllowed": false
+}

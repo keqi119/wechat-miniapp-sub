@@ -1,0 +1,70 @@
+// Root integration: VehicleOwner.creditCode String? @unique;
+// VehicleOwner.subjectType String @default("ENTERPRISE")
+// OwnerMember: no field changes; historical electronic status is not offline authorization.
+// OwnerH5Session.identitySnapshot Json @default("[]")
+// Scalar foreign keys deliberately avoid edits to existing relation arrays.
+model PartnerVerification {
+ id String @id @default(cuid())
+ ownerId String
+ revision Int @default(0)
+ profileRevision Int
+ subjectType String
+ status String @default("SUBMITTED")
+ identityBindingId String
+ identityBindingRevision Int
+ evidenceFileIds String[]
+ submittedBy String
+ submittedAt DateTime @default(now())
+ reviewedBy String?
+ reviewedAt DateTime?
+ reason String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([ownerId,revision])
+}
+model PartnerIdentityBinding {
+ id String @id @default(cuid())
+ ownerId String
+ customerId String
+ relationship String
+ profileRevision Int
+ revision Int @default(0)
+ status String @default("SUBMITTED")
+ evidenceFileIds String[]
+ submittedBy String
+ submittedAt DateTime @default(now())
+ reviewedBy String?
+ reviewedAt DateTime?
+ reason String?
+ revokedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([ownerId,customerId])
+ @@index([customerId,status])
+}
+model PartnerVehicleBindingHistory {
+ id String @id @default(cuid())
+ ownerId String
+ vehicleId String
+ bindingRevision Int
+ evidenceFileId String
+ validFrom DateTime @default(now())
+ validUntil DateTime?
+ submittedBy String
+ reviewedBy String
+ @@unique([vehicleId,bindingRevision])
+ @@index([ownerId,vehicleId])
+}
+model PartnerVehicleBindingProposal {
+ id String @id @default(cuid())
+ ownerId String
+ vehicleId String
+ bindingRevision Int
+ evidenceFileId String
+ submittedBy String
+ status String @default("SUBMITTED")
+ reviewedBy String?
+ reviewedAt DateTime?
+ createdAt DateTime @default(now())
+ @@index([vehicleId,status])
+}

@@ -1,4 +1,5 @@
 import {ContractPdfRendererService} from '../src/contract/contract-pdf-renderer.service';
+import PDFDocument from 'pdfkit';
 import {resolveDelayTemplate} from '../src/contract/delay-template';
 import {hash} from '../src/common/data';
 import { test } from 'node:test';
@@ -41,6 +42,19 @@ test('approved main contract plus commercial schedule resolves actual immutable 
   assert.ok(text.includes('第2期：¥0.00，到期日2026-02-25，服务期间2026-02-28至2026-03-30'));
   assert.ok(text.includes('2026-01-31至2026-03-30'));assert.ok(text.includes('合成客户'));assert.ok(text.includes('application-1'));
 });
+
+test('one-yuan contract keeps the twelve exact rents and deposit after test authorization closes',()=>{
+ const saved=process.env.ORDER_ACCEPTANCE_SCOPE_JSON;
+ try{
+  const app={id:resource.order.applicationId,customerId:resource.customerId,vehicleId:'synthetic-car'};
+  process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify({applicationId:app.id,customerId:app.customerId,vehicleId:app.vehicleId,startDate:'2026-11-01',firstDueDate:'2026-11-01',reference:'synthetic-yuan-contract',pricingMode:'V2_ONE_YUAN'});
+  const input={...snapshot,pricingMode:'V2_ONE_YUAN',monthlyFeeAmount:100,depositAmount:100,months:12,startDate:'2026-11-01',firstDueDate:'2026-11-01'};
+  const final={...input,...finalPlanPricing(app,input,0,{id:'synthetic-admin',role:'ADMIN'})};
+  delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;
+  const text=resolveSubscriptionTemplate(source('subscription-contract.md')+'\n\n'+source('commercial-schedule.md'),{...resource,order:{...resource.order,finalPlanSnapshot:final}},identity,1);
+  assert.equal((text.match(/第\d+期：¥1\.00/g)||[]).length,12);assert.ok(text.includes('押金¥1.00'));assert.match(text,/12期租金各1\.00元（合计12\.00元）/);assert.ok(!text.includes('{{'));assert.ok(!text.includes('0.01元'));
+ }finally{if(saved===undefined)delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;else process.env.ORDER_ACCEPTANCE_SCOPE_JSON=saved;}
+});
 test('missing commercial fields, unknown or nested placeholders and invalid canonical amounts fail closed',()=>{
   const template=source('commercial-schedule.md');
   for(const plan of [{...snapshot,commercialTerms:null},{...snapshot,commercialTerms:{...terms,insuranceDetails:''}},{...snapshot,commercialTerms:{...terms,otherFees:'另行通知'}},{...snapshot,depositAmount:0.5},{...snapshot,startDate:'2026-02-30'}])assert.throws(()=>resolveSubscriptionTemplate(template,{...resource,order:{...resource.order,finalPlanSnapshot:plan}},identity,1),code('COMMERCIAL_INCOMPLETE'));
@@ -61,6 +75,46 @@ test('handover fills only confirmed facts and hashes from current evidence; abse
   assert.throws(()=>resolveHandoverTemplate(source('handover-record.md'),{...handover,customerResponse:'OBJECT'},identity,'contract-1',[]),code('HANDOVER_INCOMPLETE'));
 });
 const font=[process.env.FADADA_CJK_FONT_PATH,'C:/Windows/Fonts/simhei.ttf','/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttf'].find(path=>path&&existsSync(path));
+test('platform subscription appendix uses the deployment legal entity and cannot prepare a legacy company body',async()=>{
+ const prior=process.env.PLATFORM_LEGAL_ENTITY_NAME;process.env.PLATFORM_LEGAL_ENTITY_NAME='上海宁达信息科技有限公司';
+ try{
+  const legal={id:'ninda-legal',type:'subscription',status:'PUBLISHED',confirmedBy:'reviewer',confirmedAt:new Date(),version:1,title:'合成宁达合同',content:'甲方：上海宁达信息科技有限公司\n乙方：{{customerName}}'};
+  const contract={...resource,status:'DRAFT',documentId:legal.id,documentHash:snapshot.commercialHash,createdAt:new Date(),body:legal.content};
+  const encryptionKey=Buffer.alloc(32,7).toString('base64');let rendered:any;
+  const db:any={eSignAccount:{findUnique:async()=>({identityCiphertext:encryptIdentity(identity,resource.customerId,encryptionKey)})},legalDocument:{findUnique:async()=>legal},serial:async(fn:any)=>fn({contract:{findUniqueOrThrow:async()=>contract,update:async(value:any)=>value.data}})};
+  const writer=new ContractPdfArtifactWriterService(db,{render:async(model:any)=>{rendered=model;return{buffer:Buffer.from('%PDF-synthetic'),slotCoordinates:[]};}} as any);
+  writer.resource=async()=>contract;writer.persistPdf=async()=>({id:'source-pdf',sha256:'f'.repeat(64)} as any);
+  await writer.prepare('SUBSCRIPTION',contract.id,{identityEncryptionKey:encryptionKey} as any);
+  assert.equal(rendered.appendix.sections[0].rows[0].value,'上海宁达信息科技有限公司');
+  legal.content='甲方：上海晓浪网络科技有限公司\n乙方：{{customerName}}';contract.body=legal.content;
+  await assert.rejects(writer.prepare('SUBSCRIPTION',contract.id,{identityEncryptionKey:encryptionKey} as any),code('LEGAL_ENTITY_MISMATCH'));
+ }finally{if(prior===undefined)delete process.env.PLATFORM_LEGAL_ENTITY_NAME;else process.env.PLATFORM_LEGAL_ENTITY_NAME=prior;}
+});
+test('handover PDF identifies the current operation company in its facts and seal area',{skip:!font},async()=>{
+ const prior=process.env.PLATFORM_LEGAL_ENTITY_NAME;process.env.PLATFORM_LEGAL_ENTITY_NAME='上海宁达信息科技有限公司';
+ const printed:string[]=[],original=PDFDocument.prototype.text;
+ PDFDocument.prototype.text=function(text:any,...args:any[]){printed.push(String(text));return(original as any).call(this,text,...args);};
+ try{
+  const legal={id:'ninda-handover',type:'handover',status:'PUBLISHED',confirmedBy:'reviewer',confirmedAt:new Date(),version:1,title:'合成宁达交接',content:'交接作业方：上海宁达信息科技有限公司\n客户：{{customerName}}'};
+  const checklist=Object.fromEntries(['actualTimeAndPlace','batteryLevel','accessoriesChecklist','conditionChecklist','openItems','resolutionPlan','staffName'].map(key=>[key,'合成现场事实']));
+  const handover={...resource,id:'handover-ninda',type:'DELIVERY',status:'CUSTOMER_CONFIRMED',signatureStatus:'DRAFT',customerResponse:'CONFIRM',confirmedAt:new Date(),manifestHash:'b'.repeat(64),readingKm:10,fileIds:[],checklist};
+  const encryptionKey=Buffer.alloc(32,7).toString('base64');
+  const db:any={eSignAccount:{findUnique:async()=>({identityCiphertext:encryptIdentity(identity,resource.customerId,encryptionKey)})},legalDocument:{findFirst:async()=>legal},storedFile:{findMany:async()=>[]},contract:{findFirst:async()=>({id:'main-contract'})}};
+  const writer=new ContractPdfArtifactWriterService(db);writer.resource=async()=>handover;writer.persistPdf=async()=>({id:'source-pdf',sha256:'f'.repeat(64)} as any);
+  const result=await writer.prepare('HANDOVER',handover.id,{identityEncryptionKey:encryptionKey,cjkFontPath:font} as any);
+  assert.equal(result.slotCoordinates.length,2);
+  assert.ok(printed.some(value=>value.includes('交接作业方 上海宁达信息科技有限公司')));
+  assert.ok(printed.includes('上海宁达信息科技有限公司盖章'));
+  assert.ok(!printed.some(value=>value.includes('上海晓浪网络科技有限公司')));
+  printed.length=0;
+  (handover.order.finalPlanSnapshot as any).lessorSnapshot={name:'上海晓浪网络科技有限公司',creditCode:'SYNTHETIC0000000001'};
+  legal.type='owner-handover';legal.content='交接作业方：上海宁达信息科技有限公司\n出租方：{{lessorName}}\n客户：{{customerName}}';
+  await writer.prepare('HANDOVER',handover.id,{identityEncryptionKey:encryptionKey,cjkFontPath:font} as any);
+  assert.ok(printed.some(value=>value.includes('出租方：上海晓浪网络科技有限公司')));
+  assert.ok(printed.includes('交接作业方：上海宁达信息科技有限公司盖章'));
+  delete (handover.order.finalPlanSnapshot as any).lessorSnapshot;
+ }finally{delete (snapshot as any).lessorSnapshot;PDFDocument.prototype.text=original;if(prior===undefined)delete process.env.PLATFORM_LEGAL_ENTITY_NAME;else process.env.PLATFORM_LEGAL_ENTITY_NAME=prior;}
+});
 test('writer renders approved combined Chinese text to actual PDF and freezes resolved body and four source signing slots',{skip:!font},async()=>{
   const legal={id:'legal-approved',type:'subscription',status:'PUBLISHED',confirmedBy:'operator',confirmedAt:new Date(),version:1,title:'批准合同及费用附件',content:source('subscription-contract.md')+'\n\n'+source('commercial-schedule.md')};
   const encryptionKey=Buffer.alloc(32,7).toString('base64');

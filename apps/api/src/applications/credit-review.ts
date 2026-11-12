@@ -35,12 +35,12 @@ async function view(tx:any,app:any,admin=false,actorRole?:string) {
   return {applicationId:app.id,creditRevision:app.creditRevision,ruleVersion:CREDIT_RULE,...(admin&&actorRole==='ADMIN'&&acceptancePricingOffer(app)?{acceptancePricing:acceptancePricingOffer(app)}:{}),
     document:s.document?{id:s.document.id,type:s.document.type,version:s.document.version,title:s.document.title,content:s.document.content}:null,
     consent:s.consent?{id:s.consent.id,status:s.consent.status,documentId:s.consent.documentId,version:s.consent.version,acceptedAt:s.consent.acceptedAt,withdrawnAt:s.consent.withdrawnAt}:null,
-    verification:s.verification?{id:s.verification.id,band:s.verification.band,verifiedBy:s.verification.verifiedBy,verifiedAt:s.verification.verifiedAt,consentId:s.verification.consentId}:null,
+    verification:s.verification?(admin?{id:s.verification.id,band:s.verification.band,verifiedBy:s.verification.verifiedBy,verifiedAt:s.verification.verifiedAt,consentId:s.verification.consentId}:{verifiedAt:s.verification.verifiedAt,current:s.verified}):null,
     status:!open?'HISTORICAL':s.verified?(multiplier===null?'MANUAL_REVIEW':'VERIFIED'):s.consent?.status==='DECLINED'?'MANUAL_REVIEW':s.consentValid?'AWAITING_VERIFICATION':'CONSENT_REQUIRED',
     canConsent:open&&!!s.document&&consentRequirementsMet,canDecline:open&&!!s.document,consentRequirementsMet,
     canWithdraw:s.consent?.status==='ACCEPTED',canVerify:admin&&open&&s.consentValid&&consentRequirementsMet,verificationCurrent:s.verified,
     canConfirmFinalPlan:app.status==='AWAITING_CONFIRMATION'&&s.verified&&multiplier!==null&&consentRequirementsMet,
-    canFinalize:admin&&['IN_REVIEW','AWAITING_CONFIRMATION'].includes(app.status)&&s.verified&&multiplier!==null&&consentRequirementsMet,depositMultiplier:multiplier};
+    canFinalize:admin&&['IN_REVIEW','AWAITING_CONFIRMATION'].includes(app.status)&&s.verified&&multiplier!==null&&consentRequirementsMet,...(admin?{depositMultiplier:multiplier}:{})};
 }
 @Controller()
 export class CreditReviewController {

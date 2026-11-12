@@ -1,0 +1,52 @@
+import {useEffect,useRef,useState} from 'react';
+import {api,ApiError,can,date} from './core';
+import {ErrorNotice,Loading} from './ui';
+import {AdvertisingCopyCommand} from './advertising-copy-command';
+import {canPublish,normalizeItems,validateDetail,type CopyDetail,type CopyItem} from './advertising-copy-model';
+import {intentUiLease,pendingIntentCurrent,releasePendingIntent,runPendingIntent,sessionPendingIntent,subscribePendingIntent} from './session-pending-intents';
+import './advertising-copy.css';
+
+export function AdvertisingCopyPage(){
+ const [generation,setGeneration]=useState(0),[denied,setDenied]=useState(false);useEffect(()=>{const change=()=>{setDenied(false);setGeneration(v=>v+1);};window.addEventListener('admin-session-change',change);return()=>window.removeEventListener('admin-session-change',change);},[]);
+ const user=api.session?.user;
+ if(denied||!user||!['ADMIN','OPERATIONS'].includes(user.role||'')||!can(user.permissions,'advertising-copy.read'))return <section className="panel"><h1>广告词</h1><p>当前账号无权维护广告词。</p></section>;
+ return <AdvertisingWorkspace key={generation} onDenied={()=>setDenied(true)}/>;
+}
+function AdvertisingWorkspace({onDenied}:{onDenied:()=>void}){
+ const [intent]=useState(()=>sessionPendingIntent<AdvertisingCopyCommand,CopyItem[]>('advertising-copy',()=>new AdvertisingCopyCommand()));
+ const [data,setData]=useState<CopyDetail>(),[input,setInput]=useState<CopyItem[]|undefined>(()=>(intent.command.originalItems as CopyItem[]|undefined)||intent.snapshot),[selected,setSelected]=useState(0),[error,setError]=useState<unknown>(),[loading,setLoading]=useState(true),[ready,setReady]=useState(intent.command.ready),[confirm,setConfirm]=useState(false),[message,setMessage]=useState(''),[,render]=useState(0),[attempt,setAttempt]=useState(0);
+ const mounted=useRef(true),readSequence=useRef(0),inputRef=useRef(input);inputRef.current=input;
+ const current=()=>mounted.current&&pendingIntentCurrent(intent);
+ const read=async(preserve:boolean,requireConsumption=false)=>{const sequence=++readSequence.current,lease=intentUiLease(intent,()=>mounted.current);const result=validateDetail(await api.request<CopyDetail>('/admin/advertising-copy',{permission:'advertising-copy.read',cache:'no-store'}));const consumed=lease()&&sequence===readSequence.current;if(consumed){setData(result);if(!preserve||!inputRef.current)setInput(structuredClone(result.draft.items));setError(undefined);}else if(requireConsumption)throw new ApiError('操作已提交，请在当前页面重新核对结果',0,'READBACK_VIEW_CHANGED');return result;};
+ const failure=(reason:unknown)=>{if(!current())return;if(reason instanceof ApiError&&([401,403].includes(reason.status)||reason.code==='SESSION_CHANGED')){intent.command.dispose();setInput(undefined);setData(undefined);setReady(false);api.setSession(api.session);onDenied();return;}setError(reason);};
+ useEffect(()=>{mounted.current=true;const unsubscribe=subscribePendingIntent(intent,()=>{if(!mounted.current)return;if(!pendingIntentCurrent(intent)){setData(undefined);setInput(undefined);setConfirm(false);setReady(false);}render(v=>v+1);});return()=>{mounted.current=false;readSequence.current++;unsubscribe();releasePendingIntent(intent);};},[intent]);
+ useEffect(()=>{let active=true;setLoading(true);const session=api.session;if(session)void intent.command.bind(session).then(async()=>{if(!active||!current())return;setReady(intent.command.ready);const original=intent.command.originalItems as CopyItem[]|undefined;if(original){inputRef.current=original;setInput(original);}await read(true);}).catch(failure).finally(()=>{if(active&&current())setLoading(false);});return()=>{active=false;};},[intent,attempt]);
+ const command=intent.command,phase=command.phase,busy=intent.busy,valid=current(),writable=can(api.session?.user.permissions||[],'advertising-copy.write');
+ const blocked=!valid||!ready||!writable||busy||loading||command.hasPending||phase==='conflict';
+ const dirty=!!data&&!!input&&JSON.stringify(input)!==JSON.stringify(data.draft.items);
+ let validation='';if(input)try{normalizeItems(input);}catch(reason){validation=(reason as Error).message;}
+ const publishable=!!data&&!!input&&canPublish(input,data.draft.items,data.draft.contentHash,data.published.contentHash);
+ const execute=async(action:'draft'|'publish')=>{if((!command.hasPending&&(!data||!input))||busy||!ready||!valid)return;setError(undefined);setMessage('');setConfirm(false);const lease=intentUiLease(intent,()=>mounted.current),operation=command.pendingAction||action;
+  try{const body=command.hasPending?{}:action==='draft'?{revision:data!.revision,items:normalizeItems(input)}:{revision:data!.revision,draftHash:data!.draft.contentHash};
+   await runPendingIntent(intent,structuredClone(input||[]),()=>command.execute(action,body,(path,options)=>api.request(path,options),async()=>{await read(false,true);}));
+   if(pendingIntentCurrent(intent)){intent.completed=false;intent.snapshot=undefined;if(lease())setMessage(operation==='draft'?'草稿已保存并核对。':'广告词已发布并核对。');}
+  }catch(reason){failure(reason);}finally{if(current())render(v=>v+1);}
+ };
+ const review=async()=>{if(busy||command.hasPending)return;setLoading(true);try{await read(true);if(current()){command.reviewed();setMessage('已读取最新版本；当前输入已保留，请逐组核对后再保存。');}}catch(reason){failure(reason);}finally{if(current())setLoading(false);}};
+ const change=(field:'title'|'line0'|'line1'|'catalogDescription',value:string)=>{setMessage('');setInput(old=>old?.map((item,index)=>index!==selected?item:field==='line0'||field==='line1'?{...item,lines:field==='line0'?[value,item.lines[1]]:[item.lines[0],value]}:{...item,[field]:value}));};
+ if(!valid)return <section className="panel"><p>登录或权限已变化，请重新进入广告词。</p></section>;
+ const item=input?.[selected];
+ return <div className="advertising-copy-page"><header className="advertising-heading"><div><h1>广告词</h1><p>统一管理首页与选车页的 12 组文案</p></div><button className="button" disabled={busy||command.hasPending||dirty||loading} onClick={()=>{setAttempt(v=>v+1);}}>重新读取</button></header>
+ {error?<ErrorNotice error={error}/>:null}{!ready&&!loading?<button className="button" onClick={()=>setAttempt(v=>v+1)}>重新绑定会话</button>:null}
+ {loading?<Loading/>:null}{message?<p role="status" className="advertising-notice">{message}</p>:null}
+ {phase==='unknown'?<div className="advertising-notice" role="alert"><p>{command.pendingAction==='publish'?'发布':'保存'}结果未知，原内容和请求编号已保留。重试前将先核对原操作回执。</p><button className="button" disabled={busy||loading||!ready} onClick={()=>void execute(command.pendingAction||'draft')}>按原内容重试</button></div>:null}
+ {phase==='readback'?<div className="advertising-notice" role="alert"><p>{command.pendingAction==='publish'?'发布':'保存'}已返回成功，仅重新读取结果，不重复提交。</p><button className="button" disabled={busy||loading||!ready} onClick={()=>void execute(command.pendingAction||'draft')}>重新核对结果</button></div>:null}
+ {phase==='conflict'?<div className="advertising-notice" role="alert">{command.hasPending?<p>命令回执与原请求不一致，当前输入已保留。请联系管理员核对，已停止重提。</p>:<><p>版本已变化，当前输入已保留。请重新读取并逐组核对。</p><button className="button" disabled={busy||loading} onClick={()=>void review()}>重读并核对版本</button></>}</div>:null}
+ {data&&item?<><section className="panel advertising-status"><strong>已发布 v{data.published.version}</strong><span>{data.draft.contentHash===data.published.contentHash?'与已发布一致':'草稿待发布'}</span><span>最后发布：{date(data.published.publishedAt)}</span><span>草稿更新：{date(data.draft.updatedAt)}</span>{dirty?<strong>有未保存输入</strong>:null}</section>
+ <div className="advertising-workspace"><nav className="panel advertising-slots" aria-label="固定广告词位置">{input!.map((entry,index)=><button key={entry.id} className={selected===index?'selected':''} aria-current={selected===index?'true':undefined} onClick={()=>setSelected(index)}><span>{String(index+1).padStart(2,'0')}</span><strong>{entry.title||'未填写标题'}</strong></button>)}</nav>
+ <section className="panel advertising-editor"><h2>第 {selected+1} 组</h2><p>请填写单行纯文本，保存时去除首尾空格。</p><fieldset disabled={blocked}><label>主标题<input aria-label="主标题" value={item.title} onChange={e=>change('title',e.target.value)}/><small>{Array.from(item.title.trim()).length} / 9 字</small></label><label>首页小字第一行<input aria-label="首页小字第一行" value={item.lines[0]} onChange={e=>change('line0',e.target.value)}/><small>{Array.from(item.lines[0].trim()).length} / 32 字</small></label><label>首页小字第二行<input aria-label="首页小字第二行" value={item.lines[1]} onChange={e=>change('line1',e.target.value)}/><small>{Array.from(item.lines[1].trim()).length} / 32 字</small></label><label>选车页小字<input aria-label="选车页小字" value={item.catalogDescription} onChange={e=>change('catalogDescription',e.target.value)}/><small>{Array.from(item.catalogDescription.trim()).length} / 40 字</small></label></fieldset>{validation?<p role="alert">{validation}</p>:null}
+ <div className="advertising-previews"><section aria-label="首页预览"><small>首页 · 实时预览</small><article className="advertising-mini-card"><span className="advertising-mini-eyebrow">纯电汽车 · 按月订阅</span><h3>{item.title}</h3><p>{item.lines[0]}<br/>{item.lines[1]}</p></article></section><section aria-label="选车页预览"><small>选车页 · 实时预览</small><article className="advertising-mini-card advertising-mini-catalog"><span className="advertising-mini-eyebrow">上海 · 纯电汽车订阅</span><h3>{item.title}</h3><p>{item.catalogDescription}</p></article></section></div>
+ <div className="advertising-actions"><button className="button primary" disabled={blocked||!dirty||!!validation} onClick={()=>void execute('draft')}>保存草稿</button><button className="button" disabled={blocked||!publishable||!!validation} onClick={()=>setConfirm(true)}>发布</button><span>{dirty?'请先保存草稿，再核对发布。':'保存草稿不会改变小程序当前展示。'}</span></div></section></div>
+ <section className="panel advertising-history"><h2>最近发布</h2>{data.history.length?<ol>{data.history.map(row=><li key={row.version}><strong>v{row.version}</strong><span>{date(row.publishedAt)}</span><span>{row.publishedBy}</span></li>)}</ol>:<p>暂无发布记录</p>}</section>
+ {confirm?<section className="panel advertising-confirm" role="dialog" aria-modal="true" aria-labelledby="copy-confirm-title"><h2 id="copy-confirm-title">核对并发布整套广告词</h2><p>以下为已保存草稿的 12 组标题，确认后同时应用于首页与选车页。</p><ol>{data.draft.items.map(entry=><li key={entry.id}>{entry.title}</li>)}</ol><div className="advertising-actions"><button className="button primary" disabled={blocked||!publishable} onClick={()=>void execute('publish')}>确认发布</button><button className="button" onClick={()=>setConfirm(false)}>取消发布</button></div></section>:null}</>:null}</div>;
+}

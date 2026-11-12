@@ -11,7 +11,7 @@ import {CustomerESignOnboardingService} from '../esign/customer-esign-onboarding
 import {ESIGN_SETTINGS} from '../esign/esign.controller';
 import {FadadaSettings} from '../esign/esign.settings';
 import {ContractPdfArtifactWriterService} from '../contract/contract-pdf-artifact-writer.service';
-import {H5_RETURN,approvedProviderUrl,providerHosts} from './config';
+import {h5ReturnUrl,approvedProviderUrl,providerHosts} from './config';
 export type H5Kind='SUBSCRIPTION'|'HANDOVER'|'AMENDMENT';
 @Injectable()
 export class H5RecordsService{
@@ -48,10 +48,10 @@ export class H5RecordsService{
   const before=await this.view(kind,id,customer.id);if(kind==='AMENDMENT')ensure(input.revision!==undefined&&input.revision===before.revision,409,'VERSION_CONFLICT','补充协议已更新，请刷新');
   let result:any;
   if(!sync){await requireCurrentConsents(this.db,customer.id,['terms','privacy']);ensure(before.canSign,409,'SIGNING_NOT_READY',before.blockers.join('；'));}
-  const request={customer,signingReturnUrl:H5_RETURN};
-  if(kind==='SUBSCRIPTION')result=sync?await this.contracts.status(id,request):await this.contracts.send(id,customer.id,H5_RETURN);
+  const request={customer,signingReturnUrl:h5ReturnUrl()};
+  if(kind==='SUBSCRIPTION')result=sync?await this.contracts.status(id,request):await this.contracts.send(id,customer.id,h5ReturnUrl());
   else if(kind==='HANDOVER')result=sync?await this.workflows.signStatus(id,request):await this.workflows.signHandover(id,request);
-  else if(sync)await this.delay.sync(id,input,customer.id);else result=await this.delay.sign(id,input,customer.id,H5_RETURN);
+  else if(sync)await this.delay.sync(id,input,customer.id);else result=await this.delay.sign(id,input,customer.id,h5ReturnUrl());
   const record=await this.view(kind,id,customer.id);if(sync)return record;
   return{record,...(result?.url?{redirectUrl:approvedProviderUrl(result.url)}:{})};
  }

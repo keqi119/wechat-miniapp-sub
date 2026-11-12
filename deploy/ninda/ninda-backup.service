@@ -1,0 +1,9 @@
+[Unit]
+Description=Ninda encrypted database and uploads backup
+After=docker.service
+Requires=docker.service
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/ninda-platform/deploy/backup.sh
+User=root
+UMask=0077

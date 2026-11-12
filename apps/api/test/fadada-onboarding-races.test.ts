@@ -1,3 +1,4 @@
+import './legacy-esign-mode';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -9,7 +10,7 @@ function latch(){let resolve!:(value?:any)=>void;const promise=new Promise<any>(
 function matches(row:any,where:any):boolean{return Object.entries(where).every(([key,value]:[string,any])=>key==='OR'?value.some((x:any)=>matches(row,x)):key==='AND'?value.every((x:any)=>matches(row,x)):value&&typeof value==='object'&&!(value instanceof Date)?Object.entries(value).every(([op,target]:[string,any])=>op==='not'?row[key]!==target:op==='lt'?row[key]<target:op==='gt'?row[key]>target:op==='in'?target.includes(row[key]):false):value instanceof Date?row[key]?.getTime()===value.getTime():row[key]===value);}
 function fixture(api:any){
   const row:any={id:'account',customerId:'customer',providerCustomerId:'provider',registrationStatus:'REGISTERED',realNameStatus:'PENDING',verificationSource:'UNKNOWN',verifiedSerialNo:'serial-A',verificationTransactionNo:'transaction-A',identityCiphertext:encryptIdentity({name:'身份A',idCardNo:'110101199001010000'},'customer',key),identityVersion:1,verifiedIdentityHash:null,verificationLeaseUntil:null,verificationLeaseToken:null,verifiedAt:null,certSerialNo:null,certStatus:'UNKNOWN',checkedAt:null};
-  const db:any={eSignAccount:{findUnique:async()=>structuredClone(row),updateMany:async({where,data}:any)=>{if(!matches(row,where))return{count:0};for(const[key,value]of Object.entries(data))row[key]=(value as any)?.increment!==undefined?(row[key]||0)+(value as any).increment:value;return{count:1};},update:async({data}:any)=>Object.assign(row,data)},customer:{findUniqueOrThrow:async()=>({mobile:'13800000000'})},auditLog:{create:async()=>({})},serial:async(fn:any)=>fn(db)};
+  const db:any={virtualAcceptanceScope:{findFirst:async()=>null},eSignAccount:{findUnique:async()=>structuredClone(row),updateMany:async({where,data}:any)=>{if(!matches(row,where))return{count:0};for(const[key,value]of Object.entries(data))row[key]=(value as any)?.increment!==undefined?(row[key]||0)+(value as any).increment:value;return{count:1};},update:async({data}:any)=>Object.assign(row,data)},customer:{findUniqueOrThrow:async()=>({mobile:'13800000000'})},auditLog:{create:async()=>({})},serial:async(fn:any)=>fn(db)};
   const service=new CustomerESignOnboardingService(db,{enabled:true,realNameVerifyEnabled:true,identityEncryptionKey:key,verifyNotifyUrl:'https://mini-api.subauto.keybox.cloud/api/callbacks/fadada-identity',verifyReturnUrl:'https://mini-api.subauto.keybox.cloud/api/public/esign-return'} as any,api);
   return{row,service};
 }

@@ -1,10 +1,21 @@
 const HOSTS = ['textapi17.fadada.com', 'realnameverify16.fadada.com'];
-const RETURN_URL = 'https://mini-api.subauto.keybox.cloud/api/public/esign-return';
+const RETURN_URL = 'https://api.evsub.ndacar.com/api/public/esign-return';
 function fail(code, message) { throw Object.assign(new Error(message), { code }); }
-function signingConfig(value) {
+function signingConfig(value, electronic = false) {
+  if (!['OFFLINE','ESIGN','ELECTRONIC'].includes(value?.newOrderContractMode) || typeof value.newEsignRequestsEnabled !== 'boolean') fail('SIGN_CONFIG', '当前签署办理能力尚未核实，历史资料仍可查看。');
   if (value?.mode !== 'MINIAPP_WEBVIEW' || typeof value.enabled !== 'boolean' || typeof value.signProviderConfigured !== 'boolean' || !Array.isArray(value.providerHosts) || value.providerHosts.some(host => !HOSTS.includes(host)) || new Set(value.providerHosts).size !== value.providerHosts.length || value.returnUrl !== RETURN_URL) fail('SIGN_CONFIG', '小程序签约配置尚未核验，请联系运营。');
-  const faceBridgeConfigured = value.faceBridgeConfigured === true && value.faceBridgeProtocol === 'FADADA_H5_CURRENT_FLOW_V1';
-  return { mode: value.mode, enabled: value.enabled, signProviderConfigured: value.signProviderConfigured, providerHosts: [...value.providerHosts], returnUrl: RETURN_URL, faceBridgeConfigured, faceBridgeProtocol: faceBridgeConfigured ? value.faceBridgeProtocol : null };
+  const newEsignRequestsEnabled = value.newOrderContractMode === 'ESIGN' && value.newEsignRequestsEnabled;
+  const enabled = electronic ? value.newOrderContractMode === 'ELECTRONIC' && value.newElectronicRequestsEnabled === true && value.electronicEnabled === true : newEsignRequestsEnabled && value.enabled;
+  const faceBridgeConfigured = enabled && value.faceBridgeConfigured === true && value.faceBridgeProtocol === 'FADADA_H5_CURRENT_FLOW_V1';
+  return { mode: value.mode, newOrderContractMode: value.newOrderContractMode, newEsignRequestsEnabled, enabled, signProviderConfigured: value.signProviderConfigured, providerHosts: [...value.providerHosts], returnUrl: RETURN_URL, faceBridgeConfigured, faceBridgeProtocol: faceBridgeConfigured ? value.faceBridgeProtocol : null };
+}
+function identityConfig(value) {
+  const identityPolicy=value?.identityPolicy===undefined?'PROVIDER_REQUIRED':value.identityPolicy;
+  if(!['MANUAL_REVIEW','PROVIDER_REQUIRED','SIGNING_REQUIRED'].includes(identityPolicy))fail('IDENTITY_CONFIG','实名认证办理方式尚未核实，请稍后重试。');
+  if(value?.mode!=='MINIAPP_WEBVIEW'||typeof value.enabled!=='boolean'||typeof value.signProviderConfigured!=='boolean'||!Array.isArray(value.providerHosts)||value.providerHosts.some(host=>!HOSTS.includes(host))||new Set(value.providerHosts).size!==value.providerHosts.length||value.returnUrl!==RETURN_URL)fail('IDENTITY_CONFIG','实名认证能力暂未核实，请稍后重试。');
+  if(identityPolicy==='MANUAL_REVIEW')return{identityPolicy,mode:value.mode,enabled:false,signProviderConfigured:false,providerHosts:[],returnUrl:RETURN_URL,faceBridgeConfigured:false,faceBridgeProtocol:null};
+  const enabled=value.enabled,faceBridgeConfigured=enabled&&value.faceBridgeConfigured===true&&value.faceBridgeProtocol==='FADADA_H5_CURRENT_FLOW_V1'&&Array.isArray(value.faceBridgeKinds)&&value.faceBridgeKinds.includes('identity');
+  return{identityPolicy,mode:value.mode,enabled,canQueryIdentity:identityPolicy==='SIGNING_REQUIRED'&&value.canQueryIdentity===true,signProviderConfigured:value.signProviderConfigured,providerHosts:[...value.providerHosts],returnUrl:RETURN_URL,faceBridgeConfigured,faceBridgeProtocol:faceBridgeConfigured?value.faceBridgeProtocol:null};
 }
 function providerUrl(value, config, allowReturn = false) {
   // Mini Program JavaScript does not universally expose the browser URL class.
@@ -49,4 +60,4 @@ function faceReturn(entry, bridge, initiated, config) {
   // extraData/faceResult are navigation signals, never an authentication result.
   return { reloadUrl: b.callbackUrl, flowId: b.flowId };
 }
-module.exports = { signingConfig, providerUrl, providerIdentityBridge, bridgeArguments, faceReturn };
+module.exports = { signingConfig, identityConfig, providerUrl, providerIdentityBridge, bridgeArguments, faceReturn };

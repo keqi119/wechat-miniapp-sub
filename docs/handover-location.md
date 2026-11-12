@@ -1,5 +1,11 @@
 # 交还地点配置与验收
 
+## 当前进度（2026-10-17）
+
+用户已确认 `wx.chooseLocation` 接口审核通过，隐私保护指引已重新提交；随后明确回复当前“仍在审核中”（问题 `call_7da80a27c07143df8e3851dc6652fd79`）。提交不再列为未完成事项，不重复提交；等待审核通过后核对生效指引中的“选择的位置信息”披露。最新只读检查确认生产 `20261017-direct-v2` 健康、手填地址开启、地图选点仍关闭，详见[本次提交记录](evidence/wechat-location-privacy-submission.json)。确认新指引生效后，按下面顺序开启受控真机验证。
+
+下列 `20261017-location-v1` 记录保留为初次部署历史；直营版当前法律文案绑定及版本见[直营发布记录](evidence/direct-operation-release.json)与[直营文案发布记录](evidence/direct-legal-publication.json)，不要用历史绑定覆盖当前生产配置。
+
 三份完整文案于2026-10-17获用户批准，并已通过新系统后台协议流程发布。批准源和正式副本SHA-256见[批准记录](legal/location-approval-manifest.json)，线上正文核对见[法律文案发布记录](evidence/location-legal-publication.json)。历史客户同意不会自动迁移。
 
 生产版本`20261017-location-v1`已部署，API、后台静态文件及三份线上文案均已核对；数据库迁移020已应用，备份恢复检查通过。地点入口与地图开关仍关闭，微信隐私指引v3和真机流程尚待完成，详见[生产验证记录](evidence/handover-location-production.json)。本次尚未向微信上传新版代码，也未创建真实租赁订单。

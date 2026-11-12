@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "subject": {
+    "subjectType": "ENTERPRISE",
+    "name": "合成宁达合作企业A",
+    "creditCode": "SYNTHETIC000000001",
+    "address": "合成测试地址，不用于寄送",
+    "contactPhone": "13800000000"
+  },
+  "identityRelationship": "ENTERPRISE_REPRESENTATIVE",
+  "cooperationMode": "OFFLINE"
+}

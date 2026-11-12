@@ -1,0 +1,188 @@
+{
+  "schema": "NINDA_V31_TEMPLATE",
+  "artifact": "02-grant",
+  "kind": "COOPERATION_GRANT",
+  "status": "DRAFT",
+  "source": {
+    "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+    "zipEntry": "02_车辆合作协议_V3.1.docx",
+    "docxSha256": "47c4c611f64aa3d43f09ea3d5593413326111257bb3cafa11b147da951496270",
+    "textSha256": "5ca502368de250924064fc7a7437e4c2059cedc062143a851123933171fc4017"
+  },
+  "nodes": [
+    {
+      "type": "paragraph",
+      "loc": "P079",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "附件三 企业电子印章使用授权书",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P080",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "本授权由本协议乙方作为授权人，向上海宁达信息科技有限公司作出。授权人名称、统一社会信用代码、有权签署人及权限来源，直接引用本次独立签署所确认的企业身份；受权人不据此取得授权人印章所有权或签名制作数据，不得共用账号、冒用自然人或自行扩展权限。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P081",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "授权范围仅为：在本协议附件一已确定的有效合作期间、车辆及产品条件范围内，组织使用授权人本企业经验证的电子印章，对采用《汽车订阅合同 三方 V3.1》完整审定版本的逐单合同及一并固定附件进行签署。允许变化仅为该版本明确的客户身份、获准车辆、获准产品条件、计划交付安排、真实保险和常设联系信息等逐单数据，不得擅改正文责任。适用印章以独立授权签署时企业认证并可核验的本企业印章标识、证书和控制记录为准；具体范围不留白后补。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P082",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "授权自授权人有权人员独立有效签署本书且授权到达受权人时生效，至附件一约定的合作期间届满时止；车辆或产品范围后续减少的，相应范围同步停止，扩大仍须新授权。本书不以企业实名、管理员开通或合作主协议一般签署而当然生效。若实际可用印章、车辆或产品授权边界不能核验，不得自动用印。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P083",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "本授权不包含本合作协议、合作补充或终止协议、换车或续期补充协议、客户解除或终止协议、结算和解、保证担保、借款、划款指令、责任减免、债权放弃或授权扩展。上述文件由有权人员对具体内容逐份签署；另行作出范围明确的有效授权时，方可依该授权办理。不得替客户表达同意，不得转授权第三人自行决定用印。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P084",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "授权人可通过附件一常设联系渠道发出可核验的撤销或缩小授权通知。受权人收到有权主体发出的有效通知后立即停止受影响的后续自动用印并反馈；通知权限存在疑义时先暂停相关自动用印并核验，不以核验为由继续冒险用印。发现失密、冒用或越权风险，双方立即停用、通知并保全证据。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P085",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "撤销或到期不追溯否认此前有效范围内已签文件，不免除既有客户履行义务；对善意相对人的法律效果依法认定。自动签条件不足时两家企业均回退为有权人员逐份确认电子签，不能以自动重试替代授权。授权人应能取得完整签后文件及可核验用印记录，归档延误不自行否定已有签署效力。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P086",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "独立签署栏：授权人企业电子印章及有权签署人，受权人企业确认。各方实际身份、权限及签署时间由本授权独立签署证据记录，不预填未来日期，不以主协议签名代替本授权签署。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P087",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "独立授权签署栏",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P088",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "签署涵盖正文及同时固定的交易摘要和附件。以下为电子签署控制区，真实身份、权限及签署时间由有效签署证据确定，不另设手填日期。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P089",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "授权人 车辆合作商 企业签章    【电子签署区】",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P090",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "受权人 上海宁达信息科技有限公司 企业确认    【电子签署区】",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "02-grant:P089:0",
+      "loc": "P089",
+      "token": "【电子签署区】",
+      "category": "SIGNATURE",
+      "binding": "OWNER",
+      "required": true
+    },
+    {
+      "id": "02-grant:P090:0",
+      "loc": "P090",
+      "token": "【电子签署区】",
+      "category": "SIGNATURE",
+      "binding": "PLATFORM",
+      "required": true
+    }
+  ]
+}

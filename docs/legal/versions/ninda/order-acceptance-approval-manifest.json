@@ -1,0 +1,70 @@
+{
+  "status": "APPROVED",
+  "approvedBy": "用户代表上海宁达信息科技有限公司",
+  "approvedAt": "2026-10-22T07:55:56.861Z",
+  "approvalQuestionId": "call_92370ba1080849cf8a97b2007f756466",
+  "approvalStatement": "确认发布五份文案",
+  "scope": [
+    "application",
+    "credit-verification",
+    "usage-policy",
+    "handover-location",
+    "owner-handover"
+  ],
+  "reviewSha256": "1e56744606d2cc2c0791c13147d8b18e0ffbaeab7c642145acc4e29284d22c40",
+  "executionScope": "发布已审阅的五份宁达正文；不代客户同意，不发起真实订单、支付或签章。",
+  "documents": [
+    {
+      "type": "application",
+      "id": "cmvj8ybk80004mx01yo7ka014",
+      "version": 1,
+      "title": "宁达汽车订阅申请须知",
+      "status": "PUBLISHED",
+      "sha256": "ff8aa61cf02771043d89d093f93b79446dfd8a30a1bc5819b8ebe81dd0ec8224",
+      "publishedAt": "2026-10-22T07:55:58.258Z",
+      "finalPath": "docs/legal/versions/ninda/application-notice-v1.md"
+    },
+    {
+      "type": "credit-verification",
+      "id": "cmvj8ybvb0007mx01l83jiztc",
+      "version": 1,
+      "title": "人工核验芝麻分及押金规则说明",
+      "status": "PUBLISHED",
+      "sha256": "cbbc4e5f8643ac688fcd9e227c17160078df9baa7cc4c41b19789cbbd98cff6b",
+      "publishedAt": "2026-10-22T07:55:58.617Z",
+      "finalPath": "docs/legal/versions/ninda/manual-credit-verification-v1.md"
+    },
+    {
+      "type": "usage-policy",
+      "id": "cmvj8yc57000amx01qf2e0u9u",
+      "version": 1,
+      "title": "订阅里程、权益及退订结算规则",
+      "status": "PUBLISHED",
+      "sha256": "ca90c9cfca32489f3f9c68b1917e3189759b4b3f55abc3c981a90ac445f75179",
+      "publishedAt": "2026-10-22T07:55:59.228Z",
+      "finalPath": "docs/legal/versions/ninda/usage-policy-v1.md"
+    },
+    {
+      "type": "handover-location",
+      "id": "cmvj8ycnk000dmx01fiuufcm0",
+      "version": 1,
+      "title": "交接地点选择说明",
+      "status": "PUBLISHED",
+      "sha256": "1cad87fbadea30ccf009071fb90733826d51d74cf5e084d96bc8709f5b91a736",
+      "publishedAt": "2026-10-22T07:55:59.562Z",
+      "finalPath": "docs/legal/versions/ninda/handover-location-notice-v1.md"
+    },
+    {
+      "type": "owner-handover",
+      "id": "cmvj8ycsp000gmx016ek5elmd",
+      "version": 1,
+      "title": "企业车主车辆交接确认单",
+      "status": "PUBLISHED",
+      "sha256": "c9b939a7f1bb279b2e37a5fc8214615d671f6e585274d6a1c451e1f8f3a6ec9d",
+      "publishedAt": "2026-10-22T07:55:59.747Z",
+      "finalPath": "docs/legal/versions/ninda/owner-handover-v1.md"
+    }
+  ],
+  "sourceManifest": "docs/legal/drafts/ninda/order-acceptance-20261022/source-hashes-change-summary.json",
+  "published": true
+}

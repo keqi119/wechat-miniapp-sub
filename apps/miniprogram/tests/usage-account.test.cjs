@@ -28,6 +28,41 @@ function setup(extra={}) {
 function page(env,name,options={}){global.wx=env.wx;let definition;global.Page=value=>{definition=value;};for(const file of ['../src/services/index','../src/pages/'+name+'/index'])delete require.cache[require.resolve(file)];require('../src/pages/'+name+'/index');const p={...definition,data:structuredClone(definition.data),setData(value){Object.assign(this.data,value);}};p.onLoad?.(options);return p;}
 const purchaseInput={productId:'mp1000',termsVersion:terms.version,termsDocumentId:terms.documentId,termsDocumentVersion:terms.documentVersion,termsHash:terms.hash,accepted:true};
 const readingInput={orderId:'o1',periodId:'up1',readingKm:2600,recordedAt:'2026-10-16T00:30:00Z',fileIds:['file1']};
+
+test('v2 mileage uses the configured order and period values without reverting to 1500 kilometres',async()=>{
+ for(const [baseAllowanceKm,excessPriceAmount]of [[2400,230],[0,0]]){
+  const configured={policyVersion:'USAGE_V2',baseAllowanceKm,excessPriceAmount};
+  const env=setup({usage:account({...configured,periods:[period(configured)]})});
+  const value=await env.api.getUsageAccount('o1');
+  assert.equal(value.baseAllowanceKm,baseAllowanceKm);assert.equal(value.excessPriceAmount,excessPriceAmount);
+  assert.equal(value.periods[0].baseAllowanceKm,baseAllowanceKm);assert.equal(value.periods[0].excessPriceAmount,excessPriceAmount);
+  assert.equal(env.calls.some(call=>call.method==='POST'),false);
+ }
+});
+
+test('v2 missing or mismatched period pricing and unknown mileage policies are rejected',async()=>{
+ const configured={policyVersion:'USAGE_V2',baseAllowanceKm:2400,excessPriceAmount:230};
+ for(const invalid of [account({...configured,periods:[period()]}),account({...configured,periods:[period({...configured,baseAllowanceKm:1500})]}),account({...configured,periods:[period({...configured,excessPriceAmount:150})]}),account({...configured,baseAllowanceKm:-1,periods:[period(configured)]}),account({policyVersion:'UNKNOWN'})]){
+  const env=setup({usage:invalid});await assert.rejects(env.api.getUsageAccount('o1'),{code:'RESPONSE'});
+  assert.equal(env.calls.some(call=>call.method==='POST'),false);
+ }
+});
+
+test('renewed account preserves each real stage price and explicitly keeps expired history read-only',async()=>{
+ const current={policyVersion:'USAGE_V2',baseAllowanceKm:2400,excessPriceAmount:230},initial={policyVersion:'USAGE_V2',baseAllowanceKm:2000,excessPriceAmount:175};
+ const usage=account({...current,initialPricing:initial,servicePeriod:{status:'CURRENT',periodId:'new-period'},periods:[period({...initial,status:'SETTLED',canSubmit:false}),period({...current,id:'new-period',sequence:25,serviceStageId:'real-stage-2',stageSequence:1})]});
+ const env=setup({usage}),view=await env.api.getUsageAccount('o1');assert.deepEqual(view.periods.map(p=>[p.baseAllowanceKm,p.excessPriceAmount]),[[2000,175],[2400,230]]);assert.equal(view.periods[1].serviceStageId,'real-stage-2');
+ env.setUsage({...usage,servicePeriod:{status:'NO_ACTIVE_PERIOD',periodId:'new-period'},canPurchase:true});const ended=await env.api.getUsageAccount('o1');assert.equal(ended.canPurchase,false);assert.match(ended.servicePeriodNotice,/当前无已生效服务期/);assert.equal(ended.periods.length,2);assert.equal(env.calls.some(c=>c.method==='POST'),false);
+});
+
+test('renewal period identity and history state are validated before any purchase is enabled',async()=>{
+ const pricing={policyVersion:'USAGE_V2',baseAllowanceKm:2400,excessPriceAmount:230};
+ for(const change of [p=>p.stageSequence=null,p=>p.serviceStageId='',p=>p.stageSequence=0,p=>p.stageSequence=121,p=>p.excessPriceAmount=-1]){
+  const row=period({...pricing,serviceStageId:'stage-2',stageSequence:1});change(row);await assert.rejects(setup({usage:account({...pricing,periods:[row]})}).api.getUsageAccount('o1'),{code:'RESPONSE'});
+ }
+ for(const state of [{status:'UNKNOWN',periodId:'up1'},{status:'CURRENT',periodId:'foreign'},{status:'CURRENT',periodId:null}])await assert.rejects(setup({usage:account({servicePeriod:state})}).api.getUsageAccount('o1'),{code:'RESPONSE'});
+ const env=setup({usage:account({servicePeriod:{status:'NO_ACTIVE_PERIOD',periodId:'up1'},canPurchase:true})});await assert.rejects(env.api.createMileagePack('o1',purchaseInput),{code:'USAGE_PURCHASE_UNAVAILABLE'});assert.equal(env.calls.some(c=>c.method==='POST'),false);
+});
 test('usage account is authenticated, scoped, preserves unreviewed nulls and never invents credited pack balance',async()=>{
   const env=setup();const value=await env.api.getUsageAccount('o1');assert.equal(value.packBalanceKm,0);assert.equal(value.periods[0].excessAmount,null);assert.match(value.periods[0].statusText,/待.*读数|待.*申报/);assert.equal(value.products[0].amountText,'¥800.00');env.setUsage(account({orderId:'other'}));await assert.rejects(env.api.getUsageAccount('o1'),{code:'RESPONSE'});env.storage.clear();await assert.rejects(env.api.getUsageAccount('o1'),{code:'AUTH_REQUIRED'});
 });
@@ -84,3 +119,12 @@ test('subscription month ranges mark the exclusive month boundary and distinguis
 test('return on the original last month boundary remains an actual-time cutoff even when effectiveEndDate equals endDate',async()=>{
   const env=setup({usage:account({orderStatus:'SETTLING',returnedOn:'2026-10-16',packStatus:'FROZEN',periods:[period(),period({id:'future',sequence:2,startDate:'2026-10-16',endDate:'2026-11-16',effectiveEndDate:'2026-11-16',status:'CANCELLED',canSubmit:false})]})});const result=await env.api.getUsageAccount('o1');assert.match(result.periods[0].periodText,/归还日，以实际还车时刻截止/);assert.doesNotMatch(result.periods[0].periodText,/末日不含/);assert.equal(result.periods[0].effectiveEndDate,'2026-10-16');
 });
+
+
+test('monthly V2 and old V1 remain separate from current usable and historical pending balance',async()=>{
+ const env=setup({usage:account({products:[],canPurchase:false,historicalPendingPackBalanceKm:700,packs:[{id:'v2',status:'ACTIVE',km:1500,amount:42100,remainingKm:700,ruleVersion:'MILEAGE_PACK_V2',periodId:'up1',expiresAt:'2026-10-15T16:00:00Z',canUseNow:false,billId:'b2'},{id:'v1',status:'ACTIVE',km:1000,amount:80000,remainingKm:100,ruleVersion:'MILEAGE_PACK_V1',periodId:null,expiresAt:null,canUseNow:true,billId:'b1'}]})});
+ const view=await env.api.getUsageAccount('o1');assert.equal(view.historicalPendingPackBalanceKm,700);assert.equal(view.packs[0].canUseNow,false);assert.match(view.packs[0].ruleText,/不结转/);assert.match(view.packs[0].availabilityText,/原计费月/);assert.match(view.packs[1].ruleText,/原订阅期结转/);
+});
+
+test('returned frozen V1 book balance is retained while current available mileage is zero',async()=>{const env=setup({usage:account({orderStatus:'SETTLING',returnedOn:'2026-11-05',packStatus:'FROZEN',packBalanceKm:500,availablePackBalanceKm:0,servicePeriod:{status:'ENDED',periodId:null},packs:[{id:'legacy',status:'ACTIVE',km:1000,amount:80000,remainingKm:500,ruleVersion:'MILEAGE_PACK_V1',canUseNow:false,billId:'b1'}]})});const view=await env.api.getUsageAccount('o1');assert.equal(view.packBalanceKm,500);assert.equal(view.availablePackBalanceKm,0);assert.equal(view.packs[0].canUseNow,false);assert.match(view.packs[0].availabilityText,/当前不可用/);assert.match(require('node:fs').readFileSync(require.resolve('../src/pages/records/index.wxml'),'utf8'),/当期可用里程包 \{\{usage.availablePackBalanceKm\}\}/);});
+test('usage reader shows late monthly payment review and real paid amount',async()=>{const pack={id:'late',status:'PENDING_PAYMENT',effectiveStatus:'PAYMENT_REVIEW',km:1000,amount:30000,remainingKm:0,ruleVersion:'MILEAGE_PACK_V2',periodId:'up1',expiresAt:'2026-10-15T16:00:00Z',canUseNow:false,canPay:false,billId:'latebill',bill:{id:'latebill',type:'MILEAGE_PACK',amount:30000,paidAmount:30000,status:'PAID'},paymentReview:{required:true,reason:'MILEAGE_MONTH_CLOSED',reasons:['MILEAGE_MONTH_CLOSED'],unresolvedReceiptCount:1},paymentFacts:{receiptCount:1,receivedAmount:30000,refundedAmount:0,netReceivedAmount:30000,pendingRefundCount:0}};const env=setup({usage:account({products:[],canPurchase:false,availablePackBalanceKm:0,packs:[pack]})});const view=await env.api.getUsageAccount('o1');assert.match(view.packs[0].statusText,/核账/);assert.equal(view.packs[0].bill.paidAmount,30000);assert.equal(view.packs[0].canPay,false);assert.match(view.packs[0].paymentReviewText,/原计费月|月界/);});

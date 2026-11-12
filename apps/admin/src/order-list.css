@@ -1,0 +1,17 @@
+/* All eight facts fit the normal desktop workspace; narrow screens scroll inside the table. */
+.order-list-table table{min-width:1100px;width:100%;table-layout:fixed}
+.order-list-table th,.order-list-table td{white-space:normal;vertical-align:top;padding-left:10px;padding-right:10px}
+.order-list-table th:nth-child(1){width:170px}.order-list-table th:nth-child(2){width:85px}.order-list-table th:nth-child(3){width:210px}.order-list-table th:nth-child(4){width:130px}.order-list-table th:nth-child(5){width:65px}.order-list-table th:nth-child(6){width:90px}.order-list-table th:nth-child(7){width:75px}.order-list-table th:nth-child(8){width:130px}.order-list-table th:nth-child(9){width:65px}
+.order-list-table td{overflow:visible;text-overflow:clip}
+.order-list-table .order-list-id{overflow-wrap:anywhere}
+.order-list-table .row-link{white-space:normal;text-align:left;overflow-wrap:anywhere;user-select:text}
+.order-list-cell{display:flex;flex-direction:column;gap:5px;line-height:1.5;overflow-wrap:anywhere}
+.order-list-vehicle span:last-child{font-size:12px}
+.order-list-months,.order-list-monthlyFeeAmount{white-space:nowrap}
+.order-list-table .action-cell{position:sticky;right:0;background:var(--surface,#fff);min-width:65px;white-space:nowrap;z-index:1}
+.order-list-table .action-cell .text-button{padding:0;white-space:nowrap}
+.order-search-submit{padding:6px 14px!important;min-height:32px;flex-shrink:0}
+.search-field:has(.order-search-submit){max-width:580px;flex:1}
+.search-field:has(.order-search-submit) input{min-width:140px}
+.order-list-scroll-hint{display:none}
+@media(max-width:600px){.search-field:has(.order-search-submit){width:100%;max-width:100%}.search-field:has(.order-search-submit) input{min-width:90px}.order-list-table{max-width:100%;overflow-x:auto}.order-list-scroll-hint{display:block;position:sticky;left:0;width:fit-content;font-size:12px;color:#595959;margin:10px}}

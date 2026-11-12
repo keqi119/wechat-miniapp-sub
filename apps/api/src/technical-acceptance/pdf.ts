@@ -1,7 +1,9 @@
 import PDFDocument from 'pdfkit';
 import {useCjkFont} from '../contract/pdf-font';
 import {ensure} from '../common/errors';
+import {assertPlatformDocumentEntity} from '../common/platform-legal-entity';
 export async function renderTechnicalPdf(body:string,font?:string){
+ const platformName=assertPlatformDocumentEntity(body);
  ensure(font,503,'CJK_FONT_REQUIRED','验收文档中文字体未配置');
  const doc=new PDFDocument({size:'A4',margin:45,bufferPages:true});let page=0;const chunks:Buffer[]=[],slotCoordinates:any[]=[];
  const done=new Promise<Buffer>((resolve,reject)=>{doc.on('data',c=>chunks.push(c));doc.on('end',()=>resolve(Buffer.concat(chunks)));doc.on('error',reject);});
@@ -11,7 +13,7 @@ export async function renderTechnicalPdf(body:string,font?:string){
  for(let i=0;i<lines.length;i++){if(i===first)continue;const line=lines[i];if(!line.trim()){doc.moveDown(0.35);continue;}const heading=/^#{1,6}\s+/.test(line),bold=/\*\*[^*]+\*\*/.test(line),plain=line.replace(/^#{1,6}\s+/,'').replace(/(?<!\*)\*\*([^*]+)\*\*(?!\*)/g,'$1');
  if(heading&&doc.y>doc.page.height-140)doc.addPage();doc.fontSize(heading?12:bold?10.5:10);doc.lineWidth(0.15);doc.text(plain,{lineGap:4,stroke:heading||bold,fill:true});doc.lineWidth(1);
  }
- const title='本文件双方签署区',slots=[{role:'CUSTOMER',label:'乙方本人签署',height:80},{role:'PLATFORM',label:'上海晓浪网络科技有限公司企业签章',height:150}];
+ const title='本文件双方签署区',slots=[{role:'CUSTOMER',label:'乙方本人签署',height:80},{role:'PLATFORM',label:platformName+'企业签章',height:150}];
  const textOptions={width:doc.page.width-doc.page.margins.left-doc.page.margins.right,lineGap:0};
  const topGap=doc.currentLineHeight(true)*2;
  // Measure with the selected font: Noto CJK and SimHei have different line

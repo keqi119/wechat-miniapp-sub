@@ -26,21 +26,21 @@ Page({
     this.reload();
   },
   onShow() { if (this.data.usage && !this.data.busy && !this.data.choosing) this.reload(); },
+  onUnload() { this._disposed = true; this._loadRevision = (this._loadRevision || 0) + 1; },
   reload() {
     const selectedId = this.data.periodId || this.requestedPeriodId;
     const selectedSegmentId = this.data.segmentId;
     const previous = JSON.stringify([this.data.selectedPeriod?.revision, this.data.selectedSegment]);
-    this.setData({ usage: null, selectedPeriod: null, selectedSegment: null, periodId: '', segmentId: '', boundaryDate: '' });
     return load(this, async () => {
       const current = (await services.getDashboard()).subscription;
       const id = this.orderId || current?.orderId || current?.id;
-      if (!id) return { subscription: null, usage: null };
+      if (!id) return { subscription: null, usage: null, selectedPeriod: null, selectedSegment: null, periodId: '', segmentId: '', boundaryDate: '', reading: '', recordedDate: '', recordedTime: '', attachments: [], submitted: null };
       const usage = await services.getUsageAccount(id);
       const selectedPeriod = usage.periods.find(row => row.id === selectedId && row.canSubmit) || null;
       const selectedSegment = selectedPeriod?.segments.find(row => row.id === selectedSegmentId && row.canSubmit) || null;
       const changed = previous !== JSON.stringify([selectedPeriod?.revision, selectedSegment]);
       return { subscription: current && (current.orderId || current.id) === id ? current : { id, orderId: id, vehicleName: '本订阅的月度里程' }, usage, selectedPeriod, periodId: selectedPeriod?.id || '', selectedSegment, segmentId: selectedSegment?.id || '', boundaryDate: selectedSegment?.boundaryDate || (selectedPeriod && !selectedPeriod.segmented ? selectedPeriod.effectiveEndDate : ''), ...(changed ? { reading: '', recordedDate: '', recordedTime: '', attachments: [], submitted: null } : {}) };
-    });
+    }, { clearOnError: ['usage', 'selectedPeriod', 'selectedSegment'] });
   },
   selectUsagePeriod(event) {
     if (this.data.busy || this.data.choosing) return;

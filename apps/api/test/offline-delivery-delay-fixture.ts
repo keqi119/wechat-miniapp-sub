@@ -1,0 +1,51 @@
+import {agreementFixture} from './offline-change-agreement-fixture';
+import {hash} from '../src/common/data';
+import {canonicalHash} from '../src/customers/types';
+import {customerProfileHash} from '../src/customers/qualifications';
+import {day,periods} from '../src/usage/rules';
+
+export function offlineDelayFixture(archived=false){
+ const f=agreementFixture(),{tx,order,initial}=f;const writes:any[]=[],audits:any[]=[],obligations:any[]=[],allocations:any[]=[],refunds:any[]=[];
+ const customer={id:'customer',name:'原签约客户',mobile:'13800000000',drivingYears:5,profile:{},legalIdentityFileId:null};
+ const evidence=['identity-front','identity-back','driving-license'].map(id=>({id,sha256:hash(id),customerId:customer.id,adminId:null,purpose:'identity',mimeType:'image/png'}));f.files.push(...evidence);
+ const qualification:any={id:'qualification',customerId:'customer',revision:1,status:'APPROVED',submittedBy:'uploader',reviewedBy:'reviewer',reviewedAt:new Date(),profileHash:customerProfileHash(customer),identityFileIds:['identity-front','identity-back'],drivingLicenseFileIds:['driving-license'],identityLongTerm:true,drivingLicenseLongTerm:true,evidenceHash:canonicalHash(evidence.map(({id,sha256,customerId,adminId})=>({id,sha256,customerId,adminId})).sort((a,b)=>a.id.localeCompare(b.id)))};
+ const risk:any={id:'risk',applicationId:'application',customerId:'customer',decision:'APPROVED',identityChecked:true,drivingQualificationChecked:true,finalPlanId:'plan',planRevision:1,commercialHash:initial.commercialHash,qualificationId:'qualification',qualificationRevision:1,profileHash:qualification.profileHash};
+ Object.assign(initial,{monthlyFeeAmount:10000,depositAmount:0,commercialTerms:{vehicleIdentification:'原冻结车辆 VIN123',customerAddress:'原冻结地址'},customerProfileSnapshot:{version:2,identityPolicy:'MANUAL_REVIEW',identity:null,captureStage:'ORDER_CONFIRMATION',capturedAt:'2026-10-01T00:00:00.000Z',profileRevision:1,profileHash:qualification.profileHash,name:customer.name,mobile:customer.mobile,drivingYears:customer.drivingYears,documents:{identityFront:{id:evidence[0].id,sha256:evidence[0].sha256},identityBack:{id:evidence[1].id,sha256:evidence[1].sha256},drivingLicense:{id:evidence[2].id,sha256:evidence[2].sha256}}},riskSnapshot:{reviewId:risk.id,applicationId:risk.applicationId,customerId:risk.customerId,planId:risk.finalPlanId,planRevision:risk.planRevision,commercialHash:risk.commercialHash,qualificationId:risk.qualificationId,qualificationRevision:1}});
+ Object.assign(initial.lessorSnapshot,{name:'原出租方',executionMode:'OFFLINE',subjectType:'ENTERPRISE',creditCode:'credit',platformLegalEntityName:'平台主体',address:'原地址',phone:'01000000000'});
+ for(const p of initial.partiesSnapshot as any[])Object.assign(p,{name:p.role==='CUSTOMER'?customer.name:p.role==='OWNER'?'原出租方':'平台主体',subjectType:p.role==='CUSTOMER'?'INDIVIDUAL':'ENTERPRISE'});
+ Object.assign(order,{applicationId:'application',revision:3,status:'AWAITING_HANDOVER'});
+ const current=f.addChange();const {change,quote,contract,archive,version}=current;
+ Object.assign(change,{revision:1,createdBy:'ops',reason:'双方确认未交付延期',status:archived?'AWAITING_FINANCE':'REVIEWED'});
+ const originalRows=periods(initial.startDate,3).map(p=>({sequence:p.sequence,startDate:day(p.startDate),endDate:day(p.endDate),dueDate:day(p.startDate),amount:10000,billId:'bill-'+p.sequence,billStatus:'PAID',netPaidAmount:10000,sourceBillIds:['bill-'+p.sequence],payments:[{id:'payment-'+p.sequence,amount:10000,net:10000}]}));
+ const nextRows=periods('2026-11-01',3).map(p=>({sequence:p.sequence,startDate:day(p.startDate),endDate:day(p.endDate),dueDate:day(p.startDate),amount:10000,originalAmount:10000,netPaidAmount:10000,carryAmount:10000,chargeAmount:0,refundAmount:0,calculationBasis:'原同一期金额不变'}));
+ Object.assign(quote,{createdBy:'ops',reviewedBy:'finance',reviewNote:'逐期核对完毕',fundsSnapshot:originalRows,financePreparedAt:null,status:archived?'CONFIRMED':'REVIEWED'});
+ Object.assign(quote.snapshot,{expiresAt:'2099-12-31T00:00:00.000Z',newStartDate:'2026-11-01',newEndDate:'2027-01-31',months:3,periods:nextRows,reason:'双方确认未交付延期',settlementExplanation:'原同一期已付款沿用',handoverArrangement:'新起租日交车',cancellationTerms:'按原合同约定办理',externalCompensationRequired:false});
+ const legal:any={id:'template-ORDER_AMENDMENT',type:'OFFLINE_ORDER_AMENDMENT',version:1,status:'PUBLISHED',confirmedBy:'legal-reviewer',confirmedAt:new Date(),content:'双方 {{customerName}} / {{lessorName}}，原档案 {{originalArchiveVersionId}} / {{originalArchiveHash}}；{{changeFacts}}；{{periodSchedule}}；{{financialSchedule}}；{{commercialHash}}'};
+ const bills:any[]=originalRows.map(r=>({id:r.billId,orderId:order.id,type:'SUBSCRIPTION',sequence:r.sequence,dueDate:new Date(r.dueDate),amount:r.amount,paidAmount:r.amount,status:'PAID',payments:r.payments.map(p=>({...p,status:'SUCCEEDED',refunds:[]}))}));
+ const update=(items:any[],where:any,data:any)=>{const value=items.find(x=>x.id===where.id);if(!value)throw Error('fixture missing '+where.id);for(const[k,v]of Object.entries(data))value[k]=v&&typeof v==='object'&&'increment'in v?value[k]+(v as any).increment:v;return value;};
+ tx.adminUser={findUnique:async({where}:any)=>({id:where.id,role:where.id==='finance'?'FINANCE':'OPERATIONS',active:true,authVersion:1})};
+ tx.customer={findUnique:async()=>customer};tx.customerQualificationVersion={findFirst:async()=>qualification};tx.applicationRiskReview={findUnique:async()=>risk};
+ tx.storedFile.findMany=async({where}:any)=>f.files.filter(x=>where.id.in.includes(x.id));
+ tx.legalDocument={findFirst:async({where}:any)=>where.type===legal.type?legal:['terms','privacy'].includes(where.type)?{id:where.type,type:where.type,version:1,status:'PUBLISHED',confirmedAt:new Date()}:null,findUnique:async()=>legal};tx.customerConsent={count:async()=>1};
+ tx.eSignAccount={findUnique:async()=>{throw Error('FORBIDDEN_ESIGN_READ');}};
+ tx.order.findUniqueOrThrow=async()=>order;tx.order.update=async({data}:any)=>{writes.push({table:'order',data});return update([order],{id:order.id},data);};
+ tx.orderChange.findFirst=async({where}:any)=>f.changes.find(c=>(!where.id||c.id===where.id)&&(!where.customerId||c.customerId===where.customerId)&&(!where.orderId||c.orderId===where.orderId)&&(!where.status?.notIn||!where.status.notIn.includes(c.status)))??null;
+ const oldFind=tx.orderChange.findFirst;tx.orderChange.findFirst=async(args:any)=>{const c=await oldFind(args);return c&&args.include?{...c,quotes:f.quotes.filter(q=>q.changeId===c.id).map(q=>({...q,contract:f.contracts.find(c=>c.delayQuoteId===q.id)}))}:c;};
+ tx.orderChange.update=async({where,data}:any)=>{writes.push({table:'change',data});return update(f.changes,where,data);};
+ tx.orderChange.create=async({data}:any)=>{const c={id:'created-change',revision:1,kind:'DELIVERY_DELAY',status:'DRAFT',...data};f.changes.push(c);return c;};
+ tx.delayQuote.findUniqueOrThrow=async({where}:any)=>{const q=f.quotes.find(q=>q.id===where.id);if(!q)throw Error('missing quote');return {...q,contract:f.contracts.find(c=>c.delayQuoteId===q.id)};};
+ tx.delayQuote.update=async({where,data}:any)=>{writes.push({table:'quote',data});return update(f.quotes,where,data);};tx.delayQuote.aggregate=async()=>({_max:{revision:1}});
+ tx.delayQuote.create=async({data}:any)=>{const q={id:'quote-new',status:'DRAFT',...data};f.quotes.push(q);return q;};
+ tx.contract.findFirst=async({where}:any)=>f.contracts.find(c=>c.kind===where.kind&&c.status===where.status)??null;
+ tx.contract.create=async({data}:any)=>{writes.push({table:'contract',data});const c={status:'DRAFT',executionMode:'ESIGN',...data};f.contracts.push(c);const q=f.quotes.find(q=>q.id===data.delayQuoteId);if(q)q.contract=c;return c;};
+ tx.usageAccount={findUnique:async()=>null};tx.vehicleAssignment={count:async()=>0};tx.handover={count:async()=>0,findMany:async()=>[],updateMany:async({data}:any)=>{writes.push({table:'handover',data});return{count:0};}};
+ tx.serviceObligation={findMany:async({where}:any)=>obligations.filter(o=>(!where.quoteId||o.quoteId===where.quoteId)&&(!where.active||o.active)).map(o=>({...o,allocations:allocations.filter(a=>a.obligationId===o.id&&!a.releasedAt)})),create:async({data}:any)=>{const o={id:'obligation-'+(obligations.length+1),active:false,...data};obligations.push(o);return o;},update:async({where,data}:any)=>update(obligations,where,data),updateMany:async({where,data}:any)=>{for(const o of obligations.filter(o=>(!where.quoteId||where.quoteId===o.quoteId)&&(!where.active||o.active)))Object.assign(o,data);return{count:1};}};
+ tx.bill={findMany:async()=>bills,aggregate:async()=>({_max:{sequence:0}}),updateMany:async()=>({count:0}),create:async({data}:any)=>{const b={id:'new-bill-'+bills.length,payments:[],...data};bills.push(b);return b;}};
+ tx.paymentAllocation={updateMany:async()=>({count:0}),create:async({data}:any)=>{allocations.push(data);return data;}};
+ tx.refund={findMany:async()=>refunds,create:async({data}:any)=>{refunds.push(data);return data;}};
+ tx.orderTermsVersion.findFirst=async({where}:any)=>f.terms.find(t=>t.id===where.id&&t.orderId===where.orderId)??null;
+ tx.orderTermsVersion.aggregate=async()=>({_max:{version:f.terms.length}});tx.orderTermsVersion.create=async({data}:any)=>{const t={id:'terms-created-'+(f.terms.length+1),...data};f.terms.push(t);return t;};
+ tx.auditLog={create:async({data}:any)=>{audits.push(data);return data;},findFirst:async({where}:any)=>audits.find(a=>Object.entries(where).every(([k,v])=>a[k]===v))??null};
+ if(!archived){f.contracts.splice(f.contracts.indexOf(contract),1);quote.snapshot.document=null;quote.contract=null;}
+ return{...f,...current,terms:f.terms,legal,customer,qualification,risk,bills,writes,audits,obligations,allocations,refunds,db:{...tx,serial:async(fn:any)=>fn(tx)}};
+}

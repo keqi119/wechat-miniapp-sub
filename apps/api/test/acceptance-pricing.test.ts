@@ -51,3 +51,44 @@ test('confirmation rejects changed scope or tampered snapshot/amount and histori
   assert.equal(acceptancePricingDescription({ monthlyFeeAmount: 489900, depositAmount: 0 }), '');
   assert.throws(() => acceptancePricingDescription({ ...final, depositAmount: 0 }));
 });
+
+test('one-yuan authorization uses 100 cents and never inherits or widens one-fen authorization', () => {
+  const yuanScope = { ...scope, pricingMode: 'V2_ONE_YUAN' };
+  const yuanInput = { ...input, pricingMode: 'V2_ONE_YUAN', monthlyFeeAmount: 100, depositAmount: 100 };
+  enable();
+  assert.throws(() => finalPlanPricing(application, yuanInput, 0, admin));
+  process.env.ORDER_ACCEPTANCE_SCOPE_JSON = JSON.stringify(yuanScope);
+  const offer = acceptancePricingOffer(application);
+  assert.equal(offer?.mode, 'V2_ONE_YUAN');
+  assert.equal(offer?.monthlyFeeAmount, 100); assert.equal(offer?.depositAmount, 100);
+  assert.throws(() => finalPlanPricing(application, input, 0, admin));
+  for (const key of ['id','customerId','vehicleId']) {
+    assert.equal(acceptancePricingOffer({ ...application, [key]: 'other' }), null);
+    assert.throws(() => finalPlanPricing({ ...application, [key]: 'other' }, yuanInput, 0, admin));
+  }
+  for (const role of ['OPERATIONS','FINANCE','SUPPORT']) assert.throws(() => finalPlanPricing(application, yuanInput, 0, { ...admin,role }));
+  for (const patch of [{monthlyFeeAmount:1},{depositAmount:1},{depositAmount:0},{months:13},{startDate:'2026-10-18'},{firstDueDate:'2026-10-18'}]) assert.throws(() => finalPlanPricing(application,{...yuanInput,...patch},0,admin));
+  for (const standardDeposit of [0,100,200]) {
+    const result=finalPlanPricing(application,yuanInput,standardDeposit,admin);
+    assert.equal(result.depositAmount,100);
+    assert.equal(result.acceptancePricing?.ruleVersion,'V2_ONE_YUAN');
+    assert.equal(result.acceptancePricing?.standardDepositAmount,standardDeposit);
+    assertFinalPricing(application,{...yuanInput,...result},standardDeposit);
+    assert.throws(()=>assertFinalPricing(application,{...yuanInput,...result},standardDeposit+100));
+  }
+  assert.equal(finalPlanPricing(application,{...yuanInput,depositAmount:undefined},0,admin).depositAmount,100);
+});
+
+test('one-yuan snapshots preserve historical text but fail closed after authorization or mode changes', () => {
+  process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify({...scope,pricingMode:'V2_ONE_YUAN'});
+  const yuanInput={...input,pricingMode:'V2_ONE_YUAN',monthlyFeeAmount:100,depositAmount:100};
+  const result=finalPlanPricing(application,yuanInput,0,admin),final={...yuanInput,...result};
+  assert.throws(()=>acceptancePricingDescription({...final,acceptancePricing:{...result.acceptancePricing,ruleVersion:'V1_ONE_FEN'}}));
+  assert.throws(()=>assertFinalPricing(application,{...final,monthlyFeeAmount:1},0));
+  enable();assert.throws(()=>assertFinalPricing(application,final,0));
+  delete process.env.ORDER_ACCEPTANCE_SCOPE_JSON;assert.throws(()=>assertFinalPricing(application,final,0));
+  assert.match(acceptancePricingDescription(final),/12期.*1\.00.*12\.00.*押金.*1\.00/);
+  process.env.ORDER_ACCEPTANCE_SCOPE_JSON=JSON.stringify({...scope,pricingMode:'UNKNOWN'});
+  assert.equal(acceptancePricingOffer(application),null);
+  assert.equal(finalPlanPricing(application,{...yuanInput,pricingMode:'STANDARD',depositAmount:undefined},200,admin).depositAmount,200);
+});

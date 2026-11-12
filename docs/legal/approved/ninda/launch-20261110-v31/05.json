@@ -1,0 +1,744 @@
+{
+  "schema": "NINDA_V31_TEMPLATE",
+  "artifact": "05",
+  "kind": "RENEWAL",
+  "status": "DRAFT",
+  "source": {
+    "zipSha256": "595a133668894fd1858e6aa67b9bbfebab5a6e38a10b71314c28d15e6dafe897",
+    "zipEntry": "05_补充协议_续期_V3.1.docx",
+    "docxSha256": "6b5d682ddefe3c69e0bf9922e328704fc64983221b6223af84669606f9810327",
+    "textSha256": "352d0a0c87c0a1c45a0dfbfc824d6bc028b4d7da13143af1231ab9cde44382d9"
+  },
+  "nodes": [
+    {
+      "type": "paragraph",
+      "loc": "P001",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "补充协议 续期",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P002",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "原三方 原车辆 原订单追加服务阶段 V3.1",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P004",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "本次交易摘要",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "loc": "T1",
+      "widths": [
+        1944,
+        7906
+      ],
+      "rows": [
+        [
+          {
+            "loc": "T1R1C1",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R1C1",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "原合同与三方",
+                    "bold": true,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          },
+          {
+            "loc": "T1R1C2",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R1C2",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "【自动带入：本次协议及业务编号、原合同和订单编号、三方真实身份识别及有效联系渠道；有效补充文件关联】。无需另建同义资料。",
+                    "bold": false,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          }
+        ],
+        [
+          {
+            "loc": "T1R2C1",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R2C1",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "原期及车辆",
+                    "bold": true,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          },
+          {
+            "loc": "T1R2C2",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R2C2",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "【自动带入：原车品牌车型、车牌、VIN、原起租日原日号、原阶段起止、当前月费及押金】。三方及车辆不变。",
+                    "bold": false,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          }
+        ],
+        [
+          {
+            "loc": "T1R3C1",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R3C1",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "新增服务阶段",
+                    "bold": true,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          },
+          {
+            "loc": "T1R3C2",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R3C2",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "【自动带入：确认的新产品和版本、约定月数、新阶段起日及止日、含税总月费及组成、里程及超额单价、赠送换车次数和其他价格权益、BaaS包含或另付的金额对象、已确认付款安排】。最短产品期限见第1.3条。",
+                    "bold": false,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          }
+        ],
+        [
+          {
+            "loc": "T1R4C1",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R4C1",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "沿用及例外",
+                    "bold": true,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          },
+          {
+            "loc": "T1R4C2",
+            "paragraphs": [
+              {
+                "type": "paragraph",
+                "loc": "T1R4C2",
+                "alignment": "left",
+                "runs": [
+                  {
+                    "text": "联系人、押金及未明确变更的通用条款沿用原约定。仅有真实协商例外时，【自动带入：已确认的具体例外】；无例外时不生成该项，不留空白授权。",
+                    "bold": false,
+                    "italic": false,
+                    "underline": false
+                  }
+                ]
+              }
+            ],
+            "span": 1
+          }
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P005",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第一条 当事人与续期摘要",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P006",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "1.1 本协议三方为原《汽车订阅合同》的甲方订阅客户、乙方车辆合作商暨实际出租方、丙方上海宁达信息科技有限公司。三方身份由原合同及有效实名认证、企业认证资料自动带入续期摘要；原合同与当前资料不一致的，先核实并经相关方确认。联系方式沿用原合同或有效通知更新后的渠道，不因续期另设重复维护信息。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P007",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "1.2 续期摘要与本协议一并签署，完整展示原合同号、订单号、本次业务号、三方主体、车辆品牌车型及车牌和VIN、原阶段起止及月费、新增阶段起止及月数、确认的新产品和版本、含税月费及组成、押金沿用、里程及超额单价、赠送换车次数和BaaS费用安排。内容从原订单、车辆资料及已确认续期方案集中带入；没有特别变更的事项直接沿用原合同，不逐项增设空格。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P008",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "1.3 本协议适用于三方及车辆均不变、原订单增加新阶段，不用于换车或变更实际出租方。新增阶段选定产品最短订阅期限【待填写】个月，由产品参数自动带入并在签署时固定；新增约定期限应符合签署时所选产品的最短期限。后续产品调整不追溯已签本期。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P009",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第二条 生效与新增服务期",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P010",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "2.1 本协议自三方有效签署完成时成立生效，先约束续期准备、付款及期前取消；新增车辆使用服务及新增计费从续期摘要列明的新增阶段起日上海时间00:00开始，含起日、不含止日。新增起日与原阶段止日连续衔接，不重签虚构的首次交付或还车记录，不以签约、提前收款或归档时间代替服务开始。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P011",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "2.2 新增阶段服务月继续沿用原首次实际交付起租日的原日号，短月无对应日号取该月最后一日，后续月份恢复原日号。新增第一期月费在新增起日前付清，其后各期在对应服务月起始日支付；甲方主动查询并按期付款，不以未收到额外提醒、尚未开票或个人内部报销为由迟付明确到期款。原付款及新增预付款分清归属，不重复收取，不因短月新增期数，不另维护独立支付日；法定抗辩权保留。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P012",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "2.3 甲方应在新增阶段开始前完成约定付款并更新已经失效或发生重要变化的身份、驾驶资格等必要资料，真实变化及时告知。未完成时，乙丙可在法律及约定范围内催告补正、拒绝尚未确定的新增权益或依法解除，不承担因甲方原因未备妥造成的相应迟延损失；不得以内部状态虚构计费、改期或加费。已实际进入新增服务的按真实履行结算，第三条真实期前取消不因手续晚办失效；本协议不含自动续订或自动扣款授权。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P013",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第三条 新增阶段开始前取消",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P014",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "3.1 三方预先约定：甲方与乙方有权人员在约定新增起日上海时间00:00之前已真实达成取消本次新增阶段的合意时，该新增服务阶段不开始、不计费；单方申请、未回复或虚假倒签不能替代双方合意。丙方负责核实和办理，不以其核实、补签文件或归档尚未完成否定已存在的期前合意。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P015",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "3.2 符合前款时，本新增阶段成功实收全部款项应全额原路退还，不收取消费，不以原阶段损伤、违章或费用争议抵减。自取消已生效且无争议退款金额确认之日起三个工作日内发起退款；乙丙应及时提供并核对明细，不以内审、归档或原期未结为由迟延确认，部分有争议的先退无争议部分。实际到账受支付机构正常处理时间影响，发起及结果凭证应向甲方提供；支付渠道正常处理不免除退款方迟发、错付或其他可归责迟延责任。原阶段及原押金按原约定独立处理；法律规定更早或另有对甲方更有利的明确约定，从其规定。",
+          "bold": true,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P016",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "3.3 甲方主张期前取消的，应及时提交已经存在的本人意思、乙方有权人员意思、取消范围及真实形成时间的证据，并配合核验；不得伪造、截取误导或倒签。可用依法取得的应用确认、原始消息、录音等核实，不要求补填不存在的签署事实。后续核实、补签、退款或归档跨过新增起日，不改变此前真实取消的效力；各项真实时间分别留存，不以后录入时间替换合意时间。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P017",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "3.4 对取消时间或内容有争议的，丙方及时说明并提供核实渠道，结合原始资料处理，不凭单方截图或系统状态作最终认定。证据提交较晚不当然消灭已真实形成的合意；主张方仍须举证，各方保留依法解决争议的权利。新增阶段已经开始后的结束，依原合同、真实事实及法律处理，履行期内协商终止另签《终止协议》；依法或依约的单方解除不以他方补签为前提。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P018",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第四条 价格 权益与押金",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P019",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.1 新增阶段按已签摘要价格及产品条件履行，原阶段按原规则结算，新价格、里程和权益不追溯原阶段。未明确列明的额外费用不发生；BaaS是否含月费以及确有另付的金额、对象须明确，日常充换电另由甲方自付，同一费用不重复收取。已签价格、押金及责任不能由签后可变页面、报价或内部规则单方改动。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P020",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.2 新增包含里程按新增各服务月释放，当期期末未用不结转；超额用量依据核实读数，扣除当期包含量及适用的有效已购里程后按摘要单价计算。原阶段与新增阶段边界读数据实记录，缺失或异常先核实补证，不以续期重算原阶段费用。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P021",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.3 新产品赠送换车次数在新增阶段实际开始时重新发放，原阶段未用赠送次数不结转；提前签署不提前启用新增次数或冲减原次数。已购换车次数、里程等仍按各笔原购买条件、适用范围及原有效期处理，续期不自动延长、清零或恢复。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P022",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "4.4 原押金金额、权利归属、持有及返还关系保持不变，不重复收取。原阶段未结款、无争议应退及事故等未决事项分别保留，不因续期付款视为全部结清、认债或弃权。需要改变押金或处理原期特定债务的，须另行明确有效约定，不隐藏在新增月费中。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P023",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第五条 持续供车与责任",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P024",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "5.1 乙方在新增阶段持续提供有合法出租权限且安全适用的车辆，依原合同约定履行投保、保养、必要维修和事故协助。本车按非营运性质登记及投保，甲方仅作合法非营运自用；续保后的险种、保险公司、保单号及有效保单在相应环节提供并关联，不预填未来保单。保险赔付依法依有效保单及实际事故认定，不保证一切事故或损失均获赔；乙方承担自身投保和履约义务，甲方承担其违规使用或不配合依法造成的相应损失。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P025",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "5.2 丙方承担方案说明、受理协调、受托资金办理及资料提供，不代替乙方供车，也不对保险赔付、维修期限、特定替代车辆或其他第三方结果提供保证；自身明示承诺和法定义务保留。甲方应保持身份、驾驶资格及必要资料真实有效，非营运自用、妥善保管、及时报险并配合处理；未经核验同意不得交他人驾驶，不得有偿网约载客、出租营运、转租、抵押、竞赛或擅改车辆。甲方对自身及依法应负责驾驶人的可归责行为承担责任，正常磨损不赔，法定救济不受排除。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P026",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "5.3 原合同保险、维修、停驶及费用分工继续适用。甲方应配合合理通知的检测保养、必要查验及安全措施，不得明知异常仍继续驾驶或擅自修理扩大损失；因其无正当理由拒绝配合、错误使用或迟报造成的可归责费用及损失增加由其依法承担。乙方维修义务及非甲方原因停驶的减租按实际影响和有效约定处理，合格替代方案经明确接受后避免重复补偿。乙丙不承诺免费提供超出产品的升级、额外交通或替代服务，不满足安全条件不得要求继续驾驶。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P027",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第六条 账目 退款与记录",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P028",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "6.1 丙方依据原订单分阶段形成可核对账单，列明期间、项目、应付、实收、抵用、已退及净应补退，付款以成功渠道凭证等为据，不逐笔手填未来流水。甲方应及时核查并具体提出异议，主动支付有效约定下已明确的到期净额，不以部分争议拖延无关无争议款；其法定抗辩权保留。账目核查不抵减或拖延第三条新增实收全额退款，第三方正常办理时间不视为平台保证的到账时间。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P029",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "6.2 乙方承担其应退租金等款项，丙方承担其自身应退收费；丙方代收且仍实际控制的到期应退款，由其依授权办理，乙方在此同意，无须逐笔批准。乙方应及时补足其应退款，不以内部分润或财务审批延误。丙方对其无过错且未控制的乙方债务不作一般垫资或担保，依法应负责任及明确另约除外；依法或依有效约定代乙方清偿后可追偿。原退款路径客观不可用的，及时告知并核验甲方本人合法替代账户，不因经营方内部原因延长约定退款期限。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P030",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "6.3 正常续期期间原押金持续担保原合同及新增阶段义务，不因原阶段届满发生押金返还。原阶段未决事故、损伤、违章等凭具体事实和证据另列处理，不视为认可债务；在原合同及有效新增阶段整体届满、解除或其他依法依约应返还情形发生时，确需保留部分押金的，须有有效依据并明确具体金额、事项及最迟释放日，其余按原合同期限退还，不得借未决事项或内部对账扣留全部押金。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P031",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "6.4 实际签署、取消合意、交接读数、通知、到账及退款事实，在发生后以原始凭证与合同、订单和续期业务号关联保存，不预填、不覆盖待签或已签文件。待签条件改变应停止旧签署流程、形成新版本重新确认；已签条件改变另行有效变更。记录更正保留原始版本和更正依据。实名认证或点击不当然等于可靠电子签名；平台记录依法可作证据，各方可反证，平台无最终认定权。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P032",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "第七条 其他与签署",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P033",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "7.1 本协议及一并签署的续期摘要仅就明确新增或变更事项优先适用，其余原合同合法有效约定继续适用。三方通过原有效联系渠道或依法通知更新的渠道联系并保存内容及到达证据；重要费用、权益不结转、期前取消和责任条款应合理提示并应要求说明。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P034",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "7.2 争议及可归责违约所致必要合理维权费用沿用原合同合法有效约定，无有效管辖约定时依法向有管辖权的人民法院起诉。三方使用有效电子签名签署并各自取得完整文本，企业签署或用印须在真实有效授权范围内；签署控制区由电子签系统设置，真实签署身份与时间由签署记录证明，无须人工填写未来签署日期。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P035",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "签署栏",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P036",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "签署涵盖正文及同时固定的交易摘要和附件。以下为电子签署控制区，真实身份、权限及签署时间由有效签署证据确定，不另设手填日期。",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P037",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "甲方 订阅客户 本人签名    【电子签署区】",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P038",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "乙方 车辆合作商 企业签章    【电子签署区】",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "loc": "P039",
+      "alignment": "left",
+      "runs": [
+        {
+          "text": "丙方 上海宁达信息科技有限公司 企业签章    【电子签署区】",
+          "bold": false,
+          "italic": false,
+          "underline": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "05:T1R1C2:0",
+      "loc": "T1R1C2",
+      "token": "【自动带入：本次协议及业务编号、原合同和订单编号、三方真实身份识别及有效联系渠道；有效补充文件关联】",
+      "category": "BLOCK",
+      "binding": "document.referencesAndParties",
+      "required": true
+    },
+    {
+      "id": "05:T1R2C2:0",
+      "loc": "T1R2C2",
+      "token": "【自动带入：原车品牌车型、车牌、VIN、原起租日原日号、原阶段起止、当前月费及押金】",
+      "category": "BLOCK",
+      "binding": "renewal.originalTerms",
+      "required": true
+    },
+    {
+      "id": "05:T1R3C2:0",
+      "loc": "T1R3C2",
+      "token": "【自动带入：确认的新产品和版本、约定月数、新阶段起日及止日、含税总月费及组成、里程及超额单价、赠送换车次数和其他价格权益、BaaS包含或另付的金额对象、已确认付款安排】",
+      "category": "BLOCK",
+      "binding": "renewal.newTerms",
+      "required": true
+    },
+    {
+      "id": "05:T1R4C2:0",
+      "loc": "T1R4C2",
+      "token": "【自动带入：已确认的具体例外】",
+      "category": "BLOCK",
+      "binding": "renewal.exceptions",
+      "required": false
+    },
+    {
+      "id": "05:P008:0",
+      "loc": "P008",
+      "token": "【待填写】",
+      "category": "PARAMETER",
+      "binding": "product.minimumTermMonths",
+      "required": true
+    },
+    {
+      "id": "05:P037:0",
+      "loc": "P037",
+      "token": "【电子签署区】",
+      "category": "SIGNATURE",
+      "binding": "CUSTOMER",
+      "required": true
+    },
+    {
+      "id": "05:P038:0",
+      "loc": "P038",
+      "token": "【电子签署区】",
+      "category": "SIGNATURE",
+      "binding": "OWNER",
+      "required": true
+    },
+    {
+      "id": "05:P039:0",
+      "loc": "P039",
+      "token": "【电子签署区】",
+      "category": "SIGNATURE",
+      "binding": "PLATFORM",
+      "required": true
+    }
+  ]
+}

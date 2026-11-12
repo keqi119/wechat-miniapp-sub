@@ -6,7 +6,7 @@ const policy = require('./native-signing-policy');
 function createFaceBridgeApi({ currentTask, native, error }) {
   let pending = null, sequence = 0;
   function parentTask(parent) {
-    if (!parent || !['identity', 'owner-identity'].includes(parent.kind)) throw error('请从当前本人实名认证页面进入刷脸。', 'FACE_CONTEXT');
+    if (!parent || parent.kind !== 'identity') throw error('请从当前本人实名认证页面进入刷脸。', 'FACE_CONTEXT');
     const task = currentTask(parent.kind, parent.id);
     if (!task || task.url !== parent.url || task.loadedUrl !== parent.url) throw error('当前认证页面已变化，请返回原流程重新进入。', 'FACE_CONTEXT');
     return task;

@@ -1,6 +1,38 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { moneyToCents, can, ApiClient, ApiError, isPrivateField } from './core.ts';
+import { actionAllowed } from './resources.ts';
+
+test('owner contracts cannot use platform preparation or signature initiation', () => {
+  for (const status of ['DRAFT', 'REJECTED', 'EXPIRED', 'PENDING', 'SIGNED']) {
+    for (const path of ['prepare-signature', 'send']) {
+      assert.equal(actionAllowed('contracts', { path, label: path }, { id: 'contract-owner', kind: 'SUBSCRIPTION', status, signingFlow: 'OWNER', ownerId: 'owner-1' }), false, `${status}: ${path}`);
+    }
+  }
+});
+
+test('unknown or incomplete contract routing fails closed for platform writes', () => {
+  for (const metadata of [{}, { signingFlow: 'UNKNOWN' }, { signingFlow: 'unexpected' }, { signingFlow: 'OWNER', ownerId: null }]) {
+    for (const path of ['prepare-signature', 'send']) {
+      assert.equal(actionAllowed('contracts', { path, label: path }, { id: 'contract-unknown', status: 'DRAFT', ...metadata }), false);
+    }
+  }
+});
+
+test('explicit platform contracts retain their existing preparation and send states', () => {
+  for (const status of ['DRAFT', 'REJECTED', 'EXPIRED', 'PENDING', 'SIGNED']) {
+    const contract = { id: 'contract-platform', kind: 'SUBSCRIPTION', status, signingFlow: 'PLATFORM', ownerId: null };
+    assert.equal(actionAllowed('contracts', { path: 'prepare-signature', label: '' }, contract), status === 'DRAFT');
+    assert.equal(actionAllowed('contracts', { path: 'send', label: '' }, contract), ['DRAFT', 'REJECTED', 'EXPIRED'].includes(status));
+    assert.equal(actionAllowed('contracts', { path: 'send', label: '' }, { ...contract, kind: 'AMENDMENT' }), false);
+  }
+});
+
+test('owner pending contracts keep their existing status synchronization action', () => {
+  const contract = { id: 'contract-owner', kind: 'SUBSCRIPTION', signingFlow: 'OWNER', ownerId: 'owner-1' };
+  assert.equal(actionAllowed('contracts', { path: 'sync', label: '' }, { ...contract, status: 'PENDING' }), true);
+  assert.equal(actionAllowed('contracts', { path: 'sync', label: '' }, { ...contract, status: 'DRAFT' }), false);
+});
 
 test('decimal currency converts exactly to safe integer cents', () => {
   assert.equal(moneyToCents('0.29'), 29);
@@ -63,8 +95,8 @@ test('network failures carry a useful offline message', async () => {
   await assert.rejects(api.request('/admin/vehicles'), /无法连接/);
 });
 test('custom API origin also controls authorized file links', () => {
-  const api = new ApiClient(fetch, 'https://mini-api.subauto.keybox.cloud/api');
-  assert.equal(api.fileUrl('file/one'), 'https://mini-api.subauto.keybox.cloud/api/admin/files/file%2Fone');
+  const api = new ApiClient(fetch, 'https://api.evsub.ndacar.com/api');
+  assert.equal(api.fileUrl('file/one'), 'https://api.evsub.ndacar.com/api/admin/files/file%2Fone');
 });
 test('fetch is called without an incompatible ApiClient receiver', async () => {
   const api = new ApiClient(async function (this: unknown) { assert.equal(this, undefined); return Response.json({ status: 'ok' }); });

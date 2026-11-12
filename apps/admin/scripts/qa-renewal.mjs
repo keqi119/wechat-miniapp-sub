@@ -54,7 +54,7 @@ try {
   await db.fadadaTask.update({ where: { id: taskId }, data: { processingUntil: null } });
   const before = await db.fadadaTask.findUniqueOrThrow({ where: { id: taskId } });
   await open(); await page.getByRole('button', { name: '同一签署任务重新授权', exact: true }).click();
-  await page.locator('#field-policyId').selectOption(policy.id);
+  await page.locator('[id$="-field-policyId"]:visible').selectOption(policy.id);
   await page.getByRole('checkbox', { name: '我已核对上述业务对象和操作影响' }).check();
   const wait = page.waitForResponse(r => r.url().endsWith(`/esign-approvals/${approvalId}/renew`) && r.request().method() === 'POST');
   await page.getByRole('button', { name: '同一签署任务重新授权', exact: true }).click();

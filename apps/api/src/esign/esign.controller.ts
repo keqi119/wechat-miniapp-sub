@@ -1,7 +1,12 @@
+import {assertNewEsignAllowed} from '../offline-documents/mode';
+import {virtualActorScope} from '../virtual-acceptance/actors';
+import {assertNotInspectionFiles} from '../vehicle-inspections/service';
 import {TechnicalAcceptanceSigning} from '../technical-acceptance/signing';
 import {esignReturnPage} from './return-page';
-import {MINIAPP_RETURN,runNativeSigning,nativeRealnameUrl} from './native-signing';
+import {miniappReturnUrl,runNativeSigning,runCustomerIdentity,nativeRealnameUrl,customerIdentityConfig,requireCustomerIdentity} from './native-signing';
+import {requireCurrentConsents} from '../auth/consents';
 import {realnameInput,recordRealnameConsent} from './realname-consent';
+import {platformLegalEntity} from '../common/platform-legal-entity';
 import { Body, Controller, Get, Inject, Param, Post, Req, Res } from '@nestjs/common';
 import { z } from 'zod';
 import { Db } from '../common/db';
@@ -14,11 +19,27 @@ import { FadadaESignGateway } from './fadada/fadada-esign.provider';
 import { FadadaSettings,ESIGN_SETTINGS } from './esign.settings';
 export {ESIGN_SETTINGS} from './esign.settings';
 @Controller()
+export class CustomerIdentityController {
+ constructor(@Inject(CustomerESignOnboardingService)private accounts:CustomerESignOnboardingService,@Inject(Db)private db:Db){}
+ @Get('public/identity-config')config(){return customerIdentityConfig();}
+ @Get('customer/identity/readiness')readiness(@Req()request:any){return this.accounts.identityReadiness(request.customer.id);}
+ private async allowed(customerId:string){const scoped=!!await virtualActorScope(this.db,customerId);requireCustomerIdentity(scoped);await requireCurrentConsents(this.db,customerId,['terms','privacy']);return scoped;}
+ @Post('customer/identity/register')async register(@Req()request:any,@Body()body:any){z.object({}).strict().parse(body);const scoped=await this.allowed(request.customer.id);await runCustomerIdentity(()=>this.accounts.register(request.customer.id,true),scoped);return this.accounts.identityReadiness(request.customer.id);}
+ @Post('customer/identity/verify')async verify(@Req()request:any,@Body()body:any){
+  const input=realnameInput.parse(body),scoped=await this.allowed(request.customer.id);
+  const customer=await this.db.customer.findUniqueOrThrow({where:{id:request.customer.id}});
+  ensure(customer.name.trim().normalize('NFC')===input.name.trim().normalize('NFC'),409,'IDENTITY_NAME_MISMATCH','请先保存个人资料，并以本人姓名实名认证');
+  await recordRealnameConsent(this.db,customer.id,input.consent,'MINIAPP');
+  return runCustomerIdentity(async()=>{const result=await this.accounts.verify(customer.id,{name:input.name,idCardNo:input.idCardNo},miniappReturnUrl(),true);return{...result,url:nativeRealnameUrl(result.url)};},scoped);
+ }
+ @Post('customer/identity/refresh')async refresh(@Req()request:any,@Body()body:any){z.object({}).strict().parse(body);const scoped=!!await virtualActorScope(this.db,request.customer.id,{current:false});if(scoped)await this.accounts.refresh(request.customer.id,false);else{await this.allowed(request.customer.id);await runCustomerIdentity(()=>this.accounts.refresh(request.customer.id,true));}return this.accounts.identityReadiness(request.customer.id);}
+}
+@Controller()
 export class ESignCustomerController {
   constructor(@Inject(CustomerESignOnboardingService)private accounts:CustomerESignOnboardingService,@Inject(Db)private db:Db){}
   @Get('customer/esign/readiness')readiness(@Req()request:any){return this.accounts.readiness(request.customer.id);}
   @Post('customer/esign/register')register(@Req()request:any,@Body()body:any){z.object({}).strict().parse(body);return runNativeSigning(()=>this.accounts.register(request.customer.id));}
-  @Post('customer/esign/verify')async verify(@Req()request:any,@Body()body:any){ensure(body?.consent!==undefined,400,'ESIGN_CLIENT_UPDATE','请重新打开最新版小程序并单独同意实名说明');const input=realnameInput.parse(body);await recordRealnameConsent(this.db,request.customer.id,input.consent,'MINIAPP');return runNativeSigning(async()=>{const result=await this.accounts.verify(request.customer.id,{name:input.name,idCardNo:input.idCardNo},MINIAPP_RETURN);return{...result,url:nativeRealnameUrl(result.url)};});}
+  @Post('customer/esign/verify')async verify(@Req()request:any,@Body()body:any){assertNewEsignAllowed();ensure(body?.consent!==undefined,400,'ESIGN_CLIENT_UPDATE','请重新打开最新版小程序并单独同意实名说明');const input=realnameInput.parse(body);await recordRealnameConsent(this.db,request.customer.id,input.consent,'MINIAPP');return runNativeSigning(async()=>{const result=await this.accounts.verify(request.customer.id,{name:input.name,idCardNo:input.idCardNo},miniappReturnUrl());return{...result,url:nativeRealnameUrl(result.url)};});}
   @Post('customer/esign/refresh')refresh(@Req()request:any,@Body()body:any){z.object({}).strict().parse(body);return runNativeSigning(()=>this.accounts.refresh(request.customer.id));}
   @Get('admin/customers/:id/esign-readiness')adminReadiness(@Param('id')id:string){return this.accounts.readiness(id);}
 }
@@ -30,10 +51,10 @@ export class EnterpriseSealController {
   @Get('admin/enterprise-seals/:id')async sealDetail(@Param('id')id:string,@Req()request:any){this.read(request);return this.db.enterpriseSeal.findUniqueOrThrow({where:{id}});}
   @Get('admin/seal-authorities/:id')async authorityDetail(@Param('id')id:string,@Req()request:any){this.read(request);return this.db.sealAuthority.findUniqueOrThrow({where:{id}});}
   @Get('admin/signature-policies/:id')async policyDetail(@Param('id')id:string,@Req()request:any){this.read(request);return this.db.signaturePolicy.findUniqueOrThrow({where:{id}});}
-  private admin(request:any){ensure(request.admin?.role==='ADMIN',403,'SEAL_MANAGEMENT_PERMISSION','印章和授权仅管理员可维护');}
+  private admin(request:any){assertNewEsignAllowed();ensure(request.admin?.role==='ADMIN',403,'SEAL_MANAGEMENT_PERMISSION','印章和授权仅管理员可维护');}
   @Get('admin/enterprise-seals')async seals(@Req()request:any){return this.listing(this.db.enterpriseSeal,request,['sealName','organizationName']);}
-  @Post('admin/enterprise-seals')async create(@Req()request:any,@Body()body:any){this.admin(request);const input=z.object({sealName:z.string().trim().min(1).max(100),organizationName:z.literal('上海晓浪网络科技有限公司'),providerCustomerId:z.string().min(1).max(200),providerSignatureId:z.string().min(1).max(200),evidenceFileId:z.string().min(1)}).strict().parse(body);ensure(await this.db.storedFile.count({where:{id:input.evidenceFileId,customerId:null}}),400,'SEAL_EVIDENCE','请上传企业与印章授权证明');const item=await this.db.enterpriseSeal.create({data:{...input,status:'DRAFT',confirmedBy:request.admin.id}});await audit(this.db,request.admin.id,'SEAL_DRAFT_CREATED','enterprise-seals',item.id,{});return item;}
-  @Post('admin/enterprise-seals/:id/activate')async activate(@Param('id')id:string,@Req()request:any,@Body()body:any){this.admin(request);ensure(body?.identityConfirmed===true,400,'SEAL_CONFIRMATION','请核对企业与供应商印章映射');const seal=await this.db.enterpriseSeal.findUnique({where:{id}});ensure(seal&&seal.status==='DRAFT',409,'SEAL_STATE','印章不在待核验状态');ensure(seal.confirmedBy!==request.admin.id,403,'TWO_PERSON_REQUIRED','印章建档与启用需由不同管理员完成');ensure(this.settings.platformCustomerId&&this.settings.platformSignatureId&&seal.providerCustomerId===this.settings.platformCustomerId&&seal.providerSignatureId===this.settings.platformSignatureId,409,'SEAL_PROVIDER_MAPPING','企业与印章映射不符合已配置的供应商账号');const updated=await this.db.enterpriseSeal.update({where:{id},data:{status:'ACTIVE',confirmedBy:request.admin.id,confirmedAt:new Date()}});await audit(this.db,request.admin.id,'SEAL_ACTIVATED','enterprise-seals',id,{});return updated;}
+  @Post('admin/enterprise-seals')async create(@Req()request:any,@Body()body:any){this.admin(request);const input=z.object({sealName:z.string().trim().min(1).max(100),organizationName:z.literal(platformLegalEntity()),providerCustomerId:z.string().min(1).max(200),providerSignatureId:z.string().min(1).max(200),evidenceFileId:z.string().min(1)}).strict().parse(body);await assertNotInspectionFiles(this.db,[input.evidenceFileId]);ensure(await this.db.storedFile.count({where:{id:input.evidenceFileId,customerId:null}}),400,'SEAL_EVIDENCE','请上传企业与印章授权证明');const item=await this.db.enterpriseSeal.create({data:{...input,status:'DRAFT',confirmedBy:request.admin.id}});await audit(this.db,request.admin.id,'SEAL_DRAFT_CREATED','enterprise-seals',item.id,{});return item;}
+  @Post('admin/enterprise-seals/:id/activate')async activate(@Param('id')id:string,@Req()request:any,@Body()body:any){this.admin(request);ensure(body?.identityConfirmed===true,400,'SEAL_CONFIRMATION','请核对企业与供应商印章映射');const seal=await this.db.enterpriseSeal.findUnique({where:{id}});ensure(seal&&seal.status==='DRAFT',409,'SEAL_STATE','印章不在待核验状态');ensure(seal.organizationName===platformLegalEntity(),409,'SEAL_LEGAL_ENTITY','企业印章不属于当前平台法定主体');ensure(seal.confirmedBy!==request.admin.id,403,'TWO_PERSON_REQUIRED','印章建档与启用需由不同管理员完成');ensure(this.settings.platformCustomerId&&this.settings.platformSignatureId&&seal.providerCustomerId===this.settings.platformCustomerId&&seal.providerSignatureId===this.settings.platformSignatureId,409,'SEAL_PROVIDER_MAPPING','企业与印章映射不符合已配置的供应商账号');const updated=await this.db.enterpriseSeal.update({where:{id},data:{status:'ACTIVE',confirmedBy:request.admin.id,confirmedAt:new Date()}});await audit(this.db,request.admin.id,'SEAL_ACTIVATED','enterprise-seals',id,{});return updated;}
   @Post('admin/enterprise-seals/:id/disable')async disable(@Param('id')id:string,@Req()request:any){this.admin(request);const item=await this.db.enterpriseSeal.update({where:{id},data:{status:'DISABLED'}});await audit(this.db,request.admin.id,'SEAL_DISABLED','enterprise-seals',id,{});return item;}
   @Get('admin/seal-authorities')async authorities(@Req()request:any){return this.listing(this.db.sealAuthority,request,['subjectId','authorityType']);}
   @Post('admin/seal-authorities')async authority(@Req()request:any,@Body()body:any){this.admin(request);const input=z.object({sealId:z.string().min(1),subjectType:z.enum(['USER','ROLE']),subjectId:z.string().min(1),authorityType:z.enum(['REQUEST_USE','APPROVE_USE'])}).strict().parse(body);ensure(await this.db.enterpriseSeal.count({where:{id:input.sealId,status:'ACTIVE'}}),409,'SEAL_STATE','印章未启用');if(input.subjectType==='USER')ensure(await this.db.adminUser.count({where:{id:input.subjectId,active:true,role:{in:['ADMIN','OPERATIONS']}}}),400,'SEAL_SUBJECT','授权人员不可用');else ensure(['ADMIN','OPERATIONS'].includes(input.subjectId),400,'SEAL_SUBJECT','授权角色不可用');const item=await this.db.sealAuthority.upsert({where:{sealId_subjectType_subjectId_authorityType:input},create:{...input,status:'ACTIVE',requiresTwoPersonApproval:true},update:{status:'ACTIVE',requiresTwoPersonApproval:true}});await audit(this.db,request.admin.id,'SEAL_AUTHORITY_GRANTED','seal-authorities',item.id,{sealId:input.sealId,authorityType:input.authorityType});return item;}
