@@ -67,7 +67,9 @@ test('pricing browser uses real API and DB for frozen reference, dirty inputs, r
    await page.getByRole('button',{name:'按车型 / 年款 / 电池重新分组'}).click();
    await expect(page.getByLabel('产品名称',{exact:true})).toBeVisible();
    await page.getByLabel('产品名称',{exact:true}).fill(h.prefix+' 浏览器分组产品');
-   await page.getByRole('checkbox',{name:'已核对',exact:true}).check();
+   // Legacy scenarios have no default product term; retain an explicit draft term.
+   await page.getByLabel('租期（月）',{exact:true}).fill('12');
+   await expect(page.getByRole('checkbox',{name:'已核对',exact:true})).toHaveCount(0);
    await page.getByLabel('客户电池租赁费用',{exact:true}).selectOption('NOT_APPLICABLE');
    for(const [label,value] of [['基础使用费（元/月）','4000'],['里程包月费（元）','200'],['每月包含里程（km）','1500'],['超里程单价（元/km）','1.50'],['额外换车单次服务费（元）','500'],['适用条件','本地合成浏览器验收，不用于真实交易']])await page.getByLabel(label,{exact:true}).fill(value);
    for(const car of [one,two]){

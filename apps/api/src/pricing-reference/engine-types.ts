@@ -15,12 +15,33 @@ export interface PricingReview {
   withdrawn?: boolean;
 }
 export interface PricingScenario {
+  costModelVersion?: 2;
   managementVehicleCount: number;
-  monthlyManagementBudgetCents: number;
+  monthlyManagementBudgetCents?: number;
   occupancyRate: Decimal;
+  badDebtRate?: Decimal;
   targetAnnualRoa?: Decimal | null;
 }
+export interface ExactFraction { numerator: string; denominator: string; }
+export interface PricingCostBreakdown {
+  id: string;
+  label: string;
+  category: 'VEHICLE' | 'ENTERPRISE' | 'MARKETING' | 'BAAS' | 'INSURANCE';
+  basis: string;
+  quantity: number;
+  amountCents: number | null;
+  periodMonths: number;
+  cycles: number | null;
+  source: 'SCENARIO' | 'VEHICLE_OVERRIDE' | 'ACTUAL_COVERAGE' | 'ACTUAL_WITH_BUDGET' | 'NOT_APPLICABLE';
+  budgetAmountCents?: number | null;
+}
 export interface PricingVehicleInput {
+  productTermMonths?: number;
+  productTermSource?: 'GROUP' | 'SCENARIO';
+  costBreakdown?: PricingCostBreakdown[];
+  holdingMonthsExact?: ExactFraction;
+  /** V2 exact cost totals; rounded display fields never feed back into calculations. */
+  exactCosts?: { holding: ExactFraction | null; disposal: ExactFraction | null; setup: ExactFraction | null; enterpriseMonthly: ExactFraction | null };
   vehicleId: string;
   groupKey: string;
   currentAgeMonths: Decimal;
@@ -69,6 +90,9 @@ export interface PricingVehicleResult {
   breakEvenBaseFeeCents: number | null;
   targetBaseFeeCents: number | null;
   priceSolveReason: string | null;
+  expectedGrossRevenueCents: number | null;
+  badDebtLossCents: number | null;
+  collectibleRevenueCents: number | null;
 }
 export interface PricingGroupResult {
   groupKey: string;

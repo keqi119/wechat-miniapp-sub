@@ -2,7 +2,7 @@ import type { Decimal, PricingReferenceInput, PricingReferenceResult, PricingVeh
 export type * from './engine-types';
 
 /** Exact fractions keep cents intact through interpolation, annualization and solving. */
-class Q {
+export class Q {
   readonly n: bigint;
   readonly d: bigint;
   constructor(n: bigint, d = 1n) {
@@ -67,10 +67,11 @@ export function selectReview(reviews: PricingReview[], pricing: number, cutoff: 
   return candidates[0] ?? null;
 }
 
-function calculateCar(v: PricingVehicleInput, input: PricingReferenceInput, management: Q, occupancy: Q, targetRate: Q | null): ExactCar {
+function calculateCar(v: PricingVehicleInput, input: PricingReferenceInput, management: Q, occupancy: Q, collectibleRate: Q, targetRate: Q | null): ExactCar {
   const missing = [...(v.valuationMissing ?? [])];
   const addMissing = (s: string) => { if (!missing.includes(s)) missing.push(s); };
-  const h = Q.of(v.holdingMonths);
+  const exact = (value: {numerator:string;denominator:string}) => new Q(BigInt(value.numerator),BigInt(value.denominator));
+  const h = v.holdingMonthsExact ? exact(v.holdingMonthsExact) : Q.of(v.holdingMonths);
   if (h.cmp(zero) <= 0) addMissing('HOLDING_MONTHS_NOT_POSITIVE');
   const base = cents(v.baseFeeCents);
   const amounts = [v.purchaseAmountCents, v.nonBaseMonthlyRevenueCents, v.variableCostPerOccupiedMonthCents, v.holdingBaasCostCents, v.holdingOtherFixedCostCents, v.disposalCostCents, v.oneTimeCostCents];
@@ -79,9 +80,10 @@ function calculateCar(v: PricingVehicleInput, input: PricingReferenceInput, mana
     vehicleId: v.vehicleId, groupKey: v.groupKey, complete: false, missing,
     anchor: null, curveId: v.curve?.id ?? null, currentValueCents: null, exitValueCents: null,
     exitNetValueCents: null, baseFeeCapCents: null, baseFeeOverCapCents: null,
-    monthlyManagementCostCents: management.integer(), holdingMonths: v.holdingMonths,
+    monthlyManagementCostCents: v.exactCosts?.enterpriseMonthly ? exact(v.exactCosts.enterpriseMonthly).integer() : management.integer(), holdingMonths: v.holdingMonths,
     averageAssetsCents: null, periodProfitCents: null, annualizedProfitCents: null,
     annualRoa: null, breakEvenBaseFeeCents: null, targetBaseFeeCents: null, priceSolveReason: null,
+    expectedGrossRevenueCents:null,badDebtLossCents:null,collectibleRevenueCents:null,
   };
   const review = selectReview(v.reviews ?? [], timestamp(input.pricingDate), timestamp(input.knowledgeCutoff));
   if (review === 'AMBIGUOUS') addMissing('REVIEW_AMBIGUOUS');
@@ -122,7 +124,8 @@ function calculateCar(v: PricingVehicleInput, input: PricingReferenceInput, mana
     ['disposalCostCents', 'DISPOSAL_COST_MISSING'], ['oneTimeCostCents', 'ONE_TIME_COST_MISSING'],
   ] as const;
   costFields.forEach(([key, code]) => { if (v[key] === null) addMissing(code); });
-  const net = exit !== null && v.disposalCostCents !== null ? exit.sub(cents(v.disposalCostCents)) : null;
+  const disposal = v.exactCosts ? (v.exactCosts.disposal ? exact(v.exactCosts.disposal) : null) : (v.disposalCostCents===null ? null : cents(v.disposalCostCents));
+  const net = exit !== null && disposal !== null ? exit.sub(disposal) : null;
   if (net) result.exitNetValueCents = net.integer();
   const assets = current && net ? current.add(net).div(Q.of(2)) : null;
   if (assets && assets.cmp(zero) <= 0) addMissing('AVERAGE_ASSETS_NOT_POSITIVE');
@@ -131,17 +134,20 @@ function calculateCar(v: PricingVehicleInput, input: PricingReferenceInput, mana
   const additional = v.additionalOccupiedRevenue;
   if (additional && (!Number.isSafeInteger(additional.periodMonths) || additional.periodMonths <= 0)) throw new Error('INVALID_REVENUE_PERIOD');
   const nonBase = cents(v.nonBaseMonthlyRevenueCents!).add(additional ? cents(additional.amountCents).div(Q.of(additional.periodMonths)) : zero), variable = cents(v.variableCostPerOccupiedMonthCents!);
-  const holding = cents(v.holdingBaasCostCents!).add(cents(v.holdingOtherFixedCostCents!)).add(management.mul(h)).add(cents(v.oneTimeCostCents!));
+  const holding = v.exactCosts ? exact(v.exactCosts.holding!).add(exact(v.exactCosts.setup!)) : cents(v.holdingBaasCostCents!).add(cents(v.holdingOtherFixedCostCents!)).add(management.mul(h)).add(cents(v.oneTimeCostCents!));
   const depreciation = current.sub(net);
-  const periodProfit = h.mul(occupancy).mul(base.add(nonBase).sub(variable)).sub(holding).sub(depreciation);
+  const gross = h.mul(occupancy).mul(base.add(nonBase)), collected = gross.mul(collectibleRate);
+  result.expectedGrossRevenueCents=gross.integer();result.badDebtLossCents=gross.sub(collected).integer();result.collectibleRevenueCents=collected.integer();
+  const periodProfit = collected.sub(h.mul(occupancy).mul(variable)).sub(holding).sub(depreciation);
   const annualProfit = periodProfit.mul(twelve).div(h);
   result.periodProfitCents = periodProfit.integer();
   result.annualizedProfitCents = annualProfit.integer();
   result.annualRoa = annualProfit.div(assets).number();
   result.complete = true;
-  const solve = (rate: Q): Q => variable.add(holding.add(depreciation).div(h).add(rate.mul(assets).div(twelve)).div(occupancy)).sub(nonBase);
+  const solve = (rate: Q): Q => variable.add(holding.add(depreciation).div(h).add(rate.mul(assets).div(twelve)).div(occupancy)).div(collectibleRate).sub(nonBase);
   let target: Q | null = null;
   if (occupancy.cmp(zero) === 0) result.priceSolveReason = 'ZERO_OCCUPANCY';
+  else if (collectibleRate.cmp(zero) === 0) result.priceSolveReason = 'FULL_BAD_DEBT';
   else {
     result.breakEvenBaseFeeCents = solve(zero).integer('ceil');
     if (targetRate) { target = solve(targetRate); result.targetBaseFeeCents = target.integer('ceil'); }
@@ -154,16 +160,19 @@ export function calculatePricingReference(input: PricingReferenceInput): Pricing
   timestamp(input.pricingDate); timestamp(input.knowledgeCutoff);
   const scenario = input.scenario;
   if (!Number.isSafeInteger(scenario.managementVehicleCount) || scenario.managementVehicleCount <= 0) throw new Error('INVALID_MANAGEMENT_VEHICLE_COUNT');
-  const management = cents(scenario.monthlyManagementBudgetCents).div(Q.of(scenario.managementVehicleCount));
+  const management = scenario.costModelVersion===2 ? zero : cents(scenario.monthlyManagementBudgetCents!).div(Q.of(scenario.managementVehicleCount));
   const occupancy = Q.of(scenario.occupancyRate);
   if (occupancy.cmp(zero) < 0 || occupancy.cmp(Q.of(1)) > 0) throw new Error('INVALID_OCCUPANCY');
+  const badDebt=Q.of(scenario.badDebtRate??0);
+  if(badDebt.cmp(zero)<0||badDebt.cmp(Q.of(1))>0)throw new Error('INVALID_BAD_DEBT');
+  const collectibleRate=Q.of(1).sub(badDebt);
   const target = scenario.targetAnnualRoa == null ? null : Q.of(scenario.targetAnnualRoa);
   const ids = new Set<string>();
   const groups = new Map<string, { inputs: PricingVehicleInput[]; exact: ExactCar[] }>();
   const exact = input.vehicles.map(v => {
     if (ids.has(v.vehicleId)) throw new Error('DUPLICATE_VEHICLE');
     ids.add(v.vehicleId);
-    const calculated = calculateCar(v, input, management, occupancy, target);
+    const calculated = calculateCar(v, input, management, occupancy, collectibleRate, target);
     const group = groups.get(v.groupKey) ?? { inputs: [], exact: [] };
     if (group.inputs.some(other => other.baseFeeCents !== v.baseFeeCents || other.nonBaseMonthlyRevenueCents !== v.nonBaseMonthlyRevenueCents)) throw new Error('INCONSISTENT_GROUP_PRICE');
     group.inputs.push(v); group.exact.push(calculated); groups.set(v.groupKey, group);
@@ -178,8 +187,8 @@ export function calculatePricingReference(input: PricingReferenceInput): Pricing
     const allCaps = caps.length === all.length ? Math.min(...caps) : null;
     let groupTarget: number | null = null, everyTarget: number | null = null;
     let weakest: string[] = [];
-    if (full && target && occupancy.cmp(zero) > 0) {
-      const needed = target.mul(assets).sub(annual).div(twelve.mul(occupancy).mul(Q.of(all.length))).add(cents(group.inputs[0].baseFeeCents));
+    if (full && target && occupancy.cmp(zero) > 0 && collectibleRate.cmp(zero)>0) {
+      const needed = target.mul(assets).sub(annual).div(twelve.mul(occupancy).mul(collectibleRate).mul(Q.of(all.length))).add(cents(group.inputs[0].baseFeeCents));
       groupTarget = needed.integer('ceil');
       const highest = group.exact.reduce((a, b) => a.target!.cmp(b.target!) >= 0 ? a : b).target!;
       everyTarget = highest.integer('ceil');
@@ -199,5 +208,5 @@ export function calculatePricingReference(input: PricingReferenceInput): Pricing
       overCapVehicles: all.filter(c => c.baseFeeOverCapCents !== null && c.baseFeeOverCapCents > 0).map(c => ({ vehicleId: c.vehicleId, excessCents: c.baseFeeOverCapCents! })),
     };
   });
-  return { algorithmVersion: 'pricing-reference-v1', vehicles: exact.map(c => c.result), groups: groupResults, selectedCount: exact.length, calculableCount: exact.filter(c => c.result.complete).length };
+  return { algorithmVersion: scenario.costModelVersion===2?'pricing-reference-v2':'pricing-reference-v1', vehicles: exact.map(c => c.result), groups: groupResults, selectedCount: exact.length, calculableCount: exact.filter(c => c.result.complete).length };
 }

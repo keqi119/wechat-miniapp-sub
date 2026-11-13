@@ -884,6 +884,12 @@ revision 冲突 409 `REVISION_CONFLICT`，摘要变化 409 `DRAFT_CHANGED`，内
 
 场景 payload 包含 name、managementVehicleCount、monthlyManagementBudgetCents、occupancyRate（0..1）、targetAnnualRoa（小数比例或 null）、expectedMonthlyMileageKm、variableCostPerOccupiedMonthCents、otherFixedMonthlyCostCents、disposalCostCents、oneTimeCostCents、notes。可空成本 null 表示未知，0 表示明确无成本。金额均整数分。
 
+经营场景 v2 使用 `costModelVersion:2`，保留 name、managementVehicleCount、occupancyRate、targetAnnualRoa、expectedMonthlyMileageKm、notes，新增 productTermMonths（3..120 整数）、repeatOrderRate、badDebtRate（0..1）、baasMonthlyBudgetCents、insuranceAnnualBudgetCents（可空金额）、vehicleCosts、enterpriseCosts、marketing；不再同时传送 v1 的成本合计字段。v1 仍可读取/使用，旧快照不重算。
+
+每条成本 `{id,label,basis,amountCents,quantity,allocationMonths?,startDate?}`；金额可空，数量为非负数，每类最多 100 项且 id 唯一。车辆 basis 为 HOLDING_MONTH、HOLDING_YEAR、OCCUPIED_MONTH、OCCUPIED_KM、IDLE_MONTH、PER_CYCLE、FUTURE_SETUP、DISPOSAL；企业 basis 为 MONTH、YEAR、AMORTIZED_ONCE，最后一种必须填写发生日期和正整数分摊月数。marketing 为 `{fixedBudgetCents,conversionMonths,coverageVehicleCount,newOrderCostCents,repeatOrderCostCents}`，三个金额可空，周期及非空覆盖规模须正整数；覆盖规模 null 表示采用 managementVehicleCount。固定推广按折算月投入持续计入，非预算到期自动归零。
+
+逐车 override 另支持 `includeSetupCosts?:boolean`，默认 false，不追计已支付的牌照/初始投入。oneTimeCostCents 与 disposalCostCents 为对应合计覆盖，不与明细重复累加。分组 draft.months 优先于场景默认产品期限，用于周期订单及营销成本。结果增加 expectedGrossRevenueCents、badDebtLossCents、collectibleRevenueCents；标准化车辆输入冻结实际期限、来源及成本分解。
+
 曲线 payload 包含 name、modelDefinitionId、year（车型年款）、batteryOwnership、batteryCapacityKwh、configuration、mileageMinKm、mileageMaxKm、condition、effectiveFrom、valuationDate、source（MANUAL/MARKET）、sourceNotes、points（ageMonths/coefficient 正值点）。人工来源不得伪装成统计市场数据；有效范围内插值，不做默认外推；相同优先级多条匹配需明确选择。
 
 review payload 包含 vehicleId、observedAt（估值日期）、effectiveAt（ISO 时刻，兼容 YYYY-MM-DD 按上海零点解释）、ageMonths、mileageKm、valueCents、curveId（可空）、notes、withdrawn。更正/撤回必须带同一 lineageId，不能借更正改变车辆范围。新测算仅使用生成时已知、已生效且估值日不晚于定价日的有效记录。
