@@ -34,4 +34,21 @@
 
 ## 执行状态
 
-候选代码完成，相关验证与独立复核通过，待上线执行。部署完成后补充精确镜像、线上读回与恢复材料校验记录。
+2026-11-13 16:24（北京时间）已完成切换及公网核验。
+
+- 源码提交：`a64823e155203ee126126f815b7a726ce603b99d`，已同步 GitHub main 与功能分支。
+- API 镜像：`sha256:e9453ff4a6fa7b4c74eaac5ecd565fc552e976939fb3e38d2c78a08bf8b6d126`；只覆盖 4 个定价 JS 模块。
+- 静态目录：`/opt/ninda-platform/releases/20261113-scenario-cost-v2`；8 个当前后台文件公网逐项 SHA 校验通过，保留签署 H5 与旧哈希资源。
+- `/api/health` 返回 ok / database connected / version `20261113-scenario-cost-v2`；匿名访问内部定价接口返回 401。
+- 实际管理员登录后只读检查场景、曲线、review、历史及定价选车；浏览器错误 0、失败响应 0，未写入生产业务测试数据。
+- 当时生产场景/曲线/review/测算各 0 条，需按真实经营假设录入首版参数与残值曲线；系统没有写入示例预算冒充业务参数。
+
+精确镜像及版本清单已写入既有私有 OSS，并完整读回：
+
+- 对象前缀：`system-files/releases/20261113-scenario-cost-v2/`，包含 `api-image.tar.gz` 和 `manifest.json`。
+- 镜像压缩包 300,529,324 字节，SHA-256 `a8b72468b95f4c55eb51e1eade70434f408b99d91f6bb669cf97ba612f61739a`。
+- 已校验 OCI manifest → config → 全部 20 层存储摘要与解压 DiffID；镜像不包含运行期私有环境文件、挂载材料或密钥，既有旧版归档保留。
+- 上线后加密备份：`/opt/ninda-platform/backups/20261113T083610121213Z.tar.enc`，1,914,227,456 字节，SHA-256 `a37bde5c0a500108d2cb3dd67378251b06cc82768a0dfd441a539470faf2bf9c`。
+- 加密备份已完成隔离数据库恢复及 OSS 完整读回，元数据确认包括 `releases/20261113-scenario-cost-v2` 静态目录；备份过程 API 保持在线。
+
+本轮实施、源码同步、上线及恢复材料校验完成，等待业务人工验收。
