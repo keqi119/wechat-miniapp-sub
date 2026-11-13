@@ -1,0 +1,226 @@
+/* The editor also inherits pricing-reference.css. This root scope has higher
+   specificity so compact rules remain stable regardless of CSS import order. */
+.scenario-editor.scenario-editor-compact {
+  gap: 14px;
+  margin: 14px 0;
+}
+
+.scenario-editor.scenario-editor-compact h3,
+.scenario-editor.scenario-editor-compact h4 {
+  margin: 0 0 8px;
+}
+
+.scenario-editor.scenario-editor-compact label {
+  gap: 4px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.scenario-editor.scenario-editor-compact input,
+.scenario-editor.scenario-editor-compact select,
+.scenario-editor.scenario-editor-compact textarea {
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.scenario-editor.scenario-editor-compact textarea {
+  resize: vertical;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-background,
+.scenario-editor.scenario-editor-compact .scenario-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-card {
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-card header {
+  gap: 8px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-card header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-card-number {
+  padding: 3px 6px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-card > p,
+.scenario-editor.scenario-editor-compact .scenario-help,
+.scenario-editor.scenario-editor-compact .scenario-summary p {
+  margin: 8px 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-template {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-template .button {
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-cost-row {
+  position: relative;
+  margin: 8px 0;
+  padding: 8px;
+  gap: 6px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-cost-legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-cost-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) 32px;
+  gap: 6px;
+  align-items: end;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-cost-amount,
+.scenario-editor.scenario-editor-compact .scenario-budget-fields,
+.scenario-editor.scenario-editor-compact .scenario-marketing-orders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-remove {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  font-size: 21px;
+  line-height: 1;
+  color: #875444;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-budget-fields,
+.scenario-editor.scenario-editor-compact .scenario-marketing-part {
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-marketing-part h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-marketing-part p {
+  margin: 0;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-marketing-fixed {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-marketing-fixed label,
+.scenario-editor.scenario-editor-compact .scenario-marketing-orders label,
+.scenario-editor.scenario-editor-compact .scenario-budget-fields label {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-help-details {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #60717b;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-help-details summary {
+  min-height: 32px;
+  padding: 7px 0;
+  box-sizing: border-box;
+  cursor: pointer;
+  color: #47645a;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-help-details p {
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-empty {
+  padding: 10px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-summary {
+  padding: 12px 14px;
+  border-radius: 10px;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-summary-grid > div {
+  min-width: 0;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-summary-grid strong {
+  margin-top: 3px;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.scenario-editor.scenario-editor-compact .scenario-unknown,
+.scenario-editor.scenario-editor-compact .scenario-source-note {
+  padding: 7px 9px;
+}
+
+@media (max-width: 1100px) {
+  .scenario-editor.scenario-editor-compact .scenario-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .scenario-editor.scenario-editor-compact .scenario-background,
+  .scenario-editor.scenario-editor-compact .scenario-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .scenario-editor.scenario-editor-compact .scenario-background {
+    grid-template-columns: 1fr;
+  }
+
+  .scenario-editor.scenario-editor-compact .scenario-card {
+    padding: 10px;
+  }
+
+  .scenario-editor.scenario-editor-compact .scenario-summary-grid {
+    gap: 10px;
+  }
+
+  .scenario-editor.scenario-editor-compact .scenario-summary-grid strong {
+    font-size: 15px;
+  }
+}
