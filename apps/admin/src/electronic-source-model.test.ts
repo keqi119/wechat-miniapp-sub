@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {productInitial,productV2Payload} from './product-model.ts';
 import {loadFinalPlanDefaults,finalPlanInitial} from './final-plan-defaults.ts';
 import {electronicPlanFields,electronicPlanBody,profileBody,profileInitial,cooperationSourcesBody} from './electronic-source-model.ts';
-const base={name:'产品',months:6,minimumTermMonths:3,minimumConfirmed:true,baseFeeAmount:100,mileageMonthlyFeeAmount:200,mileagePerMonthKm:0,excessMileagePriceAmount:0,includedCount:0,extraFeeAmount:1,conditions:'实际约定',vehicleIds:['v'],modelDefinitionIds:[]};
-test('minimum is independently confirmed, actual months follow it; absent history remains absent',()=>{
- assert.equal(productInitial({}).minimumTermMonths,''); assert.throws(()=>productV2Payload({...base,minimumConfirmed:false}),/确认/);
- assert.throws(()=>productV2Payload({...base,months:2}),/期限|月|租期/); assert.equal(productV2Payload(base).minimumTermMonths,3);
+const base={name:'产品',months:6,minimumTermMonths:3,baseFeeAmount:100,mileageMonthlyFeeAmount:200,mileagePerMonthKm:0,excessMileagePriceAmount:0,includedCount:0,extraFeeAmount:1,conditions:'实际约定',vehicleIds:['v'],modelDefinitionIds:[]};
+test('minimum needs no extra confirmation, actual months follow it; absent history remains absent',()=>{
+ assert.equal(productInitial({}).minimumTermMonths,''); assert.equal(productV2Payload(base).minimumTermMonths,3);
+ for(const patch of [{minimumTermMonths:2},{minimumTermMonths:undefined},{minimumTermMonths:7},{months:2}])assert.throws(()=>productV2Payload({...base,...patch}),/期限|月|租期/);
  assert.deepEqual(productV2Payload({...base,baasDisposition:'SEPARATE',baasAmount:200,baasPeriod:'MONTH',baasRecipient:'真实收款方'}).customerBaas,{disposition:'SEPARATE',amount:200,period:'MONTH',recipient:'真实收款方'});
 });
 test('electronic defaults accept exactly factual terms and genuine fee components',async()=>{

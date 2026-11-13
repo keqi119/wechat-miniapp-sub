@@ -4,7 +4,7 @@ import {productInitial,productV2Payload,productMonthlyPreview,productVersionKind
 import {readFields} from './domain-commands.ts';
 import {routeAllowed,moduleForRoute} from './modules/navigation.ts';
 
-const input={minimumTermMonths:3,minimumConfirmed:true,name:'按产品配置',months:24,baseFeeAmount:'1000.10',mileageMonthlyFeeAmount:'250.15',mileagePerMonthKm:2300,excessMileagePriceAmount:'1.25',includedCount:0,extraFeeAmount:'620.50',conditions:'按具体产品约定',vehicleIds:['car'],modelDefinitionIds:[],benefitVersionIds:[]};
+const input={minimumTermMonths:3,name:'按产品配置',months:24,baseFeeAmount:'1000.10',mileageMonthlyFeeAmount:'250.15',mileagePerMonthKm:2300,excessMileagePriceAmount:'1.25',includedCount:0,extraFeeAmount:'620.50',conditions:'按具体产品约定',vehicleIds:['car'],modelDefinitionIds:[],benefitVersionIds:[]};
 test('modular v2 converts yuan once, uses configured mileage and never submits total or arbitrary energy',()=>{
  const payload=productV2Payload(readFields(productV2Fields,input));
  assert.equal(payload.configurationVersion,2);assert.equal(payload.baseFeeAmount,100010);assert.equal(payload.mileageMonthlyFeeAmount,25015);assert.equal(payload.excessMileagePriceAmount,125);assert.equal(payload.mileagePerMonthKm,2300);
